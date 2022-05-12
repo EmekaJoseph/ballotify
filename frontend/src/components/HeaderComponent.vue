@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import offCanvasComponentVue from './offCanvasComponent.vue';
+import { useRoute } from 'vue-router';
 
 defineProps({
     scrolled: {
@@ -8,6 +8,7 @@ defineProps({
         required: true,
     }
 })
+const route = useRoute()
 </script>
 
 <template>
@@ -17,39 +18,31 @@ defineProps({
             <div class="container d-flex align-items-center justify-content-between">
                 <div class="logo">
                     <span class="fw-bold">
-                        <router-link class="text-decoration-none" style="font-size: 20px" to="/">
+                        <router-link class="text-decoration-none brand-Name" to="/">
                             Ballotify
                         </router-link>
                     </span>
                 </div>
                 <div v-for="i in 10" :key="i"></div>
                 <div>
-                    <nav id="navbar" class="navbar d-none d-md-block">
+                    <nav id="navbar" class="navbar">
                         <ul>
                             <li>
-                                <router-link class="nav-link" to="/">Home</router-link>
-                            </li>
-                            <!-- <li>
-                                <router-link class="nav-link " to="/">Help</router-link>
-                            </li> -->
-                            <li>
-                                <router-link class="nav-link " to="/contact">Reach Us</router-link>
+                                <router-link v-if="route.name == 'Home'" class="nav-link" to="/about">Help <i
+                                        class="bi bi-info-circle"></i></router-link>
+                                <router-link v-else class="nav-link" to="/"><i class="bi bi-arrow-left-short"></i> Home
+                                </router-link>
                             </li>
                         </ul>
                     </nav>
                 </div>
 
-
-                <nav class="d-md-none navbar">
-                    <h3 class="fw-bold" data-bs-toggle="offcanvas" data-bs-target="#offcanvasGeneral"
-                        aria-controls="offcanvasGeneral">
-                        <i class="bi bi-list"></i>
-                    </h3>
+                <nav>
+                    <router-link class="d-none d-md-block nav-link signUpBtn" to="/admin">
+                        Account</router-link>
                 </nav>
             </div>
         </header>
-
-        <offCanvasComponentVue />
     </div>
 </template>
 
@@ -81,27 +74,33 @@ defineProps({
 
 .navbar a {
     color: #2c3e50;
-}
-
-.navbar a:focus {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 5px 20px 5px 30px;
     font-size: 15px;
-    font-weight: lighter;
-
-    white-space: nowrap;
-    transition: 0.3s;
 }
 
-.navbar .active,
-.navbar .active:focus {
+
+.navbar .active {
     color: #00BD8C;
     border-bottom: 1px solid #00BD8C;
 }
 
 .navbar a:hover {
-    font-weight: bold;
+    color: #05d8a0;
+}
+
+.signUpBtn {
+    background-color: #00BD8C;
+    border-radius: 5px;
+    padding: 5px 20px;
+    color: #fff;
+}
+
+.signUpBtn:hover {
+    background-color: #05d8a0;
+}
+
+.brand-Name {
+    font-size: 20px;
+    /* color: #2c3e50; */
+    color: #BD2c00;
 }
 </style>

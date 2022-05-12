@@ -29,3 +29,71 @@ button:focus,
     box-shadow: none !important;
     /* background-color: none; */
 }
+
+
+.page-not-home {
+    margin-top: 50px;
+}
+
+
+/* section */
+section {
+    padding: 60px 0;
+    overflow: hidden;
+}
+
+.section-header {
+    text-align: center;
+    padding-bottom: 40px;
+}
+
+.section-header h2 {
+    font-size: 48px;
+    font-weight: 300;
+    margin-bottom: 20px;
+    color: var(--bs-secondary);
+}
+
+.section-header p {
+    margin: 0 auto;
+    color: var(--bs-secondary-light);
+}
+
+@media (min-width: 1280px) {
+    .section-header p {
+        max-width: 80%;
+    }
+}
+
+@media (max-width: 991px) {
+    .section-header h2 {
+        font-size: 30px;
+
+    }
+}
+
+/* section */
+
+
+/* bounce animation */
+@-webkit-keyframes up-down {
+    0% {
+        transform: translateY(10px);
+    }
+
+    100% {
+        transform: translateY(-10px);
+    }
+}
+
+@keyframes up-down {
+    0% {
+        transform: translateY(10px);
+    }
+
+    100% {
+        transform: translateY(-10px);
+    }
+}
+
+/* bounce animation */

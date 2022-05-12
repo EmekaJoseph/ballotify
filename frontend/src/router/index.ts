@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router'
 import HomeView from '../views/Home/home.vue'
-import ContactView from '../views/contact/contact.vue'
+import ContactView from '../views/Contact/contact.vue'
+import AboutView from '../views/About/about.vue'
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -12,6 +13,29 @@ const routes: Array<RouteRecordRaw> = [
     path: '/contact',
     name: 'Contact',
     component: ContactView
+  },
+
+  {
+    path: '/about',
+    name: 'About',
+    component: AboutView
+  },
+
+  {
+    path: '/admin',
+    name: 'Admin',
+    component: () => import('../views/Admin/Login/index.vue')
+  },
+
+
+
+  {
+    path: '/admin',
+    name: 'Admin-layout',
+    component: () => import('../views/Admin/admin-layout.vue'),
+    children: [
+      { path: 'dashboard', name: 'Dashboard', component: () => import('../views/Admin/Dashboard/dashboard.vue') },
+    ],
   },
 
   // {

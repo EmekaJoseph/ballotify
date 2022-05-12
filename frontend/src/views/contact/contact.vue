@@ -105,46 +105,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.page-not-home {
-    margin-top: 50px;
-}
-
-
-section {
-    padding: 60px 0;
-    overflow: hidden;
-}
-
-.section-header {
-    text-align: center;
-    padding-bottom: 40px;
-}
-
-.section-header h2 {
-    font-size: 48px;
-    font-weight: 300;
-    margin-bottom: 20px;
-    color: var(--bs-secondary);
-}
-
-.section-header p {
-    margin: 0 auto;
-    color: var(--bs-secondary-light);
-}
-
-@media (min-width: 1280px) {
-    .section-header p {
-        max-width: 80%;
-    }
-}
-
-@media (max-width: 991px) {
-    .section-header h2 {
-        font-size: 30px;
-
-    }
-}
-
 .contact .map {
     margin-bottom: 40px;
 }
@@ -286,7 +246,7 @@ section {
 }
 
 .contact .php-email-form button[type=submit]:hover {
-    background: rgb(5, 216, 160);
+    background: #05d8a0;
 }
 
 @-webkit-keyframes animate-loading {

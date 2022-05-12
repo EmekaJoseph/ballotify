@@ -12,8 +12,8 @@
                 </p>
 
                 <div class="d-flex">
-                    <button class="btn btn-primary btn-get-started">New Organisation</button>
-                    <button class="btn btn-primary btn-get-started">Voter Account</button>
+                    <a href="/admin" class="btn btn-primary btn-get-started">Admin</a>
+                    <button class="btn btn-primary btn-get-started">Voter</button>
                 </div>
             </div>
         </section>
@@ -145,7 +145,7 @@ onMounted(() => {
 }
 
 .hero-animated .btn-get-started:hover {
-    background: #067c5d;
+    background: #05d8a0;
 }
 
 
@@ -167,26 +167,6 @@ onMounted(() => {
 
     .hero-animated .btn-get-started {
         width: 150px;
-    }
-}
-
-@-webkit-keyframes up-down {
-    0% {
-        transform: translateY(10px);
-    }
-
-    100% {
-        transform: translateY(-10px);
-    }
-}
-
-@keyframes up-down {
-    0% {
-        transform: translateY(10px);
-    }
-
-    100% {
-        transform: translateY(-10px);
     }
 }
 
