@@ -3,6 +3,7 @@
         <div class="sidenav">
             <span class="brand">
                 <!-- <img src="@/assets/house34_logo2.png" width="95" alt /> -->
+                Ballotify
             </span>
             <menuList />
         </div>
@@ -33,21 +34,19 @@ import { inject } from 'vue'
     top: 0;
     /* Stay at the top */
     left: 0;
-    background-color: #701A00;
+    background-color: #fff;
 
     overflow-x: hidden;
     /* Disable horizontal scroll */
-    padding: 25px 10px;
+    /* padding: 25px 10px; */
 }
 
 .sidenav .brand {
-    /* display: flex;
-        justify-content: center; */
-    margin: 20px;
-    color: #fff;
-    font-size: 24px;
+    padding: 15px 30px 17px 30px;
+    /* color: #BD2c00; */
+    display: flex;
     font-weight: bold;
-    padding: 10px;
+    font-size: 24px;
 }
 
 @media screen and (max-width: 767px) {

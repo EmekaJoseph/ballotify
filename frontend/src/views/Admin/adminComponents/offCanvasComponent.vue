@@ -16,7 +16,7 @@
             <div class="offcanvas-body"></div>
             <span class="logOutSection">
                 <span class="logOutBtn" @click="signOut">
-                    <i class="bi bi-x"></i>&nbsp;Log Out
+                    <i class="bi bi-x text-white"></i>&nbsp;Log Out
                 </span>
             </span>
         </div>
@@ -49,16 +49,15 @@ function signOut() {
 
 <style scoped>
 .offcanvas {
-    background-color: red;
-    /* color: #3b032f; */
-    width: 250px;
-    color: #fff;
+    background-color: fff;
+    width: 200px;
+    border: none;
 }
 
 .logOutBtn {
     /* margin: 45px; */
     font-weight: bold;
-    font-size: 16px;
+    font-size: 12px;
     text-decoration: none;
     color: #fff;
     display: flex;
@@ -66,7 +65,7 @@ function signOut() {
 }
 
 .logOutSection {
-    background-color: red;
-    padding: 20px;
+    background-color: #007052;
+    padding: 10px;
 }
 </style>

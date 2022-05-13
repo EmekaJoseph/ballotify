@@ -12,7 +12,7 @@
                 </p>
 
                 <div class="d-flex">
-                    <a href="/admin" class="btn btn-primary btn-get-started">Admin</a>
+                    <router-link to="/admin" class="btn btn-primary btn-get-started">Admin</router-link>
                     <button class="btn btn-primary btn-get-started">Voter</button>
                 </div>
             </div>

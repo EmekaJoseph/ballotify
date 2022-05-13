@@ -1,6 +1,6 @@
 <template>
     <div>
-        dashboard
+        groups
     </div>
 </template>
 

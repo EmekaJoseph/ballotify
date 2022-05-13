@@ -2,15 +2,10 @@ interface LoginFormInterface {
     username: string,
     password: string,
     err: {
-        msg: string,
-        username: boolean
-        password: boolean
+        username: string
+        password: string
     }
 }
 
-interface example {
-    name: string
-}
 
-
-export { LoginFormInterface, example }
+export { LoginFormInterface }

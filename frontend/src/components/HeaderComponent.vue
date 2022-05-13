@@ -87,6 +87,10 @@ const route = useRoute()
     color: #05d8a0;
 }
 
+.navbar a:hover i {
+    color: #05d8a0;
+}
+
 .signUpBtn {
     background-color: #00BD8C;
     border-radius: 5px;
@@ -101,6 +105,6 @@ const route = useRoute()
 .brand-Name {
     font-size: 20px;
     /* color: #2c3e50; */
-    color: #BD2c00;
+    /* color: #BD2c00; */
 }
 </style>

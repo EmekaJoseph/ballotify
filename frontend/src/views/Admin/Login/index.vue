@@ -1,5 +1,11 @@
 <template>
     <div class="thForm">
+        <nav class="navbar fixed-top bg-none">
+            <div class="container">
+                <div></div>
+                <router-link class="homeBtn" to="/">Home Page</router-link>
+            </div>
+        </nav>
         <transition name="xSlide" mode="out-in">
             <LoginForm v-if="formShowing == 'login'" @switch-form="switchTo" />
             <SignUpForm v-else @switch-form="switchTo" />
@@ -33,14 +39,6 @@ function switchTo(name) {
     transition: 1.8s ease-in-out;
 }
 
-.mini-footer {
-    background-color: #eee;
-    text-align: center;
-    padding: 20px;
-}
-
-
-
 .xSlide-enter-active {
     transition: all 0.7s ease;
 }
@@ -49,5 +47,16 @@ function switchTo(name) {
 .xSlide-leave-to {
     transform: translateY(-20px);
     opacity: 0;
+}
+
+.homeBtn {
+    text-decoration: none;
+    background-color: #00BD8C21;
+    color: #00BD8C;
+    font-size: 11px;
+    padding: 2px 7px;
+    font-weight: bold;
+    border-radius: 5px;
+    margin-top: 10px;
 }
 </style>

@@ -22,26 +22,26 @@
                     <form>
                         <div class="row gy-3">
                             <div class="col-md-12">
-                                <div class="alert alert-danger small my-1 p-2 border-0" v-if="formError.msg"
-                                    v-html="formError.msg"></div>
-                            </div>
-
-                            <div class="col-md-12">
                                 <div class="form-floating">
-                                    <input v-model="form.username" type="text" class="form-control" id="floatUserName"
-                                        placeholder="username" />
+                                    <input :class="{ 'formError': err.username }" v-model="form.username" type="text"
+                                        class="form-control" id="floatUserName" placeholder="username" />
                                     <label for="floatUserName">username:</label>
+                                    <small class="text-danger" v-if="err.username">{{ err.username
+                                    }}</small>
                                 </div>
                             </div>
                             <div class="col-md-12">
                                 <div class="form-floating passF">
-                                    <input :type="pw.type" v-model="form.password" class="form-control" id="floatpassw"
+                                    <input :class="{ 'formError': err.password }" :type="pw.type"
+                                        v-model="form.password" class="form-control" id="floatpassw"
                                         placeholder="password" />
                                     <span @click="pw.toggle()">
                                         <i v-if="(pw.type == 'password')" class="bi bi-eye-slash"></i>
                                         <i v-else class="bi bi-eye"></i>
                                     </span>
                                     <label for="floatpassw">password:</label>
+                                    <small class="text-danger" v-if="err.password">{{ err.password
+                                    }}</small>
                                 </div>
                             </div>
                             <div class="col-md-12 mt-4">
@@ -80,42 +80,40 @@ const pw = reactive({
     toggle: () => { pw.type = pw.type === 'password' ? 'text' : 'password' }
 })
 
-// const errMsg = ref('')
 
 const initialFormState: LoginFormInterface = {
     username: '',
     password: '',
     err: {
-        msg: '',
-        username: false,
-        password: false,
+        username: '',
+        password: '',
     },
 }
 
 
 const form = reactive({ ...initialFormState });
-const formError = reactive({ ...initialFormState.err });
+const err = reactive({ ...initialFormState.err });
 
 function resetForm() {
     Object.assign(form, initialFormState);
 }
-function resetFormError() {
-    Object.assign(formError, initialFormState.err);
+function resetErr() {
+    Object.assign(err, initialFormState.err);
 }
 
 function loginUser() {
+    resetErr()
     if (form.username.length == 0) {
-        formError.msg = '<i class="bi bi-exclamation-circle"></i>&nbsp;Enter a name'
+        err.username = 'This field is empty'
         return false
     }
     else if (form.password.length == 0) {
-        formError.msg = '<i class="bi bi-exclamation-circle"></i>&nbsp;Enter a password biko'
+        err.password = 'This field is empty'
         return false
     }
     else {
         router.replace({ name: 'Dashboard' })
-        formError.msg = ''
-        // user.signIn()
+        resetForm()
     }
 }
 
@@ -126,6 +124,14 @@ function loginUser() {
     border: none;
     border-radius: 0px;
     border-bottom: 1px solid #eee;
+}
+
+.formError {
+    border-bottom: 1px solid #dc3545;
+}
+
+small {
+    font-size: 12px;
 }
 
 .passF i {
@@ -140,7 +146,6 @@ function loginUser() {
 
 .forgot a {
     text-decoration: none;
-    color: #BD2c00;
     /* font-weight: bold; */
 }
 

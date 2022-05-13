@@ -35,6 +35,8 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import('../views/Admin/admin-layout.vue'),
     children: [
       { path: 'dashboard', name: 'Dashboard', component: () => import('../views/Admin/Dashboard/dashboard.vue') },
+      { path: 'groups', name: 'Groups', component: () => import('../views/Admin/Groups/groups.vue') },
+      { path: 'members', name: 'Members', component: () => import('../views/Admin/Members/members.vue') },
     ],
   },
 

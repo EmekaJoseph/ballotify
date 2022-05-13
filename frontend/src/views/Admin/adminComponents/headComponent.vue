@@ -2,7 +2,9 @@
     <div>
         <nav class="navbar navbar-light fixed-top shadow-sm">
             <div class="container-fluid">
-                <a class="navbar-brand small fw-bold">{{ route.name }}</a>
+                <span class="d-md-none fw-bold">Ballotify</span>
+                <input type="text" class="d-none d-md-block form-control form-control-sm" placeholder="search.."
+                    style="width:250px">
                 <span class="d-none d-md-block shadow-sm logout-btn" @click="signOut">LOG OUT</span>
                 <nav class="d-md-none navbar">
                     <h3 class="fw-bold" data-bs-toggle="offcanvas" data-bs-target="#offcanvasAdmin"
@@ -39,7 +41,7 @@ function signOut() {
 <style scoped>
 .navbar {
     margin-left: 250px;
-    padding: 10px;
+    padding: 15px;
     background-color: #fff;
 }
 

@@ -2,26 +2,27 @@
     <div>
         <div class="menuSection">
             <ul class="list-group list-group-flush">
-                <li class="list-group-item" :data-bs-dismiss="showOn">
+                <li class="list-group-item" :class="{ 'gActive': (route.name == 'Dashboard') }"
+                    :data-bs-dismiss="showOn">
                     <router-link :to="{ name: 'Dashboard' }">
-                        <i class="bi bi-layout-wtf"></i>&nbsp; Dashboard
+                        <i class="bi bi-layout-wtf"></i>&nbsp;
+                        Dashboard
                     </router-link>
                 </li>
-                <li class="list-group-item" :data-bs-dismiss="showOn">
-                    <router-link :to="{ name: 'Dashboard' }">
-                        <i class="bi bi-card-checklist"></i>&nbsp; Bookings
+                <li class="list-group-item" :class="{ 'gActive': (route.name == 'Members') }" :data-bs-dismiss="showOn">
+                    <router-link :to="{ name: 'Members' }">
+                        <i class="bi bi-people"></i>&nbsp;
+                        Members
                     </router-link>
                 </li>
-                <li class="list-group-item" :data-bs-dismiss="showOn">
-                    <router-link :to="{ name: 'Dashboard' }">
-                        <i class="bi bi-door-closed"></i>&nbsp; Rooms
+                <li class="list-group-item" :class="{ 'gActive': (route.name == 'Groups') }" :data-bs-dismiss="showOn">
+                    <router-link :to="{ name: 'Groups' }">
+                        <i class="bi bi-folder-plus"></i>&nbsp;
+                        Groups
                     </router-link>
                 </li>
-                <li class="list-group-item" :data-bs-dismiss="showOn">
-                    <router-link :to="{ name: 'Dashboard' }">
-                        <i class="bi bi-app-indicator"></i>&nbsp; Messages
-                    </router-link>
-                </li>
+
+
                 <!-- <li class="accordion" id="settingsDropdown">
                     <div class="accordion-item">
                         <h2 class="accordion-header" id="flush-headingOne">
@@ -56,6 +57,7 @@
 
 <script setup>
 import { inject } from 'vue'
+import { useRoute } from 'vue-router';
 // const cols = inject("customColors");
 // const { color1, color2, colorActive, color3 } = cols
 
@@ -66,13 +68,13 @@ defineProps({
         required: false,
     }
 })
-
+const route = useRoute()
 
 </script>
 
 <style scoped>
 .menuSection {
-    margin-top: 60px;
+    margin-top: 30px;
 }
 
 @media screen and (max-width: 767px) {
@@ -84,41 +86,46 @@ defineProps({
 .list-group-item {
     background-color: transparent;
     color: #fff;
-    font-weight: lighter;
-    margin-top: 13px;
+    margin-bottom: 10px;
     border: none;
-    font-size: 16px;
-}
-
-.lgi-sub {
-    margin-top: 0px;
-    text-decoration: none;
 }
 
 .list-group-item a {
     text-decoration: none;
-    color: #fff;
     padding: 10px 40px 10px 10px;
 }
 
-.list-group-item i {
-    color: #fff;
-}
+/* .list-group-item:hover {
+    border-right: 2px solid #00bd8b;
+} */
 
+
+/* .list-group-item :is(a, i) {
+    color: #19FFC2;
+} */
+
+
+a:hover i {
+    color: #111;
+}
 
 a:hover {
-    /* color: v-bind(color2); */
-    /* font-weight: bold; */
-    transform: scale(1.02);
+    color: #111;
 }
 
-.list-group-item .active {
-    /* color: v-bind(color3); */
+.active {
     /* font-weight: bold; */
-    /* background-color: v-bind(colorActive); */
-    /* border-radius: 10px; */
-    margin-left: 10px;
-    border-left: 2px solid #BD2c00;
+    color: #00bd8b;
+}
+
+
+.gActive {
+    background-color: #00bd8b0e;
+    border-right: 2px solid #00bd8b;
+}
+
+.gActive i {
+    color: #00bd8b;
 }
 
 .myaccordion {

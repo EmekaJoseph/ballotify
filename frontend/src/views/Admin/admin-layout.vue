@@ -1,8 +1,10 @@
 <template>
-    <div>
+    <div class="">
         <sideBarComponent />
         <div class="adminMain">
-            <router-view></router-view>
+            <div class="admin-content">
+                <router-view></router-view>
+            </div>
         </div>
         <offcanvas />
     </div>
@@ -16,8 +18,14 @@ import sideBarComponent from './adminComponents/sideBarComponent.vue'
 .adminMain {
     margin-left: 250px;
     padding: 20px;
+    background-color: #00bd8b0e;
+    min-height: 100vh
+}
+
+.admin-content {
     margin-top: 80px;
 }
+
 
 @media screen and (max-width: 767px) {
     .adminMain {
