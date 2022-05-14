@@ -37,6 +37,7 @@ const routes: Array<RouteRecordRaw> = [
       { path: 'dashboard', name: 'Dashboard', component: () => import('../views/Admin/Dashboard/dashboard.vue') },
       { path: 'groups', name: 'Groups', component: () => import('../views/Admin/Groups/groups.vue') },
       { path: 'members', name: 'Members', component: () => import('../views/Admin/Members/members.vue') },
+      { path: 'messages', name: 'Messages', component: () => import('../views/Admin/Messages/messages.vue') },
     ],
   },
 

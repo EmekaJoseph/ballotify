@@ -5,9 +5,8 @@
                 <div class="container spanni">
                     <h2>Login</h2>
                     <p>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Adipisci aspernatur ea et
-                        dolorem
-                        nam, obcaecati perferendis voluptates pariatur ducimus explicabo libero, atque
-                        necessitatibus. Officia voluptatem beatae, neque expedita eligendi commodi?</p>
+                        dolorem.
+                    </p>
                     <div class="d-none d-md-block text-center newOrgBtn" @click="switchForm">
                         <span class="btn">Create new Organisation?</span>
                     </div>

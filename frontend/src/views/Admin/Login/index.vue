@@ -58,5 +58,6 @@ function switchTo(name) {
     font-weight: bold;
     border-radius: 5px;
     margin-top: 10px;
+    margin-right: 18px;
 }
 </style>

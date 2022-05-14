@@ -5,26 +5,29 @@
                 <span class="d-md-none fw-bold">Ballotify</span>
                 <input type="text" class="d-none d-md-block form-control form-control-sm" placeholder="search.."
                     style="width:250px">
-                <span class="dropdown d-none d-md-block">
+                <!-- <span class="dropdown d-none d-md-block">
                     <a class="nav-link dropdown-toggle" href="#" id="accountDrop" role="button"
                         data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="bi bi-person-badge"></i>&nbsp;Account
+                        Account
                         <i class="bi bi-chevron-down"></i>
                     </a>
                     <ul class="dropdown-menu fade-up" aria-labelledby="accountDrop">
                         <li>
                             <router-link class="dropdown-item" to="/admin">
-                                <i class="bi bi-gear"></i>&nbsp;&nbsp;settings
+                                <i class="bi bi-person-fill"></i>&nbsp;Admin
                             </router-link>
                         </li>
-
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
                         <li class="text-muted">
                             <a class="dropdown-item" @click.prevent href="#">
-                                <i class="bi bi-dash-circle"></i>&nbsp;&nbsp;log out
+                                <i class="bi bi-x-circle"></i>&nbsp;Sign out
                             </a>
                         </li>
                     </ul>
-                </span>
+                </span> -->
+                <span>sss</span>
                 <nav class="d-md-none navbar">
                     <h3 class="fw-bold" data-bs-toggle="offcanvas" data-bs-target="#offcanvasAdmin"
                         aria-controls="offcanvasAdmin">
@@ -58,18 +61,6 @@ function signOut() {
 </script>
 
 <style scoped>
-.navbar {
-    margin-left: 250px;
-    padding: 15px;
-    background-color: #fff;
-}
-
-
-.logout-btn:hover {
-    background-color: rgb(241, 239, 239);
-    color: red;
-}
-
 @media screen and (max-width: 767px) {
     .navbar {
         margin-left: 0px;
@@ -80,10 +71,11 @@ function signOut() {
 
 /* Acount DropDowm #############################################*/
 #accountDrop {
-    color: #2c3e50;
+    /* color: #fff; */
+    color: #111;
     font-size: 14px;
     /* pointer-events: none; */
-    margin-right: 55px;
+    margin-right: 70px;
 }
 
 .dropdown-toggle::after {
@@ -91,24 +83,14 @@ function signOut() {
 }
 
 .dropdown-menu {
+    border-radius: 20px;
     font-size: small;
     min-width: 140px !important;
-    border: 1px solid #eee;
-}
-
-.dropdown-menu :is(a, i) {
-    color: #2c3e50;
-    margin-block: 6px;
 }
 
 .dropdown-item:hover {
     background: transparent;
-    color: #00bd8b;
     /* font-weight: bold; */
-}
-
-.dropdown-item:hover i {
-    color: #00bd8b;
 }
 
 /* Acount DropDowm ##################################### */

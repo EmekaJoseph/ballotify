@@ -4,6 +4,7 @@
             <div class="offcanvas-header">
                 <span id="offcanvasAdminLabel text-muted">
                     <!-- <img src="@/assets/house34_logo2.png" width="90" alt /> -->
+                    <span class="ms-3"> Menu</span>
                 </span>
                 <button type="button" class="btn btn-link text-white fs-1" data-bs-dismiss="offcanvas">
                     <i class="bi bi-x"></i>
@@ -50,7 +51,7 @@ function signOut() {
 <style scoped>
 .offcanvas {
     background-color: fff;
-    width: 200px;
+    width: 250px;
     border: none;
 }
 
@@ -66,6 +67,6 @@ function signOut() {
 
 .logOutSection {
     background-color: #007052;
-    padding: 10px;
+    padding: 20px;
 }
 </style>

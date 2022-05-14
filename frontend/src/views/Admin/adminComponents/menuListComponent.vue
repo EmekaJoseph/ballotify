@@ -21,9 +21,47 @@
                         Groups
                     </router-link>
                 </li>
+                <li class="accordion" id="votingsDropdown">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="flush-headingTwo">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#flush-votings" aria-expanded="false" aria-controls="flush-votings">
+                                <i class="bi bi-ui-checks"></i>&nbsp; Votings
+                            </button>
+                        </h2>
+                        <div id="flush-votings" class="accordion-collapse collapse" aria-labelledby="flush-headingTwo"
+                            data-bs-parent="#votingsDropdown">
+                            <div class="accordion-body">
+                                <ul class="list-group list-group-flush">
+                                    <li class="dropItem">
+                                        <router-link to="/" @click.prevent>
+                                            <i class="bi bi-check2-circle"></i>&nbsp; event 1
+                                        </router-link>
+                                    </li>
+                                    <li class="dropItem">
+                                        <router-link to="/" @click.prevent>
+                                            <i class="bi bi-check2-circle"></i>&nbsp; event 2
+                                        </router-link>
+                                    </li>
+                                    <li class="dropItem">
+                                        <router-link to="/" @click.prevent>
+                                            <i class="bi bi-plus-circle-dotted"></i>&nbsp; new
+                                        </router-link>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </li>
+                <li class="list-group-item" :class="{ 'gActive': (route.name == 'Messages') }"
+                    :data-bs-dismiss="showOn">
+                    <router-link :to="{ name: 'Messages' }">
+                        <i class="bi bi-app-indicator"></i>&nbsp;
+                        Messages
+                    </router-link>
+                </li>
 
-
-                <!-- <li class="accordion" id="settingsDropdown">
+                <li class="accordion" id="settingsDropdown">
                     <div class="accordion-item">
                         <h2 class="accordion-header" id="flush-headingOne">
                             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
@@ -35,21 +73,21 @@
                             data-bs-parent="#settingsDropdown">
                             <div class="accordion-body">
                                 <ul class="list-group list-group-flush">
-                                    <li class="list-group-item">
-                                        <router-link to="/">
-                                            <i class="bi bi-people"></i>&nbsp; Users
+                                    <li class="dropItem">
+                                        <router-link to="/" @click.prevent>
+                                            <i class="bi bi-person-plus"></i>&nbsp; users
                                         </router-link>
                                     </li>
-                                    <li class="list-group-item">
-                                        <router-link to="/">
-                                            <i class="bi bi-person-lines-fill"></i>&nbsp; Account
+                                    <li class="dropItem">
+                                        <router-link to="/" @click.prevent>
+                                            <i class="bi bi-person-circle"></i>&nbsp; profile
                                         </router-link>
                                     </li>
                                 </ul>
                             </div>
                         </div>
                     </div>
-                </li>-->
+                </li>
             </ul>
         </div>
     </div>
@@ -109,7 +147,7 @@ a:hover i {
     color: #111;
 }
 
-a:hover {
+a:not(.gActive):hover {
     color: #111;
 }
 
@@ -139,29 +177,47 @@ a:hover {
 
 .accordion-button {
     background-color: transparent;
-    color: #fff;
-    font-weight: lighter;
     font-size: 16px;
     padding: 10px 40px 10px 25px;
-    margin-top: 16px;
     border: none;
+    margin-bottom: 10px;
 }
 
 .accordion-button:hover {
-    color: red;
+    color: #111;
+}
+
+.accordion-button:not(.collapsed) {
+    color: #00bd8b;
+
 }
 
 .accordion-button.collapsed::after {
-    background: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23fff'%3e%3cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e");
+    /* margin-left: 30px; */
+    background: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%232c3e50'%3e%3cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e");
 }
 
 .accordion-button:not(.collapsed)::after {
-    background: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23fff'%3e%3cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e");
+    /* margin-left: 30px; */
+    background: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%232c3e50'%3e%3cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e");
 }
 
 .accordion-body {
-    padding: 2px;
-    margin-left: 35px;
-    border: 0px;
+    border: none;
+    padding: 0px;
+    margin: 0px;
+}
+
+.dropItem {
+    margin-bottom: 10px;
+}
+
+.dropItem a {
+    text-decoration: none;
+    margin-left: 50px;
+}
+
+.dropItem a:hover {
+    color: #111;
 }
 </style>
