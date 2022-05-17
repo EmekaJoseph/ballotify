@@ -3,8 +3,12 @@
         <nav class="navbar navbar-light fixed-top shadow-sm">
             <div class="container-fluid">
                 <span class="d-md-none fw-bold">Ballotify</span>
-                <input type="text" class="d-none d-md-block form-control form-control-sm" placeholder="search.."
-                    style="width:250px">
+                <div class="inputSearch d-none d-md-block">
+                    <input type="text" class=" form-control form-control-sm" placeholder="search.." style="width:250px">
+                    <span class="icon">
+                        <i class="bi bi-search"></i>
+                    </span>
+                </div>
                 <span class="dropdown d-none d-md-block">
                     <a class="nav-link dropdown-toggle" href="#" id="accountDrop" role="button"
                         data-bs-toggle="dropdown" aria-expanded="false">
@@ -44,8 +48,8 @@ import { useRouter, useRoute } from 'vue-router'
 const router = useRouter()
 const route = useRoute()
 
-// const cols = inject("customColors");
-// const { color1, color2, colorSideBar } = cols
+const { cc1, cc2, ccThk, ccBg, ccBtnH } = inject("c$");
+
 
 
 // const user = useUserStore()
@@ -64,18 +68,26 @@ function signOut() {
     background-color: #fff;
 }
 
-
-.logout-btn:hover {
-    background-color: rgb(241, 239, 239);
-    color: red;
-}
-
 @media screen and (max-width: 767px) {
     .navbar {
         margin-left: 0px;
         padding: 5px;
     }
 }
+
+
+/* input search  ############################################### */
+.inputSearch .icon {
+    position: absolute;
+    margin-top: 21px;
+    margin-right: 50px;
+    margin-left: 220px;
+    top: 0;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+/* input search  ############################################### */
 
 
 /* Acount DropDowm #############################################*/
@@ -103,12 +115,12 @@ function signOut() {
 
 .dropdown-item:hover {
     background: transparent;
-    color: #00bd8b;
+    color: v-bind(cc1);
     /* font-weight: bold; */
 }
 
 .dropdown-item:hover i {
-    color: #00bd8b;
+    color: v-bind(cc1);
 }
 
 /* Acount DropDowm ##################################### */

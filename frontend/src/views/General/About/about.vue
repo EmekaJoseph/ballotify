@@ -162,10 +162,11 @@
     </div>
 </template>
 
-<script setup lang="ts">
-import { onMounted, ref } from 'vue';
+<script setup>
+import { onMounted, ref, inject } from 'vue';
 import { useWindowScroll } from '@vueuse/core'
 const { x, y } = useWindowScroll()
+const { cc1, cc2, ccThk, ccBg, ccBtnH } = inject("c$");
 onMounted(() => {
     window.scrollTo(0, 0);
 })
@@ -233,9 +234,9 @@ onMounted(() => {
 }
 
 .about .nav-link.active {
-    color: #00BD8C;
+    color: v-bind(cc1);
     background: none;
-    border-bottom: 3px solid #00BD8C;
+    border-bottom: 3px solid v-bind(cc1);
 }
 
 @media (max-width: 575px) {
@@ -255,7 +256,7 @@ onMounted(() => {
     font-size: 22px;
     line-height: 0;
     margin-right: 8px;
-    color: #00BD8C;
+    color: v-bind(cc1);
 }
 
 .get-in-touch {
@@ -265,7 +266,7 @@ onMounted(() => {
 }
 
 .get-in-touch a {
-    color: #00BD8C;
+    color: v-bind(cc1);
     font-size: 30px;
     text-decoration: none;
     border-radius: 10px;
@@ -273,6 +274,6 @@ onMounted(() => {
 }
 
 .get-in-touch a:hover {
-    color: #05d8a0;
+    color: v-bind(ccBtnH);
 }
 </style>

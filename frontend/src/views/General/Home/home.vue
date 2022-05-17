@@ -6,7 +6,7 @@
             <div class="container d-flex flex-column justify-content-center align-items-center text-center position-relative"
                 data-aos="zoom-out">
                 <img src="@/assets/images/hero-img2.svg" class="img-fluid animated">
-                <h2 class="fw-bold">Welcome to <span style="color: #BD2c00">Ballotify</span></h2>
+                <h2 id="account_" class="fw-bold">Welcome to <span>Ballotify</span></h2>
                 <p>
                     <VueWriter :array="textArr" :typeSpeed="70" />
                 </p>
@@ -64,14 +64,16 @@
     </div>
 </template>
 
-<script setup lang="ts">
-import { onMounted, ref } from 'vue';
+<script setup>
+import { onMounted, ref, inject } from 'vue';
 import { useWindowScroll } from '@vueuse/core'
 const { x, y } = useWindowScroll()
-const textArr = ref<string[]>(['This App is still in Dev mode', 'With this App, You can create voting event', 'You can manage users also in a organisation'])
+const textArr = ref(['This App is still in Dev mode', 'With this App, You can create voting event', 'You can manage users also in a organisation'])
 onMounted(() => {
     window.scrollTo(0, 0);
 })
+
+const { cc1, cc2, ccThk, ccBg, ccBtnH } = inject("c$");
 
 // const scrollPosition = ref<any>(null)
 // function updateScrollPosition() {
@@ -99,7 +101,7 @@ onMounted(() => {
 }
 
 .hero-animated h2 span {
-    color: #00BD8C;
+    color: v-bind(cc2);
 }
 
 .hero-animated p {
@@ -137,7 +139,7 @@ onMounted(() => {
     font-weight: 400;
     border-radius: 4px;
     transition: 0.5s;
-    background: #00BD8C;
+    background: v-bind(cc1);
     width: 200px;
     border: none;
     margin-inline: 6px;
@@ -145,7 +147,7 @@ onMounted(() => {
 }
 
 .hero-animated .btn-get-started:hover {
-    background: #05d8a0;
+    background: v-bind(ccBtnH);
 }
 
 
@@ -186,7 +188,7 @@ onMounted(() => {
 }
 
 .featured-services .service-item .icon i {
-    color: #00BD8C;
+    color: v-bind(cc1);
     font-size: 36px;
     transition: 0.3s;
 }
@@ -214,6 +216,6 @@ onMounted(() => {
 }
 
 .featured-services .service-item:hover h4 a {
-    color: #00BD8C;
+    color: v-bind(cc1);
 }
 </style>

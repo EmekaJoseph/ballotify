@@ -14,10 +14,6 @@
 <script setup>
 import adminHeadBar from './headComponent.vue'
 import menuList from './menuListComponent.vue'
-import { inject } from 'vue'
-// const cols = inject("customColors");
-// const { colorSideBar, color1 } = cols
-
 </script>
 
 <style scoped>

@@ -30,9 +30,7 @@ import { inject } from 'vue'
 // import { useUserStore } from '@/stores/user'
 import { useRouter } from 'vue-router'
 import menuList from './menuListComponent.vue'
-// const cols = inject("customColors");
-// const { color1, color2, colorThick } = cols
-
+const ccThk = inject("c$").ccThk.value;
 
 // const user = useUserStore()
 
@@ -66,7 +64,7 @@ function signOut() {
 }
 
 .logOutSection {
-    background-color: #007052;
+    background-color: v-bind(ccThk);
     padding: 20px;
 }
 </style>

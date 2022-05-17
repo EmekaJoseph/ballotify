@@ -95,9 +95,10 @@
     </div>
 </template>
 
-<script setup lang="ts">
-import { onMounted, ref } from 'vue';
+<script setup>
+import { onMounted, ref, inject } from 'vue';
 import { useWindowScroll } from '@vueuse/core'
+const { cc1, cc2, ccThk, ccBg, ccBtnH } = inject("c$");
 const { x, y } = useWindowScroll()
 onMounted(() => {
     window.scrollTo(0, 0);
@@ -237,7 +238,7 @@ onMounted(() => {
 }
 
 .contact .php-email-form button[type=submit] {
-    background: #00BD8C;
+    background: v-bind(cc1);
     border: 0;
     padding: 13px 50px;
     color: var(--bs-white);
@@ -246,7 +247,7 @@ onMounted(() => {
 }
 
 .contact .php-email-form button[type=submit]:hover {
-    background: #05d8a0;
+    background: v-bind(ccBtnH);
 }
 
 @-webkit-keyframes animate-loading {

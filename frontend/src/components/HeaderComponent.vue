@@ -1,6 +1,7 @@
-<script setup lang="ts">
+<script setup>
 import { useRoute } from 'vue-router';
-
+import { inject } from 'vue'
+const { cc1, cc2, ccThk, ccBg, ccBtnH } = inject("c$");
 defineProps({
     scrolled: {
         type: Number,
@@ -38,8 +39,8 @@ const route = useRoute()
                 </div>
 
                 <nav>
-                    <router-link class="d-none d-md-block nav-link signUpBtn" to="/admin">
-                        Account</router-link>
+                    <a class="d-none d-md-block nav-link signUpBtn" href="#account_">
+                        Account</a>
                 </nav>
             </div>
         </header>
@@ -55,6 +56,10 @@ const route = useRoute()
     padding: 12px 0;
 }
 
+
+.brand-Name:hover {
+    color: v-bind(cc1);
+}
 
 .navbar {
     padding: 0;
@@ -78,28 +83,23 @@ const route = useRoute()
 }
 
 
-.navbar .active {
-    color: #00BD8C;
-    border-bottom: 1px solid #00BD8C;
-}
-
 .navbar a:hover {
-    color: #05d8a0;
+    color: v-bind(cc1);
 }
 
 .navbar a:hover i {
-    color: #05d8a0;
+    color: v-bind(cc1);
 }
 
 .signUpBtn {
-    background-color: #00BD8C;
+    background-color: v-bind(cc1);
     border-radius: 5px;
-    padding: 5px 20px;
+    padding: 4px 14px;
     color: #fff;
 }
 
 .signUpBtn:hover {
-    background-color: #05d8a0;
+    background-color: v-bind(ccBtnH);
 }
 
 .brand-Name {

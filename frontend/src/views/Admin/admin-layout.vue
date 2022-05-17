@@ -10,15 +10,17 @@
     </div>
 </template>
 <script setup>
+import { inject, onMounted } from 'vue'
 import offcanvas from './adminComponents/offCanvasComponent.vue'
 import sideBarComponent from './adminComponents/sideBarComponent.vue'
+const ccBg = inject("c$").ccBg.value;
 </script>
 
 <style scoped>
 .adminMain {
     margin-left: 250px;
     padding: 20px;
-    background-color: #00bd8b0e;
+    background-color: v-bind(ccBg);
     min-height: 100vh
 }
 

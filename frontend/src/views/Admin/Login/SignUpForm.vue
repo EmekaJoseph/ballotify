@@ -97,7 +97,7 @@
 import { reactive, ref, inject } from 'vue'
 import { useRouter } from 'vue-router'
 import { LoginFormInterface } from '@/types'
-
+const { cc1, cc2, ccThk, ccBg, ccBtnH }: any = inject("c$");
 const router = useRouter();
 
 const emits = defineEmits(["switchForm"]);
@@ -153,20 +153,6 @@ function loginUser() {
 </script>
 
 <style scoped>
-.thForm {
-    min-height: 100vh;
-    display: -ms-flexbox;
-    display: flex;
-    -ms-flex-pack: center;
-    justify-content: center;
-    -ms-flex-align: center;
-    align-items: center;
-    background: url("@/assets/images/hero-bg.png") center center;
-    background-size: cover;
-    background-color: #00BD8C21;
-    transition: 1.8s ease-in-out;
-}
-
 .form-control {
     border: none;
     border-radius: 0px;
@@ -183,31 +169,21 @@ function loginUser() {
     cursor: pointer;
 }
 
-.forgot a {
-    text-decoration: none;
-    color: #BD2c00;
-    /* font-weight: bold; */
-}
-
-.forgot a:hover {
-    color: #BD2c00;
-    text-decoration: underline;
-}
-
 .customBtn {
-    background-color: #00BD8C;
+    background-color: v-bind(cc1);
     color: #fff;
 }
 
 .customBtn:hover {
-    background-color: #05d8a0;
+    background-color: v-bind(ccBtnH);
+    color: #fff;
 }
 
 .newOrgBtn .btn {
     margin-top: 10px;
     cursor: pointer;
     border: none;
-    color: #00BD8C;
+    color: v-bind(cc1);
     float: right;
     font-size: 20px;
 }
@@ -229,7 +205,7 @@ function loginUser() {
 }
 
 .AcntBtn .btn {
-    color: #00BD8C;
+    color: v-bind(cc1);
     font-size: 20px;
 }
 </style>

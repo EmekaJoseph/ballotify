@@ -13,10 +13,11 @@
     </div>
 </template>
 
-<script lang="ts" setup>
-import { ref } from 'vue'
+<script setup>
+import { ref, inject } from 'vue'
 import LoginForm from './LoginForm.vue'
 import SignUpForm from './SignUpForm.vue'
+const { cc1, cc2, ccThk, ccBg, ccBtnH } = inject("c$");
 
 const formShowing = ref('login')
 function switchTo(name) {
@@ -51,8 +52,8 @@ function switchTo(name) {
 
 .homeBtn {
     text-decoration: none;
-    background-color: #00BD8C21;
-    color: #00BD8C;
+    background-color: v-bind(ccBg);
+    color: v-bind(cc1);
     font-size: 11px;
     padding: 2px 7px;
     font-weight: bold;

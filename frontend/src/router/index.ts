@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router'
-import HomeView from '../views/Home/home.vue'
-import ContactView from '../views/Contact/contact.vue'
-import AboutView from '../views/About/about.vue'
+import HomeView from '../views/General/Home/home.vue'
+import ContactView from '../views/General/Contact/contact.vue'
+import AboutView from '../views/General/About/about.vue'
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -27,10 +27,8 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import('../views/Admin/Login/index.vue')
   },
 
-
-
   {
-    path: '/admin',
+    path: '/adm',
     name: 'Admin-layout',
     component: () => import('../views/Admin/admin-layout.vue'),
     children: [
@@ -41,11 +39,13 @@ const routes: Array<RouteRecordRaw> = [
     ],
   },
 
-  // {
-  //   path: '/about',
-  //   name: 'about',
-  //   component: () => import(/* webpackChunkName: "about" */ '../views/AboutView.vue')
-  // }
+
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'Invalid',
+    component: () => import('../views/General/invalid.vue')
+  },
+
 ]
 
 
@@ -54,6 +54,10 @@ const router = createRouter({
   history: createWebHistory(process.env.BASE_URL),
   linkActiveClass: 'active',
   routes
+})
+
+router.afterEach((to, from) => {
+  document.title = 'Ballotify | ' + to.name?.toString()
 })
 
 export default router

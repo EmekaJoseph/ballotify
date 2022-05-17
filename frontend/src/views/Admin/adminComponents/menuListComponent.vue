@@ -96,8 +96,7 @@
 <script setup>
 import { inject } from 'vue'
 import { useRoute } from 'vue-router';
-// const cols = inject("customColors");
-// const { color1, color2, colorActive, color3 } = cols
+const { cc1, cc2, ccThk, ccBg, ccBtnH } = inject("c$");
 
 defineProps({
     showOn: {
@@ -133,16 +132,6 @@ const route = useRoute()
     padding: 10px 40px 10px 10px;
 }
 
-/* .list-group-item:hover {
-    border-right: 2px solid #00bd8b;
-} */
-
-
-/* .list-group-item :is(a, i) {
-    color: #19FFC2;
-} */
-
-
 a:hover i {
     color: #111;
 }
@@ -152,18 +141,16 @@ a:not(.gActive):hover {
 }
 
 .active {
-    /* font-weight: bold; */
-    color: #00bd8b;
+    color: v-bind(cc1);
 }
 
-
 .gActive {
-    background-color: #00bd8b0e;
-    border-right: 2px solid #00bd8b;
+    background-color: v-bind(ccBg);
+    border-right: 2px solid v-bind(cc1);
 }
 
 .gActive i {
-    color: #00bd8b;
+    color: v-bind(cc1);
 }
 
 .myaccordion {
@@ -188,7 +175,7 @@ a:not(.gActive):hover {
 }
 
 .accordion-button:not(.collapsed) {
-    color: #00bd8b;
+    color: v-bind(cc1);
 
 }
 
@@ -209,7 +196,7 @@ a:not(.gActive):hover {
 }
 
 .dropItem {
-    margin-bottom: 10px;
+    margin-bottom: 18px;
 }
 
 .dropItem a {

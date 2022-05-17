@@ -65,6 +65,7 @@
 import { reactive, ref, inject } from 'vue'
 import { useRouter } from 'vue-router'
 import { LoginFormInterface } from '@/types'
+const { cc1, cc2, ccThk, ccBg, ccBtnH }: any = inject("c$");
 
 const router = useRouter();
 
@@ -126,7 +127,7 @@ function loginUser() {
 }
 
 .formError {
-    border-bottom: 1px solid #dc3545;
+    border-bottom: 1px solid var(--bs-danger);
 }
 
 small {
@@ -149,24 +150,15 @@ small {
 }
 
 .forgot a:hover {
-    color: #BD2c00;
+    color: v-bind(cc2);
     text-decoration: underline;
-}
-
-.customBtn {
-    background-color: #00BD8C;
-    color: #fff;
-}
-
-.customBtn:hover {
-    background-color: #05d8a0;
 }
 
 .newOrgBtn .btn {
     margin-top: 10px;
     cursor: pointer;
     border: none;
-    color: #00BD8C;
+    color: v-bind(cc1);
     float: right;
     font-size: 20px;
 }
@@ -188,7 +180,17 @@ small {
 }
 
 .AcntBtn .btn {
-    color: #00BD8C;
+    color: v-bind(cc1);
     font-size: 20px;
+}
+
+.customBtn {
+    background-color: v-bind(cc1);
+    color: #fff;
+}
+
+.customBtn:hover {
+    background-color: v-bind(ccBtnH);
+    color: #fff;
 }
 </style>
