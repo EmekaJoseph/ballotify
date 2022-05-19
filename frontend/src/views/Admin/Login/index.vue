@@ -16,7 +16,7 @@
 <script setup>
 import { ref, inject } from 'vue'
 import LoginForm from './LoginForm.vue'
-import SignUpForm from './SignUpForm.vue'
+import SignUpForm from './signupForm/index.vue'
 const { cc1, cc2, ccThk, ccBg, ccBtnH } = inject("c$");
 
 const formShowing = ref('login')
