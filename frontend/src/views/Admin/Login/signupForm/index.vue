@@ -6,8 +6,8 @@
                     <span class="text-center fw-bold mb-2">
                         <!-- <img src="@/assets/house34_logo1.png" width="130" /> -->
                     </span>
-                    <newUserForm v-if="currForm == 1" @next="currForm = 2" />
-                    <newOrgForm v-else @back="currForm = 1" @done="submitForm" />
+                    <newUserForm v-if="currForm == 1" @next="currForm = 2" @error="showErrorToast" />
+                    <newOrgForm v-else @back="currForm = 1" @done="submitForm" @error="showErrorToast" />
                 </div>
                 <div class=" d-md-none text-center AcntBtn my-3" @click="emit('switchForm', 'login')">
                     <span class="btn">I already have an Account</span>
@@ -25,6 +25,7 @@
                 </div>
             </div>
         </div>
+        <notify ref="toast" />
     </div>
 </template>
 
@@ -32,14 +33,72 @@
 import { reactive, ref, inject } from 'vue'
 import newUserForm from './newUserComponent.vue'
 import newOrgForm from './newOrgComponent.vue'
-import entryData from './user-data'
+import userStore from './user-data'
+import { newRegister } from '@/types'
+import server from '@/store/apiStore.js'
+
 const { cc1, cc2, ccThk, ccBg, ccBtnH }: any = inject("c$");
 const emit = defineEmits(["switchForm"]);
 const currForm = ref(1)
 
+const state = userStore.state
+const user = state.user
+const org = state.org
+const mthds = userStore.methods
+
+
+const toast = ref<any>(null)
+function showErrorToast() {
+    toast.value.showToast('Sorry error occoured, try again', 'danger');
+}
+function showSuccessToast() {
+    toast.value.showToast('Registration successfull', 'success');
+}
 
 function submitForm() {
-    console.log(entryData.data);
+    var obj: newRegister = {
+        firstname: user.firstname,
+        lastname: user.lastname,
+        email: user.email,
+        password: user.password,
+        org_name: org.name,
+        org_address: org.address
+    }
+
+    sendToServer(obj)
+}
+
+async function sendToServer(obj: object) {
+    state.loading = true
+    let jsonData = JSON.stringify(obj)
+    try {
+        var { data } = await server.registerNew(jsonData);
+        switch (data) {
+            case 1:
+                showSuccessToast()
+                state.loading = false
+                mthds.resetData()
+                setTimeout(() => {
+                    emit('switchForm', 'login')
+                }, 1000);
+                break;
+            case 0:
+                showErrorToast()
+                state.loading = false
+                break;
+
+            default:
+                showErrorToast()
+                state.loading = false
+                break;
+        }
+        var val = (data == true) ? true : (data == false ? false : null)
+        state.loading = false
+    } catch (error) {
+        console.log(error);
+        showErrorToast()
+        state.loading = false
+    }
 }
 </script>
 

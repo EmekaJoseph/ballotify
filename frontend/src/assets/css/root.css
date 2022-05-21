@@ -31,6 +31,10 @@ button:focus,
     /* background-color: none; */
 }
 
+input[type="password"]:disabled,
+input[type="text"]:disabled {
+    background-color: #fff;
+}
 
 .page-not-home {
     margin-top: 50px;

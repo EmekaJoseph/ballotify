@@ -10,15 +10,6 @@ import 'bootstrap/dist/js/bootstrap.min.js'
 
 import './assets/css/root.css'
 
-//npm install @vuepic/vue-datepicker
-import Datepicker from '@vuepic/vue-datepicker';
-import '@vuepic/vue-datepicker/dist/main.css';
-
-//npm install vue-select-3
-import vSelect from "vue-select";
-import "vue-select/dist/vue-select.css";
-
-
 const mainApp = createApp(App)
 
 // npm install vue-writer
@@ -30,8 +21,17 @@ mainApp.component('HeaderComponent', HeaderComponent);
 import FooterComponent from '@/components/FooterComponent.vue'
 mainApp.component('FooterComponent', FooterComponent);
 
+import notify from "@/components/toastNotify.vue";
+mainApp.component('notify', notify);
+
+//npm install @vuepic/vue-datepicker
+import Datepicker from '@vuepic/vue-datepicker';
+import '@vuepic/vue-datepicker/dist/main.css';
 mainApp.component('Datepicker', Datepicker);
 
+//npm install vue-select-3
+import vSelect from "vue-select";
+import "vue-select/dist/vue-select.css";
 mainApp.component('vSelect', vSelect);
 
 

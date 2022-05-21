@@ -28,7 +28,7 @@ const routes: Array<RouteRecordRaw> = [
   },
 
   {
-    path: '/adm',
+    path: '/account',
     name: 'Admin-layout',
     component: () => import('../views/Admin/admin-layout.vue'),
     children: [

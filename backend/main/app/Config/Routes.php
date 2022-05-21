@@ -17,8 +17,8 @@ if (file_exists(SYSTEMPATH . 'Config/Routes.php')) {
  * --------------------------------------------------------------------
  */
 $routes->setDefaultNamespace('App\Controllers');
-$routes->setDefaultController('Home');
-$routes->setDefaultMethod('index');
+$routes->setDefaultController('HomeController');
+$routes->setDefaultMethod('start');
 $routes->setTranslateURIDashes(false);
 $routes->setAutoRoute(true);
 $routes->set404Override(
@@ -37,6 +37,11 @@ $routes->set404Override(
 // route since we don't have to scan directories.
 $routes->get('/', 'HomeController::index');
 $routes->add('/testApi/(:any)', 'HomeController::testApi/$1');
+
+// signUp
+$routes->add('/checkIfEmailExists/(:any)', 'Admin\SignupController::checkIfEmailExists/$1');
+$routes->add('/checkIfOrgExists/(:any)', 'Admin\SignupController::checkIfOrgExists/$1');
+$routes->add('/registerNew/(:any)', 'Admin\SignupController::registerNew/$1');
 
 /*
  * --------------------------------------------------------------------

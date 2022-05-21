@@ -5,28 +5,36 @@
             <div class="row gy-3">
                 <div class="col-md-12">
                     <div class="form-floating">
-                        <input v-model="orgData.name" type="text" class="form-control" id="flOrgName"
-                            placeholder="firstname" />
+                        <input :class="{ 'formError': err.name }" v-model="org.name" type="text" class="form-control"
+                            id="flOrgName" placeholder="firstname" />
                         <label for="flOrgName">Organisation Name:</label>
+                        <small class="text-danger" v-if="err.name">{{ err.name }}</small>
                     </div>
                 </div>
                 <div class="col-md-12">
                     <div class="form-floating">
-                        <input v-model="orgData.address" type="text" class="form-control" id="flOrdAddr"
-                            placeholder="lastname" />
+                        <input :class="{ 'formError': err.address }" v-model="org.address" type="text"
+                            class="form-control" id="flOrdAddr" placeholder="lastname" />
                         <label for="flOrdAddr">Organisation Address:</label>
+                        <small class="text-danger" v-if="err.address">{{ err.address }}</small>
                     </div>
                 </div>
                 <div class="col-md-12 mt-5">
                     <div class="row g-2">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <button @click.prevent="emit('back')" type="submit"
                                 class="btn btn-lg btn-secondary w-100"><i class="bi bi-arrow-left text-white"></i>
                                 Back</button>
                         </div>
-                        <div class="col-md-6">
-                            <button @click.prevent="checkForm" type="submit" class="btn btn-lg w-100 customBtn">Create
-                                Account</button>
+                        <div class="col-md-8">
+                            <button :disabled="state.loading" @click.prevent="checkForm" type="submit"
+                                class="btn btn-lg customBtn w-100">
+                                <span class="text-white" v-if="!state.loading">Create Account <i
+                                        class="bi bi-check-circle text-white"></i></span>
+                                <span v-else class="spinner-border spinner-border-sm" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </span>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -37,21 +45,44 @@
 
 <script setup lang="ts">
 import { reactive, ref, inject } from 'vue'
-import entryData from './user-data'
+import userStore from './user-data'
 const { cc1, cc2, ccThk, ccBg, ccBtnH }: any = inject("c$");
-const emit = defineEmits(["back", 'done']);
+const emit = defineEmits(["back", 'done', "error"]);
 
-const orgData = entryData.data.org
-const resetError = entryData.methods.resetError
+const userMthds = userStore.methods
+const state = userStore.state
+const org = state.org
+const err = org.err
 
-const pw = reactive({
-    type: 'password',
-    toggle: () => { pw.type = pw.type === 'password' ? 'text' : 'password' }
-})
+async function checkForm() {
+    userMthds.resetError()
+    if (!org.name) {
+        err.name = 'enter organisation name'
+        return
+    }
 
-function checkForm() {
-    emit('done')
+    else if (!org.address) {
+        err.address = 'address field is empty'
+        return
+    }
+    else {
+        let exists = await userMthds.orgExists(org.name)
+        if (exists == null) {
+            emit('error')
+            return
+        }
+        else if (exists == true) {
+            err.name = 'This name already exists'
+            return
+        }
+        else {
+            emit('done')
+        }
+    }
+
 }
+
+
 </script>
 
 <style scoped>
@@ -69,5 +100,9 @@ function checkForm() {
 .customBtn:hover {
     background-color: v-bind(ccBtnH);
     color: #fff;
+}
+
+.formError {
+    border-bottom: 1px solid var(--bs-danger);
 }
 </style>
