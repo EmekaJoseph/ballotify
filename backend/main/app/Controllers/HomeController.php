@@ -8,9 +8,4 @@ class HomeController extends BaseController
     {
         return view('start');
     }
-
-    public function testApi($test)
-    {
-        return $this->response->setJSON($test);;
-    }
 }

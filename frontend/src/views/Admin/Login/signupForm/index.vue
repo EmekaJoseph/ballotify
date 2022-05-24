@@ -6,8 +6,8 @@
                     <span class="text-center fw-bold mb-2">
                         <!-- <img src="@/assets/house34_logo1.png" width="130" /> -->
                     </span>
-                    <newUserForm v-if="currForm == 1" @next="currForm = 2" @error="showErrorToast" />
-                    <newOrgForm v-else @back="currForm = 1" @done="submitForm" @error="showErrorToast" />
+                    <newUserForm v-if="currForm == 1" @next="currForm = 2" @error="emit('error')" />
+                    <newOrgForm v-else @back="currForm = 1" @done="submitForm" @error="emit('error')" />
                 </div>
                 <div class=" d-md-none text-center AcntBtn my-3" @click="emit('switchForm', 'login')">
                     <span class="btn">I already have an Account</span>
@@ -25,7 +25,6 @@
                 </div>
             </div>
         </div>
-        <notify ref="toast" />
     </div>
 </template>
 
@@ -33,27 +32,18 @@
 import { reactive, ref, inject } from 'vue'
 import newUserForm from './newUserComponent.vue'
 import newOrgForm from './newOrgComponent.vue'
-import userStore from './user-data'
+import userStore from '../user-data'
 import { newRegister } from '@/types'
-import server from '@/store/apiStore.js'
+import server from '@/store/apiStore'
 
-const { cc1, cc2, ccThk, ccBg, ccBtnH }: any = inject("c$");
-const emit = defineEmits(["switchForm"]);
+const { cc1 }: any = inject("c$");
+const emit = defineEmits(["switchForm", "error", "success"]);
 const currForm = ref(1)
 
 const state = userStore.state
 const user = state.user
 const org = state.org
 const mthds = userStore.methods
-
-
-const toast = ref<any>(null)
-function showErrorToast() {
-    toast.value.showToast('Sorry error occoured, try again', 'danger');
-}
-function showSuccessToast() {
-    toast.value.showToast('Registration successfull', 'success');
-}
 
 function submitForm() {
     var obj: newRegister = {
@@ -75,28 +65,24 @@ async function sendToServer(obj: object) {
         var { data } = await server.registerNew(jsonData);
         switch (data) {
             case 1:
-                showSuccessToast()
+                emit("success")
                 state.loading = false
                 mthds.resetData()
-                setTimeout(() => {
-                    emit('switchForm', 'login')
-                }, 1000);
+                emit('switchForm', 'login')
                 break;
             case 0:
-                showErrorToast()
+                emit("error")
                 state.loading = false
                 break;
 
             default:
-                showErrorToast()
+                emit("error")
                 state.loading = false
                 break;
         }
-        var val = (data == true) ? true : (data == false ? false : null)
-        state.loading = false
     } catch (error) {
         console.log(error);
-        showErrorToast()
+        emit("error")
         state.loading = false
     }
 }

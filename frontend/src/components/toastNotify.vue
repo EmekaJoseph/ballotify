@@ -26,7 +26,7 @@ export default {
 <template>
     <div>
         <!-- toast -->
-        <div class="position-fixed top-0 start-50 translate-middle-x p-3" style="z-index: 11;">
+        <div class="position-fixed bottom-0 start-50 translate-middle-x p-3" style="z-index: 11;">
             <div id="liveToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
                 <div class="d-flex" :class="bgType">
                     <div class="toast-body fs-6" :class="{ 'text-white': bgType != 'light' }">
@@ -49,12 +49,12 @@ export default {
 
 <style scoped>
 .danger {
-    background-color: var(--bs-danger);
+    background-color: #BD2c00;
     color: #fff;
 }
 
 .success {
-    background-color: var(--bs-success);
+    background-color: #00BD8C;
     color: #fff;
 }
 </style>

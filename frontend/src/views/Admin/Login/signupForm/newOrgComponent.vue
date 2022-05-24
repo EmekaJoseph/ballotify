@@ -45,7 +45,7 @@
 
 <script setup lang="ts">
 import { reactive, ref, inject } from 'vue'
-import userStore from './user-data'
+import userStore from '../user-data'
 const { cc1, cc2, ccThk, ccBg, ccBtnH }: any = inject("c$");
 const emit = defineEmits(["back", 'done', "error"]);
 
@@ -57,12 +57,12 @@ const err = org.err
 async function checkForm() {
     userMthds.resetError()
     if (!org.name) {
-        err.name = 'enter organisation name'
+        err.name = 'This field is empty'
         return
     }
 
     else if (!org.address) {
-        err.address = 'address field is empty'
+        err.address = 'This field is empty'
         return
     }
     else {

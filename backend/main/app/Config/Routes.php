@@ -39,8 +39,8 @@ $routes->get('/', 'HomeController::index');
 $routes->add('/testApi/(:any)', 'HomeController::testApi/$1');
 
 // signUp
-$routes->add('/checkIfEmailExists/(:any)', 'Admin\SignupController::checkIfEmailExists/$1');
-$routes->add('/checkIfOrgExists/(:any)', 'Admin\SignupController::checkIfOrgExists/$1');
+$routes->add('/checkIfEmailExists/(:any)', 'Admin\SignupController::ifEmailIsFound/$1');
+$routes->add('/checkIfOrgExists/(:any)', 'Admin\SignupController::ifOrgIsFound/$1');
 $routes->add('/registerNew/(:any)', 'Admin\SignupController::registerNew/$1');
 
 /*

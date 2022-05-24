@@ -1,6 +1,6 @@
 import { reactive } from 'vue'
 import { newUserInterface, newOrgInterface } from '@/types'
-import server from '@/store/apiStore.js'
+import server from '@/store/apiStore'
 
 const state = reactive({
     user: <newUserInterface>{
@@ -27,7 +27,8 @@ const state = reactive({
         },
     },
 
-    loading: false
+    loading: false,
+    regSuccess: false
 
 })
 

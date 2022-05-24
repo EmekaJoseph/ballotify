@@ -70,7 +70,7 @@
 
 <script setup lang="ts">
 import { reactive, ref, inject } from 'vue'
-import userStore from './user-data'
+import userStore from '../user-data'
 const { cc1, cc2, ccThk, ccBg, ccBtnH }: any = inject("c$");
 const emit = defineEmits(["next", "error"]);
 
@@ -82,15 +82,15 @@ const err = user.err
 async function checkForm() {
     userMthds.resetError()
     if (!user.firstname) {
-        err.firstname = 'enter firstname'
+        err.firstname = 'This field is empty'
         return
     }
     else if (!user.lastname) {
-        err.lastname = 'enter lastname'
+        err.lastname = 'This field is empty'
         return
     }
     else if (!user.email) {
-        err.email = 'enter email'
+        err.email = 'This field is empty'
         return
     }
     else if (!user.password || (user.password.length < 5)) {
@@ -106,7 +106,7 @@ async function checkForm() {
         return
     }
     else if (!(userMthds.testEmail(user.email))) {
-        err.email = 'invalid email format'
+        err.email = 'This emails looks invalid'
         return
     }
     else {

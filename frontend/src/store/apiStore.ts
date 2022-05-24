@@ -10,19 +10,15 @@ const bus = axios.create({
 
 
 export default {
-    testApi(name) {
-        return bus.get('/testApi/' + name)
-    },
-
-    checkIfEmailExists(email) {
+    checkIfEmailExists(email: string) {
         return bus.post('/checkIfEmailExists/' + email)
     },
 
-    checkIfOrgExists(name) {
+    checkIfOrgExists(name: string) {
         return bus.post('/checkIfOrgExists/' + name)
     },
 
-    registerNew(obj) {
+    registerNew(obj: string) {
         return bus.post('/registerNew/' + obj)
     }
 }
