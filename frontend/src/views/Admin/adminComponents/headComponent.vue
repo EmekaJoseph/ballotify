@@ -12,7 +12,7 @@
                 <span class="dropdown d-none d-md-block">
                     <a class="nav-link dropdown-toggle" href="#" id="accountDrop" role="button"
                         data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="bi bi-person-badge"></i>&nbsp;Account
+                        <i class="bi bi-person-circle text-muted"></i>&nbsp; {{ accountName }}
                         <i class="bi bi-chevron-down"></i>
                     </a>
                     <ul class="dropdown-menu fade-up" aria-labelledby="accountDrop">
@@ -23,7 +23,7 @@
                         </li>
 
                         <li class="text-muted">
-                            <a class="dropdown-item" @click.prevent href="#">
+                            <a class="dropdown-item" @click.prevent="logOut" href="">
                                 <i class="bi bi-dash-circle"></i>&nbsp;&nbsp;log out
                             </a>
                         </li>
@@ -42,9 +42,10 @@
 
 <script setup>
 
-import { onMounted, inject } from 'vue'
+import { inject } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-// import { useUserStore } from '@/stores/user'
+import { useAdminStore } from '@/store/user/admin'
+
 const router = useRouter()
 const route = useRoute()
 
@@ -52,10 +53,10 @@ const { cc1, cc2, ccThk, ccBg, ccBtnH } = inject("c$");
 
 
 
-// const user = useUserStore()
-
-function signOut() {
-    // user.signOut()
+const admin = useAdminStore()
+const accountName = admin.getData.name
+function logOut() {
+    admin.signOut()
     router.replace({ name: 'Admin' })
 }
 
@@ -103,14 +104,15 @@ function signOut() {
 }
 
 .dropdown-menu {
-    font-size: small;
+    font-size: 14px;
     min-width: 140px !important;
     border: 1px solid #eee;
+    border-bottom: 3px solid v-bind(ccThk);
 }
 
 .dropdown-menu :is(a, i) {
     color: #2c3e50;
-    margin-block: 6px;
+    margin-block: 9px;
 }
 
 .dropdown-item:hover {

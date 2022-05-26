@@ -16,7 +16,7 @@
 
             <div class="offcanvas-body"></div>
             <span class="logOutSection">
-                <span class="logOutBtn" @click="signOut">
+                <span class="logOutBtn" @click="logOut">
                     <i class="bi bi-x text-white"></i>&nbsp;Log Out
                 </span>
             </span>
@@ -27,18 +27,16 @@
 <script setup>
 
 import { inject } from 'vue'
-// import { useUserStore } from '@/stores/user'
+import { useAdminStore } from '@/store/user/admin'
 import { useRouter } from 'vue-router'
 import menuList from './menuListComponent.vue'
-const ccThk = inject("c$").ccThk.value;
-
-// const user = useUserStore()
-
+const { cc1, cc2, ccThk, ccBg, ccBtnH } = inject("c$");
 
 const router = useRouter()
 
-function signOut() {
-    // user.signOut()
+const admin = useAdminStore()
+function logOut() {
+    admin.signOut()
     router.replace({ name: 'Admin' })
 }
 
@@ -66,5 +64,6 @@ function signOut() {
 .logOutSection {
     background-color: v-bind(ccThk);
     padding: 20px;
+    border-top: 2px solid v-bind(cc1);
 }
 </style>

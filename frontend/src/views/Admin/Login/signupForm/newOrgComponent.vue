@@ -60,6 +60,10 @@ async function checkForm() {
         err.name = 'This field is empty'
         return
     }
+    else if ((org.name).length < 3) {
+        err.name = 'Not less than three characters.'
+        return
+    }
 
     else if (!org.address) {
         err.address = 'This field is empty'
@@ -72,7 +76,7 @@ async function checkForm() {
             return
         }
         else if (exists == true) {
-            err.name = 'This name already exists'
+            err.name = 'This name has been taken'
             return
         }
         else {

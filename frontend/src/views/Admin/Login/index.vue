@@ -17,8 +17,8 @@
 
 <script setup>
 import { ref, inject } from 'vue'
-import LoginForm from './LoginForm.vue'
-import SignUpForm from './signupForm/index.vue'
+import LoginForm from './loginForm'
+import SignUpForm from './signupForm'
 import regSuccess from './regSuccessModal.vue'
 import userStore from './user-data'
 const { cc1, cc2, ccThk, ccBg, ccBtnH } = inject("c$");

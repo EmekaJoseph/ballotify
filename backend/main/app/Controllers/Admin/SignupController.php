@@ -80,15 +80,15 @@ class SignupController extends BaseController
 
     private function generateOrgId($name)
     {
-        $string = $name;
-        //retain only characters
-        $string = preg_replace('/[\W]/', '', $string);
-        //convert to uppercase
-        $string = strtoupper($string);
-        //remove duplicate characters 
-        $string = count_chars($string, 3);
-        $a = substr(str_shuffle($string), 0, 4);
-        $b = substr(str_shuffle('23456789'), 0, 3);
-        return 'B-' . $a . $b;
+        //retain only characters###########################
+        //$name = preg_replace('/[\W]/', '', $name);
+        //convert to uppercase###############################
+        //$name = strtoupper($name);
+        //remove duplicate characters ##########################
+        //$name = count_chars($name, 3);
+        $a = substr($name, 0, 3);
+        $b = substr(str_shuffle('23456789'), 0, 2);
+        $c = substr(str_shuffle('ABCDEFGHJKLMNPQRTUVWXYZ'), 0, 2);
+        return 'B-' . $a . $b . $c;
     }
 }

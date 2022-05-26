@@ -39,7 +39,7 @@ const route = useRoute()
                 </div>
 
                 <nav>
-                    <a class="d-none d-md-block nav-link signUpBtn" href="#account_">
+                    <a v-if="route.name == 'Home'" class="d-none d-md-block nav-link signUpBtn" href="#account_">
                         Account</a>
                 </nav>
             </div>

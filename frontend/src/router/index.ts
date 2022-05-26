@@ -3,6 +3,9 @@ import HomeView from '../views/General/Home/home.vue'
 import ContactView from '../views/General/Contact/contact.vue'
 import AboutView from '../views/General/About/about.vue'
 
+// store
+import { useAdminStore } from '@/store/user/admin'
+
 const routes: Array<RouteRecordRaw> = [
   {
     path: '/',
@@ -55,6 +58,27 @@ const router = createRouter({
   linkActiveClass: 'active',
   routes
 })
+
+
+
+router.beforeEach(async (to, from, next) => {
+  const admin = useAdminStore()
+  let isLoggedIn = admin.hasAccess
+  if (to.name == 'Home' || to.name == 'About' || to.name == 'Contact') {
+    next()
+  }
+  else if (to.name !== 'Admin' && !isLoggedIn) {
+    next({ name: 'Admin' })
+  }
+  else if (to.name == 'Admin' && isLoggedIn) {
+    next({ name: 'Dashboard' })
+  }
+  else {
+    next()
+  }
+
+})
+
 
 router.afterEach((to, from) => {
   document.title = 'Ballotify | ' + to.name?.toString()

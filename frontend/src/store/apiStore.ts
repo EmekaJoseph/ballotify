@@ -20,5 +20,8 @@ export default {
 
     registerNew(obj: string) {
         return bus.post('/registerNew/' + obj)
-    }
+    },
+    login(obj: object) {
+        return bus.post('/login', obj)
+    },
 }

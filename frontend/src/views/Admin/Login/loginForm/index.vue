@@ -18,13 +18,14 @@
                         <!-- <img src="@/assets/house34_logo1.png" width="130" /> -->
                     </span>
                     <small class="text-center fw-bold text-muted mb-2">Admin</small>
+                    <div v-if="errMsg.length" class="errMsg">{{ errMsg }}</div>
                     <form>
                         <div class="row gy-3">
                             <div class="col-md-12">
                                 <div class="form-floating">
                                     <input :class="{ 'formError': err.username }" v-model="form.username" type="text"
                                         class="form-control" id="floatUserName" placeholder="username" />
-                                    <label for="floatUserName">username:</label>
+                                    <label for="floatUserName">email:</label>
                                     <small class="text-danger" v-if="err.username">{{ err.username
                                     }}</small>
                                 </div>
@@ -44,8 +45,14 @@
                                 </div>
                             </div>
                             <div class="col-md-12 mt-4">
-                                <button type="submit" @click.prevent="loginUser"
-                                    class="btn btn-lg w-100 customBtn">Login</button>
+
+                                <button :disabled="loading" @click.prevent="checkForm" type="submit"
+                                    class="btn btn-lg customBtn w-100">
+                                    <span class="text-white" v-if="!loading">Login</span>
+                                    <span v-else class="spinner-border spinner-border-sm" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </span>
+                                </button>
                             </div>
                             <span class="forgot text-center small mt-4">
                                 <a href="#">I forgot my password </a>
@@ -62,12 +69,16 @@
 </template>
 
 <script lang="ts" setup>
-import { reactive, ref, inject } from 'vue'
+import { reactive, inject, ref } from 'vue'
+import server from '@/store/apiStore'
 import { useRouter } from 'vue-router'
+import userStore from '../user-data'
+import { useAdminStore } from '@/store/user/admin'
 import { LoginFormInterface } from '@/types'
 const { cc1, cc2, ccThk, ccBg, ccBtnH }: any = inject("c$");
-
 const router = useRouter();
+const userMthds = userStore.methods
+const admin = useAdminStore()
 
 const emits = defineEmits(["switchForm"]);
 function switchForm() {
@@ -101,7 +112,8 @@ function resetErr() {
     Object.assign(err, initialFormState.err);
 }
 
-function loginUser() {
+
+function checkForm() {
     resetErr()
     if (form.username.length == 0) {
         err.username = 'This field is empty'
@@ -111,9 +123,41 @@ function loginUser() {
         err.password = 'This field is empty'
         return false
     }
+    else if (!(userMthds.testEmail(form.username))) {
+        err.username = 'Invalid email format'
+        return
+    }
     else {
-        router.replace({ name: 'Dashboard' })
-        resetForm()
+        loginUser()
+    }
+}
+
+const errMsg = ref('')
+const loading = ref(false)
+async function loginUser() {
+    errMsg.value = ''
+    let obj = {
+        email: form.username,
+        password: form.password
+    }
+    loading.value = true
+    try {
+        var { data } = await server.login(obj);
+
+        if (data.status != 1) {
+            errMsg.value = 'invalid credentials.'
+            loading.value = false
+        }
+        else {
+            let obj = data.data
+            admin.signIn(obj)
+            router.replace({ name: 'Dashboard' })
+            loading.value = false
+        }
+    } catch (error) {
+        console.log(error);
+        errMsg.value = 'Sorry, Internet Error!'
+        loading.value = false
     }
 }
 
@@ -192,5 +236,14 @@ small {
 .customBtn:hover {
     background-color: v-bind(ccBtnH);
     color: #fff;
+}
+
+.errMsg {
+    background-color: #b936360e;
+    padding: 5px;
+    border-radius: 10px;
+    margin: 10px;
+    color: var(--bs-danger);
+    text-align: center;
 }
 </style>

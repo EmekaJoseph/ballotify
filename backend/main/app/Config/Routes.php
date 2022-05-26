@@ -36,12 +36,15 @@ $routes->set404Override(
 // We get a performance increase by specifying the default
 // route since we don't have to scan directories.
 $routes->get('/', 'HomeController::index');
-$routes->add('/testApi/(:any)', 'HomeController::testApi/$1');
 
-// signUp
+// admin signUp
 $routes->add('/checkIfEmailExists/(:any)', 'Admin\SignupController::ifEmailIsFound/$1');
 $routes->add('/checkIfOrgExists/(:any)', 'Admin\SignupController::ifOrgIsFound/$1');
 $routes->add('/registerNew/(:any)', 'Admin\SignupController::registerNew/$1');
+
+//admin login
+$routes->add('/login', 'Admin\LoginController::login');
+
 
 /*
  * --------------------------------------------------------------------

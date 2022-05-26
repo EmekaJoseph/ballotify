@@ -10,7 +10,7 @@
     </div>
 </template>
 <script setup>
-import { inject, onMounted } from 'vue'
+import { inject } from 'vue'
 import offcanvas from './adminComponents/offCanvasComponent.vue'
 import sideBarComponent from './adminComponents/sideBarComponent.vue'
 const ccBg = inject("c$").ccBg.value;
