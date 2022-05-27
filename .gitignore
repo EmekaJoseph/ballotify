@@ -154,4 +154,6 @@ nb-configuration.xml
 /phpunit*.xml
 /.phpunit.*.cache
 
+debugbar_*.json
+
 

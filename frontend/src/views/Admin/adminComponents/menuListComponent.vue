@@ -61,32 +61,15 @@
                     </router-link>
                 </li>
 
-                <li class="accordion" id="settingsDropdown">
-                    <div class="accordion-item">
-                        <h2 class="accordion-header" id="flush-headingOne">
-                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-                                data-bs-target="#flush-settings" aria-expanded="false" aria-controls="flush-settings">
-                                <i class="bi bi-gear"></i>&nbsp; Settings
-                            </button>
-                        </h2>
-                        <div id="flush-settings" class="accordion-collapse collapse" aria-labelledby="flush-headingOne"
-                            data-bs-parent="#settingsDropdown">
-                            <div class="accordion-body">
-                                <ul class="list-group list-group-flush">
-                                    <li class="dropItem">
-                                        <router-link to="/" @click.prevent>
-                                            <i class="bi bi-person-plus"></i>&nbsp; users
-                                        </router-link>
-                                    </li>
-                                    <li class="dropItem">
-                                        <router-link to="/" @click.prevent>
-                                            <i class="bi bi-person-circle"></i>&nbsp; profile
-                                        </router-link>
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
+                <li class="list-group-item" :class="{ 'gActive': (route.name == 'Profile') }" :data-bs-dismiss="showOn">
+                    <router-link :to="{ name: 'Profile' }">
+                        <i class="bi bi-person-plus"></i>&nbsp; Account
+                    </router-link>
+                </li>
+                <hr style="border:1px solid #fff">
+                <hr style="border:1px solid #fff">
+                <li class="list-group-item">
+                    <button><i class="bi bi-box-arrow-left"></i>&nbsp;Log Out</button>
                 </li>
             </ul>
         </div>
@@ -131,6 +114,19 @@ const route = useRoute()
     text-decoration: none;
     padding: 10px 40px 10px 10px;
 }
+
+.list-group-item button {
+    text-decoration: none;
+    background: none;
+    border: none;
+    color: v-bind(cc2);
+    margin-left: 5px;
+}
+
+.list-group-item button i {
+    color: v-bind(cc2);
+}
+
 
 a:hover i {
     color: #111;

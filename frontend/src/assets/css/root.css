@@ -102,3 +102,22 @@ section {
 }
 
 /* bounce animation */
+
+
+/* dropdown */
+.dropdown-toggle::after {
+    display: none;
+}
+
+/* dropdown */
+
+/* table */
+.table> :not(:first-child) {
+    border-top: 0;
+}
+
+/* table */
+
+.card {
+    border: none;
+}
