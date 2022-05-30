@@ -38,13 +38,18 @@ $routes->set404Override(
 $routes->get('/', 'HomeController::index');
 
 // admin signUp
-$routes->add('/checkIfEmailExists/(:any)', 'Admin\SignupController::ifEmailIsFound/$1');
-$routes->add('/checkIfOrgExists/(:any)', 'Admin\SignupController::ifOrgIsFound/$1');
+$routes->add('/checkIfEmailExists/(:any)', 'Admin\UserController::ifEmailIsFound/$1');
+$routes->add('/checkIfOrgExists/(:any)', 'Admin\OrgController::ifOrgIsFound/$1');
 $routes->add('/registerNew/(:any)', 'Admin\SignupController::registerNew/$1');
 
 //admin login
 $routes->add('/login', 'Admin\LoginController::login');
 
+//settings
+$routes->add('/getOrgDetails/(:any)', 'Admin\OrgController::getOrgDetails/$1');
+$routes->add('/getUserDetails', 'Admin\UserController::getUserDetails');
+$routes->add('/updateOrg', 'Admin\OrgController::updateOrg');
+$routes->add('/updateUser', 'Admin\UserController::updateUser');
 
 /*
  * --------------------------------------------------------------------

@@ -1,6 +1,7 @@
 <template>
     <fieldset class="border rounded-3 p-4">
         <legend class="text-muted float-none small p-0 px-3 w-auto">1/2 - Personal Info</legend>
+
         <form>
             <div class="row gy-3">
                 <div class="col-md-6">
@@ -58,9 +59,7 @@
                         class="btn btn-lg btn-secondary w-100">
                         <span class="text-white" v-if="!state.loading">Continue <i
                                 class="bi bi-arrow-right text-white"></i></span>
-                        <span v-else class="spinner-border spinner-border-sm" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </span>
+                        <div v-else class="c-loader"></div>
                     </button>
                 </div>
             </div>

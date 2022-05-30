@@ -25,17 +25,23 @@ import notify from "@/components/toastNotify.vue";
 mainApp.component('notify', notify);
 
 //npm install @vuepic/vue-datepicker
-import Datepicker from '@vuepic/vue-datepicker';
-import '@vuepic/vue-datepicker/dist/main.css';
-mainApp.component('Datepicker', Datepicker);
+// import Datepicker from '@vuepic/vue-datepicker';
+// import '@vuepic/vue-datepicker/dist/main.css';
+// mainApp.component('Datepicker', Datepicker);
 
 //npm install vue-select-3
 import vSelect from "vue-select";
 import "vue-select/dist/vue-select.css";
 mainApp.component('vSelect', vSelect);
 
+// https://vcalendar.io/vue-3.html
+// npm install v-calendar@next
+import VCalendar from 'v-calendar';
+import 'v-calendar/dist/style.css';
+
 
 mainApp.use(router)
 mainApp.use(createPinia())
 mainApp.use(VueWriter)
+mainApp.use(VCalendar, {})
 mainApp.mount('#app')

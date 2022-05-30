@@ -1,6 +1,6 @@
 import { reactive } from 'vue'
 
-const x = reactive({
+const fx = reactive({
     spell(name: string, rate: number): string {
         let str: string = name;
         if (rate > 1 || rate == 0) {
@@ -11,5 +11,5 @@ const x = reactive({
 })
 
 export default {
-    x
+    fx
 }

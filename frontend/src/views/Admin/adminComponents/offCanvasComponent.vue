@@ -15,6 +15,7 @@
             <menuList showOn='offcanvas' />
 
             <div class="offcanvas-body"></div>
+            <span class="name-section">{{ name }}</span>
             <span class="logOutSection">
                 <span class="logOutBtn" @click="logOut">
                     <i class="bi bi-x text-white"></i>&nbsp;Log Out
@@ -26,15 +27,19 @@
 
 <script setup>
 
-import { inject } from 'vue'
+import { inject, ref } from 'vue'
 import { useAdminStore } from '@/store/user/admin'
 import { useRouter } from 'vue-router'
 import menuList from './menuListComponent.vue'
+import { storeToRefs } from 'pinia'
 const { cc1, cc2, ccThk, ccBg, ccBtnH } = inject("c$");
 
 const router = useRouter()
 
 const admin = useAdminStore()
+const { fullName } = storeToRefs(admin)
+const name = ref(fullName)
+
 function logOut() {
     admin.signOut()
     router.replace({ name: 'Admin' })
@@ -52,18 +57,22 @@ function logOut() {
 }
 
 .logOutBtn {
-    /* margin: 45px; */
     font-weight: bold;
     font-size: 12px;
     text-decoration: none;
     color: #fff;
     display: flex;
     justify-content: center;
+    background-color: v-bind(ccThk);
+    padding-block: 15px;
 }
 
-.logOutSection {
-    background-color: v-bind(ccThk);
-    padding: 20px;
-    border-top: 2px solid v-bind(cc1);
+
+.name-section {
+    display: flex;
+    justify-content: center;
+    font-size: small;
+    color: v-bind(ccThk);
+    padding: 5px;
 }
 </style>

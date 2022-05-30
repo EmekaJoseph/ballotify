@@ -6,13 +6,15 @@
             <infoCard :name="spell('Group', iRates.Group)" icon="bi-folder-plus" color="#18B4F0" :rate="iRates.Group" />
             <infoCard :name="'Voting  ' + spell('Event', iRates.Event)" icon="bi-list-check" color="#F01844"
                 :rate="iRates.Event" />
-            <infoCard :name="spell('Message', iRates.Message)" icon="bi-app-indicator" color="#09BD27"
+            <infoCard :name="spell('Message', iRates.Message)" icon="bi-app-indicator" color="#2c3e50"
                 :rate="iRates.Message" />
         </div>
 
-        <div class="mt-5">
-            <div v-if="recentsTable.length" class="fw-bold mb-2">Recently Added:</div>
-            <recents :data="recentsTable" />
+        <div class="mt-4">
+            <div class="row justify-content-center gy-3">
+                <recents :data="recentsTable" />
+                <calender :data="recentsTable" />
+            </div>
         </div>
     </div>
 </template>
@@ -23,6 +25,7 @@ import server from '@/store/apiStore.js'
 import useFunc from '@/store/useFunction'
 import infoCard from './infoCardComponent.vue'
 import recents from './recentsComponent.vue'
+import calender from './calenderComponent.vue'
 const { cc1, cc2, ccThk, ccBg, ccBtnH }: any = inject("c$");
 
 
@@ -34,7 +37,7 @@ const iRates = ref({
     Message: 0
 })
 
-const spell = useFunc.x.spell
+const spell = useFunc.fx.spell
 
 
 

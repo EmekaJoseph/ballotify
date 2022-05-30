@@ -4,23 +4,21 @@ namespace App\Controllers\Admin;
 
 use App\Controllers\BaseController;
 use App\Models\UserModel;
+use App\Controllers\Admin\UserController as User;
 
 class LoginController extends BaseController
 {
     public function login()
     {
-        $usersTable = new UserModel();
-
         $email = $this->request->getVar('email');
         $password = $this->request->getVar('password');
         $rArray = array();
 
-        $emailExists = $usersTable->where('email', $email)->countAllResults();
+        $admin = (new User())->getUserWithEmail($email);
 
-        if ($emailExists == 0) {
+        if ($admin == null) {
             $rArray['status'] = 0;
         } else {
-            $admin = $usersTable->where('email', $email)->first();
             if (!password_verify($password, $admin['password'])) {
                 $rArray['status'] = 0;
             } else {
@@ -28,7 +26,8 @@ class LoginController extends BaseController
                 $rArray['data'] = array(
                     'id' => $admin['id'],
                     'org_id' => $admin['org_id'],
-                    'name' => $admin['firstname'] . ' ' . $admin['lastname']
+                    'name' => $admin['firstname'] . ' ' . $admin['lastname'],
+                    'role' => $admin['role']
                 );
             }
         }

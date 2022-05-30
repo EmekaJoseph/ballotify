@@ -39,7 +39,7 @@ const routes: Array<RouteRecordRaw> = [
       { path: 'groups', name: 'Groups', component: () => import('../views/Admin/Groups/groups.vue') },
       { path: 'members', name: 'Members', component: () => import('../views/Admin/Members/members.vue') },
       { path: 'messages', name: 'Messages', component: () => import('../views/Admin/Messages/messages.vue') },
-      { path: 'profile', name: 'Profile', component: () => import('../views/Admin/Profile/profile.vue') },
+      { path: 'settings', name: 'Settings', component: () => import('../views/Admin/Settings/settings.vue') },
     ],
   },
 

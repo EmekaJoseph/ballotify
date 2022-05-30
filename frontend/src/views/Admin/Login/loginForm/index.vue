@@ -49,9 +49,7 @@
                                 <button :disabled="loading" @click.prevent="checkForm" type="submit"
                                     class="btn btn-lg customBtn w-100">
                                     <span class="text-white" v-if="!loading">Login</span>
-                                    <span v-else class="spinner-border spinner-border-sm" role="status">
-                                        <span class="visually-hidden">Loading...</span>
-                                    </span>
+                                    <div v-else class="c-loader"></div>
                                 </button>
                             </div>
                             <span class="forgot text-center small mt-4">
@@ -143,7 +141,6 @@ async function loginUser() {
     loading.value = true
     try {
         var { data } = await server.login(obj);
-
         if (data.status != 1) {
             errMsg.value = 'invalid credentials.'
             loading.value = false

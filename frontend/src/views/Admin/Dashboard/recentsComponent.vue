@@ -1,5 +1,6 @@
 <template>
-    <div class="col-xl-12 col-md-12">
+    <div class="col-xl-8">
+        <div class="fw-bold mb-2">Recently Added:</div>
         <div class="card" style="min-height: 300px">
             <div v-if="data.length" class="card-body">
                 <div class="table-responsive">
@@ -36,11 +37,11 @@
             </div>
             <div v-else class="card-body ">
                 <div class="row justify-content-center my-4">
-                    <span class="text-center"><i class="bi bi-exclamation-circle" style="font-size: 8rem"></i></span>
+                    <span class="text-center"><i class="bi bi-person-x" style="font-size: 8rem"></i></span>
                     <small class="text-center text-muted">You do not have any members yet.</small> <br>
                     <small class="text-center">
                         <router-link class="" :to="{ name: 'Members' }">
-                            add a member..
+                            add new members..
                         </router-link>
                     </small>
                 </div>

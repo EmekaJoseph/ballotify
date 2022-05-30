@@ -61,14 +61,14 @@
                     </router-link>
                 </li>
 
-                <li class="list-group-item" :class="{ 'gActive': (route.name == 'Profile') }" :data-bs-dismiss="showOn">
-                    <router-link :to="{ name: 'Profile' }">
-                        <i class="bi bi-person-plus"></i>&nbsp; Account
+                <li class="list-group-item" :class="{ 'gActive': (route.name == 'Settings') }"
+                    :data-bs-dismiss="showOn">
+                    <router-link :to="{ name: 'Settings' }">
+                        <i class="bi bi-gear-wide"></i>&nbsp; Settings
                     </router-link>
                 </li>
-                <hr style="border:1px solid #fff">
-                <hr style="border:1px solid #fff">
-                <li class="list-group-item">
+
+                <li class="list-group-item mt-5 d-none d-md-block">
                     <button><i class="bi bi-box-arrow-left"></i>&nbsp;Log Out</button>
                 </li>
             </ul>

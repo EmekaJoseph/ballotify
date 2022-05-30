@@ -2,7 +2,7 @@
     <div>
         <nav class="navbar navbar-light fixed-top shadow-sm">
             <div class="container-fluid">
-                <span class="d-md-none fw-bold">Ballotify</span>
+                <span class="d-md-none"><b>Admin</b> | {{ route.name }}</span>
                 <div class="inputSearch d-none d-md-block">
                     <input type="text" class=" form-control form-control-sm" placeholder="search.." style="width:250px">
                     <span class="icon">
@@ -17,14 +17,14 @@
                     </a>
                     <ul class="dropdown-menu fade-up" aria-labelledby="accountDrop">
                         <li>
-                            <router-link class="dropdown-item" to="/admin">
-                                <i class="bi bi-gear"></i>&nbsp;&nbsp;settings
+                            <router-link class="dropdown-item" to="/account/settings">
+                                <i class="bi bi-gear-wide"></i>&nbsp;&nbsp;settings
                             </router-link>
                         </li>
 
                         <li class="text-muted">
                             <a class="dropdown-item" @click.prevent="logOut" href="">
-                                <i class="bi bi-dash-circle"></i>&nbsp;&nbsp;log out
+                                <i class="bi bi-box-arrow-left"></i>&nbsp;&nbsp;log out
                             </a>
                         </li>
                     </ul>
@@ -42,19 +42,20 @@
 
 <script setup>
 
-import { inject } from 'vue'
+import { inject, ref, onMounted, reactive } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAdminStore } from '@/store/user/admin'
+import { storeToRefs } from 'pinia'
 
 const router = useRouter()
 const route = useRoute()
 
 const { cc1, cc2, ccThk, ccBg, ccBtnH } = inject("c$");
 
-
-
 const admin = useAdminStore()
-const accountName = admin.getData.name
+const { fullName } = storeToRefs(admin)
+const accountName = ref(fullName)
+
 function logOut() {
     admin.signOut()
     router.replace({ name: 'Admin' })
@@ -104,10 +105,10 @@ function logOut() {
 }
 
 .dropdown-menu {
-    font-size: 14px;
+    /* font-size: 14px; */
     min-width: 140px !important;
     border: 1px solid #eee;
-    border-bottom: 3px solid v-bind(ccThk);
+    border-top: 3px solid v-bind(ccThk);
 }
 
 .dropdown-menu :is(a, i) {
@@ -123,6 +124,11 @@ function logOut() {
 
 .dropdown-item:hover i {
     color: v-bind(cc1);
+}
+
+.active {
+    background-color: transparent;
+    /* pointer-events: none; */
 }
 
 /* Acount DropDowm ##################################### */

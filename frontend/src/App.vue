@@ -3,7 +3,6 @@ import { provide } from "vue";
 import { storeToRefs } from 'pinia'
 import { useColorStore } from '@/store/colorStore'
 const cols = useColorStore()
-const { cc1, ccBtnH } = cols
 provide("c$", storeToRefs(cols));
 </script>
 <template>

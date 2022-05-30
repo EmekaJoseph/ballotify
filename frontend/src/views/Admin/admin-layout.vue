@@ -32,6 +32,7 @@ const ccBg = inject("c$").ccBg.value;
 @media screen and (max-width: 767px) {
     .adminMain {
         margin-left: 0px;
+        padding: 10px;
     }
 }
 </style>

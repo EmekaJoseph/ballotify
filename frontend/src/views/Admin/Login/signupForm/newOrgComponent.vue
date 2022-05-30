@@ -31,9 +31,7 @@
                                 class="btn btn-lg customBtn w-100">
                                 <span class="text-white" v-if="!state.loading">Create Account <i
                                         class="bi bi-check-circle text-white"></i></span>
-                                <span v-else class="spinner-border spinner-border-sm" role="status">
-                                    <span class="visually-hidden">Loading...</span>
-                                </span>
+                                <div v-else class="c-loader"></div>
                             </button>
                         </div>
                     </div>
@@ -96,15 +94,7 @@ async function checkForm() {
     border-bottom: 1px solid #eee;
 }
 
-.customBtn {
-    background-color: v-bind(cc1);
-    color: #fff;
-}
 
-.customBtn:hover {
-    background-color: v-bind(ccBtnH);
-    color: #fff;
-}
 
 .formError {
     border-bottom: 1px solid var(--bs-danger);

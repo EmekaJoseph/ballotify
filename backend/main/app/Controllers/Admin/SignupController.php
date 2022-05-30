@@ -3,41 +3,16 @@
 namespace App\Controllers\Admin;
 
 use App\Controllers\BaseController;
-use App\Models\UserModel;
-use App\Models\OrgModel;
+use App\Controllers\Admin\OrgController as Org;
+use App\Controllers\Admin\UserController as User;
 
 class SignupController extends BaseController
 {
-
-    public function ifEmailIsFound($email)
-    {
-        $usersTable = new UserModel();
-        $exists = $usersTable->where('email', $email)->countAllResults();
-        $val = false;
-        if ($exists != 0) {
-            $val = true;
-        }
-        return $this->response->setJSON($val);
-    }
-
-    public function ifOrgIsFound($orgName)
-    {
-        $orgTable = new OrgModel();
-        $exists = $orgTable->where('org_name', $orgName)->countAllResults();
-        $val = false;
-        if ($exists != 0) {
-            $val = true;
-        }
-        return $this->response->setJSON($val);
-    }
-
     public function registerNew($recievedJSON)
     {
-        $usersTable = new UserModel();
-        $orgTable = new OrgModel();
         $data = json_decode($recievedJSON);
         $response = 0;
-        $org_id = $this->getOrgId($data->org_name);
+        $org_id = $this->getOrgId();
         try {
             $userProfile = [
                 'firstname' => $data->firstname,
@@ -55,8 +30,9 @@ class SignupController extends BaseController
                 'org_address' => $data->org_address,
                 'org_events' => 0,
             ];
-            $usersTable->save($userProfile);
-            $orgTable->save($orgProfile);
+
+            (new User())->storeToDB($userProfile);
+            (new Org())->storeToDB($orgProfile);
 
             $response = 1;
         } catch (\Throwable $th) {
@@ -67,18 +43,17 @@ class SignupController extends BaseController
     }
 
 
-    private function getOrgId($name)
+    private function getOrgId()
     {
-        $org_id = $this->generateOrgId($name);
-        $orgTable = new OrgModel();
-        $exists = $orgTable->where('org_id', $org_id)->countAllResults();
+        $org_id = $this->generateOrgId();
+        $exists =  (new Org())->orgIdExists($org_id);
         if ($exists != 0) {
-            $this->getOrgId($name);
+            $this->getOrgId();
         }
         return $org_id;
     }
 
-    private function generateOrgId($name)
+    private function generateOrgId()
     {
         //retain only characters###########################
         //$name = preg_replace('/[\W]/', '', $name);
@@ -86,9 +61,10 @@ class SignupController extends BaseController
         //$name = strtoupper($name);
         //remove duplicate characters ##########################
         //$name = count_chars($name, 3);
-        $a = substr($name, 0, 3);
+        $str = 'ABCDEFGHJKLMNPQRTUVWXYZ';
+        $a = substr(str_shuffle($str), 0, 3);
         $b = substr(str_shuffle('23456789'), 0, 2);
-        $c = substr(str_shuffle('ABCDEFGHJKLMNPQRTUVWXYZ'), 0, 2);
+        $c = substr(str_shuffle($str), 0, 1);
         return 'B-' . $a . $b . $c;
     }
 }
