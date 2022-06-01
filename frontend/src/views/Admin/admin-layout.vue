@@ -25,7 +25,7 @@ const ccBg = inject("c$").ccBg.value;
 }
 
 .admin-content {
-    margin: 70px 10px;
+    margin: 75px 10px;
 }
 
 

@@ -1,9 +1,9 @@
 <template>
     <div class="col-md-7">
         <div class="card">
-            <div class="card-header">Profile:
+            <div class="card-header">My Profile:
                 <span class="float-end">
-                    <div v-if="user.isSaving" class="c-loader loaderBlack"></div>
+                    <div v-if="user.isLoading" class="c-loader loaderBlack"></div>
                 </span>
             </div>
             <div class="card-body">
@@ -31,13 +31,13 @@
 
                     <div>
                         <span class="float-end">
-                            <button @click="user.keyIn = true" v-if="!user.keyIn"
+                            <button @click="user.keyIn = true" v-if="!user.keyIn && !user.isLoading"
                                 class="btn btn-link text-success text-decoration-none me-2" style="width: 100px"><i
-                                    class="bi bi-pencil text-success"></i> edit</button>
-                            <button :disabled="user.isSaving" @click="cancelKeyIn" v-if="user.keyIn"
+                                    class="bi bi-pencil"></i> edit</button>
+                            <button :disabled="user.isLoading" @click="cancelKeyIn" v-if="user.keyIn"
                                 class="btn btn-secondary btn-sm me-2" style="width: 80px">Cancel</button>
-                            <button :disabled="user.isSaving" @click="updateUser" v-if="user.keyIn"
-                                class="btn customBtn btn-sm" style="width: 100px">Update</button>
+                            <button :disabled="user.isLoading" @click="updateUser" v-if="user.keyIn"
+                                class="customBtn btn-sm" style="width: 100px">Update</button>
                         </span>
                     </div>
                 </div>
@@ -61,7 +61,7 @@ const user = reactive({
     firstname_bk: '',
     lastname_bk: '',
     keyIn: false,
-    isSaving: false
+    isLoading: true
 })
 
 
@@ -78,7 +78,7 @@ async function getUserDetails() {
         user.email = data.data.email
         user.role = data.data.role
         user.keyIn = false
-        user.isSaving = false
+        user.isLoading = false
     } catch (error) {
         console.log(error);
     }
@@ -91,7 +91,7 @@ function cancelKeyIn() {
 }
 
 async function updateUser() {
-    user.isSaving = true
+    user.isLoading = true
     let obj = {
         id: id,
         firstname: user.firstname,
@@ -110,7 +110,7 @@ async function updateUser() {
             admin.setData(newValues)
         }
     } catch (error) {
-        user.isSaving = false
+        user.isLoading = false
         console.log(error);
     }
 }

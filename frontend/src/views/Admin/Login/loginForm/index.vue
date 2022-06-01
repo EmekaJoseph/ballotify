@@ -47,7 +47,7 @@
                             <div class="col-md-12 mt-4">
 
                                 <button :disabled="loading" @click.prevent="checkForm" type="submit"
-                                    class="btn btn-lg customBtn w-100">
+                                    class="btn-lg customBtn w-100">
                                     <span class="text-white" v-if="!loading">Login</span>
                                     <div v-else class="c-loader"></div>
                                 </button>
@@ -225,15 +225,6 @@ small {
     font-size: 20px;
 }
 
-.customBtn {
-    background-color: v-bind(cc1);
-    color: #fff;
-}
-
-.customBtn:hover {
-    background-color: v-bind(ccBtnH);
-    color: #fff;
-}
 
 .errMsg {
     background-color: #b936360e;

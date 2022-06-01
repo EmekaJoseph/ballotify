@@ -51,6 +51,11 @@ $routes->add('/getUserDetails', 'Admin\UserController::getUserDetails');
 $routes->add('/updateOrg', 'Admin\OrgController::updateOrg');
 $routes->add('/updateUser', 'Admin\UserController::updateUser');
 
+
+// Groups
+$routes->add('/saveNewGroup', 'Admin\GroupsController::saveNewGroup');
+$routes->add('/getGroupNames/(:any)', 'Admin\GroupsController::getGroupNames/$1');
+
 /*
  * --------------------------------------------------------------------
  * Additional Routing

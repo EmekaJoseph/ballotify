@@ -28,7 +28,7 @@
                         </div>
                         <div class="col-md-8">
                             <button :disabled="state.loading" @click.prevent="checkForm" type="submit"
-                                class="btn btn-lg customBtn w-100">
+                                class="btn-lg customBtn w-100">
                                 <span class="text-white" v-if="!state.loading">Create Account <i
                                         class="bi bi-check-circle text-white"></i></span>
                                 <div v-else class="c-loader"></div>

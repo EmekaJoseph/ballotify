@@ -3,11 +3,11 @@ import { defineStore } from "pinia";
 export const useColorStore = defineStore({
     id: "colorStore",
     state: () => ({
-        cc1: '#00BD8C',
-        cc2: '#BD2c00',
-        ccThk: '#007052',
-        ccBg: '#00bd8b11',
-        ccBtnH: '#05d8a0'
+        cc1: '#03787c',
+        cc2: '#04C3C9',
+        ccThk: '#026063',
+        ccBg: '#03787c11',
+        ccBtnH: '#03858A'
 
     })
 });

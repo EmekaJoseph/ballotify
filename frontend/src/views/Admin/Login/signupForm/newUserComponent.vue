@@ -151,16 +151,6 @@ const pw = reactive({
     cursor: pointer;
 }
 
-.customBtn {
-    background-color: v-bind(cc1);
-    color: #fff;
-}
-
-.customBtn:hover {
-    background-color: v-bind(ccBtnH);
-    color: #fff;
-}
-
 .formError {
     border-bottom: 1px solid var(--bs-danger);
 }

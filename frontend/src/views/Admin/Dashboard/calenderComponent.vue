@@ -5,8 +5,9 @@
             <div class="card-header">Calender</div>
             <div class="card-body">
                 <div class="row justify-content-center">
-                    <!-- <v-calendar class="border-0" /> -->
-                    <v-date-picker class="border-0 w-100" v-model="date" />
+                    <!-- <v-date-picker v-model="date" /> -->
+                    <v-calendar :attributes="attributes" @dayclick="onDayClick" is-expanded class="border-0" />
+                    <div class="text-center">{{ dateFormat }}</div>
                 </div>
             </div>
         </div>
@@ -14,13 +15,26 @@
 </template>
 
 <script setup>
-import { onMounted, ref, inject, watch, watchEffect } from 'vue'
+import { onMounted, ref, inject, computed } from 'vue'
+import { useNow, useDateFormat } from '@vueuse/core'
 const { cc1, cc2, ccThk, ccBg, ccBtnH } = inject("c$");
-const date = ref(new Date())
 
-watch(date, (newDate) => { console.log('watch:', newDate); })
+const days = ref([new Date('2022-06-01'), new Date('2022-06-24'), new Date()])
+const attributes = computed(() => {
+    return days.value.map(date => ({
+        highlight: {
+            color: 'orange',
+            fillMode: 'solid',
+        },
+        dates: date,
+    }));
+})
 
-watchEffect(() => console.log('watcheffect:', date.value));
+
+const dateFormat = useDateFormat(useNow(), 'DD-MM-YYYY')
+function onDayClick(day) {
+}
+
 </script>
 
 <style scoped>

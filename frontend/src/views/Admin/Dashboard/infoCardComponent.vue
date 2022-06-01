@@ -38,14 +38,13 @@ const bgColor = props.color + '09'
     justify-content: center;
     align-items: center;
     font-size: 2rem;
-    color: v-bind(cc1);
+    color: v-bind(color);
 }
 
 .bi {
     background-color: v-bind(bgColor);
     padding: 10px 17px;
-    border-radius: 10%;
-    color: v-bind(color);
+    border-radius: 20%;
 }
 
 .digit {

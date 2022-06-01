@@ -2,13 +2,13 @@
     <div>
         <nav class="navbar navbar-light fixed-top shadow-sm">
             <div class="container-fluid">
-                <span class="d-md-none"><b>Admin</b> | {{ route.name }}</span>
-                <div class="inputSearch d-none d-md-block">
+                <span><b>Admin</b> | {{ route.name }}</span>
+                <!-- <div class="inputSearch d-none d-md-block">
                     <input type="text" class=" form-control form-control-sm" placeholder="search.." style="width:250px">
                     <span class="icon">
                         <i class="bi bi-search"></i>
                     </span>
-                </div>
+                </div> -->
                 <span class="dropdown d-none d-md-block">
                     <a class="nav-link dropdown-toggle" href="#" id="accountDrop" role="button"
                         data-bs-toggle="dropdown" aria-expanded="false">
@@ -98,10 +98,6 @@ function logOut() {
     font-size: 14px;
     /* pointer-events: none; */
     margin-right: 55px;
-}
-
-.dropdown-toggle::after {
-    display: none;
 }
 
 .dropdown-menu {

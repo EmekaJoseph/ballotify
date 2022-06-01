@@ -36,5 +36,12 @@ export default {
     },
     updateUser(obj: object) {
         return bus.post('/updateUser', obj)
+    },
+
+    getGroupNames(obj: string) {
+        return bus.post('/getGroupNames/' + obj)
+    },
+    saveNewGroup(org_id: object) {
+        return bus.post('/saveNewGroup', org_id)
     }
 }

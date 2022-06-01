@@ -54,15 +54,6 @@ function showErrorToast() {
     transition: 1.8s ease-in-out;
 }
 
-.xSlide-enter-active {
-    transition: all 0.7s ease;
-}
-
-.xSlide-enter-from,
-.xSlide-leave-to {
-    transform: translateY(-20px);
-    opacity: 0;
-}
 
 .homeBtn {
     text-decoration: none;

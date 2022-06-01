@@ -25,9 +25,9 @@ import notify from "@/components/toastNotify.vue";
 mainApp.component('notify', notify);
 
 //npm install @vuepic/vue-datepicker
-// import Datepicker from '@vuepic/vue-datepicker';
-// import '@vuepic/vue-datepicker/dist/main.css';
-// mainApp.component('Datepicker', Datepicker);
+import Datepicker from '@vuepic/vue-datepicker';
+import '@vuepic/vue-datepicker/dist/main.css';
+mainApp.component('Datepicker', Datepicker);
 
 //npm install vue-select-3
 import vSelect from "vue-select";

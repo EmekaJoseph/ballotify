@@ -3,7 +3,7 @@
         <div class="card">
             <div class="card-header">Organisation:
                 <span class="float-end">
-                    <div v-if="org.isSaving" class="c-loader loaderBlack"></div>
+                    <div v-if="org.isLoading" class="c-loader loaderBlack"></div>
                 </span>
             </div>
             <div class="card-body">
@@ -12,7 +12,7 @@
                         <label>Name:</label>
                         <div>
                             {{ org.name }} &nbsp;
-                            (<span class="org-span fw-bold text-success">{{ orgId }}</span>)
+                            (<span class="fw-bold text-custom">{{ orgId }}</span>)
                         </div>
                     </div>
 
@@ -23,13 +23,13 @@
                     </div>
                     <div>
                         <span class="float-end">
-                            <button @click="org.keyIn = true" v-if="!org.keyIn"
-                                class="btn btn-link text-success text-decoration-none me-2" style="width: 100px"><i
-                                    class="bi bi-pencil text-success"></i> edit</button>
-                            <button :disabled="org.isSaving" @click="cancelKeyIn" v-if="org.keyIn"
+                            <button @click="org.keyIn = true" v-if="!org.keyIn && !org.isLoading"
+                                class="btn btn-link text-decoration-none me-2 text-success" style="width: 100px"><i
+                                    class="bi bi-pencil"></i> edit</button>
+                            <button :disabled="org.isLoading" @click="cancelKeyIn" v-if="org.keyIn"
                                 class="btn btn-secondary btn-sm me-2" style="width: 80px">Cancel</button>
-                            <button :disabled="org.isSaving" @click="updateOrg" v-if="org.keyIn"
-                                class="btn btn-sm customBtn" style="width: 100px">Update</button>
+                            <button :disabled="org.isLoading" @click="updateOrg" v-if="org.keyIn"
+                                class="btn-sm customBtn" style="width: 100px">Update</button>
                         </span>
                     </div>
                 </div>
@@ -50,7 +50,7 @@ const org = reactive({
     name_bk: '',
     address_bk: '',
     keyIn: false,
-    isSaving: false
+    isLoading: true
 })
 
 onMounted(() => {
@@ -64,7 +64,7 @@ async function getOrgDetails() {
         org.address = org.address_bk = data.org_address
         org.id = data.id
         org.keyIn = false;
-        org.isSaving = false
+        org.isLoading = false
     } catch (error) {
         console.log(error);
     }
@@ -77,7 +77,7 @@ function cancelKeyIn() {
 }
 
 async function updateOrg() {
-    org.isSaving = true
+    org.isLoading = true
     let obj = {
         id: org.id,
         org_name: org.name,
@@ -89,7 +89,7 @@ async function updateOrg() {
             getOrgDetails()
         }
     } catch (error) {
-        org.isSaving = false
+        org.isLoading = false
         console.log(error);
     }
 }

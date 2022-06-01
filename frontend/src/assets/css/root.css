@@ -119,7 +119,12 @@ section {
 /* table */
 
 .card {
+    border: none;
     height: 100%;
+}
+
+.card-body {
+    padding: 20px;
 }
 
 .card-header {
@@ -138,7 +143,6 @@ section {
     content: '';
     height: 3px;
     width: 40px;
-    background: #00BD8C;
     position: absolute;
     margin: 18px;
     bottom: -5px;
@@ -146,33 +150,21 @@ section {
     right: 0;
 }
 
-.card-body {
-    padding: 20px;
-}
-
-
-.customBtn {
-    background-color: #00BD8C;
-    color: #fff;
-}
-
-.customBtn:hover {
-    background-color: #05d8a0;
-    color: #fff;
-}
 
 label {
-    font-size: small;
+    font-size: 12px;
     font-weight: bold;
 }
 
-
+.bi {
+    color: inherit;
+}
 
 /* custom loader */
 .c-loader {
     width: 2rem;
     height: 2rem;
-    margin: 0px;
+    margin: auto;
     border-radius: 50%;
     border: 0.3rem solid #fff;
     transform: translate(50%);
@@ -209,3 +201,51 @@ label {
 }
 
 /* end of custom loader */
+
+
+
+/* transition */
+
+.xSlide-enter-active {
+    transition: all 0.7s ease;
+}
+
+.xSlide-enter-from,
+.xSlide-leave-to {
+    transform: translateX(-20px);
+    opacity: 0;
+}
+
+
+
+.ySlide-enter-active {
+    transition: all 0.2s ease;
+}
+
+.ySlide-enter-from,
+.ySlide-leave-to {
+    transform: translateY(-20px);
+    opacity: 0;
+}
+
+/* end of transition */
+
+
+
+
+
+
+/* #################################### remove arrow from number input */
+/* Chrome, Safari, Edge, Opera */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Firefox */
+input[type=number] {
+    -moz-appearance: textfield;
+}
+
+/* #################################### remove arrow from number input */

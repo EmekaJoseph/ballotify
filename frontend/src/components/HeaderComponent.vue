@@ -87,10 +87,6 @@ const route = useRoute()
     color: v-bind(cc1);
 }
 
-.navbar a:hover i {
-    color: v-bind(cc1);
-}
-
 .signUpBtn {
     background-color: v-bind(cc1);
     border-radius: 5px;

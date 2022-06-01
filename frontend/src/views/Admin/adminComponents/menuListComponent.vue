@@ -67,10 +67,6 @@
                         <i class="bi bi-gear-wide"></i>&nbsp; Settings
                     </router-link>
                 </li>
-
-                <li class="list-group-item mt-5 d-none d-md-block">
-                    <button><i class="bi bi-box-arrow-left"></i>&nbsp;Log Out</button>
-                </li>
             </ul>
         </div>
     </div>
@@ -123,14 +119,14 @@ const route = useRoute()
     margin-left: 5px;
 }
 
-.list-group-item button i {
+/* .list-group-item button i {
     color: v-bind(cc2);
-}
+} */
 
 
-a:hover i {
+/* a:hover i {
     color: #111;
-}
+} */
 
 a:not(.gActive):hover {
     color: #111;
@@ -145,9 +141,9 @@ a:not(.gActive):hover {
     border-right: 2px solid v-bind(cc1);
 }
 
-.gActive i {
+/* .gActive i {
     color: v-bind(cc1);
-}
+} */
 
 .myaccordion {
     border: none;
