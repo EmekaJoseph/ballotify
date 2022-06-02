@@ -101,13 +101,8 @@ async function updateUser() {
         var { data } = await server.updateUser(obj);
         if (data == 1) {
             await getUserDetails()
-            let newValues = {
-                id: id,
-                org_id: orgId,
-                name: user.firstname + ' ' + user.lastname,
-                role: user.role
-            }
-            admin.setData(newValues)
+            let newName = user.firstname + ' ' + user.lastname
+            admin.setFullName(newName)
         }
     } catch (error) {
         user.isLoading = false

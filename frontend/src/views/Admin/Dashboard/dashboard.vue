@@ -27,7 +27,7 @@ import infoCard from './infoCardComponent.vue'
 import recents from './recentsComponent.vue'
 import calender from './calenderComponent.vue'
 const { cc1, cc2, ccThk, ccBg, ccBtnH }: any = inject("c$");
-
+const spell = useFunc.fx.spell
 
 const recentsTable = ref([])
 const iRates = ref({
@@ -36,10 +36,6 @@ const iRates = ref({
     Event: 0,
     Message: 0
 })
-
-const spell = useFunc.fx.spell
-
-
 
 </script>
 

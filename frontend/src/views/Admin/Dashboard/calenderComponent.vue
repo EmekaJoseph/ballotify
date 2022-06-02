@@ -7,6 +7,7 @@
                 <div class="row justify-content-center">
                     <!-- <v-date-picker v-model="date" /> -->
                     <v-calendar :attributes="attributes" @dayclick="onDayClick" is-expanded class="border-0" />
+                    <div class="text-center fw-bold">Today:</div>
                     <div class="text-center">{{ dateFormat }}</div>
                 </div>
             </div>

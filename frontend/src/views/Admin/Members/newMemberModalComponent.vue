@@ -42,7 +42,7 @@
                                 <div class="col-sm-6">
                                     <label>group:</label>
                                     <v-select v-model="person.group" placeholder="none" class="vSelect"
-                                        :options="['group1', 'group2']" />
+                                        :options="groups" />
                                 </div>
                                 <!-- <div class="col-sm-6 ">
                                     <button @click.prevent="checkForm" class="customBtn mt-4 p-2 w-100"
@@ -68,9 +68,31 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
+import { useAdminStore } from '@/store/user/admin'
+import server from '@/store/apiStore'
+import useFunc from '@/store/useFunction'
+const orgId = useAdminStore().getData.org_id
+const monthStr = useFunc.fx.monthStr
 const emit = defineEmits(["closeModal"]);
 const date = ref()
+const groups = ref([])
+
+onMounted(() => {
+    getGroupNames()
+})
+
+async function getGroupNames() {
+    try {
+        var { data } = await server.getGroupNames(orgId)
+        if (data) {
+            let groups1 = data.groups;
+            groups.value = groups1.map(x => ({ id: x.id, label: x.group_name }))
+        }
+    } catch (error) {
+        console.log(error);
+    }
+}
 
 const person = ref({
     firstname: '',
@@ -84,13 +106,10 @@ const person = ref({
 const flow = ref(['month', 'calendar']);
 const format = (date) => {
     const day = date.getDate();
-    // const month = date.getMonth() + 1;
-    const month = monthStrings[date.getMonth()]
+    const month = monthStr(date)
     return `${month} ${day}`;
 }
-const monthStrings = [
-    'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'
-]
+
 
 
 

@@ -41,5 +41,24 @@ interface newRegister {
     org_address: string
 }
 
+interface newMemberInterface {
+    firstname: string,
+    lastname: string,
+    email: string,
+    phone: string,
+    birthday: string,
+    gender: string,
+    group: object,
+    err: {
+        firstname: string,
+        lastname: string,
+        email: string,
+        phone: string,
+        birthday: string,
+        gender: string,
+        group: string,
+    }
+}
 
-export { LoginFormInterface, newOrgInterface, newUserInterface, newRegister }
+
+export { LoginFormInterface, newOrgInterface, newUserInterface, newRegister, newMemberInterface }

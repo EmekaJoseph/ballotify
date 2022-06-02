@@ -14,14 +14,17 @@ export const useAdminStore = defineStore({
     },
     actions: {
         signIn(obj: object) {
-            this.setData(obj)
+            this.setState(obj)
             this.signedIn = true
         },
-        setData(obj: any) {
+        setState(obj: any) {
             localStorage.setItem('ballotify-admin', JSON.stringify(obj))
-            localStorage.setItem('b-fname', obj.name)
+            this.setFullName(obj.name)
             this.data = localStorage.getItem('ballotify-admin')
-            this.fullName = obj.name
+        },
+        setFullName(name: string) {
+            localStorage.setItem('b-fname', name)
+            this.fullName = name
         },
         signOut() {
             localStorage.removeItem('ballotify-admin')

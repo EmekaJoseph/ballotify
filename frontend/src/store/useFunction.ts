@@ -7,6 +7,12 @@ const fx = reactive({
             str = name + 's'
         }
         return str
+    },
+    monthStr(date: Date) {
+        const array = [
+            'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'
+        ]
+        return array[date.getMonth()]
     }
 })
 

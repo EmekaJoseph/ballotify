@@ -4,6 +4,7 @@ namespace App\Controllers\Admin;
 
 use App\Controllers\BaseController;
 use App\Models\GroupsModel;
+use App\Controllers\Admin\MembersController as Members;
 
 class GroupsController extends BaseController
 {
@@ -32,20 +33,25 @@ class GroupsController extends BaseController
     {
         $table = new GroupsModel();
         $groups = $table->where('org_id', $org_id)->findAll();
-
-        return $this->response->setJSON(array('data' => $groups));
+        $memberGroups = (new Members())->getGroupsCount($org_id);
+        $counted = null;
+        if (sizeof($memberGroups) > 0) {
+            $counted = array_count_values($memberGroups);
+        }
+        return $this->response->setJSON(array('groups' => $groups, 'counted' => $counted));
     }
 
-    // function orgIdExists($id)
-    // {
-    //     $table = new OrgModel();
-    //     $exists = $table->where('org_id', $id)->countAllResults();
-    //     return ($exists);
-    // }
-
-    // function storeToDB($data)
-    // {
-    //     $table = new OrgModel();
-    //     $table->save($data);
-    // }
+    public function getGroupDetails()
+    {
+        $org_id = $this->request->getVar('org_id');
+        $id = $this->request->getVar('id');
+        $table = new GroupsModel();
+        $details = $table->where('org_id', $org_id)->where('id', $id)->first();
+        $members = (new Members())->membersInThisGroup($id, $org_id);
+        $data = array(
+            'details' => $details,
+            'members' => $members
+        );
+        return $this->response->setJSON($data);
+    }
 }
