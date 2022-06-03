@@ -18,10 +18,11 @@
                     <div v-for="(g, i) in  groupList" :key="g.id" class="col-4 col-md-4 col-lg-2">
                         <div class="card groupCard" @click="showThisGroup(g.id)">
                             <div class="group-content">
-                                <i class="bi bi-folder bi-lg"></i>
+                                <i v-if="numInGrp(g.id) > 0" class="bi bi-folder-fill bi-lg"></i>
+                                <i v-else class="bi bi-folder bi-lg"></i>
                                 <div class="group-name text-center">{{ g.group_name }}</div>
                                 <small class="info-text text-muted">
-                                    {{ getGroupsNum(g.id) }} {{ spell('member', getGroupsNum(g.id)) }}
+                                    {{ numInGrp(g.id) }} {{ spell('member', numInGrp(g.id)) }}
                                 </small>
                             </div>
                         </div>
@@ -50,7 +51,7 @@ const ifAddModal = ref(false)
 const groupList = ref<any>([])
 const groupsCount = ref<any>(null)
 
-const getGroupsNum = (group_id: string) => {
+const numInGrp = (group_id: string) => {
     if (groupsCount.value == null) {
         return 0;
     }
@@ -115,6 +116,7 @@ function showThisGroup(id: string) {
 
 .group-name {
     font-size: 16px;
+    text-transform: capitalize;
 }
 
 .info-text {
@@ -135,20 +137,20 @@ function showThisGroup(id: string) {
 
 @media (max-width: 550px) {
     .group-name {
-        font-size: 11px;
+        font-size: 9px;
     }
 
     .bi-lg {
-        font-size: 20px;
+        font-size: 15px;
 
     }
 
     .info-text {
-        font-size: 8px;
+        font-size: 7px;
     }
 
     .groupCard {
-        padding: 10px 0px
+        padding: 14px 0px
     }
 }
 </style>

@@ -71,7 +71,6 @@ async function saveName() {
             group.isSaving = false
             emit('added')
             emit('closeModal')
-
         }
         else {
             group.isSaving = false

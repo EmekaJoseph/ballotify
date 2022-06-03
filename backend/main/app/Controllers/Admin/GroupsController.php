@@ -54,4 +54,39 @@ class GroupsController extends BaseController
         );
         return $this->response->setJSON($data);
     }
+
+    public function deleteGroup()
+    {
+        try {
+            $org_id = $this->request->getVar('org_id');
+            $id = $this->request->getVar('id');
+            $table = new GroupsModel();
+            $table->where('org_id', $org_id)->delete($id);
+            return $this->response->setJSON(1);
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $this->response->setJSON(0);
+        }
+    }
+
+    public function renameGroup()
+    {
+        $id = $this->request->getVar('id');
+        $org_id = $this->request->getVar('org_id');
+        $group_name = $this->request->getVar('group_name');
+        $table = new GroupsModel();
+        $exists = $table->where('org_id', $org_id)->where('group_name', $group_name)->countAllResults();
+        if ($exists != 0) {
+            $val = 0;
+        } else {
+            $data = [
+                'id' => $id,
+                'org_id' => $org_id,
+                'group_name' => $group_name
+            ];
+            $table->save($data);
+            $val = 1;
+        }
+        return $this->response->setJSON($val);
+    }
 }

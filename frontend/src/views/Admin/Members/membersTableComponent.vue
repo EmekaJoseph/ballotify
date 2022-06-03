@@ -3,7 +3,7 @@
         <div class="card" style="min-height: 85vh">
             <div class="card-header">Members List <span class="badge rounded-pill bg-light text-dark">{{ oData.length
             }}</span>
-                <span class="float-end optionsBtn">
+                <!-- <span class="float-end optionsBtn">
                     <div class="dropdown">
                         <span class="dropdown-toggle" type="button" id="dropdownMenu2" data-bs-toggle="dropdown"
                             aria-expanded="false">
@@ -17,10 +17,15 @@
                             </li>
                         </ul>
                     </div>
+                </span> -->
+                <span v-if="data.length" class="float-end">
+                    <button class="btn btn-outline-success float-end btn-sm p-0 px-3 m-0">
+                        <i class="bi bi-plus-circle"></i> add
+                    </button>
                 </span>
             </div>
             <div class="card-body">
-                <div v-if="data.length" class="row justify-content-center my-4">
+                <div v-if="!data.length" class="row justify-content-center my-4">
                     <span @click="emit('openModal')" class="text-center"><i class="bi bi-person-plus plus"></i></span>
                     <div class="text-center text-muted">You do not have any members yet.</div> <br>
                     <small class="text-center">
@@ -29,7 +34,7 @@
                 </div>
                 <div v-else>
                     <div class="table-responsive">
-                        <table class="table">
+                        <table class="table table-sm text-nowrap">
                             <thead>
                                 <tr>
                                     <th class="smallCol"><input @change="toggleAll" v-model="mCheck"
@@ -97,19 +102,15 @@ function showChecked() {
 <style scoped>
 .plus {
     color: #ece8e8;
-    font-size: 12rem;
+    font-size: 10rem;
     cursor: pointer;
 }
 
 .plus:hover {
-    color: #c3ece1;
+    color: #c7bfbf;
+    transform: scale(1.05);
 }
 
-.bi:not(.plus) {
-    font-weight: bolder;
-    color: #111;
-    font-size: 18px;
-}
 
 .dropdown-item:hover {
     background: transparent;
@@ -121,17 +122,6 @@ function showChecked() {
     color: v-bind(cc1);
 }
 
-
-.form-check-input {
-    width: 22px;
-    height: 22px;
-    cursor: pointer;
-}
-
-.form-check-input:checked {
-    background-color: v-bind(cc1);
-    border-color: v-bind(cc1);
-}
 
 table td:nth-child(2),
 th:nth-child(2) {

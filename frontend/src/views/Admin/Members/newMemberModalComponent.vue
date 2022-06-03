@@ -39,10 +39,15 @@
                                     <v-select v-model="person.gender" :clearable="false" :searchable="false"
                                         class="vSelect" :options="['Male', 'Female']" />
                                 </div>
-                                <div class="col-sm-6">
+                                <div class="col-sm-12">
                                     <label>group:</label>
-                                    <v-select v-model="person.group" placeholder="none" class="vSelect"
-                                        :options="groups" />
+
+                                    <v-select :value="person.group" v-model="person.group" placeholder="none"
+                                        class="vSelect" :options="groups" />
+                                    <button @click.prevent="openNewGroup = true"
+                                        class="float-end text-decoration-none btn-sm ms-2 btn btn-link text-danger px-3">
+                                        <i class="bi bi-plus-circle-dotted"></i> add group?
+                                    </button>
                                 </div>
                                 <!-- <div class="col-sm-6 ">
                                     <button @click.prevent="checkForm" class="customBtn mt-4 p-2 w-100"
@@ -50,9 +55,9 @@
                                         Save</button>
                                 </div> -->
                                 <div>
-                                    <span class="float-end">
-                                        <button @click.prevent="checkForm" class="customBtn btn-sm"
-                                            style="width: 100px"><i class="bi bi-save2"></i>&nbsp;
+                                    <span class="float-end mt-2">
+                                        <button @click.prevent="checkForm" class="customBtn btn-sm w-100 p-2 px-5"><i
+                                                class="bi bi-save2"></i>&nbsp;
                                             Save</button>
                                     </span>
                                 </div>
@@ -63,15 +68,16 @@
                 </div>
             </div>
         </div>
-
+        <newGroupModal v-if="openNewGroup" @added="re_getGroupNames" @close-modal="openNewGroup = false" />
     </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useAdminStore } from '@/store/user/admin'
 import server from '@/store/apiStore'
 import useFunc from '@/store/useFunction'
+import newGroupModal from '@/views/Admin/Groups/newGroupModalComponent.vue'
 const orgId = useAdminStore().getData.org_id
 const monthStr = useFunc.fx.monthStr
 const emit = defineEmits(["closeModal"]);
@@ -82,19 +88,26 @@ onMounted(() => {
     getGroupNames()
 })
 
+const openNewGroup = ref(false)
+
+async function re_getGroupNames() {
+    await getGroupNames()
+    person.value.group = groups.value[groups.value.length - 1]
+}
+
 async function getGroupNames() {
     try {
         var { data } = await server.getGroupNames(orgId)
         if (data) {
             let groups1 = data.groups;
-            groups.value = groups1.map(x => ({ id: x.id, label: x.group_name }))
+            groups.value = groups1.map((x: { id: string; group_name: string; }) => ({ id: x.id, label: x.group_name }))
         }
     } catch (error) {
         console.log(error);
     }
 }
 
-const person = ref({
+const person = ref<any>({
     firstname: '',
     lastname: '',
     email: '',
@@ -104,7 +117,7 @@ const person = ref({
     group: 'none'
 })
 const flow = ref(['month', 'calendar']);
-const format = (date) => {
+const format = (date: Date) => {
     const day = date.getDate();
     const month = monthStr(date)
     return `${month} ${day}`;

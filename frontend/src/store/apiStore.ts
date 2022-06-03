@@ -59,5 +59,14 @@ export default {
     getGroupDetails(org_id: string, id: any) {
         let data: object = { id: id, org_id: org_id }
         return bus.post('/getGroupDetails', data)
+    },
+
+    deleteGroup(org_id: string, id: any) {
+        let data: object = { id: id, org_id: org_id }
+        return bus.post('/deleteGroup', data)
+    },
+
+    renameGroup(obj: any) {
+        return bus.post('/renameGroup', obj)
     }
 }

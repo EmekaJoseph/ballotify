@@ -40,6 +40,12 @@ import VCalendar from 'v-calendar';
 import 'v-calendar/dist/style.css';
 
 
+// npm install -S vue-sweetalert2
+import VueSweetalert2 from 'vue-sweetalert2';
+import 'sweetalert2/dist/sweetalert2.min.css';
+
+
+mainApp.use(VueSweetalert2);
 mainApp.use(router)
 mainApp.use(createPinia())
 mainApp.use(VueWriter)

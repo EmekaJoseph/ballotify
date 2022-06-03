@@ -56,6 +56,8 @@ $routes->add('/updateUser', 'Admin\UserController::updateUser');
 $routes->add('/saveNewGroup', 'Admin\GroupsController::saveNewGroup');
 $routes->add('/getGroupNames/(:any)', 'Admin\GroupsController::getGroupNames/$1');
 $routes->add('/getGroupDetails', 'Admin\GroupsController::getGroupDetails');
+$routes->add('/deleteGroup', 'Admin\GroupsController::deleteGroup');
+$routes->add('/renameGroup', 'Admin\GroupsController::renameGroup');
 
 /*
  * --------------------------------------------------------------------

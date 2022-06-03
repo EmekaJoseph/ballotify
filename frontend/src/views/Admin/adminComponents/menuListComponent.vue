@@ -15,7 +15,9 @@
                         Members
                     </router-link>
                 </li>
-                <li class="list-group-item" :class="{ 'gActive': (route.name == 'Groups') }" :data-bs-dismiss="showOn">
+                <li class="list-group-item"
+                    :class="{ 'gActive': (route.name == 'Groups') || (route.name == 'Grp(details)') }"
+                    :data-bs-dismiss="showOn">
                     <router-link :to="{ name: 'Groups' }">
                         <i class="bi bi-folder-plus"></i>&nbsp;
                         Groups

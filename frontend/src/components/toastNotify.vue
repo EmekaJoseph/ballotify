@@ -49,7 +49,7 @@ export default {
 
 <style scoped>
 .danger {
-    background-color: #BD2c00;
+    background-color: #cf603e;
     color: #fff;
 }
 

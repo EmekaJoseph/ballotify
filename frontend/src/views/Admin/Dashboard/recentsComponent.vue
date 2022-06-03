@@ -4,7 +4,7 @@
         <div class="card" style="min-height: 300px">
             <div v-if="data.length" class="card-body">
                 <div class="table-responsive">
-                    <table class="table">
+                    <table class="table table-sm text-nowrap">
                         <thead>
                             <tr>
                                 <th>S/N</th>
