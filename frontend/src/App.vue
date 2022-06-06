@@ -46,4 +46,14 @@ provide("c$", allColors);
   border-bottom: 2px solid v-bind(cc2) !important;
   padding: 24px !important;
 }
+
+.btn-link {
+  color: v-bind(cc1) !important;
+  text-decoration: none !important;
+}
+
+.btn-link:hover {
+  /* background-color: #eee; */
+  font-weight: bold;
+}
 </style>

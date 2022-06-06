@@ -7,13 +7,16 @@
                 </span>
                 <span v-if="data.length" class="float-end">
                     <button class="btn btn-outline-success float-end btn-sm p-0 px-3 m-0">
-                        <i class="bi bi-plus-circle"></i> add
+                        <i class="bi bi-plus-circle"></i> add members
                     </button>
                 </span>
                 <transition name="xSlide">
-                    <span v-if="aMember.isChecked" class="me-2 float-end">
-                        <button class="btn btn-outline-danger float-end btn-sm p-0 px-3 m-0">
-                            <i class="bi bi-folder-minus"></i> Remove marked
+                    <span v-if="aMember.isChecked" class="float-end">
+                        <button class="btn btn-outline-danger me-2 float-end btn-sm p-0 px-3 m-0">
+                            <i class="bi bi-folder-minus"></i> Remove
+                        </button>
+                        <button class="btn btn-outline-primary me-2 float-end btn-sm p-0 px-3 m-0">
+                            <i class="bi bi-folder-symlink"></i> Move
                         </button>
                     </span>
                 </transition>
@@ -37,7 +40,7 @@
                                 <td class="text-capitalize">{{ val.firstname + ' ' + val.lastname }}</td>
                                 <td>{{ val.gender }}</td>
                                 <td>
-                                    <button class="m-0 p-0 btn btn-sm text-dark">
+                                    <button class="m-0 p-0 btn btn-sm text-primary">
                                         <i class="bi bi-folder-symlink"></i> Move to..
                                     </button>
                                 </td>
@@ -98,7 +101,6 @@ const aMember = reactive({
     border: 2px solid #eee;
 }
 
-.table,
 .mainCard {
     min-height: 70vh;
 

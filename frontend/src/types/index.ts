@@ -46,9 +46,9 @@ interface newMemberInterface {
     lastname: string,
     email: string,
     phone: string,
-    birthday: string,
+    birthday: Date,
     gender: string,
-    group: object,
+    group: any,
     err: {
         firstname: string,
         lastname: string,

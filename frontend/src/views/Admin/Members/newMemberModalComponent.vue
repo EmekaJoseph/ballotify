@@ -12,27 +12,38 @@
                         <form>
                             <div class="row gy-3">
                                 <div class="col-sm-6">
-                                    <label>first name:</label>
-                                    <input v-model="person.firstname" type="text" class="form-control w-100">
+                                    <label>first name: <span class="text-danger">*</span></label>
+                                    <input :class="{ 'formError': err.firstname }" v-model="person.firstname"
+                                        type="text" class="form-control w-100">
+                                    <small class="text-danger">{{ err.firstname }}</small>
                                 </div>
 
                                 <div class="col-sm-6">
-                                    <label>last name:</label>
-                                    <input v-model="person.lastname" type="text" class="form-control w-100">
+                                    <label>last name: <span class="text-danger">*</span></label>
+                                    <input :class="{ 'formError': err.lastname }" v-model="person.lastname" type="text"
+                                        class="form-control w-100">
+                                    <small class="text-danger">{{ err.lastname }}</small>
                                 </div>
                                 <div class="col-sm-6">
-                                    <label>email:</label> <small class="text-muted"> *valid email</small>
-                                    <input v-model="person.email" type="text" class="form-control w-100">
+                                    <label>email:</label> <span class="text-danger">*</span><small class="text-muted">
+                                        valid email</small>
+                                    <input :class="{ 'formError': err.email }" v-model="person.email" type="text"
+                                        class="form-control w-100">
+                                    <small class="text-danger">{{ err.email }}</small>
                                 </div>
                                 <div class="col-sm-6">
-                                    <label>phone:</label>
-                                    <input v-model="person.phone" type="number" class="form-control w-100">
+                                    <label>phone: <span class="text-danger">*</span></label>
+                                    <input :class="{ 'formError': err.phone }" v-model="person.phone" type="number"
+                                        class="form-control w-100">
+                                    <small class="text-danger">{{ err.phone }}</small>
                                 </div>
 
                                 <div class="col-sm-6">
-                                    <label>birthday:</label>
-                                    <Datepicker hideOffsetDates :format="format" :flow="flow" v-model="person.dob"
-                                        :enableTimePicker="false" :clearable="false" placeholder="birthday" autoApply />
+                                    <label>birthday: <span class="text-danger">*</span></label>
+                                    <Datepicker :class="{ 'formError': err.birthday }" hideOffsetDates :format="format"
+                                        :flow="flow" v-model="person.birthday" :enableTimePicker="false"
+                                        :clearable="false" placeholder="birthday" autoApply />
+                                    <small class="text-danger">{{ err.birthday }}</small>
                                 </div>
                                 <div class="col-sm-6">
                                     <label>gender:</label>
@@ -41,24 +52,21 @@
                                 </div>
                                 <div class="col-sm-12">
                                     <label>group:</label>
-
-                                    <v-select :value="person.group" v-model="person.group" placeholder="none"
-                                        class="vSelect" :options="groups" />
-                                    <button @click.prevent="openNewGroup = true"
-                                        class="float-end text-decoration-none btn-sm ms-2 btn btn-link text-danger px-3">
-                                        <i class="bi bi-plus-circle-dotted"></i> add group?
+                                    <v-select v-model="person.group" placeholder="none" class="vSelect"
+                                        :options="groups" />
+                                    <button @click.prevent="grpModalOpen = true"
+                                        class="float-end text-decoration-none btn-sm ms-2 btn btn-link px-3">
+                                        <i class="bi bi-plus-circle-dotted"></i> create new group?
                                     </button>
                                 </div>
-                                <!-- <div class="col-sm-6 ">
-                                    <button @click.prevent="checkForm" class="customBtn mt-4 p-2 w-100"
-                                        style="border-radius: 5px"><i class="bi bi-save2"></i>&nbsp;
-                                        Save</button>
-                                </div> -->
+
                                 <div>
-                                    <span class="float-end mt-2">
-                                        <button @click.prevent="checkForm" class="customBtn btn-sm w-100 p-2 px-5"><i
-                                                class="bi bi-save2"></i>&nbsp;
-                                            Save</button>
+                                    <span class="mt-2">
+                                        <div class="col-md-12">
+                                            <button @click.prevent="checkForm" class="customBtn btn-lg w-100"><i
+                                                    class="bi bi-save2"></i>&nbsp;
+                                                Save</button>
+                                        </div>
                                     </span>
                                 </div>
                             </div>
@@ -68,67 +76,130 @@
                 </div>
             </div>
         </div>
-        <newGroupModal v-if="openNewGroup" @added="re_getGroupNames" @close-modal="openNewGroup = false" />
+        <newGroupModal v-if="grpModalOpen" @added="re_getGroupNames" @close-modal="grpModalOpen = false" />
     </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, inject, reactive } from 'vue';
 import { useAdminStore } from '@/store/user/admin'
 import server from '@/store/apiStore'
 import useFunc from '@/store/useFunction'
 import newGroupModal from '@/views/Admin/Groups/newGroupModalComponent.vue'
-const orgId = useAdminStore().getData.org_id
-const monthStr = useFunc.fx.monthStr
-const emit = defineEmits(["closeModal"]);
-const date = ref()
-const groups = ref([])
+import { newMemberInterface } from '@/types'
 
 onMounted(() => {
     getGroupNames()
 })
 
-const openNewGroup = ref(false)
+const { cc1, cc2, ccThk, ccBg, ccBtnH }: any = inject("c$");
+const orgId = useAdminStore().getData.org_id
+const emit = defineEmits(["closeModal", "saved"]);
+const fx = useFunc.fx
 
-async function re_getGroupNames() {
-    await getGroupNames()
-    person.value.group = groups.value[groups.value.length - 1]
-}
 
 async function getGroupNames() {
     try {
         var { data } = await server.getGroupNames(orgId)
         if (data) {
-            let groups1 = data.groups;
-            groups.value = groups1.map((x: { id: string; group_name: string; }) => ({ id: x.id, label: x.group_name }))
+            let grp = data.groups;
+            groups.value = grp.map((x: { id: string; group_name: string; }) => ({ id: x.id, label: x.group_name }))
         }
     } catch (error) {
         console.log(error);
     }
 }
 
-const person = ref<any>({
-    firstname: '',
-    lastname: '',
-    email: '',
-    dob: null,
-    phone: '',
-    gender: 'Male',
-    group: 'none'
-})
+async function re_getGroupNames() {
+    await getGroupNames()
+    person.group = groups.value[groups.value.length - 1]
+}
+
+
+const groups = ref([])
+const grpModalOpen = ref(false)
+
+// date picker
 const flow = ref(['month', 'calendar']);
 const format = (date: Date) => {
     const day = date.getDate();
-    const month = monthStr(date)
+    const month = fx.monthStr(date)
     return `${month} ${day}`;
 }
 
 
+const initForm: newMemberInterface = reactive({
+    firstname: '',
+    lastname: '',
+    email: '',
+    phone: '',
+    birthday: new Date(),
+    gender: 'Male',
+    group: { id: '0', label: 'none' },
+    err: {
+        firstname: '',
+        lastname: '',
+        email: '',
+        phone: '',
+        birthday: '',
+        gender: '',
+        group: '',
+    }
+})
+
+const person = reactive({ ...initForm });
+const err = reactive({ ...initForm.err });
+
+function showError(field: string) {
+    err[field] = 'required field'
+}
 
 
 function checkForm() {
-    console.log(person.value);
+    Object.assign(err, initForm.err);
+    if (person.firstname == '') { showError('firstname'); return }
+    if (person.lastname == '') { showError('lastname'); return }
+    if (person.email == '') { showError('email'); return }
+    if (person.phone == '') { showError('phone'); return }
+    if (!(fx.emailIsOk(person.email))) { err.email = 'invalid email'; return }
+    saveNewMember()
 }
+
+
+const isSaving = ref<boolean>(false)
+async function saveNewMember() {
+    isSaving.value = true
+    let obj = {
+        org_id: orgId,
+        firstname: person.firstname,
+        lastname: person.lastname,
+        email: person.email,
+        phone: person.phone,
+        birthday: fx.birthdayStr(person.birthday),
+        group_id: (person.group == null) ? "0" : person.group.id,
+        gender: (person.gender == 'Male') ? 'M' : 'F'
+    }
+
+    try {
+        var { data } = await server.saveNewMember(obj)
+        if (data == 0) {
+            err.email = 'email already exists.'
+            isSaving.value = false
+        }
+        else {
+            Object.assign(person, initForm);
+            isSaving.value = false
+            emit('closeModal')
+            emit('saved')
+        }
+
+    } catch (error) {
+        console.log(error);
+        isSaving.value = false
+    }
+
+}
+
 </script>
 
 <style>
@@ -159,5 +230,20 @@ function checkForm() {
 .dp__overlay_action,
 .dp__button_bottom {
     display: none;
+}
+
+.dp__range_end,
+.dp__range_start,
+.dp__active_date,
+.dp__overlay_cell_active {
+    background: #03787c;
+}
+
+.formError {
+    border: 1px solid var(--bs-danger);
+}
+
+small {
+    font-size: 12px;
 }
 </style>

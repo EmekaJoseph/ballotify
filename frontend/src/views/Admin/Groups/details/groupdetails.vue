@@ -6,14 +6,13 @@
                     <i class="bi bi-arrow-left"></i> back
                 </button>
             </div>
-            <i class="bi bi-folder"></i> {{ group.name }}
+            <i class="bi bi-folder"></i> {{ group.name }} group
         </h4>
 
         <div class="card-body">
             <div class="row gy-3">
                 <tableComp :data="membersList()" />
-                <settingComp :name="group.name" @delete="deleteGroup" @rename="renameGroup" />
-                <notify ref="toast" />
+                <settingComp :name="group.name" :name_bk="group.name" @delete="deleteGroup" @rename="renameGroup" />
             </div>
         </div>
     </div>
@@ -63,12 +62,9 @@ async function getGroupDetails() {
     }
 }
 
-const toast = ref<any>(null)
-
 async function deleteGroup() {
     let hasMembers = group.members.some((x: { group_id: string }) => x.group_id == group.id)
     if (hasMembers) {
-        // toast.value.showToast('Can not delete, group is not empty', 'danger');
         Swal.fire({
             title: '',
             text: "Group not empty",

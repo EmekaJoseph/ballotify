@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 
-export const useAdminStore = defineStore({
-    id: "admin",
+export const useAdminStore = defineStore('admin', {
+    // id: "admin",
     state: () => ({
         localStore: '',
         signedIn: (localStorage.getItem('ballotify-admin') == null) ? false : true,

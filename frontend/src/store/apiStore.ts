@@ -20,6 +20,8 @@ export default {
     },
 
 
+
+
     // init
     registerNew(obj: string) {
         return bus.post('/registerNew/' + obj)
@@ -27,6 +29,8 @@ export default {
     login(obj: object) {
         return bus.post('/login', obj)
     },
+
+
 
 
     //user/admin
@@ -37,6 +41,7 @@ export default {
     updateUser(obj: object) {
         return bus.post('/updateUser', obj)
     },
+
 
 
     // org
@@ -60,13 +65,26 @@ export default {
         let data: object = { id: id, org_id: org_id }
         return bus.post('/getGroupDetails', data)
     },
-
     deleteGroup(org_id: string, id: any) {
         let data: object = { id: id, org_id: org_id }
         return bus.post('/deleteGroup', data)
     },
-
     renameGroup(obj: any) {
         return bus.post('/renameGroup', obj)
-    }
+    },
+
+
+
+
+    // members
+    saveNewMember(obj: any) {
+        return bus.post('/saveNewMember', obj)
+    },
+    getMembers(org_id: string) {
+        return bus.post('/getMembers/' + org_id)
+    },
+    deleteMember(org_id: string, id: any) {
+        let data: object = { id: id, org_id: org_id }
+        return bus.post('/deleteMember', data)
+    },
 }

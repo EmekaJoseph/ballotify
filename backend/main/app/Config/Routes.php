@@ -59,6 +59,15 @@ $routes->add('/getGroupDetails', 'Admin\GroupsController::getGroupDetails');
 $routes->add('/deleteGroup', 'Admin\GroupsController::deleteGroup');
 $routes->add('/renameGroup', 'Admin\GroupsController::renameGroup');
 
+
+// members
+$routes->add('/saveNewMember', 'Admin\MembersController::saveNewMember');
+$routes->add('/getMembers/(:any)', 'Admin\MembersController::getMembers/$1');
+$routes->add('/deleteMember', 'Admin\MembersController::deleteMember');
+
+
+
+
 /*
  * --------------------------------------------------------------------
  * Additional Routing

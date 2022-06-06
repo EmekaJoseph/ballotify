@@ -10,11 +10,13 @@
                                 <div class="row g-3">
                                     <div class="col-md-12">
                                         <label>Edit name</label>
-                                        <input v-model="name" type="text" class="form-control">
+                                        <input @input="watchInput" v-model="name" type="text" class="form-control">
                                         <small v-if="nameErr" class="text-danger">{{ nameErr }}</small>
                                     </div>
                                     <div class="col-md-12">
-                                        <button @click.prevent="sendName" class="btn-lg customBtn w-100">Change</button>
+                                        <button @click.prevent="sendName"
+                                            class="btn btn-outline-secondary btn-lg  w-100"
+                                            :disabled="!isInput">Change</button>
                                     </div>
                                 </div>
                             </form>
@@ -42,15 +44,28 @@
     </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import Swal from 'sweetalert2'
 import { ref } from 'vue';
-const prop = defineProps({
-    name: {
-        type: String,
-        default: ''
-    },
+
+interface Props {
+    name: string,
+    name_bk: string
+}
+
+const prop = withDefaults(defineProps<Props>(), {
+    name: 'name',
+    name_bk: 'name'
 })
+
+
+
+const isInput = ref<boolean>(false)
+function watchInput() {
+    if ((prop.name.toLowerCase() == prop.name_bk.toLowerCase())
+        || !prop.name.length) isInput.value = false
+    else isInput.value = true
+}
 
 const nameErr = ref('')
 const emit = defineEmits(['delete', 'rename'])
@@ -66,7 +81,6 @@ function sendName() {
             emit('rename', prop.name)
         }
     }
-
 }
 
 function deleteGroup() {
