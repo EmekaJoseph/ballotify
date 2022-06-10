@@ -89,4 +89,18 @@ class GroupsController extends BaseController
         }
         return $this->response->setJSON($val);
     }
+
+
+
+
+
+
+
+
+    function countGroupsInOrg($org_id)
+    {
+        $table = new GroupsModel();
+        $dataSize = $table->where('org_id', $org_id)->countAllResults();
+        return ($dataSize);
+    }
 }

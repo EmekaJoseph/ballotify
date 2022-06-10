@@ -29,7 +29,7 @@
 </template>
 
 <script lang="ts" setup>
-import { reactive, ref, inject } from 'vue'
+import { ref, inject } from 'vue'
 import newUserForm from './newUserComponent.vue'
 import newOrgForm from './newOrgComponent.vue'
 import userStore from '../user-data'

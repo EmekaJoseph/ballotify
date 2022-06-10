@@ -4,9 +4,26 @@ namespace App\Controllers\Admin;
 
 use App\Controllers\BaseController;
 use App\Models\OrgModel;
+use App\Controllers\Admin\MembersController as Member;
+use App\Controllers\Admin\GroupsController as Group;
 
 class OrgController extends BaseController
 {
+    public function getOverview($org_id)
+    {
+        $membersCount = (new Member)->countMembersInOrg($org_id);
+        $groupsCount = (new Group)->countGroupsInOrg($org_id);
+        $birthdays = (new Member)->getBirthdays($org_id);
+
+        $data2 = array(
+            'members' => $membersCount,
+            'groups' => $groupsCount,
+            'birthdays' => $birthdays
+        );
+        return $this->response->setJSON($data2);
+    }
+
+
     public function getOrgDetails($org_id)
     {
         $orgTable = new OrgModel();
@@ -36,6 +53,9 @@ class OrgController extends BaseController
         $table->save($data);
         return $this->response->setJSON(1);
     }
+
+
+
 
     function orgIdExists($id)
     {

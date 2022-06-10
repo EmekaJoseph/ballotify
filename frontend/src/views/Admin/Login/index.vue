@@ -8,33 +8,43 @@
         </nav>
         <transition name="xSlide" mode="out-in">
             <LoginForm v-if="formShowing == 'login'" @switch-form="switchTo" />
-            <SignUpForm v-else @switch-form="switchTo" @error="showErrorToast" @success="state.regSuccess = true" />
+            <SignUpForm v-else @switch-form="switchTo" @error="showErrorToast" @success="showSuccessToast" />
         </transition>
-        <notify ref="toast" />
-        <reg-success v-if="state.regSuccess" @clicked="state.regSuccess = false" />
     </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, inject } from 'vue'
-import LoginForm from './loginForm'
-import SignUpForm from './signupForm'
-import regSuccess from './regSuccessModal.vue'
-import userStore from './user-data'
-const { cc1, cc2, ccThk, ccBg, ccBtnH } = inject("c$");
-
-const state = userStore.state
-
+import LoginForm from './loginForm/index.vue'
+import SignUpForm from './signupForm/index.vue'
+import Swal from 'sweetalert2'
+const { cc1, cc2, ccThk, ccBg, ccBtnH }: any = inject("c$");
 
 const formShowing = ref('login')
 function switchTo(name) {
     formShowing.value = name
 }
 
-
-const toast = ref(null)
 function showErrorToast() {
-    toast.value.showToast('Sorry error occoured, try again', 'danger');
+    Swal.fire({
+        toast: true,
+        icon: 'error',
+        title: 'Sorry error occoured, try again',
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: false,
+    })
+}
+
+function showSuccessToast() {
+    Swal.fire({
+        icon: 'success',
+        title: 'Registration Successful',
+        text: 'Continue to login',
+        confirmButtonColor: '#03787c',
+        confirmButtonText: 'Continue'
+    })
 }
 
 </script>

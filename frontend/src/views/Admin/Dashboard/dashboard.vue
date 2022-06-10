@@ -13,29 +13,60 @@
         <div class="mt-4">
             <div class="row justify-content-center gy-3">
                 <recents :data="recentsTable" />
-                <calender :data="recentsTable" />
+                <calender :days="birthdaysFormatted()" />
             </div>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, inject } from 'vue'
-import server from '@/store/apiStore.js'
+import { onMounted, ref, reactive } from 'vue'
+import server from '@/store/apiStore'
 import useFunc from '@/store/useFunction'
+import { useAdminStore } from '@/store/user/admin'
+
 import infoCard from './infoCardComponent.vue'
 import recents from './recentsComponent.vue'
 import calender from './calenderComponent.vue'
-const { cc1, cc2, ccThk, ccBg, ccBtnH }: any = inject("c$");
+
 const spell = useFunc.fx.spell
 
+const orgId = useAdminStore().getData.org_id
+
 const recentsTable = ref([])
-const iRates = ref({
+const birthdays = ref([])
+const iRates = reactive({
     Member: 0,
     Group: 0,
     Event: 0,
     Message: 0
 })
+
+const birthdaysFormatted: any = () => {
+    let bds = birthdays.value
+    let newArr = <any>[]
+    bds.forEach((x: string) => {
+        let appended = x + '-' + (new Date()).getFullYear()
+        newArr.push(new Date(appended));
+    })
+    return newArr
+}
+
+
+
+onMounted(async () => {
+    try {
+        var { data } = await server.getOverview(orgId)
+        if (data) {
+            iRates.Member = data.members
+            iRates.Group = data.groups
+            birthdays.value = data.birthdays
+        }
+    } catch (error) {
+        console.log(error);
+    }
+})
+
 
 </script>
 

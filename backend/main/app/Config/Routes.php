@@ -45,6 +45,10 @@ $routes->add('/registerNew/(:any)', 'Admin\SignupController::registerNew/$1');
 //admin login
 $routes->add('/login', 'Admin\LoginController::login');
 
+
+// overview-dashboard
+$routes->add('/getOverview/(:any)', 'Admin\OrgController::getOverview/$1');
+
 //settings
 $routes->add('/getOrgDetails/(:any)', 'Admin\OrgController::getOrgDetails/$1');
 $routes->add('/getUserDetails', 'Admin\UserController::getUserDetails');
@@ -64,6 +68,7 @@ $routes->add('/renameGroup', 'Admin\GroupsController::renameGroup');
 $routes->add('/saveNewMember', 'Admin\MembersController::saveNewMember');
 $routes->add('/getMembers/(:any)', 'Admin\MembersController::getMembers/$1');
 $routes->add('/deleteMember', 'Admin\MembersController::deleteMember');
+$routes->add('/updateMember', 'Admin\MembersController::updateMember');
 
 
 

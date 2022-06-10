@@ -43,6 +43,25 @@ class MembersController extends BaseController
     }
 
 
+
+    public function updateMember()
+    {
+        $table = new MembersModel();
+        $data = [
+            'id' => $this->request->getVar('id'),
+            'firstname' => $this->request->getVar('firstname'),
+            'lastname' => $this->request->getVar('lastname'),
+            'phone' => $this->request->getVar('phone'),
+            'birthday' => $this->request->getVar('birthday'),
+            'group_id' => $this->request->getVar('group_id'),
+            'gender' => $this->request->getVar('gender'),
+        ];
+        $table->save($data);
+        return $this->response->setJSON(1);
+    }
+
+
+
     public  function deleteMember()
     {
         try {
@@ -61,8 +80,26 @@ class MembersController extends BaseController
 
 
 
+    function countMembersInOrg($org_id)
+    {
+        $table = new MembersModel();
+        $membersSize = $table->where('org_id', $org_id)->countAllResults();
+        return ($membersSize);
+    }
 
 
+    function getBirthdays($org_id)
+    {
+        $table = new MembersModel();
+        $members = $table->where('org_id', $org_id)->findAll();
+        $val = array();
+        if (sizeof($members) > 0) {
+            foreach ($members as $mem) {
+                array_push($val, $mem['birthday']);
+            }
+        }
+        return ($val);
+    }
 
 
     function getGroupsCount($org_id)

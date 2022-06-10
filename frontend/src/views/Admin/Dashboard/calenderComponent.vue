@@ -15,25 +15,32 @@
     </div>
 </template>
 
-<script setup>
-import { onMounted, ref, inject, computed } from 'vue'
+<script setup lang="ts">
+import { computed } from 'vue'
 import { useNow, useDateFormat } from '@vueuse/core'
-const { cc1, cc2, ccThk, ccBg, ccBtnH } = inject("c$");
 
-const days = ref([new Date('2022-06-01'), new Date('2022-06-24'), new Date()])
+const prop = defineProps({
+    days: {
+        type: Array,
+        default: []
+    }
+})
+
 const attributes = computed(() => {
-    return days.value.map(date => ({
+    return prop.days.map(date => ({
         highlight: {
             color: 'orange',
             fillMode: 'solid',
         },
         dates: date,
     }));
+
 })
 
 
 const dateFormat = useDateFormat(useNow(), 'DD-MM-YYYY')
-function onDayClick(day) {
+function onDayClick(day: Date) {
+    console.log(day);
 }
 
 </script>

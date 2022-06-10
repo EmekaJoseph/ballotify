@@ -1,13 +1,15 @@
 <template>
     <div>
-        <div class="modal fade" id="newMemberModal" data-backdrop="static" data-keyboard="false" tabindex="-1"
-            aria-hidden="true">
+        <div class="modal fade show" data-backdrop="static" data-keyboard="false" tabindex="-1">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content border-0">
-                    <div class="modal-header"> New member
+                    <div class="modal-header">
+                        <span class="text-white">
+                            <i class="bi bi-person-fill"></i>
+                            {{ person.firstname + ' ' + person.lastname }}
+                        </span>
                         <span class="float-end">
-                            <button ref="btnX" class="btn btn-close btn-close-white" data-bs-dismiss="modal"
-                                aria-label="Close"></button>
+                            <button @click="emit('close')" class="btn btn-close btn-close-white"></button>
                         </span>
                     </div>
                     <div class="modal-body p-sm-4">
@@ -27,11 +29,9 @@
                                     <small class="text-danger">{{ err.lastname }}</small>
                                 </div>
                                 <div class="col-sm-6">
-                                    <label>email:</label> <span class="text-danger">*</span><small class="text-muted">
-                                        valid email</small>
-                                    <input :class="{ 'formError': err.email }" v-model="person.email" type="text"
-                                        class="form-control w-100">
-                                    <small class="text-danger">{{ err.email }}</small>
+                                    <label>email:</label>
+                                    <input disabled :class="{ 'formError': err.email }" v-model="person.email"
+                                        type="text" class="form-control w-100">
                                 </div>
                                 <div class="col-sm-6">
                                     <label>phone: <span class="text-danger">*</span></label>
@@ -41,11 +41,10 @@
                                 </div>
 
                                 <div class="col-sm-6">
-                                    <label>birthday: <span class="text-danger">*</span></label>
+                                    <label>birthday: </label>
                                     <Datepicker :class="{ 'formError': err.birthday }" hideOffsetDates :format="format"
                                         :flow="flow" v-model="person.birthday" :enableTimePicker="false"
                                         :clearable="false" placeholder="birthday" autoApply />
-                                    <small class="text-danger">{{ err.birthday }}</small>
                                 </div>
                                 <div class="col-sm-6">
                                     <label>gender:</label>
@@ -56,18 +55,21 @@
                                     <label>group:</label>
                                     <v-select v-model="person.group" placeholder="none" class="vSelect"
                                         :options="groups" />
-                                    <button type="button" data-bs-toggle="modal" data-bs-target="#newGroupModal"
+                                    <!-- <button @click.prevent="grpModalOpen = true"
                                         class="float-end text-decoration-none btn-sm ms-2 btn btn-link px-3">
                                         <i class="bi bi-plus-circle-dotted"></i> create new group?
-                                    </button>
+                                    </button> -->
                                 </div>
 
                                 <div>
                                     <span class="mt-2">
-                                        <div class="col-md-12">
-                                            <button @click.prevent="checkForm" class="customBtn btn-lg w-100"><i
+                                        <div class="col-md-12 mt-4">
+                                            <button v-if="isEditing" @click.prevent="checkForm"
+                                                class="customBtn btn-lg w-100"><i class="bi bi-save2"></i>&nbsp;
+                                                Update</button>
+                                            <button v-else disabled class="btn btn-secondary btn-lg w-100"><i
                                                     class="bi bi-save2"></i>&nbsp;
-                                                Save</button>
+                                                Update</button>
                                         </div>
                                     </span>
                                 </div>
@@ -78,50 +80,43 @@
                 </div>
             </div>
         </div>
-        <newGroupModal @added="re_getGroupNames" />
+        <!-- <newGroupModal v-if="grpModalOpen" @added="re_getGroupNames" @close-modal="grpModalOpen = false" /> -->
     </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, inject, reactive } from 'vue';
+import { ref, reactive, watch } from 'vue';
 import { useAdminStore } from '@/store/user/admin'
 import server from '@/store/apiStore'
 import useFunc from '@/store/useFunction'
-import newGroupModal from '@/views/Admin/Groups/newGroupModalComponent.vue'
+// import newGroupModal from '@/views/Admin/Groups/newGroupModalComponent.vue'
 import { newMemberInterface } from '@/types'
+import { membersData } from './members-data';
+import { storeToRefs } from 'pinia'
 import Swal from 'sweetalert2'
 
-onMounted(() => {
-    getGroupNames()
-})
+const mStore = membersData()
+const { groups }: any = storeToRefs(mStore)
 
 
-const { cc1, cc2, ccThk, ccBg, ccBtnH }: any = inject("c$");
+interface Props {
+    id: string,
+}
+const prop = defineProps<Props>()
+
+let data: any = mStore.memberQuery(prop.id)
+
 const orgId = useAdminStore().getData.org_id
-const emit = defineEmits(["newGroup", "saved"]);
+const emit = defineEmits(["close", "saved"]);
 const fx = useFunc.fx
 
-
-async function getGroupNames() {
-    try {
-        var { data } = await server.getGroupNames(orgId)
-        if (data) {
-            let grp = data.groups;
-            groups.value = grp.map((x: { id: string; group_name: string; }) => ({ id: x.id, label: x.group_name }))
-        }
-    } catch (error) {
-        console.log(error);
-    }
-}
-
 async function re_getGroupNames() {
-    emit('newGroup')
-    await getGroupNames()
+    await mStore.getGroupNames(orgId)
     person.group = groups.value[groups.value.length - 1]
 }
 
 
-const groups = ref([])
+const grpModalOpen = ref(false)
 
 // date picker
 const flow = ref(['month', 'calendar']);
@@ -133,13 +128,13 @@ const format = (date: Date) => {
 
 
 const initForm: newMemberInterface = reactive({
-    firstname: '',
-    lastname: '',
-    email: '',
-    phone: '',
-    birthday: new Date(),
-    gender: 'Male',
-    group: { id: '0', label: 'none' },
+    firstname: data.firstname,
+    lastname: data.lastname,
+    email: data.email,
+    phone: data.phone,
+    birthday: new Date(data.birthday + '-2022'),
+    gender: data.gender == 'M' ? 'Male' : 'Female',
+    group: data.group,
     err: {
         firstname: '',
         lastname: '',
@@ -163,22 +158,23 @@ function checkForm() {
     Object.assign(err, initForm.err);
     if (person.firstname == '') { showError('firstname'); return }
     if (person.lastname == '') { showError('lastname'); return }
-    if (person.email == '') { showError('email'); return }
     if (person.phone == '') { showError('phone'); return }
-    if (!(fx.emailIsOk(person.email))) { err.email = 'invalid email'; return }
-    saveNewMember()
+    updateMember()
 }
 
-const btnX: any = ref(null)
+
+const isEditing = ref(false)
+watch(person, () => {
+    isEditing.value = true
+})
 
 const isSaving = ref<boolean>(false)
-async function saveNewMember() {
+async function updateMember() {
     isSaving.value = true
     let obj = {
-        org_id: orgId,
+        id: prop.id,
         firstname: person.firstname,
         lastname: person.lastname,
-        email: person.email,
         phone: person.phone,
         birthday: fx.birthdayStr(person.birthday),
         group_id: (person.group == null) ? "0" : person.group.id,
@@ -186,42 +182,26 @@ async function saveNewMember() {
     }
 
     try {
-        var { data } = await server.saveNewMember(obj)
-        if (data == 0) {
-            err.email = 'email already exists.'
+        var { data } = await server.updateMember(obj)
+        if (data == 1) {
             isSaving.value = false
-        }
-        else {
-            Object.assign(person, initForm);
-            isSaving.value = false
+            emit('close')
             emit('saved')
-            askToContinue()
+            Swal.fire({
+                toast: true,
+                icon: 'success',
+                title: 'Updated',
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: false,
+            })
         }
-
     } catch (error) {
         console.log(error);
         isSaving.value = false
     }
 
-}
-
-function askToContinue() {
-    Swal.fire({
-        title: 'Added Successfully',
-        text: "Do you want to add AGAIN?",
-        icon: 'success',
-        showCancelButton: true,
-        confirmButtonColor: '#03787c',
-        cancelButtonColor: '#767676',
-        confirmButtonText: 'Continue adding'
-    }).then((result) => {
-        if (result.isConfirmed) {
-
-        }
-        else {
-            btnX.value.click()
-        }
-    })
 }
 
 function replace(e) {
@@ -233,6 +213,11 @@ function replace(e) {
 </script>
 
 <style scoped>
+.modal {
+    display: block;
+    background-color: #11111144;
+}
+
 .vSelect .vs__dropdown-toggle {
     height: 37px;
 }

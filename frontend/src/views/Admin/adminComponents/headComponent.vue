@@ -2,7 +2,7 @@
     <div>
         <nav class="navbar navbar-light fixed-top shadow-sm">
             <div class="container-fluid">
-                <span><b>Admin</b> | {{ route.name }}</span>
+                <span><b>Admin</b> <span class="d-md-none">| {{ route.name }}</span></span>
                 <!-- <div class="inputSearch d-none d-md-block">
                     <input type="text" class=" form-control form-control-sm" placeholder="search.." style="width:250px">
                     <span class="icon">
@@ -16,6 +16,11 @@
                         <i class="bi bi-chevron-down"></i>
                     </a>
                     <ul class="dropdown-menu fade-up" aria-labelledby="accountDrop">
+                        <li class="text-muted">
+                            <a class="dropdown-item" href="#help" data-bs-toggle="modal" data-bs-target="#helpModal">
+                                <i class="bi bi-question-circle"></i>&nbsp;&nbsp;Help
+                            </a>
+                        </li>
                         <li>
                             <router-link class="dropdown-item" to="/account/settings">
                                 <i class="bi bi-gear-wide"></i>&nbsp;&nbsp;settings
@@ -37,14 +42,16 @@
                 </nav>
             </div>
         </nav>
+        <helpModal />
     </div>
 </template>
 
 <script setup>
 
-import { inject, ref, onMounted, reactive } from 'vue'
+import { inject, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAdminStore } from '@/store/user/admin'
+import helpModal from './helpModalComponent.vue'
 import { storeToRefs } from 'pinia'
 
 const router = useRouter()
@@ -109,7 +116,7 @@ function logOut() {
 
 .dropdown-menu :is(a, i) {
     color: #2c3e50;
-    margin-block: 9px;
+    margin-block: 7px;
 }
 
 .dropdown-item:hover {

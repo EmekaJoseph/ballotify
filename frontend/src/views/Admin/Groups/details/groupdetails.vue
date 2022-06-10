@@ -2,11 +2,11 @@
     <div class="card">
         <h4 class="px-3 pt-3 fw-bold text-capitalize">
             <div class="d-none d-md-inline">
-                <button @click="router.go(-1)" class="btn btn-link text-info text-decoration-none">
+                <button @click="router.go(-1)" class="btn btn-link text-decoration-none">
                     <i class="bi bi-arrow-left"></i> back
                 </button>
             </div>
-            <i class="bi bi-folder"></i> {{ group.name }} group
+            <i class="bi bi-folder"></i> {{ group.name }}
         </h4>
 
         <div class="card-body">
@@ -66,13 +66,13 @@ async function deleteGroup() {
     let hasMembers = group.members.some((x: { group_id: string }) => x.group_id == group.id)
     if (hasMembers) {
         Swal.fire({
-            title: '',
-            text: "Group not empty",
+            toast: true,
             icon: 'error',
+            title: 'Group not empty',
+            position: 'top-end',
             showConfirmButton: false,
-            timer: 1500,
-            width: 350,
-            padding: '3em',
+            timer: 3000,
+            timerProgressBar: false,
         })
         return false
     }
@@ -81,13 +81,13 @@ async function deleteGroup() {
             var { data } = await server.deleteGroup(orgId, group.id);
             if (data == 1) {
                 Swal.fire({
-                    title: '',
-                    text: `'${group.name}' deleted`,
+                    toast: true,
                     icon: 'success',
+                    title: `'${group.name}' deleted`,
+                    position: 'top-end',
                     showConfirmButton: false,
-                    timer: 1000,
-                    width: 350,
-                    padding: '3em',
+                    timer: 3000,
+                    timerProgressBar: false,
                 })
                 router.push({ name: 'Groups' })
             }
@@ -124,13 +124,13 @@ async function renameGroup(name: string) {
         }
         else {
             Swal.fire({
-                title: '',
-                text: `${group.name} changed to '${name}'`,
+                toast: true,
                 icon: 'success',
+                title: `Renamed to '${name}'`,
+                position: 'top-end',
                 showConfirmButton: false,
-                timer: 1200,
-                width: 350,
-                padding: '3em',
+                timer: 3000,
+                timerProgressBar: false,
             })
             getGroupDetails()
         }

@@ -16,9 +16,6 @@
 </template>
 
 <script setup>
-import { inject } from 'vue'
-const { cc1, cc2, ccThk, ccBg, ccBtnH } = inject("c$");
-
 const props = defineProps({
     name: String,
     rate: Number,
@@ -28,7 +25,6 @@ const props = defineProps({
 
 const color = props.color
 const bgColor = props.color + '09'
-
 
 </script>
 

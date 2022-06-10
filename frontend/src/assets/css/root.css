@@ -160,6 +160,12 @@ label {
     color: inherit;
 }
 
+.actnbtn:hover {
+    background-color: #eee;
+}
+
+
+
 /* custom loader */
 .c-loader {
     width: 2rem;
@@ -227,7 +233,6 @@ label {
 }
 
 /* end of transition */
-
 
 
 

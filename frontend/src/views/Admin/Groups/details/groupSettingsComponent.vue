@@ -85,7 +85,7 @@ function sendName() {
 
 function deleteGroup() {
     Swal.fire({
-        title: 'Delete this group?',
+        title: 'Confirm Delete?',
         text: "You won't be able to revert this!",
         icon: 'warning',
         showCancelButton: true,

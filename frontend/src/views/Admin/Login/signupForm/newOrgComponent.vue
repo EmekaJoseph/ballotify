@@ -42,9 +42,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, inject } from 'vue'
 import userStore from '../user-data'
-const { cc1, cc2, ccThk, ccBg, ccBtnH }: any = inject("c$");
 const emit = defineEmits(["back", 'done', "error"]);
 
 const userMthds = userStore.methods

@@ -1,11 +1,13 @@
 <template>
     <div>
-        <div class="modal fade show" data-backdrop="static" data-keyboard="false" tabindex="-1">
+        <div class="modal fade" id="newGroupModal" data-backdrop="static" data-keyboard="false" tabindex="-1"
+            aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered modal-sm">
                 <div class="modal-content">
                     <div class="modal-header"> New Group
                         <span class="float-end">
-                            <button @click="emit('closeModal')" class="btn btn-close btn-close-white"></button>
+                            <button ref="btnX" class="btn btn-close btn-close-white" data-bs-dismiss="modal"
+                                aria-label="Close"></button>
                         </span>
                     </div>
                     <div class="modal-body p-sm-4">
@@ -39,7 +41,7 @@
 import { reactive, ref } from 'vue';
 import { useAdminStore } from '@/store/user/admin'
 import server from '@/store/apiStore'
-const emit = defineEmits(["closeModal", "added"]);
+const emit = defineEmits(["added"]);
 
 
 const orgId = useAdminStore().getData.org_id
@@ -49,6 +51,7 @@ const group = reactive({
     error: '',
     isSaving: false
 })
+const btnX = ref(null)
 function checkForm() {
     group.error = ''
     if (!group.name || group.name.length < 3) {
@@ -69,8 +72,8 @@ async function saveName() {
         var { data } = await server.saveNewGroup(obj)
         if (data == 1) {
             group.isSaving = false
+            btnX.value.click()
             emit('added')
-            emit('closeModal')
         }
         else {
             group.isSaving = false
@@ -85,8 +88,4 @@ async function saveName() {
 </script>
 
 <style>
-.modal {
-    display: block;
-    background-color: #11111144;
-}
 </style>

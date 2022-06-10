@@ -10,15 +10,21 @@ const bus = axios.create({
 
 
 export default {
+
+    // overview
+    getOverview(org_id: string) {
+        return bus.post('/getOverview/' + org_id)
+    },
+
+
+
     // checks
     checkIfEmailExists(email: string) {
         return bus.post('/checkIfEmailExists/' + email)
     },
-
     checkIfOrgExists(name: string) {
         return bus.post('/checkIfOrgExists/' + name)
     },
-
 
 
 
@@ -86,5 +92,8 @@ export default {
     deleteMember(org_id: string, id: any) {
         let data: object = { id: id, org_id: org_id }
         return bus.post('/deleteMember', data)
+    },
+    updateMember(obj: any) {
+        return bus.post('/updateMember', obj)
     },
 }

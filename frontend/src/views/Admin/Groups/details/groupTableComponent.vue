@@ -40,12 +40,12 @@
                                 <td class="text-capitalize">{{ val.firstname + ' ' + val.lastname }}</td>
                                 <td>{{ val.gender }}</td>
                                 <td>
-                                    <button class="m-0 p-0 btn btn-sm text-primary">
+                                    <button class="m-0 p-1 btn btn-sm text-primary actnbtn">
                                         <i class="bi bi-folder-symlink"></i> Move to..
                                     </button>
                                 </td>
                                 <td>
-                                    <button class="m-0 p-0 btn btn-sm text-danger">
+                                    <button class="m-0 p-1 btn btn-sm text-danger small actnbtn">
                                         <i class="bi bi-folder-minus"></i> Remove
                                     </button>
                                 </td>

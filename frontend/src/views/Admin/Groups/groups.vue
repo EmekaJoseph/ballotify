@@ -1,12 +1,12 @@
 <template>
     <div>
         <div class="card" style="min-height: 100vh">
-            <div class="card-header">Groups:<span class="badge rounded-pill bg-light text-dark">{{ groupList.length
+            <div class="card-header">List:<span class="badge rounded-pill bg-light text-dark">{{ groupList.length
             }}</span>
             </div>
             <div class="card-body p-lg-4">
                 <div class="row g-3">
-                    <div class="col-4 col-md-4 col-lg-2" @click="ifAddModal = true">
+                    <div class="col-4 col-md-4 col-lg-2" data-bs-toggle="modal" data-bs-target="#newGroupModal">
                         <div class="card groupCard groupCardAdd">
                             <div class="group-content">
                                 <i class="bi bi-folder-plus bi-lg text-white"></i>
@@ -19,7 +19,7 @@
                         <div class="card groupCard" @click="showThisGroup(g.id)">
                             <div class="group-content">
                                 <i v-if="numInGrp(g.id) > 0" class="bi bi-folder-fill bi-lg"></i>
-                                <i v-else class="bi bi-folder bi-lg"></i>
+                                <i v-else class="bi bi-folder2-open bi-lg"></i>
                                 <div class="group-name text-center">{{ g.group_name }}</div>
                                 <small class="info-text text-muted">
                                     {{ numInGrp(g.id) }} {{ spell('member', numInGrp(g.id)) }}
@@ -31,9 +31,7 @@
                 </div>
             </div>
         </div>
-        <transition name="ySlide" mode="out-in">
-            <newGroupModal v-if="ifAddModal" @closeModal="ifAddModal = false" @added="re_getGroupNames" />
-        </transition>
+        <newGroupModal @added="re_getGroupNames" />
     </div>
 </template>
 
@@ -47,7 +45,6 @@ import useFunc from '@/store/useFunction'
 const spell = useFunc.fx.spell
 const { cc1, cc2, ccThk, ccBg, ccBtnH }: any = inject("c$");
 const orgId = useAdminStore().getData.org_id
-const ifAddModal = ref(false)
 const groupList = ref<any>([])
 const groupsCount = ref<any>(null)
 
