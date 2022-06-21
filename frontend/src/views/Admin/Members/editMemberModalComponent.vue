@@ -55,10 +55,6 @@
                                     <label>group:</label>
                                     <v-select v-model="person.group" placeholder="none" class="vSelect"
                                         :options="groups" />
-                                    <!-- <button @click.prevent="grpModalOpen = true"
-                                        class="float-end text-decoration-none btn-sm ms-2 btn btn-link px-3">
-                                        <i class="bi bi-plus-circle-dotted"></i> create new group?
-                                    </button> -->
                                 </div>
 
                                 <div>
@@ -80,7 +76,6 @@
                 </div>
             </div>
         </div>
-        <!-- <newGroupModal v-if="grpModalOpen" @added="re_getGroupNames" @close-modal="grpModalOpen = false" /> -->
     </div>
 </template>
 
@@ -89,13 +84,12 @@ import { ref, reactive, watch } from 'vue';
 import { useAdminStore } from '@/store/user/admin'
 import server from '@/store/apiStore'
 import useFunc from '@/store/useFunction'
-// import newGroupModal from '@/views/Admin/Groups/newGroupModalComponent.vue'
 import { newMemberInterface } from '@/types'
-import { membersData } from './members-data';
+import { dataStore } from '@/store/dataStore';
 import { storeToRefs } from 'pinia'
 import Swal from 'sweetalert2'
 
-const mStore = membersData()
+const mStore = dataStore()
 const { groups }: any = storeToRefs(mStore)
 
 
@@ -116,7 +110,6 @@ async function re_getGroupNames() {
 }
 
 
-const grpModalOpen = ref(false)
 
 // date picker
 const flow = ref(['month', 'calendar']);
@@ -190,7 +183,7 @@ async function updateMember() {
             Swal.fire({
                 toast: true,
                 icon: 'success',
-                title: 'Updated',
+                title: 'Record Updated',
                 position: 'top-end',
                 showConfirmButton: false,
                 timer: 3000,

@@ -61,6 +61,25 @@ class MembersController extends BaseController
     }
 
 
+    public function updateMembersGroup($data)
+    {
+        $table = new MembersModel();
+        $enco = json_decode($data);
+        $dataToSave = array();
+        foreach ($enco as $objects) {
+            array_push($dataToSave, (object)[
+                'id' =>  $objects->id,
+                'group_id' =>  $objects->group_id,
+            ]);
+        }
+        $table->updateBatch($dataToSave, 'id');
+        return $this->response->setJSON(1);
+    }
+
+
+
+
+
 
     public  function deleteMember()
     {

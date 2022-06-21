@@ -9,11 +9,27 @@
         <offcanvas />
     </div>
 </template>
-<script setup>
-import { inject } from 'vue'
+<script setup lang="ts">
+import { inject, onMounted } from 'vue'
 import offcanvas from './adminComponents/offCanvasComponent.vue'
 import sideBarComponent from './adminComponents/sideBarComponent.vue'
-const ccBg = inject("c$").ccBg.value;
+
+import { useAdminStore } from '@/store/user/admin'
+import { dataStore } from '@/store/dataStore';
+const orgId = useAdminStore().getData.org_id
+const mStore = dataStore()
+
+onMounted(() => {
+    loadData()
+})
+
+function loadData() {
+    mStore.getMembers(orgId)
+    mStore.getGroupNames(orgId)
+}
+
+const { ccBg }: any = inject("c$")
+
 </script>
 
 <style scoped>

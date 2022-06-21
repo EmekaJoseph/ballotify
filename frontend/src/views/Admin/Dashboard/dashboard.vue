@@ -1,5 +1,8 @@
 <template>
     <div>
+        <div v-if="networkError" class="alert alert-danger py-2 border-0" role="alert">
+            <i class=" bi bi-wifi-off"></i> <b>App not connected, </b> please check your internet and refresh.
+        </div>
         <div class="fw-bold mb-2">Overview:</div>
         <div class="row justify-content-center gy-3">
             <infoCard :name="spell('Member', iRates.Member)" icon="bi-people" color="#BD6C13" :rate="iRates.Member" />
@@ -54,6 +57,7 @@ const birthdaysFormatted: any = () => {
 
 
 
+const networkError = ref(false)
 onMounted(async () => {
     try {
         var { data } = await server.getOverview(orgId)
@@ -62,8 +66,10 @@ onMounted(async () => {
             iRates.Group = data.groups
             birthdays.value = data.birthdays
         }
+        networkError.value = false
     } catch (error) {
         console.log(error);
+        networkError.value = true
     }
 })
 

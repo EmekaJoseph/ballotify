@@ -1,7 +1,10 @@
 <template>
     <div>
+        <div v-if="mStore.internetError" class="alert alert-danger py-2 border-0" role="alert">
+            <i class=" bi bi-wifi-off"></i> <b>App not connected, </b> please check your internet and refresh.
+        </div>
         <div class="card" style="min-height: 100vh">
-            <div class="card-header">List:<span class="badge rounded-pill bg-light text-dark">{{ groupList.length
+            <div class="card-header">Groups:<span class="badge rounded-pill bg-light text-dark">{{ groups.length
             }}</span>
             </div>
             <div class="card-body p-lg-4">
@@ -15,12 +18,12 @@
                             </div>
                         </div>
                     </div>
-                    <div v-for="(g, i) in  groupList" :key="g.id" class="col-4 col-md-4 col-lg-2">
+                    <div v-for="(g, i) in  groups" :key="g.id" class="col-4 col-md-4 col-lg-2">
                         <div class="card groupCard" @click="showThisGroup(g.id)">
                             <div class="group-content">
                                 <i v-if="numInGrp(g.id) > 0" class="bi bi-folder-fill bi-lg"></i>
                                 <i v-else class="bi bi-folder2-open bi-lg"></i>
-                                <div class="group-name text-center">{{ g.group_name }}</div>
+                                <div class="group-name text-center">{{ g.name }}</div>
                                 <small class="info-text text-muted">
                                     {{ numInGrp(g.id) }} {{ spell('member', numInGrp(g.id)) }}
                                 </small>
@@ -36,46 +39,28 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject, ref, onMounted } from 'vue'
+import { inject, onMounted } from 'vue'
 import newGroupModal from './newGroupModalComponent.vue'
 import { useAdminStore } from '@/store/user/admin'
-import server from '@/store/apiStore'
 import router from '@/router';
+import { dataStore } from '@/store/dataStore';
+import { storeToRefs } from 'pinia'
 import useFunc from '@/store/useFunction'
+
 const spell = useFunc.fx.spell
-const { cc1, cc2, ccThk, ccBg, ccBtnH }: any = inject("c$");
+const { cc1, ccBtnH }: any = inject("c$");
 const orgId = useAdminStore().getData.org_id
-const groupList = ref<any>([])
-const groupsCount = ref<any>(null)
+
+const mStore = dataStore()
+const { members, groups }: any = storeToRefs(mStore)
 
 const numInGrp = (group_id: string) => {
-    if (groupsCount.value == null) {
-        return 0;
-    }
-    else {
-        let num = groupsCount.value[group_id];
-        return num == undefined ? 0 : num;
-    }
-
+    let mems = members.value.filter((x: { group_id: string; }) => x.group_id == group_id)
+    return mems.length
 }
 
-onMounted(() => {
-    getGroupNames()
-})
-
-async function getGroupNames() {
-    try {
-        var { data } = await server.getGroupNames(orgId)
-        groupList.value = data.groups
-        if (data.counted != null) {
-            groupsCount.value = data.counted
-        }
-    } catch (error) {
-        console.log(error);
-    }
-}
 function re_getGroupNames() {
-    getGroupNames()
+    mStore.getGroupNames(orgId)
 }
 
 function showThisGroup(id: string) {

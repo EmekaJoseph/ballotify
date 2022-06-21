@@ -28,7 +28,7 @@
                                 <div class="row g-3">
                                     <div class="col-md-12">
                                         <button @click.prevent="deleteGroup"
-                                            class="btn-lg btn btn-outline-danger w-100">
+                                            class="btn-lg btn btn-link text-danger w-100">
                                             <i class="bi bi-folder-x"></i> Delete
                                             Group</button>
                                         <!-- <div class="small text-center"><b>NB:</b> can not be undone!
@@ -65,6 +65,7 @@ function watchInput() {
     if ((prop.name.toLowerCase() == prop.name_bk.toLowerCase())
         || !prop.name.length) isInput.value = false
     else isInput.value = true
+
 }
 
 const nameErr = ref('')

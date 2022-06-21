@@ -1,32 +1,30 @@
 <template>
     <div>
+        <div v-if="mStore.internetError" class="alert alert-danger py-2 border-0" role="alert">
+            <i class=" bi bi-wifi-off"></i> <b>App not connected, </b> please check your internet and refresh.
+        </div>
         <List @delete="deleteMember" @update="loadData" />
     </div>
 </template>
 
 <script setup lang="ts">
+import { onMounted } from 'vue'
 import server from '@/store/apiStore'
-import { ref, inject, onMounted } from 'vue';
 import List from './membersTableComponent.vue'
 import Swal from 'sweetalert2'
 import { useAdminStore } from '@/store/user/admin'
-import { membersData } from './members-data';
-import { storeToRefs } from 'pinia'
-const { cc1, cc2, ccThk, ccBg, ccBtnH }: any = inject("c$");
+import { dataStore } from '@/store/dataStore';
 const orgId = useAdminStore().getData.org_id
 
-
-const openMemberModal = ref(false)
-
-const mStore = membersData()
-
-onMounted(async () => {
+onMounted(() => {
     loadData()
 })
 
-function loadData() {
-    mStore.getMembers(orgId)
-    mStore.getGroupNames(orgId)
+const mStore = dataStore()
+
+async function loadData() {
+    await mStore.getMembers(orgId)
+    await mStore.getGroupNames(orgId)
 }
 
 

@@ -1,18 +1,26 @@
 <template>
-    <div class="card">
-        <h4 class="px-3 pt-3 fw-bold text-capitalize">
-            <div class="d-none d-md-inline">
-                <button @click="router.go(-1)" class="btn btn-link text-decoration-none">
-                    <i class="bi bi-arrow-left"></i> back
-                </button>
-            </div>
-            <i class="bi bi-folder"></i> {{ group.name }}
-        </h4>
+    <div>
+        <div v-if="mStore.internetError" class="alert alert-danger py-2 border-0" role="alert">
+            <i class=" bi bi-wifi-off"></i> <b>App not connected, </b> please check your internet and refresh.
+        </div>
+        <div class="card">
+            <h5 class="px-3 pt-3 text-capitalize">
+                <div class="d-none d-md-inline me-5 float-end">
+                    <button @click="router.go(-1)" class="btn p-1 px-3 btn-sm m-0 fw-bold ">
+                        <i class="bi bi-arrow-left"></i> Go back
+                    </button>
+                </div>
+                <i class="bi bi-folder"></i> {{ group.name }}
 
-        <div class="card-body">
-            <div class="row gy-3">
-                <tableComp :data="membersList()" />
-                <settingComp :name="group.name" :name_bk="group.name" @delete="deleteGroup" @rename="renameGroup" />
+            </h5>
+
+            <div class="card-body">
+                <div class="row gy-3">
+                    <tableComp :data="membersList()" @remove="confirmRemove" />
+                    <settingComp :name="group.name" :name_bk="group.name" @delete="deleteGroup" @rename="renameGroup" />
+                    <addMembersModal @add="confirmAdd" />
+                </div>
+
             </div>
         </div>
     </div>
@@ -21,20 +29,48 @@
 <script setup lang="ts">
 import tableComp from './groupTableComponent.vue'
 import settingComp from './groupSettingsComponent.vue'
+import addMembersModal from './membersToGroupModal.vue';
 import { useRoute, useRouter } from 'vue-router'
 import { useAdminStore } from '@/store/user/admin'
 import server from '@/store/apiStore'
-import { onMounted, reactive, ref } from 'vue';
+import { reactive, onMounted, ref } from 'vue';
 import Swal from 'sweetalert2'
+import { dataStore } from '@/store/dataStore';
+import { storeToRefs } from 'pinia'
+
+
+const mStore = dataStore()
+const { members, groups }: any = storeToRefs(mStore)
+
 const orgId = useAdminStore().getData.org_id
 const route = useRoute()
 const router = useRouter()
+const query = ref<any>(route.query.g)
 
+let thisGroup = groups.value.find((x: { id: any }) => x.id == query.value)
 const group = reactive({
-    name: '...',
-    id: '',
-    members: <any>[]
+    name: thisGroup == undefined ? '' : thisGroup.name,
+    id: query.value,
+    members: members.value.filter((x: { group_id: any }) => x.group_id == query.value)
 })
+
+onMounted(async () => {
+    mStore.currentGroup = query.value
+    if (thisGroup == undefined) {
+        updateData()
+    }
+
+})
+
+async function updateData() {
+    await mStore.getMembers(orgId)
+    await mStore.getGroupNames(orgId)
+
+    let grp = groups.value.find((x: { id: any }) => x.id == query.value)
+    group.name = (group == undefined) ? '' : grp.name
+    group.members = members.value.filter((x: { group_id: any }) => x.group_id == query.value)
+}
+
 
 const membersList: any = () => {
     let tableGroup = group.members
@@ -45,25 +81,8 @@ const membersList: any = () => {
 }
 
 
-onMounted(() => {
-    getGroupDetails()
-})
-
-async function getGroupDetails() {
-    try {
-        var { data } = await server.getGroupDetails(orgId, route.query.g);
-        let details = data.details
-        let members = data.members
-        group.name = details.group_name
-        group.id = details.id
-        group.members = members
-    } catch (error) {
-        console.log(error);
-    }
-}
-
 async function deleteGroup() {
-    let hasMembers = group.members.some((x: { group_id: string }) => x.group_id == group.id)
+    let hasMembers = members.value.some((x: { group_id: string }) => x.group_id == group.id)
     if (hasMembers) {
         Swal.fire({
             toast: true,
@@ -89,6 +108,8 @@ async function deleteGroup() {
                     timer: 3000,
                     timerProgressBar: false,
                 })
+                // unwatch()
+                await mStore.getGroupNames(orgId)
                 router.push({ name: 'Groups' })
             }
             else console.log(data);
@@ -100,7 +121,7 @@ async function deleteGroup() {
 }
 
 async function renameGroup(name: string) {
-    if (group.name == name) {
+    if (group.name.toLowerCase() == name.toLowerCase()) {
         return
     }
     let obj = {
@@ -132,7 +153,8 @@ async function renameGroup(name: string) {
                 timer: 3000,
                 timerProgressBar: false,
             })
-            getGroupDetails()
+            mStore.getGroupNames(orgId)
+            group.name = name
         }
 
     } catch (error) {
@@ -140,6 +162,55 @@ async function renameGroup(name: string) {
     }
 
 }
+
+
+
+
+
+function confirmRemove(arr: any[]) {
+    Swal.fire({
+        title: 'Confirm?',
+        text: "Remove selection from group",
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#767676',
+        confirmButtonText: 'Remove'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            updateMembersGroup(arr)
+        }
+    })
+}
+
+
+function confirmAdd(arr: any[]) {
+    let rec = arr.length == 1 ? 'record' : 'records'
+    Swal.fire({
+        title: `Add ${arr.length} ${rec}?`,
+        text: "NB: will be removed from previous groups",
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#03787c',
+        cancelButtonColor: '#767676',
+        confirmButtonText: 'Continue'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            updateMembersGroup(arr)
+        }
+    })
+}
+
+
+async function updateMembersGroup(arr: any[]) {
+    try {
+        await server.updateMembersGroup(JSON.stringify(arr));
+        updateData()
+    } catch (error) {
+        console.log(error);
+    }
+}
+
 
 </script>
 

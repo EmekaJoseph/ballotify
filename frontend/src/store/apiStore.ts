@@ -96,4 +96,8 @@ export default {
     updateMember(obj: any) {
         return bus.post('/updateMember', obj)
     },
+
+    updateMembersGroup(obj: any) {
+        return bus.post('/updateMembersGroup/' + obj)
+    },
 }

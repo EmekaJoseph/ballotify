@@ -1,23 +1,24 @@
 <template>
     <div class="col-lg-12 col-xl-7">
         <div class="card mainCard">
-            <div class="card-header">Members
+            <div class="card-header">List
                 <span class="badge rounded-pill bg-light text-dark">
                     {{ data.length }}
                 </span>
                 <span v-if="data.length" class="float-end">
-                    <button class="btn btn-outline-success float-end btn-sm p-0 px-3 m-0">
+                    <button @click="mStore.groupAddQuery()" data-bs-toggle="modal" data-bs-target="#mListModal"
+                        class="btn btn-outline-success float-end btn-sm p-0 px-3 m-0">
                         <i class="bi bi-plus-circle"></i> add members
                     </button>
                 </span>
                 <transition name="xSlide">
                     <span v-if="aMember.isChecked" class="float-end">
-                        <button class="btn btn-outline-danger me-2 float-end btn-sm p-0 px-3 m-0">
+                        <button @click="remove()" class="btn btn-outline-danger me-2 float-end btn-sm p-0 px-3 m-0">
                             <i class="bi bi-folder-minus"></i> Remove
                         </button>
-                        <button class="btn btn-outline-primary me-2 float-end btn-sm p-0 px-3 m-0">
+                        <!-- <button class="btn btn-outline-primary me-2 float-end btn-sm p-0 px-3 m-0">
                             <i class="bi bi-folder-symlink"></i> Move
-                        </button>
+                        </button> -->
                     </span>
                 </transition>
             </div>
@@ -28,24 +29,27 @@
                             <tr>
                                 <th class="smallCol"><input @change="toggleAll" v-model="allCheck"
                                         class="form-check-input" type="checkbox"></th>
+                                <th class="smallCol">#</th>
                                 <th>Name</th>
                                 <th>Gender</th>
-                                <th>Move</th>
+                                <!-- <th>Move</th> -->
                                 <th>Remove</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr v-for="(val, index) in data" :key="val.id">
+
                                 <td><input v-model="val.checked" class="form-check-input" type="checkbox"></td>
+                                <th>{{ index + 1 }}</th>
                                 <td class="text-capitalize">{{ val.firstname + ' ' + val.lastname }}</td>
                                 <td>{{ val.gender }}</td>
-                                <td>
-                                    <button class="m-0 p-1 btn btn-sm text-primary actnbtn">
+                                <!-- <td>
+                                    <button class="m-0 p-0 btn btn-sm text-success actnbtn">
                                         <i class="bi bi-folder-symlink"></i> Move to..
                                     </button>
-                                </td>
+                                </td> -->
                                 <td>
-                                    <button class="m-0 p-1 btn btn-sm text-danger small actnbtn">
+                                    <button @click="remove(val.id)" class="m-0 p-0 btn btn-sm text-danger actnbtn">
                                         <i class="bi bi-folder-minus"></i> Remove
                                     </button>
                                 </td>
@@ -56,7 +60,8 @@
             </div>
             <div v-else class="card-body emptytable">
                 <div class="row justify-content-center butt">
-                    <span class="text-center"><i class="bi bi-folder-plus bi-lg"></i></span>
+                    <span @click="mStore.groupAddQuery()" data-bs-toggle="modal" data-bs-target="#mListModal"
+                        class="text-center"><i class="bi bi-folder-plus bi-lg"></i></span>
                     <h5 class="text-center text-muted text1">Empty List</h5> <br>
                     <h6 class="text-center text-muted text1">click <i class="bi bi-folder-plus"></i> to add members</h6>
                     <span class="text-center text2">add members</span> <br>
@@ -69,19 +74,22 @@
                 </div>
             </div>
         </div>
-
+        <!-- <membersList @test="test" /> -->
     </div>
 </template>
 
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue';
+import { dataStore } from '@/store/dataStore';
+
+const mStore = dataStore()
+
+const emit = defineEmits(['remove',])
 
 interface Props {
     data: any[]
 }
 const prop = defineProps<Props>()
-
-
 
 const allCheck = ref(false)
 function toggleAll() {
@@ -94,7 +102,22 @@ const aMember = reactive({
     isChecked: computed(() => { return prop.data.find(x => x.checked == true) })
 })
 
+
+function remove(val?: string) {
+    let arr = <any>[]
+    if (val) {
+        let data = prop.data.find(x => x.id == val)
+        arr.push(data)
+    }
+    else {
+        arr = prop.data.filter((x: any) => x.checked == true)
+    }
+    arr = arr.map((x) => ({ id: x.id, group_id: '0' }))
+    emit('remove', arr)
+}
+
 </script>
+
 
 <style scoped>
 .card {
@@ -144,5 +167,9 @@ const aMember = reactive({
         min-height: 50vh;
 
     }
+}
+
+.actnbtn:hover {
+    color: #ddee44 !important;
 }
 </style>

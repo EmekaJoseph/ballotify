@@ -56,7 +56,11 @@
                                     <td class="text-capitalize">{{ i.firstname }} {{ i.lastname }}, ({{ i.gender }})
                                     </td>
                                     <td>{{ i.email }}</td>
-                                    <td>{{ whatGroupName(i.group_id) }}</td>
+                                    <td>
+                                        <i v-if="i.group_id != '0'" class="bi bi-folder-check"></i>
+                                        {{ whatGroupName(i.group_id) }}
+                                        <!-- <i v-if="i.group_id != '0'" class="bi bi-folder"></i> -->
+                                    </td>
                                     <td>{{ fx.displayBD(i.birthday) }}</td>
                                     <td v-if="i.verified == 1"><span class="badge bg-successs">verified</span></td>
                                     <td v-else><span class="badge bg-warningg fst-italic">pending</span></td>
@@ -82,17 +86,18 @@
 <script setup lang="ts">
 import { ref, reactive, computed } from 'vue'
 import useFunc from '@/store/useFunction'
-import { membersData } from './members-data';
+import { dataStore } from '@/store/dataStore';
 import { storeToRefs } from 'pinia'
 import Swal from 'sweetalert2'
 import editMemberModal from './editMemberModalComponent.vue'
 import newMemberModal from './newMemberModalComponent.vue'
-// const { cc1, cc2, ccThk, ccBg, ccBtnH }: any = inject("c$");
+const mStore = dataStore()
+
 const emit = defineEmits(["delete", "update"]);
 const fx = useFunc.fx
 
-const mStore = membersData()
 const { members, groups }: any = storeToRefs(mStore)
+
 
 const mCheck = ref(false)
 function toggleAll() {
@@ -181,5 +186,9 @@ th:nth-child(2) {
 .bg-warningg {
     background-color: #c9c9082f;
     color: #919129;
+}
+
+.actnbtn:hover {
+    background-color: #eee;
 }
 </style>

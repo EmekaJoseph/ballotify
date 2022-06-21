@@ -5,6 +5,7 @@ dist-ssr
 *.local
 
 /dist
+/ignore_folder
 
 
 # local env files
