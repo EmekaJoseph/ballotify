@@ -48,8 +48,9 @@ export const dataStore = defineStore('dataStore', {
                 var { data } = await server.getGroupNames(orgId)
                 if (data) {
                     let grp = data.groups;
-                    this.groups = grp.map((x: { id: string; group_name: string; }) => ({
+                    this.groups = grp.map((x: { id: string; group_name: string; created: string }) => ({
                         id: x.id,
+                        created: x.created,
                         name: x.group_name,
                         label: x.group_name
                     }))

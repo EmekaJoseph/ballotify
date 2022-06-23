@@ -10,7 +10,8 @@
                                 <div class="row g-3">
                                     <div class="col-md-12">
                                         <label>Edit name</label>
-                                        <input @input="watchInput" v-model="name" type="text" class="form-control">
+                                        <input @input="watchInput" v-model="name" type="text"
+                                            class="form-control form-control-lg">
                                         <small v-if="nameErr" class="text-danger">{{ nameErr }}</small>
                                     </div>
                                     <div class="col-md-12">

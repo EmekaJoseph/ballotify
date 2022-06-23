@@ -5,6 +5,7 @@ namespace App\Controllers\Admin;
 use App\Controllers\BaseController;
 use App\Models\GroupsModel;
 use App\Controllers\Admin\MembersController as Members;
+use CodeIgniter\I18n\Time;
 
 class GroupsController extends BaseController
 {
@@ -21,7 +22,7 @@ class GroupsController extends BaseController
             $data = [
                 'org_id' => $org_id,
                 'group_name' => $group_name,
-                'created' => $this->request->getVar('created')
+                'created' => new Time('now')
             ];
             $table->save($data);
             $val = 1;
@@ -33,27 +34,26 @@ class GroupsController extends BaseController
     {
         $table = new GroupsModel();
         $groups = $table->where('org_id', $org_id)->findAll();
-        $memberGroups = (new Members())->getGroupsCount($org_id);
-        $counted = null;
-        if (sizeof($memberGroups) > 0) {
-            $counted = array_count_values($memberGroups);
+        // $memberGroups = (new Members())->getGroupsCount($org_id);
+        // $counted = null;
+        // if (sizeof($memberGroups) > 0) {
+        //     $counted = array_count_values($memberGroups);
+        // }
+        $Groups = array();
+
+        foreach ($groups as $object) {
+            $thisTime = Time::parse($object['created'], 'America/Chicago');
+            array_push($Groups, (object)[
+                'id' => $object['id'],
+                'group_name' =>  $object['group_name'],
+                'created' =>   $thisTime->humanize(),
+            ]);
         }
-        return $this->response->setJSON(array('groups' => $groups, 'counted' => $counted));
+
+
+        return $this->response->setJSON(array('groups' => $Groups));
     }
 
-    public function getGroupDetails()
-    {
-        $org_id = $this->request->getVar('org_id');
-        $id = $this->request->getVar('id');
-        $table = new GroupsModel();
-        $details = $table->where('org_id', $org_id)->where('id', $id)->first();
-        $members = (new Members())->membersInThisGroup($id, $org_id);
-        $data = array(
-            'details' => $details,
-            'members' => $members
-        );
-        return $this->response->setJSON($data);
-    }
 
     public function deleteGroup()
     {

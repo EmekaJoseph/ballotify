@@ -1,0 +1,46 @@
+<?php
+
+namespace App\Controllers\Admin;
+
+use App\Controllers\BaseController;
+use App\Models\EventsModel;
+use App\Models\MembersModel;
+use App\Models\GroupsModel;
+use CodeIgniter\Database\RawSql;
+
+
+
+
+// class EventsController extends BaseController
+// {
+
+//     private $db;
+
+//     public function __construct()
+//     {
+//         $this->db = db_connect(); // Loading database
+//         // OR $this->db = \Config\Database::connect();
+//     }
+
+//     public function testEvent($org_id)
+//     {
+//         $bu = $this->db->table("tbl_members as mems");
+//         $rr2 = $bu->select('*')->join('tbl_groups as grp', 'mems.group_id = grp.id')->get()->getResult();
+//         return $this->response->setJSON($rr2);
+//     }
+// }
+
+
+class sController extends BaseController
+{
+    public function testEvent($org_id)
+    {
+        $events = new EventsModel();
+        $members = new MembersModel();
+        $groups = new GroupsModel();
+        $rr = $events->where('org_id', $org_id)->orderBy('id', 'desc')->findAll(1, 0);
+        $rr2 = $groups->select('*')->join('tbl_members as mems', 'tbl_groups.id = mems.group_id')->get()->getResult();
+        // $rr2 = $members->select('*')->join('tbl_groups as grp', 'tbl_members.group_id = grp.id')->get()->getResult();
+        return $this->response->setJSON($rr2);
+    }
+}

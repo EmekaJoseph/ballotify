@@ -64,15 +64,24 @@ onMounted(async () => {
         if (data) {
             iRates.Member = data.members
             iRates.Group = data.groups
+            iRates.Event = data.events
+            iRates.Message = data.messages
             birthdays.value = data.birthdays
         }
         networkError.value = false
+        test()
     } catch (error) {
         console.log(error);
         networkError.value = true
     }
 })
 
+
+async function test() {
+    var { data } = await server.testEvent(orgId)
+    console.log(data);
+
+}
 
 </script>
 

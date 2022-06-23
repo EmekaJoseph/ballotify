@@ -39,7 +39,7 @@
 </template>
 
 <script setup lang="ts">
-import { inject, onMounted } from 'vue'
+import { inject } from 'vue'
 import newGroupModal from './newGroupModalComponent.vue'
 import { useAdminStore } from '@/store/user/admin'
 import router from '@/router';

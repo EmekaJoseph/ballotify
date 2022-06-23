@@ -2,7 +2,7 @@
     <div>
         <nav class="navbar navbar-light fixed-top shadow-sm">
             <div class="container-fluid">
-                <span><b>Admin</b> <span class="d-md-none">| {{ route.name }}</span></span>
+                <span>Admin <span>| {{ route.name }}</span></span>
                 <!-- <div class="inputSearch d-none d-md-block">
                     <input type="text" class=" form-control form-control-sm" placeholder="search.." style="width:250px">
                     <span class="icon">
@@ -12,10 +12,16 @@
                 <span class="dropdown d-none d-md-block">
                     <a class="nav-link dropdown-toggle" href="#" id="accountDrop" role="button"
                         data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="bi bi-person-circle text-muted"></i>&nbsp; {{ accountName }}
+
+                        {{ orgName }}
                         <i class="bi bi-chevron-down"></i>
                     </a>
                     <ul class="dropdown-menu fade-up" aria-labelledby="accountDrop">
+                        <div class="fullNameSpan">
+                            <span class="fullName">
+                                <i class="bi bi-person text-white"></i>&nbsp; {{ fullName }}
+                            </span>
+                        </div>
                         <li class="text-muted">
                             <a class="dropdown-item" href="#help" data-bs-toggle="modal" data-bs-target="#helpModal">
                                 <i class="bi bi-question-circle"></i>&nbsp;&nbsp;Help
@@ -23,13 +29,13 @@
                         </li>
                         <li>
                             <router-link class="dropdown-item" to="/account/settings">
-                                <i class="bi bi-gear-wide"></i>&nbsp;&nbsp;settings
+                                <i class="bi bi-sliders"></i>&nbsp;&nbsp;settings
                             </router-link>
                         </li>
 
                         <li class="text-muted">
                             <a class="dropdown-item" @click.prevent="logOut" href="">
-                                <i class="bi bi-box-arrow-left"></i>&nbsp;&nbsp;log out
+                                <i class="bi bi-stop-circle"></i>&nbsp;&nbsp;log out
                             </a>
                         </li>
                     </ul>
@@ -60,8 +66,7 @@ const route = useRoute()
 const { cc1, cc2, ccThk, ccBg, ccBtnH } = inject("c$");
 
 const admin = useAdminStore()
-const { fullName } = storeToRefs(admin)
-const accountName = ref(fullName)
+const { fullName, orgName } = storeToRefs(admin)
 
 function logOut() {
     admin.signOut()
@@ -102,16 +107,31 @@ function logOut() {
 /* Acount DropDowm #############################################*/
 #accountDrop {
     color: #2c3e50;
-    font-size: 14px;
-    /* pointer-events: none; */
+    font-size: 15px;
     margin-right: 55px;
+    font-weight: bold;
+}
+
+.fullNameSpan {
+    background-color: v-bind(cc1);
+    /* background-color: var(--bs-gray-100); */
+    padding-block: 10px;
+    display: flex;
+    justify-content: center;
+}
+
+
+.fullName {
+    color: #fff;
+    font-size: 12px;
 }
 
 .dropdown-menu {
     /* font-size: 14px; */
-    min-width: 140px !important;
+    /* min-width: 140px !important; */
     border: 1px solid #eee;
-    border-top: 3px solid v-bind(ccThk);
+    /* border-top: 3px solid v-bind(ccThk); */
+    padding-top: 0px;
 }
 
 .dropdown-menu :is(a, i) {

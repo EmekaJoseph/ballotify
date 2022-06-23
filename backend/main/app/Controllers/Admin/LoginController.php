@@ -3,8 +3,8 @@
 namespace App\Controllers\Admin;
 
 use App\Controllers\BaseController;
-use App\Models\UserModel;
 use App\Controllers\Admin\UserController as User;
+use App\Controllers\Admin\OrgController as Org;
 
 class LoginController extends BaseController
 {
@@ -27,7 +27,8 @@ class LoginController extends BaseController
                     'id' => $admin['id'],
                     'org_id' => $admin['org_id'],
                     'name' => $admin['firstname'] . ' ' . $admin['lastname'],
-                    'role' => $admin['role']
+                    'role' => $admin['role'],
+                    'org_name' => (new Org())->getUserOrg($admin['org_id'])['org_name']
                 );
             }
         }

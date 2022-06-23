@@ -10,7 +10,7 @@
                         <i class="bi bi-arrow-left"></i> Go back
                     </button>
                 </div>
-                <i class="bi bi-folder"></i> {{ group.name }}
+                <i class="bi bi-folder"></i> {{ group.name }} <small class="created">{{ group.created }}</small>
 
             </h5>
 
@@ -47,28 +47,29 @@ const route = useRoute()
 const router = useRouter()
 const query = ref<any>(route.query.g)
 
-let thisGroup = groups.value.find((x: { id: any }) => x.id == query.value)
+
 const group = reactive({
-    name: thisGroup == undefined ? '' : thisGroup.name,
-    id: query.value,
-    members: members.value.filter((x: { group_id: any }) => x.group_id == query.value)
+    name: '',
+    created: '',
+    id: '',
+    members: []
 })
 
-onMounted(async () => {
-    mStore.currentGroup = query.value
-    if (thisGroup == undefined) {
-        updateData()
-    }
 
+onMounted(() => {
+    updateData()
 })
+
 
 async function updateData() {
     await mStore.getMembers(orgId)
     await mStore.getGroupNames(orgId)
-
-    let grp = groups.value.find((x: { id: any }) => x.id == query.value)
-    group.name = (group == undefined) ? '' : grp.name
+    let data = groups.value.find((x: { id: any }) => x.id == query.value)
+    group.name = data.name
+    group.created = data.created
+    group.id = query.value
     group.members = members.value.filter((x: { group_id: any }) => x.group_id == query.value)
+    mStore.currentGroup = query.value
 }
 
 
@@ -215,4 +216,9 @@ async function updateMembersGroup(arr: any[]) {
 </script>
 
 <style scoped>
+.created {
+    font-size: 12px;
+    margin-left: 10px;
+    color: var(--bs-gray-500);
+}
 </style>

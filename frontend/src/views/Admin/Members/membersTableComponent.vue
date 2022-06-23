@@ -5,8 +5,8 @@
             }}</span>
                 <span v-if="members.length" class="float-end">
                     <button ref="btnOpenModal" type="button" data-bs-toggle="modal" data-bs-target="#newMemberModal"
-                        class="btn btn-outline-success float-end btn-sm p-0 px-3 m-0">
-                        <i class="bi bi-plus-circle"></i> add new
+                        class="btn btn-outline-dark float-end btn-sm p-0 px-3 m-0">
+                        <i class="bi bi-plus-circle"></i> add members
                     </button>
                 </span>
                 <transition name="xSlide">
@@ -115,7 +115,7 @@ function sendSetToDelete() {
 
 const whatGroupName = (id: string) => {
     let grpObj = groups.value.find((x: { id: any; }) => x.id == id)
-    return grpObj == undefined ? 'None' : grpObj.name
+    return grpObj == undefined ? '---' : grpObj.name
 }
 
 const aMember = reactive({

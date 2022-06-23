@@ -5,9 +5,9 @@
                 <span class="badge rounded-pill bg-light text-dark">
                     {{ data.length }}
                 </span>
-                <span v-if="data.length" class="float-end">
+                <span class="float-end">
                     <button @click="mStore.groupAddQuery()" data-bs-toggle="modal" data-bs-target="#mListModal"
-                        class="btn btn-outline-success float-end btn-sm p-0 px-3 m-0">
+                        class="btn btn-outline-dark btn-sm p-0 px-3 m-0">
                         <i class="bi bi-plus-circle"></i> add members
                     </button>
                 </span>
@@ -60,11 +60,9 @@
             </div>
             <div v-else class="card-body emptytable">
                 <div class="row justify-content-center butt">
-                    <span @click="mStore.groupAddQuery()" data-bs-toggle="modal" data-bs-target="#mListModal"
-                        class="text-center"><i class="bi bi-folder-plus bi-lg"></i></span>
-                    <h5 class="text-center text-muted text1">Empty List</h5> <br>
-                    <h6 class="text-center text-muted text1">click <i class="bi bi-folder-plus"></i> to add members</h6>
-                    <span class="text-center text2">add members</span> <br>
+                    <span class="text-center"><i class="bi bi-trash2 bi-lg"></i></span>
+                    <h5 class="text-center text1">Empty List</h5> <br>
+                    <!-- <h6 class="text-center text-muted text1">click <i class="bi bi-folder-plus"></i> to add members</h6> -->
 
                     <!-- <small class="text-center">
                         <button class="btn btn-link text-success btn-sm">
@@ -103,10 +101,10 @@ const aMember = reactive({
 })
 
 
-function remove(val?: string) {
+function remove(id?: string) {
     let arr = <any>[]
-    if (val) {
-        let data = prop.data.find(x => x.id == val)
+    if (id) {
+        let data = prop.data.find(x => x.id == id)
         arr.push(data)
     }
     else {
@@ -139,14 +137,17 @@ function remove(val?: string) {
 .bi-lg {
     font-size: 6rem;
     color: #ece8e8;
-    cursor: pointer;
 }
 
-.bi-lg:hover {
+.text1 {
+    color: #d8d3d3;
+}
+
+/* .bi-lg:hover {
     color: #c7bfbf;
-}
+} */
 
-.text2 {
+/* .text2 {
     display: none;
 }
 
@@ -156,7 +157,7 @@ function remove(val?: string) {
 
 .butt:hover .text2 {
     display: block;
-}
+} */
 
 @media (max-width: 550px) {
     .bi-lg {

@@ -18,7 +18,9 @@ class OrgController extends BaseController
         $data2 = array(
             'members' => $membersCount,
             'groups' => $groupsCount,
-            'birthdays' => $birthdays
+            'birthdays' => $birthdays,
+            'events' => 0,
+            'messages' => 0,
         );
         return $this->response->setJSON($data2);
     }
@@ -56,7 +58,12 @@ class OrgController extends BaseController
 
 
 
-
+    function getUserOrg($org_id)
+    {
+        $orgTable = new OrgModel();
+        $details = $orgTable->where('org_id', $org_id)->first();
+        return ($details);
+    }
     function orgIdExists($id)
     {
         $table = new OrgModel();

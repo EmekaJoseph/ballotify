@@ -38,11 +38,11 @@ import menuList from './menuListComponent.vue'
 }
 
 .sidenav .brand {
-    padding: 15px 30px 17px 30px;
+    padding: 20px 30px 17px 30px;
     /* color: #BD2c00; */
     display: flex;
     font-weight: bold;
-    font-size: 24px;
+    font-size: 20px;
 }
 
 @media screen and (max-width: 767px) {

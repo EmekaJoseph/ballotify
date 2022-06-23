@@ -64,7 +64,6 @@ $routes->add('/updateUser', 'Admin\UserController::updateUser');
 // Groups
 $routes->add('/saveNewGroup', 'Admin\GroupsController::saveNewGroup');
 $routes->add('/getGroupNames/(:any)', 'Admin\GroupsController::getGroupNames/$1');
-$routes->add('/getGroupDetails', 'Admin\GroupsController::getGroupDetails');
 $routes->add('/deleteGroup', 'Admin\GroupsController::deleteGroup');
 $routes->add('/renameGroup', 'Admin\GroupsController::renameGroup');
 
@@ -76,6 +75,9 @@ $routes->add('/deleteMember', 'Admin\MembersController::deleteMember');
 $routes->add('/updateMember', 'Admin\MembersController::updateMember');
 $routes->add('/updateMembersGroup/(:any)', 'Admin\MembersController::updateMembersGroup/$1');
 
+
+// events
+$routes->add('/testEvent/(:any)', 'Admin\EventsController::testEvent/$1');
 
 /*
  * --------------------------------------------------------------------

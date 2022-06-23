@@ -67,10 +67,6 @@ export default {
     saveNewGroup(obj: object) {
         return bus.post('/saveNewGroup', obj)
     },
-    getGroupDetails(org_id: string, id: any) {
-        let data: object = { id: id, org_id: org_id }
-        return bus.post('/getGroupDetails', data)
-    },
     deleteGroup(org_id: string, id: any) {
         let data: object = { id: id, org_id: org_id }
         return bus.post('/deleteGroup', data)
@@ -99,5 +95,12 @@ export default {
 
     updateMembersGroup(obj: any) {
         return bus.post('/updateMembersGroup/' + obj)
+    },
+
+
+
+    // events
+    testEvent(org_id: string) {
+        return bus.post('/testEvent/' + org_id)
     },
 }

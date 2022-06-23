@@ -19,7 +19,7 @@
                     :class="{ 'gActive': (route.name == 'Groups') || (route.name == 'Grp(details)') }"
                     :data-bs-dismiss="showOn">
                     <router-link :to="{ name: 'Groups' }">
-                        <i class="bi bi-folder-plus"></i>&nbsp;
+                        <i class="bi bi-folder"></i>&nbsp;
                         Groups
                     </router-link>
                 </li>
@@ -28,7 +28,7 @@
                         <h2 class="accordion-header" id="flush-headingTwo">
                             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
                                 data-bs-target="#flush-votings" aria-expanded="false" aria-controls="flush-votings">
-                                <i class="bi bi-ui-checks"></i>&nbsp; Votings
+                                <i class="bi bi-list-check"></i>&nbsp; Votings
                             </button>
                         </h2>
                         <div id="flush-votings" class="accordion-collapse collapse" aria-labelledby="flush-headingTwo"
@@ -46,8 +46,8 @@
                                         </router-link>
                                     </li>
                                     <li class="dropItem">
-                                        <router-link to="/" @click.prevent>
-                                            <i class="bi bi-plus-circle-dotted"></i>&nbsp; new
+                                        <router-link to="/account/newEvent" @click.prevent>
+                                            <i class="bi bi-file-earmark-plus"></i>&nbsp; new
                                         </router-link>
                                     </li>
                                 </ul>
@@ -66,7 +66,7 @@
                 <li class="list-group-item" :class="{ 'gActive': (route.name == 'Settings') }"
                     :data-bs-dismiss="showOn">
                     <router-link :to="{ name: 'Settings' }">
-                        <i class="bi bi-gear-wide"></i>&nbsp; Settings
+                        <i class="bi bi-sliders"></i>&nbsp; Settings
                     </router-link>
                 </li>
             </ul>
@@ -170,7 +170,6 @@ a:not(.gActive):hover {
 
 .accordion-button:not(.collapsed) {
     color: v-bind(cc1);
-
 }
 
 .accordion-button.collapsed::after {
