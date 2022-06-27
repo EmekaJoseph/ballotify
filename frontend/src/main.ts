@@ -9,7 +9,6 @@ import 'bootstrap/dist/css/bootstrap.min.css'
 import 'bootstrap/dist/js/bootstrap.min.js'
 
 import './assets/css/root.css'
-
 const mainApp = createApp(App)
 
 // npm install vue-writer
@@ -25,8 +24,8 @@ import notify from "@/components/toastNotify.vue";
 mainApp.component('notify', notify);
 
 //npm install @vuepic/vue-datepicker
-import Datepicker from '@vuepic/vue-datepicker';
 import '@vuepic/vue-datepicker/dist/main.css';
+import Datepicker from '@vuepic/vue-datepicker';
 mainApp.component('Datepicker', Datepicker);
 
 //npm install vue-select-3

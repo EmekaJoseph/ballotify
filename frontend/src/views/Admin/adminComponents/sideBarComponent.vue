@@ -1,5 +1,6 @@
 <template>
     <div>
+        <newEventModal />
         <div class="sidenav">
             <span class="brand">
                 <!-- <img src="@/assets/house34_logo2.png" width="95" alt /> -->
@@ -14,6 +15,7 @@
 <script setup>
 import adminHeadBar from './headComponent.vue'
 import menuList from './menuListComponent.vue'
+import newEventModal from './newEventModalComponent.vue';
 </script>
 
 <style scoped>

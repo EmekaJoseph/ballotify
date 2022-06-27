@@ -39,10 +39,10 @@
 </template>
 
 <script setup lang="ts">
-import { useAdminStore } from '@/store/user/admin'
+import { adminAccount } from '@/store/admin/account'
 import server from '@/store/apiStore'
 import { onMounted, reactive } from 'vue';
-const orgId = useAdminStore().getData.org_id
+const orgId = adminAccount().getData.org_id
 const org = reactive({
     id: '',
     name: '',

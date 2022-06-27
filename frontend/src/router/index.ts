@@ -4,7 +4,7 @@ import ContactView from '../views/General/Contact/contact.vue'
 import AboutView from '../views/General/About/about.vue'
 
 // store
-import { useAdminStore } from '@/store/user/admin'
+import { adminAccount } from '@/store/admin/account'
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -41,6 +41,7 @@ const routes: Array<RouteRecordRaw> = [
       { path: 'members', name: 'Members', component: () => import('../views/Admin/Members/members.vue') },
       { path: 'messages', name: 'Messages', component: () => import('../views/Admin/Messages/messages.vue') },
       { path: 'settings', name: 'Settings', component: () => import('../views/Admin/Settings/settings.vue') },
+      { path: 'newevent', name: 'New-Event', component: () => import('../views/Admin/Events/newEvent.vue') },
     ],
   },
 
@@ -64,7 +65,7 @@ const router = createRouter({
 
 
 router.beforeEach(async (to, from, next) => {
-  const admin = useAdminStore()
+  const admin = adminAccount()
   let isLoggedIn = admin.hasAccess
   if (to.name == 'Home' || to.name == 'About' || to.name == 'Contact') {
     next()

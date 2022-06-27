@@ -4,26 +4,26 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header"> Add to group ({{ fGroupName(currentGroup) }})
-                    <span class="float-end">
+                    <!-- <span class="float-end">
                         <button ref="btnX" class="btn btn-close btn-close-white" data-bs-dismiss="modal"
                             aria-label="Close"></button>
-                    </span>
+                    </span> -->
                 </div>
                 <div v-if="mems.length" class="modal-body p-sm-4">
                     <div class="table-responsive">
-                        <table class="table">
+                        <table class="table text-nowrap table-borderless">
                             <thead>
                                 <tr>
-                                    <th class="smallCol"></th>
                                     <th>Name</th>
                                     <th>Group</th>
+                                    <th class="smallCol"></th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr v-for="(v, i) in mems">
-                                    <td><input v-model="v.checked" class="form-check-input" type="checkbox"></td>
-                                    <td>{{ v.firstname }} {{ v.lastname }}, {{ v.gender }}</td>
+                                    <td>{{ v.firstname }} {{ v.lastname }} ({{ v.gender }})</td>
                                     <td>{{ fGroupName(v.group_id) }}</td>
+                                    <td><input v-model="v.checked" class="form-check-input" type="checkbox"></td>
                                 </tr>
                             </tbody>
                         </table>
@@ -32,8 +32,10 @@
                 <div v-if="mems.length" class="modal-footer border-0">
                     <button @click="addToGroup()" v-if="isChecked.some" type="button" class=" customBtn btn-sm">Add
                         selection</button>
-                    <button @click="addToGroup('all')" type="button" class="btn btn-outline-dark btn-sm">Add
+                    <button @click="addToGroup('all')" type="button" class="btn btn-sm customBtnLine px-4">Add
                         all</button>
+                    <button ref="btnX" data-bs-dismiss="modal" type="button"
+                        class="btn btn-secondary btn-sm">cancel</button>
                 </div>
 
                 <div v-else class="modal-body text-center" style="padding: 50px;">
@@ -46,7 +48,7 @@
 </template>
 
 <script setup lang="ts">
-import { dataStore } from '@/store/dataStore'
+import { dataStore } from '@/store/admin/dataStore'
 import { storeToRefs } from 'pinia'
 import { ref, computed, reactive } from 'vue';
 

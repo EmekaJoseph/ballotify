@@ -71,12 +71,12 @@ import { reactive, inject, ref } from 'vue'
 import server from '@/store/apiStore'
 import { useRouter } from 'vue-router'
 import userStore from '../user-data'
-import { useAdminStore } from '@/store/user/admin'
+import { adminAccount } from '@/store/admin/account'
 import { LoginFormInterface } from '@/types'
 const { cc1, cc2, ccThk, ccBg, ccBtnH }: any = inject("c$");
 const router = useRouter();
 const userMthds = userStore.methods
-const admin = useAdminStore()
+const admin = adminAccount()
 
 const emits = defineEmits(["switchForm"]);
 function switchForm() {

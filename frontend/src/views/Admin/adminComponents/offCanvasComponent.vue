@@ -28,7 +28,7 @@
 <script setup>
 
 import { inject, ref } from 'vue'
-import { useAdminStore } from '@/store/user/admin'
+import { adminAccount } from '@/store/admin/account'
 import { useRouter } from 'vue-router'
 import menuList from './menuListComponent.vue'
 import { storeToRefs } from 'pinia'
@@ -36,7 +36,7 @@ const { cc1, cc2, ccThk, ccBg, ccBtnH } = inject("c$");
 
 const router = useRouter()
 
-const admin = useAdminStore()
+const admin = adminAccount()
 const { fullName } = storeToRefs(admin)
 const name = ref(fullName)
 

@@ -20,14 +20,25 @@ provide("c$", allColors);
 
 
 .customBtn {
-  background-color: v-bind(cc1);
-  color: #fff;
-  border: none;
+  background-color: v-bind(cc1) !important;
+  color: #fff !important;
+  border: none !important;
 }
 
 .customBtn:hover {
-  background-color: v-bind(ccBtnH);
-  color: #fff;
+  background-color: v-bind(ccBtnH) !important;
+  color: #fff !important;
+}
+
+.customBtnLine {
+  background-color: transparent !important;
+  color: v-bind(cc1) !important;
+  border: 1px solid v-bind(cc1) !important;
+}
+
+.customBtnLine:hover {
+  background-color: v-bind(ccBtnH) !important;
+  color: #fff !important;
 }
 
 .text-custom {

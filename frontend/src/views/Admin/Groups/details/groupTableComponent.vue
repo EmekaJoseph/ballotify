@@ -7,7 +7,7 @@
                 </span>
                 <span class="float-end">
                     <button @click="mStore.groupAddQuery()" data-bs-toggle="modal" data-bs-target="#mListModal"
-                        class="btn btn-outline-dark btn-sm p-0 px-3 m-0">
+                        class="btn btn-sm customBtnLine p-0 px-3 m-0">
                         <i class="bi bi-plus-circle"></i> add members
                     </button>
                 </span>
@@ -27,31 +27,28 @@
                     <table class="table table-sm text-nowrap table-borderless">
                         <thead>
                             <tr>
-                                <th class="smallCol"><input @change="toggleAll" v-model="allCheck"
-                                        class="form-check-input" type="checkbox"></th>
-                                <th class="smallCol">#</th>
-                                <th>Name</th>
-                                <th>Gender</th>
-                                <!-- <th>Move</th> -->
-                                <th>Remove</th>
+
+                                <th class="smallCol"></th>
+                                <th></th>
+                                <th class="smallCol">
+                                    <input v-if="data.length > 1" @change="toggleAll" v-model="allCheck"
+                                        class="form-check-input" type="checkbox">
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr v-for="(val, index) in data" :key="val.id">
-
-                                <td><input v-model="val.checked" class="form-check-input" type="checkbox"></td>
                                 <th>{{ index + 1 }}</th>
-                                <td class="text-capitalize">{{ val.firstname + ' ' + val.lastname }}</td>
-                                <td>{{ val.gender }}</td>
+                                <td class="text-capitalize">{{ val.firstname + ' ' + val.lastname }} ({{ val.gender }})
+                                </td>
                                 <!-- <td>
-                                    <button class="m-0 p-0 btn btn-sm text-success actnbtn">
-                                        <i class="bi bi-folder-symlink"></i> Move to..
-                                    </button>
-                                </td> -->
-                                <td>
                                     <button @click="remove(val.id)" class="m-0 p-0 btn btn-sm text-danger actnbtn">
                                         <i class="bi bi-folder-minus"></i> Remove
                                     </button>
+                                </td> -->
+                                <td>
+                                    <input v-if="data.length > 1" v-model="val.checked" class="form-check-input mt-0"
+                                        type="checkbox">
                                 </td>
                             </tr>
                         </tbody>
@@ -60,8 +57,8 @@
             </div>
             <div v-else class="card-body emptytable">
                 <div class="row justify-content-center butt">
-                    <span class="text-center"><i class="bi bi-trash2 bi-lg"></i></span>
-                    <h5 class="text-center text1">Empty List</h5> <br>
+                    <span class="text-center"><i class="bi bi-folder2-open bi-lg"></i></span>
+                    <h5 class="text-center text1">Group is empty</h5> <br>
                     <!-- <h6 class="text-center text-muted text1">click <i class="bi bi-folder-plus"></i> to add members</h6> -->
 
                     <!-- <small class="text-center">
@@ -72,13 +69,12 @@
                 </div>
             </div>
         </div>
-        <!-- <membersList @test="test" /> -->
     </div>
 </template>
 
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue';
-import { dataStore } from '@/store/dataStore';
+import { dataStore } from '@/store/admin/dataStore';
 
 const mStore = dataStore()
 

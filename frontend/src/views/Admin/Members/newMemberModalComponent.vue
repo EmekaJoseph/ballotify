@@ -42,9 +42,14 @@
 
                                 <div class="col-sm-6">
                                     <label>birthday: <span class="text-danger">*</span></label>
-                                    <Datepicker :class="{ 'formError': err.birthday }" hideOffsetDates :format="format"
+                                    <Datepicker menuClassName="bd-input" hideInputIcon
+                                        :class="{ 'formError': err.birthday }" hideOffsetDates :format="format"
                                         :flow="flow" v-model="person.birthday" :enableTimePicker="false"
-                                        :clearable="false" placeholder="birthday" autoApply />
+                                        :clearable="false" placeholder="birthday" autoApply>
+                                    </Datepicker>
+                                    <!-- <Datepicker v-model="person.birthday" autoApply :enableTimePicker="false">
+                                    </Datepicker> -->
+
                                     <small class="text-danger">{{ err.birthday }}</small>
                                 </div>
                                 <div class="col-sm-6">
@@ -65,7 +70,7 @@
                                 <div>
                                     <span class="mt-2">
                                         <div class="col-md-12">
-                                            <button @click.prevent="checkForm" class="customBtn btn-lg w-100"><i
+                                            <button @click.prevent="checkForm" class="customBtn btn w-100"><i
                                                     class="bi bi-save2"></i>&nbsp;
                                                 Save</button>
                                         </div>
@@ -84,12 +89,13 @@
 
 <script setup lang="ts">
 import { ref, onMounted, inject, reactive } from 'vue';
-import { useAdminStore } from '@/store/user/admin'
+import { adminAccount } from '@/store/admin/account'
 import server from '@/store/apiStore'
 import useFunc from '@/store/useFunction'
 import newGroupModal from '@/views/Admin/Groups/newGroupModalComponent.vue'
 import { newMemberInterface } from '@/types'
 import Swal from 'sweetalert2'
+
 
 onMounted(() => {
     getGroupNames()
@@ -97,7 +103,7 @@ onMounted(() => {
 
 
 const { cc1, cc2, ccThk, ccBg, ccBtnH }: any = inject("c$");
-const orgId = useAdminStore().getData.org_id
+const orgId = adminAccount().getData.org_id
 const emit = defineEmits(["newGroup", "saved"]);
 const fx = useFunc.fx
 
@@ -124,7 +130,8 @@ async function re_getGroupNames() {
 const groups = ref([])
 
 // date picker
-const flow = ref(['month', 'calendar']);
+const flow = ref<any>(['month', 'calendar']);
+
 const format = (date: Date) => {
     const day = date.getDate();
     const month = fx.monthStr(date)
@@ -257,12 +264,15 @@ function replace(e) {
     display: none;
 }
 
+
+
 .dp__range_end,
 .dp__range_start,
 .dp__active_date,
 .dp__overlay_cell_active {
     background: #03787c;
 }
+
 
 .formError {
     border: 1px solid var(--bs-danger);
@@ -272,3 +282,14 @@ small {
     font-size: 12px;
 }
 </style>
+
+<!-- <style>
+.bd-input .dp__button_bottom,
+.bd-input .dp__month_year_select,
+.bd-input .dp__inner_nav svg,
+.bd-input .dp__calendar_header_item {
+    display: none !important;
+    border: none !important;
+
+}
+</style> -->

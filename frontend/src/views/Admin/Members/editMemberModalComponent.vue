@@ -42,9 +42,9 @@
 
                                 <div class="col-sm-6">
                                     <label>birthday: </label>
-                                    <Datepicker :class="{ 'formError': err.birthday }" hideOffsetDates :format="format"
-                                        :flow="flow" v-model="person.birthday" :enableTimePicker="false"
-                                        :clearable="false" placeholder="birthday" autoApply />
+                                    <Datepicker menuClassName="bd-input" :class="{ 'formError': err.birthday }"
+                                        hideOffsetDates :format="format" :flow="flow" v-model="person.birthday"
+                                        :enableTimePicker="false" :clearable="false" placeholder="birthday" autoApply />
                                 </div>
                                 <div class="col-sm-6">
                                     <label>gender:</label>
@@ -61,9 +61,9 @@
                                     <span class="mt-2">
                                         <div class="col-md-12 mt-4">
                                             <button v-if="isEditing" @click.prevent="checkForm"
-                                                class="customBtn btn-lg w-100"><i class="bi bi-save2"></i>&nbsp;
+                                                class="customBtn btn w-100"><i class="bi bi-save2"></i>&nbsp;
                                                 Update</button>
-                                            <button v-else disabled class="btn btn-secondary btn-lg w-100"><i
+                                            <button v-else disabled class="btn btn-secondary w-100"><i
                                                     class="bi bi-save2"></i>&nbsp;
                                                 Update</button>
                                         </div>
@@ -81,11 +81,11 @@
 
 <script setup lang="ts">
 import { ref, reactive, watch } from 'vue';
-import { useAdminStore } from '@/store/user/admin'
+import { adminAccount } from '@/store/admin/account'
 import server from '@/store/apiStore'
 import useFunc from '@/store/useFunction'
 import { newMemberInterface } from '@/types'
-import { dataStore } from '@/store/dataStore';
+import { dataStore } from '@/store/admin/dataStore';
 import { storeToRefs } from 'pinia'
 import Swal from 'sweetalert2'
 
@@ -100,7 +100,7 @@ const prop = defineProps<Props>()
 
 let data: any = mStore.memberQuery(prop.id)
 
-const orgId = useAdminStore().getData.org_id
+const orgId = adminAccount().getData.org_id
 const emit = defineEmits(["close", "saved"]);
 const fx = useFunc.fx
 

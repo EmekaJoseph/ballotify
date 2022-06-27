@@ -3,6 +3,9 @@
         <sideBarComponent />
         <div class="adminMain">
             <div class="admin-content">
+                <div v-if="mStore.internetError" class="alert alert-danger py-2 border-0 small" role="alert">
+                    <i class="bi bi-wifi-off"></i> <b>Not connected, </b> please check your internet and refresh.
+                </div>
                 <router-view></router-view>
             </div>
         </div>
@@ -14,19 +17,15 @@ import { inject, onMounted } from 'vue'
 import offcanvas from './adminComponents/offCanvasComponent.vue'
 import sideBarComponent from './adminComponents/sideBarComponent.vue'
 
-import { useAdminStore } from '@/store/user/admin'
-import { dataStore } from '@/store/dataStore';
-const orgId = useAdminStore().getData.org_id
+import { adminAccount } from '@/store/admin/account'
+import { dataStore } from '@/store/admin/dataStore';
+const orgId = adminAccount().getData.org_id
 const mStore = dataStore()
 
 onMounted(() => {
-    loadData()
+    mStore.loadMaster(orgId)
 })
 
-function loadData() {
-    mStore.getMembers(orgId)
-    mStore.getGroupNames(orgId)
-}
 
 const { ccBg }: any = inject("c$")
 

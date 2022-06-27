@@ -263,3 +263,32 @@ input[type=number] {
 }
 
 /* end of form -check */
+
+
+.dp__range_end,
+.dp__range_start,
+.dp__active_date {
+    background: #03787c !important;
+    border: none;
+}
+
+.vs__dropdown-option--highlight {
+    background: #03787c !important;
+}
+
+.dp__overlay_cell_active {
+    background: #03787c !important;
+}
+
+.bd-input .dp__button_bottom,
+.bd-input .dp__month_year_select,
+.bd-input .dp__inner_nav svg,
+.bd-input .dp__calendar_header_item {
+    display: none !important;
+    border: none !important;
+
+}
+
+.dp__pm_am_button {
+    background: #03787c !important;
+}

@@ -1,8 +1,5 @@
 <template>
     <div>
-        <div v-if="networkError" class="alert alert-danger py-2 border-0" role="alert">
-            <i class=" bi bi-wifi-off"></i> <b>App not connected, </b> please check your internet and refresh.
-        </div>
         <div class="fw-bold mb-2">Overview:</div>
         <div class="row justify-content-center gy-3">
             <infoCard :name="spell('Member', iRates.Member)" icon="bi-people" color="#BD6C13" :rate="iRates.Member" />
@@ -26,7 +23,7 @@
 import { onMounted, ref, reactive } from 'vue'
 import server from '@/store/apiStore'
 import useFunc from '@/store/useFunction'
-import { useAdminStore } from '@/store/user/admin'
+import { adminAccount } from '@/store/admin/account'
 
 import infoCard from './infoCardComponent.vue'
 import recents from './recentsComponent.vue'
@@ -34,7 +31,7 @@ import calender from './calenderComponent.vue'
 
 const spell = useFunc.fx.spell
 
-const orgId = useAdminStore().getData.org_id
+const orgId = adminAccount().getData.org_id
 
 const recentsTable = ref([])
 const birthdays = ref([])
@@ -55,9 +52,6 @@ const birthdaysFormatted: any = () => {
     return newArr
 }
 
-
-
-const networkError = ref(false)
 onMounted(async () => {
     try {
         var { data } = await server.getOverview(orgId)
@@ -68,11 +62,9 @@ onMounted(async () => {
             iRates.Message = data.messages
             birthdays.value = data.birthdays
         }
-        networkError.value = false
         test()
     } catch (error) {
         console.log(error);
-        networkError.value = true
     }
 })
 
@@ -80,7 +72,6 @@ onMounted(async () => {
 async function test() {
     var { data } = await server.testEvent(orgId)
     console.log(data);
-
 }
 
 </script>

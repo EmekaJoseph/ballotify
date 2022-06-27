@@ -39,12 +39,12 @@
 
 <script setup>
 import { reactive, ref } from 'vue';
-import { useAdminStore } from '@/store/user/admin'
+import { adminAccount } from '@/store/admin/account'
 import server from '@/store/apiStore'
 const emit = defineEmits(["added"]);
 
 
-const orgId = useAdminStore().getData.org_id
+const orgId = adminAccount().getData.org_id
 
 const group = reactive({
     name: '',

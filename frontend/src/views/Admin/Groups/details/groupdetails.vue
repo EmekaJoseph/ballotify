@@ -1,16 +1,14 @@
 <template>
     <div>
-        <div v-if="mStore.internetError" class="alert alert-danger py-2 border-0" role="alert">
-            <i class=" bi bi-wifi-off"></i> <b>App not connected, </b> please check your internet and refresh.
-        </div>
         <div class="card">
-            <h5 class="px-3 pt-3 text-capitalize">
-                <div class="d-none d-md-inline me-5 float-end">
-                    <button @click="router.go(-1)" class="btn p-1 px-3 btn-sm m-0 fw-bold ">
-                        <i class="bi bi-arrow-left"></i> Go back
+            <h5 class="px-3 pt-3 ">
+                <div class="d-none d-md-inline me-2">
+                    <button @click="router.go(-1)" class="btn m-0">
+                        <i class="bi bi-chevron-left"></i>
                     </button>
                 </div>
-                <i class="bi bi-folder"></i> {{ group.name }} <small class="created">{{ group.created }}</small>
+                <span class="text-capitalize"><i class="bi bi-folder"></i> {{ group.name }}</span>
+                <small class="created">created {{ group.created }} </small>
 
             </h5>
 
@@ -31,18 +29,18 @@ import tableComp from './groupTableComponent.vue'
 import settingComp from './groupSettingsComponent.vue'
 import addMembersModal from './membersToGroupModal.vue';
 import { useRoute, useRouter } from 'vue-router'
-import { useAdminStore } from '@/store/user/admin'
+import { adminAccount } from '@/store/admin/account'
 import server from '@/store/apiStore'
 import { reactive, onMounted, ref } from 'vue';
 import Swal from 'sweetalert2'
-import { dataStore } from '@/store/dataStore';
+import { dataStore } from '@/store/admin/dataStore';
 import { storeToRefs } from 'pinia'
 
 
 const mStore = dataStore()
 const { members, groups }: any = storeToRefs(mStore)
 
-const orgId = useAdminStore().getData.org_id
+const orgId = adminAccount().getData.org_id
 const route = useRoute()
 const router = useRouter()
 const query = ref<any>(route.query.g)

@@ -1,8 +1,5 @@
 <template>
     <div>
-        <div v-if="mStore.internetError" class="alert alert-danger py-2 border-0" role="alert">
-            <i class=" bi bi-wifi-off"></i> <b>App not connected, </b> please check your internet and refresh.
-        </div>
         <div class="card" style="min-height: 100vh">
             <div class="card-header">Groups:<span class="badge rounded-pill bg-light text-dark">{{ groups.length
             }}</span>
@@ -12,8 +9,8 @@
                     <div class="col-4 col-md-4 col-lg-2" data-bs-toggle="modal" data-bs-target="#newGroupModal">
                         <div class="card groupCard groupCardAdd">
                             <div class="group-content">
-                                <i class="bi bi-folder-plus bi-lg text-white"></i>
-                                <div class="text-center group-name text-white">Add Group</div>
+                                <i class="bi bi-plus-circle-dotted bi-lg text-white"></i>
+                                <div class="text-center group-name text-white">New</div>
                                 <small class="info-text text-white">add a new group.</small>
                             </div>
                         </div>
@@ -27,6 +24,9 @@
                                 <small class="info-text text-muted">
                                     {{ numInGrp(g.id) }} {{ spell('member', numInGrp(g.id)) }}
                                 </small>
+                                <small class="info-text2">
+                                    click to view
+                                </small>
                             </div>
                         </div>
                     </div>
@@ -39,20 +39,25 @@
 </template>
 
 <script setup lang="ts">
-import { inject } from 'vue'
+import { inject, onMounted } from 'vue'
 import newGroupModal from './newGroupModalComponent.vue'
-import { useAdminStore } from '@/store/user/admin'
+import { adminAccount } from '@/store/admin/account'
 import router from '@/router';
-import { dataStore } from '@/store/dataStore';
+import { dataStore } from '@/store/admin/dataStore';
 import { storeToRefs } from 'pinia'
 import useFunc from '@/store/useFunction'
 
 const spell = useFunc.fx.spell
 const { cc1, ccBtnH }: any = inject("c$");
-const orgId = useAdminStore().getData.org_id
+const orgId = adminAccount().getData.org_id
 
 const mStore = dataStore()
 const { members, groups }: any = storeToRefs(mStore)
+
+// onMounted(async () => {
+//     await mStore.getMembers(orgId)
+//     await mStore.getGroupNames(orgId)
+// })
 
 const numInGrp = (group_id: string) => {
     let mems = members.value.filter((x: { group_id: string; }) => x.group_id == group_id)
@@ -92,7 +97,8 @@ function showThisGroup(id: string) {
 }
 
 .groupCard:hover {
-    background-color: #fdfbfb71;
+    background-color: #fdfbfb9c;
+    border: 1px solid v-bind(cc1);
     transform: scale(1.03);
 }
 
@@ -107,6 +113,19 @@ function showThisGroup(id: string) {
     font-size: 11px;
 }
 
+.info-text2 {
+    display: none;
+}
+
+.groupCard:hover .info-text2 {
+    display: flex;
+    justify-content: center;
+    font-size: 11px;
+    position: absolute;
+    top: 60;
+    margin-left: 45px;
+    color: v-bind(cc1);
+}
 
 .groupCardAdd {
     border: none;

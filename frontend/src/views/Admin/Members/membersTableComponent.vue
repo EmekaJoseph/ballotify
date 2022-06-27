@@ -5,7 +5,7 @@
             }}</span>
                 <span v-if="members.length" class="float-end">
                     <button ref="btnOpenModal" type="button" data-bs-toggle="modal" data-bs-target="#newMemberModal"
-                        class="btn btn-outline-dark float-end btn-sm p-0 px-3 m-0">
+                        class="btn float-end btn-sm customBtnLine p-0 px-3 m-0">
                         <i class="bi bi-plus-circle"></i> add members
                     </button>
                 </span>
@@ -19,61 +19,71 @@
                 </transition>
             </div>
             <div class="card-body">
-                <div v-if="members.length" class="mb-2 col-7 col-md-4 col-lg-2">
-                    <input type="text" class="form-control form-control-sm" placeholder="search..">
-                </div>
-                <div v-if="!members.length" class="row justify-content-center my-4">
-                    <span class="text-center"><i class="bi bi-person-x plus"></i></span>
-                    <div class="text-center text-muted">You do not have any members yet.</div> <br>
-                    <div class="text-center">
-                        <button ref="btnOpenModal" type="button" data-bs-toggle="modal" data-bs-target="#newMemberModal"
-                            class="btn btn-link">
-                            <i class="bi bi-plus-circle-dotted"></i> add new
-                            members</button>
+                <div class="row">
+                    <div class="col-12">
+                        <div v-if="members.length" class="me-3 mb-3 float-end">
+                            <!-- <input type="text" class="form-control form-control-sm" placeholder="search.."> -->
+                            <button class="btn btn-link m-0 p-0"><i class="bi bi-search"></i></button>
+                        </div>
                     </div>
-                </div>
-                <div v-else>
-                    <div class="table-responsive">
-                        <table class="table table-sm text-nowrap">
-                            <thead>
-                                <tr>
-                                    <th class="smallCol"><input @change="toggleAll" v-model="mCheck"
-                                            class="form-check-input" type="checkbox"></th>
-                                    <th class="smallCol">S/N</th>
-                                    <th>Name</th>
-                                    <th>Email</th>
-                                    <th>Group</th>
-                                    <th>Birthday</th>
-                                    <th>Satus</th>
-                                    <th colspan="2">edit/delete</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="(i, index) in members">
-                                    <td><input v-model="i.checked" class="form-check-input" type="checkbox">
-                                    </td>
-                                    <th>{{ index + 1 }}</th>
-                                    <td class="text-capitalize">{{ i.firstname }} {{ i.lastname }}, ({{ i.gender }})
-                                    </td>
-                                    <td>{{ i.email }}</td>
-                                    <td>
-                                        <i v-if="i.group_id != '0'" class="bi bi-folder-check"></i>
-                                        {{ whatGroupName(i.group_id) }}
-                                        <!-- <i v-if="i.group_id != '0'" class="bi bi-folder"></i> -->
-                                    </td>
-                                    <td>{{ fx.displayBD(i.birthday) }}</td>
-                                    <td v-if="i.verified == 1"><span class="badge bg-successs">verified</span></td>
-                                    <td v-else><span class="badge bg-warningg fst-italic">pending</span></td>
-                                    <td><button @click="openModalEdit(i.id)" class="btn btn-link btn-sm actnbtn"><i
-                                                class="bi bi-eye"></i></button>
-                                    </td>
-                                    <td><button @click="conFirmDelete(i.id)"
-                                            class="btn btn-link btn-sm text-danger actnbtn"><i
-                                                class="bi bi-trash3"></i></button></td>
+                    <div class="col-12">
+                        <div v-if="!members.length" class="row justify-content-center my-4">
+                            <span class="text-center"><i class="bi bi-person-x plus"></i></span>
+                            <div class="text-center text-muted">You do not have any members yet.</div> <br>
+                            <div class="text-center">
+                                <button ref="btnOpenModal" type="button" data-bs-toggle="modal"
+                                    data-bs-target="#newMemberModal" class="btn btn-link">
+                                    <i class="bi bi-plus-circle-dotted"></i> add new
+                                    members</button>
+                            </div>
+                        </div>
+                        <div v-else>
+                            <div class="table-responsive">
+                                <table class="table table-sm text-nowrap">
+                                    <thead>
+                                        <tr>
+                                            <th class="smallCol">S/N</th>
+                                            <th>Name</th>
+                                            <th>Email</th>
+                                            <th>Group</th>
+                                            <th>Birthday</th>
+                                            <th>Satus</th>
+                                            <th>modify</th>
+                                            <th class="smallCol"><input @change="toggleAll" v-model="mCheck"
+                                                    class="form-check-input" type="checkbox"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr v-for="(i, index) in members">
+                                            <th>{{ index + 1 }}</th>
+                                            <td class="text-capitalize">{{ i.firstname }} {{ i.lastname }}, ({{ i.gender
+                                            }})
+                                            </td>
+                                            <td>{{ i.email }}</td>
+                                            <td>
+                                                <i v-if="i.group_id != '0'" class="bi bi-folder-check"></i>
+                                                {{ whatGroupName(i.group_id) }}
+                                                <!-- <i v-if="i.group_id != '0'" class="bi bi-folder"></i> -->
+                                            </td>
+                                            <td>{{ fx.displayBD(i.birthday) }}</td>
+                                            <td v-if="i.verified == 1"><span class="badge bg-successs">verified</span>
+                                            </td>
+                                            <td v-else><span class="badge bg-warningg fst-italic">pending</span></td>
+                                            <td><button @click="openModalEdit(i.id)"
+                                                    class="btn btn-link btn-sm actnbtn"><i
+                                                        class="bi bi-pencil"></i></button>
+                                            </td>
+                                            <td><input v-model="i.checked" class="form-check-input" type="checkbox">
+                                            </td>
+                                            <!-- <td><button @click="conFirmDelete(i.id)"
+                                                    class="btn btn-link btn-sm text-danger actnbtn"><i
+                                                        class="bi bi-trash3"></i></button></td> -->
 
-                                </tr>
-                            </tbody>
-                        </table>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -86,16 +96,16 @@
 <script setup lang="ts">
 import { ref, reactive, computed } from 'vue'
 import useFunc from '@/store/useFunction'
-import { dataStore } from '@/store/dataStore';
+import { dataStore } from '@/store/admin/dataStore';
 import { storeToRefs } from 'pinia'
 import Swal from 'sweetalert2'
 import editMemberModal from './editMemberModalComponent.vue'
 import newMemberModal from './newMemberModalComponent.vue'
-const mStore = dataStore()
 
 const emit = defineEmits(["delete", "update"]);
 const fx = useFunc.fx
 
+const mStore = dataStore()
 const { members, groups }: any = storeToRefs(mStore)
 
 
@@ -168,8 +178,8 @@ function reOpenThis() {
 
 
 
-table td:nth-child(2),
-th:nth-child(2) {
+table td:nth-child(1),
+th:nth-child(1) {
     text-align: center;
 }
 
@@ -179,7 +189,7 @@ th:nth-child(2) {
 
 
 .bg-successs {
-    background-color: #1987541e;
+    /* background-color: #1987541e; */
     color: #198754;
 }
 

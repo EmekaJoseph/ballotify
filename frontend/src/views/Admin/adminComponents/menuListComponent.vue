@@ -35,20 +35,15 @@
                             data-bs-parent="#votingsDropdown">
                             <div class="accordion-body">
                                 <ul class="list-group list-group-flush">
-                                    <li class="dropItem">
+                                    <li v-for="list in eventsList" :key="list" class="dropItem">
                                         <router-link to="/" @click.prevent>
-                                            <i class="bi bi-check2-circle"></i>&nbsp; event 1
+                                            <i class="bi bi-check2-circle"></i>&nbsp; {{ list }}
                                         </router-link>
                                     </li>
                                     <li class="dropItem">
-                                        <router-link to="/" @click.prevent>
-                                            <i class="bi bi-check2-circle"></i>&nbsp; event 2
-                                        </router-link>
-                                    </li>
-                                    <li class="dropItem">
-                                        <router-link to="/account/newEvent" @click.prevent>
+                                        <a data-bs-toggle="modal" data-bs-target="#newEventModal" href="#newEvent">
                                             <i class="bi bi-file-earmark-plus"></i>&nbsp; new
-                                        </router-link>
+                                        </a>
                                     </li>
                                 </ul>
                             </div>
@@ -75,7 +70,7 @@
 </template>
 
 <script setup>
-import { inject } from 'vue'
+import { inject, ref } from 'vue'
 import { useRoute } from 'vue-router';
 const { cc1, cc2, ccThk, ccBg, ccBtnH } = inject("c$");
 
@@ -87,6 +82,9 @@ defineProps({
     }
 })
 const route = useRoute()
+
+
+const eventsList = ref(['event1', 'event2'])
 
 </script>
 
@@ -130,6 +128,8 @@ const route = useRoute()
     color: #111;
 } */
 
+
+
 a:not(.gActive):hover {
     color: #111;
 }
@@ -143,14 +143,6 @@ a:not(.gActive):hover {
     border-right: 2px solid v-bind(cc1);
 }
 
-/* .gActive i {
-    color: v-bind(cc1);
-} */
-
-.myaccordion {
-    border: none;
-}
-
 .accordion-item {
     background-color: transparent;
     border: none;
@@ -160,7 +152,6 @@ a:not(.gActive):hover {
     background-color: transparent;
     font-size: 16px;
     padding: 10px 40px 10px 25px;
-    border: none;
     margin-bottom: 10px;
 }
 
@@ -170,15 +161,14 @@ a:not(.gActive):hover {
 
 .accordion-button:not(.collapsed) {
     color: v-bind(cc1);
+    box-shadow: none
 }
 
 .accordion-button.collapsed::after {
-    /* margin-left: 30px; */
     background: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%232c3e50'%3e%3cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e");
 }
 
 .accordion-button:not(.collapsed)::after {
-    /* margin-left: 30px; */
     background: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%232c3e50'%3e%3cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e");
 }
 

@@ -1,9 +1,8 @@
 import { defineStore } from "pinia";
 
-export const useAdminStore = defineStore('admin', {
+export const adminAccount = defineStore('adminAccount', {
     // id: "admin",
     state: () => ({
-        localStore: '',
         signedIn: (localStorage.getItem('ballotify-admin') == null) ? false : true,
         data: localStorage.getItem('ballotify-admin'),
         fullName: localStorage.getItem('b-fname'),
@@ -23,11 +22,13 @@ export const useAdminStore = defineStore('admin', {
             this.setNames(obj.name, obj.org_name)
             this.data = localStorage.getItem('ballotify-admin')
         },
-        setNames(name: string, org: string) {
+        setNames(name: string, org?: string) {
             localStorage.setItem('b-fname', name)
-            localStorage.setItem('b-orgname', org)
             this.fullName = name
-            this.orgName = org
+            if (org) {
+                localStorage.setItem('b-orgname', (org))
+                this.orgName = org
+            }
         },
         signOut() {
             localStorage.removeItem('ballotify-admin')

@@ -13,15 +13,18 @@
                     <a class="nav-link dropdown-toggle" href="#" id="accountDrop" role="button"
                         data-bs-toggle="dropdown" aria-expanded="false">
 
-                        {{ orgName }}
-                        <i class="bi bi-chevron-down"></i>
+                        {{ orgName }} <br>
+                        <div class="fw-lighter float-end" style="font-size:12px;">
+                            {{ fullName }}
+                            <i class="bi bi-chevron-down"></i>
+                        </div>
                     </a>
                     <ul class="dropdown-menu fade-up" aria-labelledby="accountDrop">
-                        <div class="fullNameSpan">
+                        <!-- <div class="fullNameSpan">
                             <span class="fullName">
                                 <i class="bi bi-person text-white"></i>&nbsp; {{ fullName }}
                             </span>
-                        </div>
+                        </div> -->
                         <li class="text-muted">
                             <a class="dropdown-item" href="#help" data-bs-toggle="modal" data-bs-target="#helpModal">
                                 <i class="bi bi-question-circle"></i>&nbsp;&nbsp;Help
@@ -56,7 +59,7 @@
 
 import { inject, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { useAdminStore } from '@/store/user/admin'
+import { adminAccount } from '@/store/admin/account'
 import helpModal from './helpModalComponent.vue'
 import { storeToRefs } from 'pinia'
 
@@ -65,7 +68,7 @@ const route = useRoute()
 
 const { cc1, cc2, ccThk, ccBg, ccBtnH } = inject("c$");
 
-const admin = useAdminStore()
+const admin = adminAccount()
 const { fullName, orgName } = storeToRefs(admin)
 
 function logOut() {
@@ -78,7 +81,7 @@ function logOut() {
 <style scoped>
 .navbar {
     margin-left: 250px;
-    padding: 15px;
+    padding: 10px;
     background-color: #fff;
 }
 
@@ -112,25 +115,14 @@ function logOut() {
     font-weight: bold;
 }
 
-.fullNameSpan {
-    background-color: v-bind(cc1);
-    /* background-color: var(--bs-gray-100); */
-    padding-block: 10px;
-    display: flex;
-    justify-content: center;
-}
 
 
-.fullName {
-    color: #fff;
-    font-size: 12px;
-}
 
 .dropdown-menu {
     /* font-size: 14px; */
     /* min-width: 140px !important; */
     border: 1px solid #eee;
-    /* border-top: 3px solid v-bind(ccThk); */
+    border-top: 3px solid v-bind(ccThk);
     padding-top: 0px;
 }
 

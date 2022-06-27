@@ -47,10 +47,10 @@
 </template>
 
 <script setup lang="ts">
-import { useAdminStore } from '@/store/user/admin'
+import { adminAccount } from '@/store/admin/account'
 import server from '@/store/apiStore'
 import { onMounted, reactive, ref } from 'vue';
-const admin = useAdminStore()
+const admin = adminAccount()
 const orgId = admin.getData.org_id
 const id = admin.getData.id
 const user = reactive({
@@ -101,8 +101,8 @@ async function updateUser() {
         var { data } = await server.updateUser(obj);
         if (data == 1) {
             await getUserDetails()
-            let newName = user.firstname + ' ' + user.lastname
-            admin.setFullName(newName)
+            let fullName = user.firstname + ' ' + user.lastname
+            admin.setNames(fullName)
         }
     } catch (error) {
         user.isLoading = false

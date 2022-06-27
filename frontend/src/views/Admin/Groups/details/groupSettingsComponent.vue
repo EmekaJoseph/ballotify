@@ -105,6 +105,6 @@ function deleteGroup() {
 
 <style scoped>
 .settCard {
-    border: 3px solid #eee;
+    border: 1px solid rgba(221, 51, 51, 0.219);
 }
 </style>

@@ -27,6 +27,11 @@ export const dataStore = defineStore('dataStore', {
 
         },
 
+        loadMaster(orgId: string) {
+            this.getGroupNames(orgId)
+            this.getMembers(orgId)
+        },
+
         async getMembers(orgId: string) {
             try {
                 var { data } = await server.getMembers(orgId)
