@@ -8,5 +8,5 @@ class EventsModel extends Model
 {
     protected $table      = 'tbl_events';
     protected $primaryKey = 'id';
-    protected $allowedFields = ['org_id', 'event_id', 'event_name', 'event_type', 'created', 'expiry'];
+    protected $allowedFields = ['org_id', 'event_id', 'event_name', 'event_type', 'event_start', 'event_expiry', 'event_description', 'created'];
 }

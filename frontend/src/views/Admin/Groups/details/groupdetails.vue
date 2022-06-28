@@ -29,7 +29,6 @@ import tableComp from './groupTableComponent.vue'
 import settingComp from './groupSettingsComponent.vue'
 import addMembersModal from './membersToGroupModal.vue';
 import { useRoute, useRouter } from 'vue-router'
-import { adminAccount } from '@/store/admin/account'
 import server from '@/store/apiStore'
 import { reactive, onMounted, ref } from 'vue';
 import Swal from 'sweetalert2'
@@ -40,7 +39,6 @@ import { storeToRefs } from 'pinia'
 const mStore = dataStore()
 const { members, groups }: any = storeToRefs(mStore)
 
-const orgId = adminAccount().getData.org_id
 const route = useRoute()
 const router = useRouter()
 const query = ref<any>(route.query.g)
@@ -60,8 +58,8 @@ onMounted(() => {
 
 
 async function updateData() {
-    await mStore.getMembers(orgId)
-    await mStore.getGroupNames(orgId)
+    await mStore.getMembers()
+    await mStore.getGroupNames()
     let data = groups.value.find((x: { id: any }) => x.id == query.value)
     group.name = data.name
     group.created = data.created
@@ -96,7 +94,7 @@ async function deleteGroup() {
     }
     else {
         try {
-            var { data } = await server.deleteGroup(orgId, group.id);
+            var { data } = await server.deleteGroup(group.id);
             if (data == 1) {
                 Swal.fire({
                     toast: true,
@@ -108,7 +106,7 @@ async function deleteGroup() {
                     timerProgressBar: false,
                 })
                 // unwatch()
-                await mStore.getGroupNames(orgId)
+                await mStore.getGroupNames()
                 router.push({ name: 'Groups' })
             }
             else console.log(data);
@@ -125,7 +123,6 @@ async function renameGroup(name: string) {
     }
     let obj = {
         id: group.id,
-        org_id: orgId,
         group_name: name
     }
     try {
@@ -152,7 +149,7 @@ async function renameGroup(name: string) {
                 timer: 3000,
                 timerProgressBar: false,
             })
-            mStore.getGroupNames(orgId)
+            mStore.getGroupNames()
             group.name = name
         }
 

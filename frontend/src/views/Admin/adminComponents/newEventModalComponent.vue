@@ -5,7 +5,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title text-white">New Event</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    <button ref="modalClose" type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
                         aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -14,6 +14,7 @@
                             <label>Name:</label>
                             <input v-model="event.name" :class="{ 'formError': err.name }" type="text"
                                 class="form-control">
+                            <small class="text-center text-danger">{{ err.name }}</small>
                         </div>
                         <div class="col-md-12 col-lg-6">
                             <label>Type:</label>
@@ -21,27 +22,29 @@
                                 :options="['People', 'Opinion']" />
                         </div>
                         <div class="col-md-12 col-lg-12">
-                            <label>Description:</label>
-                            <textarea :class="{ 'formError': err.desc }" v-model="event.desc" class="form-control"
+                            <label>Description (optional):</label>
+                            <textarea placeholder="describe this event" v-model="event.desc" class="form-control"
                                 rows="2"></textarea>
                         </div>
 
                         <div class="col-md-12 col-lg-6">
                             <label>Start:</label>
-                            <Datepicker :class="{ 'formError': err.start }" monthNameFormat="long"
-                                :previewFormat="format" :minDate="new Date()" hideOffsetDates v-model="event.start"
-                                :is24="false" :clearable="false" placeholder="birthday" autoApply />
+                            <Datepicker monthNameFormat="long" :previewFormat="format" :minDate="new Date()"
+                                hideOffsetDates v-model="event.start" :is24="false" :clearable="false"
+                                placeholder="birthday" autoApply />
                         </div>
                         <div class="col-md-12 col-lg-6">
                             <label>expiry:</label>
                             <Datepicker :class="{ 'formError': err.expiry }" monthNameFormat="long"
                                 :previewFormat="format" :minDate="new Date()" hideOffsetDates v-model="event.expiry"
                                 :is24="false" :clearable="false" placeholder="birthday" autoApply />
+                            <small class="text-center text-danger">{{ err.expiry }}</small>
                         </div>
-                        <small class="text-center text-danger">{{ err.dateDiffTxt }}</small>
+
                         <div class="col-md-12 col-lg-12">
-                            <button @click.prevent="checkForm" type="button"
+                            <button v-if="!event.is.saving" @click.prevent="checkForm" type="button"
                                 class="btn customBtn w-100 mt-3">Save</button>
+                            <button v-else disabled type="button" class="btn customBtn w-100 mt-3">saving..</button>
                         </div>
                     </form>
                 </div>
@@ -51,14 +54,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, inject, reactive, computed } from 'vue';
-import useFunc from '@/store/useFunction'
+import { ref, reactive, computed } from 'vue';
+import server from '@/store/apiStore'
+import router from '@/router';
+
 const event = reactive({
     name: '',
     type: 'People',
     desc: '',
     start: <any>new Date(),
     expiry: <any>new Date(),
+    is: {
+        saving: false
+    },
 
     days: computed(() => {
         var seconds = Math.floor((event.expiry - event.start) / 1000);
@@ -75,11 +83,8 @@ const event = reactive({
 })
 
 const err = reactive({
-    name: false,
-    desc: false,
-    start: false,
-    expiry: false,
-    dateDiffTxt: '',
+    name: '',
+    expiry: '',
 })
 
 
@@ -91,16 +96,49 @@ const format = (date: Date) => {
 }
 
 function checkForm() {
-    err.desc = err.name = err.start = err.expiry = false;
-    err.dateDiffTxt = '';
-    if (event.name == '') { err.name = true; return }
-    if (event.desc == '') { err.desc = true; return }
+    err.name = err.expiry = '';
+    if (event.name == '') { err.name = 'fill in name'; return }
 
     let timediff = event.expiry - event.start
-    if (timediff <= 0) { err.dateDiffTxt = 'Check duration!'; return }
+    if (timediff <= 0) { err.expiry = 'invalid event duration!'; return }
+    saveEvent()
+}
 
-    console.log(event);
-    console.log(timediff);
+const modalClose = ref<any>(null)
+async function saveEvent() {
+    event.is.saving = true
+    let obj = {
+        event_name: event.name,
+        event_description: event.desc,
+        event_start: event.start,
+        event_expiry: event.expiry,
+        event_type: event.type
+    }
+
+    try {
+        var { data } = await server.saveNewEvent(obj)
+        if (data.state != 0) {
+            event.is.saving = false
+            modalClose.value.click()
+            navigateToEvent(data.id)
+        }
+        else {
+            event.is.saving = false
+            err.name = 'already exists';
+            return
+        }
+    } catch (error) {
+        event.is.saving = false
+        console.log(error);
+
+    }
+}
+
+function navigateToEvent(id: any) {
+    router.push({
+        path: 'event',
+        query: { org: id, e: event.name }
+    })
 }
 
 </script>

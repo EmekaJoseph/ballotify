@@ -4,6 +4,7 @@ export const dataStore = defineStore('dataStore', {
     state: () => ({
         members: <any>[],
         groups: <any>[],
+        events: <any>[],
         defaultGrp: { id: 0, label: 'None' },
         internetError: <boolean>false,
         currentGroup: <string>'',
@@ -27,14 +28,14 @@ export const dataStore = defineStore('dataStore', {
 
         },
 
-        loadMaster(orgId: string) {
-            this.getGroupNames(orgId)
-            this.getMembers(orgId)
+        loadMaster() {
+            this.getGroupNames()
+            this.getMembers()
         },
 
-        async getMembers(orgId: string) {
+        async getMembers() {
             try {
-                var { data } = await server.getMembers(orgId)
+                var { data } = await server.getMembers()
                 if (data) {
                     let list = data.data
                     list.forEach((x: { checked: boolean }) => {
@@ -48,9 +49,9 @@ export const dataStore = defineStore('dataStore', {
                 this.internetError = true
             }
         },
-        async getGroupNames(orgId: string) {
+        async getGroupNames() {
             try {
-                var { data } = await server.getGroupNames(orgId)
+                var { data } = await server.getGroupNames()
                 if (data) {
                     let grp = data.groups;
                     this.groups = grp.map((x: { id: string; group_name: string; created: string }) => ({

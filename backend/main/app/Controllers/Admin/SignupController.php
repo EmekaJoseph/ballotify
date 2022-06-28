@@ -61,10 +61,10 @@ class SignupController extends BaseController
         //$name = strtoupper($name);
         //remove duplicate characters ##########################
         //$name = count_chars($name, 3);
-        $str = 'ABCDEFGHJKLMNPQRTUVWXYZ';
+
+        $str = 'AC56789DEFGHJKLMNPQRTUVWXYZ234';
         $a = substr(str_shuffle($str), 0, 3);
-        $b = substr(str_shuffle('23456789'), 0, 2);
-        $c = substr(str_shuffle($str), 0, 1);
-        return 'B-' . $a . $b . $c;
+        // $b = substr(str_shuffle('23456789'), 0, 2);
+        return 'B' . $a;
     }
 }

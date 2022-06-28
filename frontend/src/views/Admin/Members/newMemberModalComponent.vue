@@ -102,7 +102,6 @@ onMounted(() => {
 })
 
 
-const { cc1, cc2, ccThk, ccBg, ccBtnH }: any = inject("c$");
 const orgId = adminAccount().getData.org_id
 const emit = defineEmits(["newGroup", "saved"]);
 const fx = useFunc.fx
@@ -110,7 +109,7 @@ const fx = useFunc.fx
 
 async function getGroupNames() {
     try {
-        var { data } = await server.getGroupNames(orgId)
+        var { data } = await server.getGroupNames()
         if (data) {
             let grp = data.groups;
             groups.value = grp.map((x: { id: string; group_name: string; }) => ({ id: x.id, label: x.group_name }))
@@ -182,7 +181,6 @@ const isSaving = ref<boolean>(false)
 async function saveNewMember() {
     isSaving.value = true
     let obj = {
-        org_id: orgId,
         firstname: person.firstname,
         lastname: person.lastname,
         email: person.email,

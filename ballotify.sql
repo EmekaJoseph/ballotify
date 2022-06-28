@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jun 22, 2022 at 12:06 AM
+-- Generation Time: Jun 28, 2022 at 10:56 PM
 -- Server version: 10.4.22-MariaDB
 -- PHP Version: 8.1.2
 
@@ -24,6 +24,24 @@ SET time_zone = "+00:00";
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `tbl_events`
+--
+
+CREATE TABLE `tbl_events` (
+  `id` int(50) NOT NULL,
+  `org_id` varchar(255) NOT NULL,
+  `event_id` varchar(255) NOT NULL,
+  `event_name` varchar(255) NOT NULL,
+  `event_type` varchar(255) NOT NULL,
+  `event_start` varchar(255) NOT NULL,
+  `event_expiry` varchar(255) NOT NULL,
+  `event_description` varchar(255) NOT NULL,
+  `created` varchar(255) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `tbl_groups`
 --
 
@@ -39,8 +57,7 @@ CREATE TABLE `tbl_groups` (
 --
 
 INSERT INTO `tbl_groups` (`id`, `org_id`, `group_name`, `created`) VALUES
-(86, 'B-Pro27KL', 'afterLifes', '2022-06-11T11:05:50.199Z'),
-(87, 'B-Pro27KL', 'Sars', '2022-06-16T12:04:07.563Z');
+(1, 'BBHK', 'family', '2022-06-28 15:41:30');
 
 -- --------------------------------------------------------
 
@@ -66,12 +83,8 @@ CREATE TABLE `tbl_members` (
 --
 
 INSERT INTO `tbl_members` (`id`, `org_id`, `firstname`, `lastname`, `email`, `phone`, `verified`, `group_id`, `gender`, `birthday`) VALUES
-(5, 'B-Pro27KL', 'emekus', 'josiah', 'joe@mail.com', '0905678976', '1', '87', 'M', '6-17'),
-(11, 'B-Pro27KL', 'FeranmiLa', 'Abigirl', 'Abire704@gmail.com', '09182345678', '1', '87', 'F', '5-28'),
-(12, 'B-Pro27KL', 'Avrilade', 'Johnny', 'avriload@yahoo.com', '090568976543', '1', '87', 'M', '12-26'),
-(28, '', '', '', '', '', '', '0', '', ''),
-(29, '', '', '', '', '', '', '0', '', ''),
-(30, '', '', '', '', '', '', '0', '', '');
+(1, 'BBHK', 'fredrick', 'Johnson', 'john@gmail.com', '09087634527', '1', '1', 'M', '8-20'),
+(2, 'BBHK', 'aliya', 'Faridah', 'aliya02@mail.com', '07012547896', '1', '1', 'F', '11-24');
 
 -- --------------------------------------------------------
 
@@ -93,11 +106,7 @@ CREATE TABLE `tbl_org` (
 --
 
 INSERT INTO `tbl_org` (`id`, `org_id`, `org_name`, `org_logo`, `org_address`, `org_events`) VALUES
-(1, 'B-Pro27KL', 'Proffix Entertainment', NULL, '34, Abeluyah street Lawanson.', 0),
-(2, 'B-TNK78N', 'emeka\'s company', NULL, 'no street avenues', 0),
-(3, 'B-EFA86F', 'emekas', NULL, 'saas', 0),
-(4, 'B-LKX92M', 'aaaaa', NULL, 'aaaaa', 0),
-(5, 'B-JGW36H', 'Proffix Academy', NULL, 'aslam street aklalaa, Lagos', 0);
+(1, 'BBHK', 'Proffix Academy', NULL, 'proffix address', 0);
 
 -- --------------------------------------------------------
 
@@ -122,15 +131,17 @@ CREATE TABLE `tbl_users` (
 --
 
 INSERT INTO `tbl_users` (`id`, `org_id`, `firstname`, `lastname`, `email`, `image`, `role`, `isActive`, `password`) VALUES
-(1, 'B-Pro27KL', 'Emeka', 'Proffix', 'emeka@mail.com', NULL, 'master', '1', '$2y$10$H.7Ul/Ed.XKu3Ex7sBcTV.1erLVbNxRAemVgOUdfMJWz7qnv8n2kC'),
-(2, 'B-TNK78N', 'emekkus', 'Oluwaseun', 'emeka@mail.coms', NULL, 'master', '1', '$2y$10$zI5I2MqAqrgTcarSPAm3vuFPJbcqhbkY3Qf4Xdcp2Z/piKaLCtoC6'),
-(3, 'B-EFA86F', 'wwqw', 'uiyyuy', 'emeka@mail.comss', NULL, 'master', '1', '$2y$10$RFnSMug.OcZRzZgFyUXWietH78wmeHnAdBuLU/mqSB9M8pNOSxjxe'),
-(4, 'B-LKX92M', 'aaaa', 'aaaaa', 'emeka@mail.comsssssss', NULL, 'master', '1', '$2y$10$0SwFuXeyXdJpoibPrlPoDeTFFjpuMv.oPbLPhKSeVQNjfvW2PC4su'),
-(5, 'B-JGW36H', 'Emmy', 'jossey', 'emmy@gmail.com', NULL, 'master', '1', '$2y$10$oxda7F5Kwhqwd/aExCfKFuPdUNrEpV5nPngThmI.TAgI1FoGZa9SS');
+(1, 'BBHK', 'emeka', 'iwuji', 'emeka@mail.com', NULL, 'master', '1', '$2y$10$ZkY6L0dz9TosKIr0OYXgGurUUC/LWmKcykp5T3RYPefhRMZSF/qQ.');
 
 --
 -- Indexes for dumped tables
 --
+
+--
+-- Indexes for table `tbl_events`
+--
+ALTER TABLE `tbl_events`
+  ADD PRIMARY KEY (`id`);
 
 --
 -- Indexes for table `tbl_groups`
@@ -161,28 +172,34 @@ ALTER TABLE `tbl_users`
 --
 
 --
+-- AUTO_INCREMENT for table `tbl_events`
+--
+ALTER TABLE `tbl_events`
+  MODIFY `id` int(50) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `tbl_groups`
 --
 ALTER TABLE `tbl_groups`
-  MODIFY `id` int(50) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=88;
+  MODIFY `id` int(50) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `tbl_members`
 --
 ALTER TABLE `tbl_members`
-  MODIFY `id` int(50) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
+  MODIFY `id` int(50) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `tbl_org`
 --
 ALTER TABLE `tbl_org`
-  MODIFY `id` int(50) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int(50) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `tbl_users`
 --
 ALTER TABLE `tbl_users`
-  MODIFY `id` int(50) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int(50) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

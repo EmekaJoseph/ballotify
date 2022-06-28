@@ -41,7 +41,6 @@
 <script setup lang="ts">
 import { inject, onMounted } from 'vue'
 import newGroupModal from './newGroupModalComponent.vue'
-import { adminAccount } from '@/store/admin/account'
 import router from '@/router';
 import { dataStore } from '@/store/admin/dataStore';
 import { storeToRefs } from 'pinia'
@@ -49,7 +48,6 @@ import useFunc from '@/store/useFunction'
 
 const spell = useFunc.fx.spell
 const { cc1, ccBtnH }: any = inject("c$");
-const orgId = adminAccount().getData.org_id
 
 const mStore = dataStore()
 const { members, groups }: any = storeToRefs(mStore)
@@ -65,7 +63,7 @@ const numInGrp = (group_id: string) => {
 }
 
 function re_getGroupNames() {
-    mStore.getGroupNames(orgId)
+    mStore.getGroupNames()
 }
 
 function showThisGroup(id: string) {

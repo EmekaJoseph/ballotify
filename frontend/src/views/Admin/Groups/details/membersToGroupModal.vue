@@ -52,7 +52,7 @@ import { dataStore } from '@/store/admin/dataStore'
 import { storeToRefs } from 'pinia'
 import { ref, computed, reactive } from 'vue';
 
-const emit = defineEmits(['add',])
+const emit = defineEmits(['add'])
 
 
 const mStore = dataStore()

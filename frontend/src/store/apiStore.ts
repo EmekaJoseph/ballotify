@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { adminAccount } from '@/store/admin/account'
 
 const bus = axios.create({
     baseURL: 'http://localhost',
@@ -7,13 +8,14 @@ const bus = axios.create({
         'Content-Type': 'application/json'
     },
 })
+const thisOrgId = adminAccount().getData.org_id
 
 
 export default {
 
     // overview
-    getOverview(org_id: string) {
-        return bus.post('/getOverview/' + org_id)
+    getOverview() {
+        return bus.post('/getOverview/' + thisOrgId)
     },
 
 
@@ -40,8 +42,8 @@ export default {
 
 
     //user/admin
-    getUserDetails(id: string, org_id: string) {
-        let data: object = { id: id, org_id: org_id }
+    getUserDetails(id: string) {
+        let data: object = { id: id, org_id: thisOrgId }
         return bus.post('/getUserDetails', data)
     },
     updateUser(obj: object) {
@@ -51,8 +53,8 @@ export default {
 
 
     // org
-    getOrgDetails(id: string) {
-        return bus.post('/getOrgDetails/' + id)
+    getOrgDetails() {
+        return bus.post('/getOrgDetails/' + thisOrgId)
     },
     updateOrg(obj: object) {
         return bus.post('/updateOrg', obj)
@@ -61,17 +63,19 @@ export default {
 
 
     // groups
-    getGroupNames(org_id: string) {
-        return bus.post('/getGroupNames/' + org_id)
+    getGroupNames() {
+        return bus.post('/getGroupNames/' + thisOrgId)
     },
-    saveNewGroup(obj: object) {
+    saveNewGroup(obj: any) {
+        obj.org_id = thisOrgId
         return bus.post('/saveNewGroup', obj)
     },
-    deleteGroup(org_id: string, id: any) {
-        let data: object = { id: id, org_id: org_id }
+    deleteGroup(group_id: any) {
+        let data: object = { id: group_id, org_id: thisOrgId }
         return bus.post('/deleteGroup', data)
     },
     renameGroup(obj: any) {
+        obj.org_id = thisOrgId
         return bus.post('/renameGroup', obj)
     },
 
@@ -80,13 +84,14 @@ export default {
 
     // members
     saveNewMember(obj: any) {
+        obj.org_id = thisOrgId
         return bus.post('/saveNewMember', obj)
     },
-    getMembers(org_id: string) {
-        return bus.post('/getMembers/' + org_id)
+    getMembers() {
+        return bus.post('/getMembers/' + thisOrgId)
     },
-    deleteMember(org_id: string, id: any) {
-        let data: object = { id: id, org_id: org_id }
+    deleteMember(id: any) {
+        let data: object = { id: id, org_id: thisOrgId }
         return bus.post('/deleteMember', data)
     },
     updateMember(obj: any) {
@@ -100,7 +105,8 @@ export default {
 
 
     // events
-    testEvent(org_id: string) {
-        return bus.post('/testEvent/' + org_id)
+    saveNewEvent(obj: any) {
+        obj.org_id = thisOrgId
+        return bus.post('/saveNewEvent', JSON.stringify(obj))
     },
 }

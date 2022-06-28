@@ -39,12 +39,10 @@
 
 <script setup>
 import { reactive, ref } from 'vue';
-import { adminAccount } from '@/store/admin/account'
 import server from '@/store/apiStore'
 const emit = defineEmits(["added"]);
 
 
-const orgId = adminAccount().getData.org_id
 
 const group = reactive({
     name: '',
@@ -65,8 +63,6 @@ async function saveName() {
     group.isSaving = true
     let obj = {
         group_name: group.name,
-        org_id: orgId,
-        created: new Date()
     }
     try {
         var { data } = await server.saveNewGroup(obj)

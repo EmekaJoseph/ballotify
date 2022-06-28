@@ -37,11 +37,11 @@ const routes: Array<RouteRecordRaw> = [
     children: [
       { path: 'dashboard', name: 'Dashboard', component: () => import('../views/Admin/Dashboard/dashboard.vue') },
       { path: 'groups', name: 'Groups', component: () => import('../views/Admin/Groups/groups.vue') },
-      { path: 'groupdetails', name: 'Grp(details)', props: route => ({ query: route.query.g }), component: () => import('../views/Admin/Groups/details/groupdetails.vue') },
+      { path: 'groupdetails', name: 'Grp(details)', props: route => ({ query: route.query }), component: () => import('../views/Admin/Groups/details/groupdetails.vue') },
       { path: 'members', name: 'Members', component: () => import('../views/Admin/Members/members.vue') },
       { path: 'messages', name: 'Messages', component: () => import('../views/Admin/Messages/messages.vue') },
       { path: 'settings', name: 'Settings', component: () => import('../views/Admin/Settings/settings.vue') },
-      { path: 'newevent', name: 'New-Event', component: () => import('../views/Admin/Events/newEvent.vue') },
+      { path: 'event', name: 'event-v', props: route => ({ query: route.query }), component: () => import('../views/Admin/Events/event.vue') },
     ],
   },
 

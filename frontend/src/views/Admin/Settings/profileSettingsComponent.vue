@@ -51,7 +51,6 @@ import { adminAccount } from '@/store/admin/account'
 import server from '@/store/apiStore'
 import { onMounted, reactive, ref } from 'vue';
 const admin = adminAccount()
-const orgId = admin.getData.org_id
 const id = admin.getData.id
 const user = reactive({
     firstname: '',
@@ -72,7 +71,7 @@ onMounted(() => {
 
 async function getUserDetails() {
     try {
-        var { data } = await server.getUserDetails(id, orgId);
+        var { data } = await server.getUserDetails(id);
         user.firstname = user.firstname_bk = data.data.firstname
         user.lastname = user.lastname_bk = data.data.lastname
         user.email = data.data.email

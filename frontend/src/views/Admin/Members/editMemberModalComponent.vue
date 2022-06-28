@@ -81,7 +81,6 @@
 
 <script setup lang="ts">
 import { ref, reactive, watch } from 'vue';
-import { adminAccount } from '@/store/admin/account'
 import server from '@/store/apiStore'
 import useFunc from '@/store/useFunction'
 import { newMemberInterface } from '@/types'
@@ -100,16 +99,8 @@ const prop = defineProps<Props>()
 
 let data: any = mStore.memberQuery(prop.id)
 
-const orgId = adminAccount().getData.org_id
 const emit = defineEmits(["close", "saved"]);
 const fx = useFunc.fx
-
-async function re_getGroupNames() {
-    await mStore.getGroupNames(orgId)
-    person.group = groups.value[groups.value.length - 1]
-}
-
-
 
 // date picker
 const flow = ref(['month', 'calendar']);

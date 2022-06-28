@@ -292,3 +292,9 @@ input[type=number] {
 .dp__pm_am_button {
     background: #03787c !important;
 }
+
+
+.vs__search,
+.vs__search:focus {
+    line-height: 1.7 !important;
+}

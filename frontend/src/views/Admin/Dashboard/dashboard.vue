@@ -23,7 +23,6 @@
 import { onMounted, ref, reactive } from 'vue'
 import server from '@/store/apiStore'
 import useFunc from '@/store/useFunction'
-import { adminAccount } from '@/store/admin/account'
 
 import infoCard from './infoCardComponent.vue'
 import recents from './recentsComponent.vue'
@@ -31,7 +30,6 @@ import calender from './calenderComponent.vue'
 
 const spell = useFunc.fx.spell
 
-const orgId = adminAccount().getData.org_id
 
 const recentsTable = ref([])
 const birthdays = ref([])
@@ -54,7 +52,7 @@ const birthdaysFormatted: any = () => {
 
 onMounted(async () => {
     try {
-        var { data } = await server.getOverview(orgId)
+        var { data } = await server.getOverview()
         if (data) {
             iRates.Member = data.members
             iRates.Group = data.groups
@@ -62,17 +60,11 @@ onMounted(async () => {
             iRates.Message = data.messages
             birthdays.value = data.birthdays
         }
-        test()
     } catch (error) {
         console.log(error);
     }
 })
 
-
-async function test() {
-    var { data } = await server.testEvent(orgId)
-    console.log(data);
-}
 
 </script>
 

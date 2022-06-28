@@ -77,7 +77,7 @@ $routes->add('/updateMembersGroup/(:any)', 'Admin\MembersController::updateMembe
 
 
 // events
-$routes->add('/testEvent/(:any)', 'Admin\EventsController::testEvent/$1');
+$routes->add('/saveNewEvent', 'Admin\EventsController::saveNewEvent');
 
 /*
  * --------------------------------------------------------------------

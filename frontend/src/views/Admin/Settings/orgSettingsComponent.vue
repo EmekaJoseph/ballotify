@@ -59,7 +59,7 @@ onMounted(() => {
 
 async function getOrgDetails() {
     try {
-        var { data } = await server.getOrgDetails(orgId);
+        var { data } = await server.getOrgDetails();
         org.name = org.name_bk = data.org_name
         org.address = org.address_bk = data.org_address
         org.id = data.id

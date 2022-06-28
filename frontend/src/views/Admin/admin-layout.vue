@@ -17,13 +17,11 @@ import { inject, onMounted } from 'vue'
 import offcanvas from './adminComponents/offCanvasComponent.vue'
 import sideBarComponent from './adminComponents/sideBarComponent.vue'
 
-import { adminAccount } from '@/store/admin/account'
 import { dataStore } from '@/store/admin/dataStore';
-const orgId = adminAccount().getData.org_id
 const mStore = dataStore()
 
 onMounted(() => {
-    mStore.loadMaster(orgId)
+    mStore.loadMaster()
 })
 
 

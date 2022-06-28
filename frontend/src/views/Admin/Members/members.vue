@@ -8,21 +8,19 @@
 import server from '@/store/apiStore'
 import List from './membersTableComponent.vue'
 import Swal from 'sweetalert2'
-import { adminAccount } from '@/store/admin/account'
 import { dataStore } from '@/store/admin/dataStore';
-const orgId = adminAccount().getData.org_id
 
 const mStore = dataStore()
 
 async function updateData() {
-    await mStore.getMembers(orgId)
-    await mStore.getGroupNames(orgId)
+    await mStore.getMembers()
+    await mStore.getGroupNames()
 }
 
 
 async function deleteMember(id: string) {
     try {
-        var { data } = await server.deleteMember(orgId, id)
+        var { data } = await server.deleteMember(id)
         if (data == 1) {
             Swal.fire({
                 toast: true,
@@ -33,7 +31,7 @@ async function deleteMember(id: string) {
                 timer: 3000,
                 timerProgressBar: false,
             })
-            mStore.getMembers(orgId)
+            mStore.getMembers()
         }
     } catch (error) {
         console.log(error);
