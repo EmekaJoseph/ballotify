@@ -46,7 +46,7 @@
                 <nav class="d-md-none navbar">
                     <h3 class="fw-bold" data-bs-toggle="offcanvas" data-bs-target="#offcanvasAdmin"
                         aria-controls="offcanvasAdmin">
-                        <i class="bi bi-list"></i>
+                        <i class="bi bi-filter-right"></i>
                     </h3>
                 </nav>
             </div>
