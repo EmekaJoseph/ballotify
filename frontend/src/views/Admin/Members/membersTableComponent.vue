@@ -92,7 +92,7 @@
         <editMemberModal v-if="edit.modal" :id="edit.id" @saved="emit('update')" @close="edit.modal = false" />
     </div>
 </template>
-
+<!-- :class="edit.modal ? 'animate__animated animate__bounce' : ''" -->
 <script setup lang="ts">
 import { ref, reactive, computed } from 'vue'
 import useFunc from '@/store/useFunction'

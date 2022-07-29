@@ -15,7 +15,7 @@
 
                         {{ orgName }} <br>
                         <div class="fw-lighter float-end" style="font-size:12px;">
-                            {{ fullName }}
+                            {{ current_user == '' ? fullName : current_user }}
                             <i class="bi bi-chevron-down"></i>
                         </div>
                     </a>
@@ -38,7 +38,7 @@
 
                         <li class="text-muted">
                             <a class="dropdown-item" @click.prevent="logOut" href="">
-                                <i class="bi bi-stop-circle"></i>&nbsp;&nbsp;log out
+                                <i class="bi bi-box-arrow-left"></i>&nbsp;&nbsp;log out
                             </a>
                         </li>
                     </ul>
@@ -69,7 +69,7 @@ const route = useRoute()
 const { cc1, cc2, ccThk, ccBg, ccBtnH } = inject("c$");
 
 const admin = adminAccount()
-const { fullName, orgName } = storeToRefs(admin)
+const { fullName, orgName, current_user } = storeToRefs(admin)
 
 function logOut() {
     admin.signOut()

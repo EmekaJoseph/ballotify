@@ -15,7 +15,9 @@
             <menuList showOn='offcanvas' />
 
             <div class="offcanvas-body"></div>
-            <span class="name-section">{{ name }}</span>
+            <span class="name-section">
+                <div><i class="bi bi-person"></i> {{ current_user == '' ? fullName : current_user }}</div>
+            </span>
             <span class="logOutSection">
                 <span class="logOutBtn" @click="logOut">
                     <i class="bi bi-x text-white"></i>&nbsp;Log Out
@@ -27,7 +29,7 @@
 
 <script setup>
 
-import { inject, ref } from 'vue'
+import { inject } from 'vue'
 import { adminAccount } from '@/store/admin/account'
 import { useRouter } from 'vue-router'
 import menuList from './menuListComponent.vue'
@@ -37,8 +39,7 @@ const { cc1, cc2, ccThk, ccBg, ccBtnH } = inject("c$");
 const router = useRouter()
 
 const admin = adminAccount()
-const { fullName } = storeToRefs(admin)
-const name = ref(fullName)
+const { fullName, orgName, current_user } = storeToRefs(admin)
 
 function logOut() {
     admin.signOut()
@@ -71,8 +72,9 @@ function logOut() {
 .name-section {
     display: flex;
     justify-content: center;
-    font-size: small;
-    color: v-bind(ccThk);
+    font-size: 11px;
+    color: #f5f5f5;
     padding: 5px;
+    background-color: #f3f3f3;
 }
 </style>

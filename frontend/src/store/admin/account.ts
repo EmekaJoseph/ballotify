@@ -3,14 +3,15 @@ import { defineStore } from "pinia";
 export const adminAccount = defineStore('adminAccount', {
     // id: "admin",
     state: () => ({
-        signedIn: (localStorage.getItem('ballotify-admin') == null) ? false : true,
-        data: localStorage.getItem('ballotify-admin'),
-        fullName: localStorage.getItem('b-fname'),
-        orgName: localStorage.getItem('b-orgname')
+        signedIn: (localStorage.getItem('ballotify') == null) ? false : true,
+        data: localStorage.getItem('ballotify'),
+        current_user: ''
     }),
     getters: {
-        hasAccess: (state) => (state.signedIn) ? true : false,
-        getData: (state) => (state.data == null) ? {} : JSON.parse(state.data),
+        hasAccess: (state) => state.signedIn,
+        getData: (state) => (state.data == null) ? {} : JSON.parse(atob(state.data)),
+        fullName: (state) => (state.data == null) ? '' : (JSON.parse(atob(state.data))).name,
+        orgName: (state) => (state.data == null) ? '' : (JSON.parse(atob(state.data))).org_name,
     },
     actions: {
         signIn(obj: object) {
@@ -18,20 +19,23 @@ export const adminAccount = defineStore('adminAccount', {
             this.signedIn = true
         },
         setState(obj: any) {
-            localStorage.setItem('ballotify-admin', JSON.stringify(obj))
+            let base64Decoded: any = btoa(JSON.stringify(obj))
+            localStorage.setItem('ballotify', base64Decoded)
+            this.data = base64Decoded
             this.setNames(obj.name, obj.org_name)
-            this.data = localStorage.getItem('ballotify-admin')
         },
         setNames(name: string, org?: string) {
-            localStorage.setItem('b-fname', name)
-            this.fullName = name
+            let storedData: any = localStorage.getItem('ballotify')
+            let xData = JSON.parse(atob(storedData))
+            xData.name = name
+            this.current_user = name
             if (org) {
-                localStorage.setItem('b-orgname', (org))
-                this.orgName = org
+                xData.org_name = org
             }
+            localStorage.setItem('ballotify', btoa(JSON.stringify(xData)))
         },
         signOut() {
-            localStorage.removeItem('ballotify-admin')
+            localStorage.removeItem('ballotify')
             this.signedIn = false
         },
 

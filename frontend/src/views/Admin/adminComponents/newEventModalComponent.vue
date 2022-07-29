@@ -42,7 +42,7 @@
                         </div>
 
                         <div class="col-md-12 col-lg-12">
-                            <button v-if="!event.is.saving" @click.prevent="checkForm" type="button"
+                            <button v-if="!event.isSaving" @click.prevent="checkForm" type="button"
                                 class="btn customBtn w-100 mt-3">Save</button>
                             <button v-else disabled type="button" class="btn customBtn w-100 mt-3">saving..</button>
                         </div>
@@ -64,9 +64,7 @@ const event = reactive({
     desc: '',
     start: <any>new Date(),
     expiry: <any>new Date(),
-    is: {
-        saving: false
-    },
+    isSaving: false,
 
     days: computed(() => {
         var seconds = Math.floor((event.expiry - event.start) / 1000);
@@ -106,7 +104,7 @@ function checkForm() {
 
 const modalClose = ref<any>(null)
 async function saveEvent() {
-    event.is.saving = true
+    event.isSaving = true
     let obj = {
         event_name: event.name,
         event_description: event.desc,
@@ -118,17 +116,17 @@ async function saveEvent() {
     try {
         var { data } = await server.saveNewEvent(obj)
         if (data.state != 0) {
-            event.is.saving = false
+            event.isSaving = false
             modalClose.value.click()
             navigateToEvent(data.id)
         }
         else {
-            event.is.saving = false
+            event.isSaving = false
             err.name = 'already exists';
             return
         }
     } catch (error) {
-        event.is.saving = false
+        event.isSaving = false
         console.log(error);
 
     }

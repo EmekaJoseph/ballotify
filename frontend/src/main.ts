@@ -9,6 +9,9 @@ import 'bootstrap/dist/css/bootstrap.min.css'
 import 'bootstrap/dist/js/bootstrap.min.js'
 
 import './assets/css/root.css'
+
+import 'animate.css';
+
 const mainApp = createApp(App)
 
 // npm install vue-writer

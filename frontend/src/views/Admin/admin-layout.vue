@@ -3,7 +3,7 @@
         <sideBarComponent />
         <div class="adminMain">
             <div class="admin-content">
-                <div v-if="mStore.internetError" class="alert alert-danger py-2 border-0 small" role="alert">
+                <div v-if="internetError" class="alert alert-danger py-2 border-0 small" role="alert">
                     <i class="bi bi-wifi-off"></i> <b>Not connected, </b> please check your internet and refresh.
                 </div>
                 <router-view></router-view>
@@ -18,7 +18,9 @@ import offcanvas from './adminComponents/offCanvasComponent.vue'
 import sideBarComponent from './adminComponents/sideBarComponent.vue'
 
 import { dataStore } from '@/store/admin/dataStore';
+import { storeToRefs } from 'pinia'
 const mStore = dataStore()
+const { internetError } = storeToRefs(mStore)
 
 onMounted(() => {
     mStore.loadMaster()

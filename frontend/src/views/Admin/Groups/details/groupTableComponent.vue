@@ -47,8 +47,7 @@
                                     </button>
                                 </td> -->
                                 <td>
-                                    <input v-if="data.length > 1" v-model="val.checked" class="form-check-input mt-0"
-                                        type="checkbox">
+                                    <input v-model="val.checked" class="form-check-input mt-0" type="checkbox">
                                 </td>
                             </tr>
                         </tbody>

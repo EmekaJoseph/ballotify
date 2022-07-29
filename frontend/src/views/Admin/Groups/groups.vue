@@ -9,7 +9,7 @@
                     <div class="col-4 col-md-4 col-lg-2" data-bs-toggle="modal" data-bs-target="#newGroupModal">
                         <div class="card groupCard groupCardAdd">
                             <div class="group-content">
-                                <i class="bi bi-plus-circle-dotted bi-lg text-white"></i>
+                                <i class="bi bi-plus-square-dotted bi-lg text-white"></i>
                                 <div class="text-center group-name text-white">New</div>
                                 <small class="info-text text-white">add a new group.</small>
                             </div>
@@ -84,7 +84,7 @@ function showThisGroup(id: string) {
 }
 
 .bi-lg {
-    font-size: 40px;
+    font-size: 25px;
     display: flex;
     justify-content: center;
     margin-bottom: 2px;
@@ -101,7 +101,7 @@ function showThisGroup(id: string) {
 }
 
 .group-name {
-    font-size: 16px;
+    font-size: 18px;
     text-transform: capitalize;
 }
 

@@ -37,12 +37,12 @@
                                 <ul class="list-group list-group-flush">
                                     <li v-for="list in eventsList" :key="list" class="dropItem">
                                         <router-link to="/" @click.prevent>
-                                            <i class="bi bi-check2-circle"></i>&nbsp; {{ list }}
+                                            <i class="bi bi-calendar4-event"></i>&nbsp; {{ list }}
                                         </router-link>
                                     </li>
                                     <li class="dropItem">
                                         <a data-bs-toggle="modal" data-bs-target="#newEventModal" href="#newEvent">
-                                            <i class="bi bi-file-earmark-plus"></i>&nbsp; new
+                                            <i class="bi bi-plus-square-dotted"></i>&nbsp; new
                                         </a>
                                     </li>
                                 </ul>
@@ -53,7 +53,7 @@
                 <li class="list-group-item" :class="{ 'gActive': (route.name == 'Messages') }"
                     :data-bs-dismiss="showOn">
                     <router-link :to="{ name: 'Messages' }">
-                        <i class="bi bi-app-indicator"></i>&nbsp;
+                        <i class="bi bi-envelope-paper"></i>&nbsp;
                         Messages
                     </router-link>
                 </li>
