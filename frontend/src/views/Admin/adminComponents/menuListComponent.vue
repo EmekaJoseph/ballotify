@@ -25,7 +25,8 @@
                 </li>
                 <li class="accordion" id="votingsDropdown">
                     <div class="accordion-item">
-                        <h2 class="accordion-header" id="flush-headingTwo">
+                        <h2 class="accordion-header" id="flush-headingTwo"
+                            :class="{ 'gActive': (route.name == 'Event') }">
                             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
                                 data-bs-target="#flush-votings" aria-expanded="false" aria-controls="flush-votings">
                                 <i class="bi bi-list-check"></i>&nbsp; Votings
@@ -35,14 +36,17 @@
                             data-bs-parent="#votingsDropdown">
                             <div class="accordion-body">
                                 <ul class="list-group list-group-flush">
-                                    <li v-for="list in eventsList" :key="list" class="dropItem">
-                                        <router-link to="/" @click.prevent>
-                                            <i class="bi bi-calendar4-event"></i>&nbsp; {{ list }}
-                                        </router-link>
+                                    <li v-for="list in events" :key="list" class="dropItem small">
+                                        <a :data-bs-dismiss="showOn"
+                                            :class="{ 'focused': route.query.id == list.event_id }" href="/"
+                                            @click.prevent="navigateToEvent(list.event_id, list.event_name)">
+                                            <i class="bi bi-calendar4-event"></i>&nbsp; {{ list.event_name }}
+                                        </a>
                                     </li>
                                     <li class="dropItem">
-                                        <a data-bs-toggle="modal" data-bs-target="#newEventModal" href="#newEvent">
-                                            <i class="bi bi-plus-square-dotted"></i>&nbsp; new
+                                        <a class="add-new" data-bs-toggle="modal" data-bs-target="#newEventModal"
+                                            href="#newEvent">
+                                            <i class="bi bi-plus-square-dotted"></i>&nbsp; Create new
                                         </a>
                                     </li>
                                 </ul>
@@ -69,10 +73,15 @@
     </div>
 </template>
 
-<script setup>
-import { inject, ref } from 'vue'
-import { useRoute } from 'vue-router';
-const { cc1, cc2, ccThk, ccBg, ccBtnH } = inject("c$");
+<script setup lang="ts">
+import { inject, ref, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router';
+import { dataStore } from '@/store/admin/dataStore';
+import { storeToRefs } from 'pinia'
+
+const route = useRoute()
+const router = useRouter()
+const { cc1, cc2, ccThk, ccBg, ccBtnH }: any = inject("c$");
 
 defineProps({
     showOn: {
@@ -81,10 +90,15 @@ defineProps({
         required: false,
     }
 })
-const route = useRoute()
 
+const { events }: any = storeToRefs(dataStore())
 
-const eventsList = ref(['event1', 'event2'])
+function navigateToEvent(id: any, name: string) {
+    router.push({
+        path: 'event',
+        query: { id: id, e: name }
+    })
+}
 
 </script>
 
@@ -179,7 +193,7 @@ a:not(.gActive):hover {
 }
 
 .dropItem {
-    margin-bottom: 18px;
+    margin-bottom: 12px;
 }
 
 .dropItem a {
@@ -189,5 +203,15 @@ a:not(.gActive):hover {
 
 .dropItem a:hover {
     color: #111;
+}
+
+.focused {
+    /* font-weight: bolder; */
+    color: rgb(148, 144, 144) !important;
+}
+
+.add-new {
+    font-weight: bolder;
+    color: v-bind(cc1) !important;
 }
 </style>

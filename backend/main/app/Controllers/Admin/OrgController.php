@@ -4,22 +4,24 @@ namespace App\Controllers\Admin;
 
 use App\Controllers\BaseController;
 use App\Models\OrgModel;
-use App\Controllers\Admin\MembersController as Member;
-use App\Controllers\Admin\GroupsController as Group;
+use App\Controllers\Admin\MembersController as memberTable;
+use App\Controllers\Admin\GroupsController as groupTable;
+use App\Controllers\Admin\EventsController as eventsTable;
 
 class OrgController extends BaseController
 {
     public function getOverview($org_id)
     {
-        $membersCount = (new Member)->countMembersInOrg($org_id);
-        $groupsCount = (new Group)->countGroupsInOrg($org_id);
-        $birthdays = (new Member)->getBirthdays($org_id);
+        $membersCount = (new memberTable)->countMembersInOrg($org_id);
+        $groupsCount = (new groupTable)->countGroupsInOrg($org_id);
+        $birthdays = (new memberTable)->getBirthdays($org_id);
+        $eventCount = (new eventsTable)->eventsCount($org_id);
 
         $data2 = array(
             'members' => $membersCount,
             'groups' => $groupsCount,
             'birthdays' => $birthdays,
-            'events' => 0,
+            'events' => $eventCount,
             'messages' => 0,
         );
         return $this->response->setJSON($data2);
@@ -67,8 +69,8 @@ class OrgController extends BaseController
     function orgIdExists($id)
     {
         $table = new OrgModel();
-        $exists = $table->where('org_id', $id)->countAllResults();
-        return ($exists);
+        $count = $table->where('org_id', $id)->countAllResults();
+        return ($count);
     }
 
     function storeToDB($data)

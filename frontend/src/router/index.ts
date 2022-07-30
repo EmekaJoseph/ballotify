@@ -41,7 +41,7 @@ const routes: Array<RouteRecordRaw> = [
       { path: 'members', name: 'Members', component: () => import('../views/Admin/Members/members.vue') },
       { path: 'messages', name: 'Messages', component: () => import('../views/Admin/Messages/messages.vue') },
       { path: 'settings', name: 'Settings', component: () => import('../views/Admin/Settings/settings.vue') },
-      { path: 'event', name: 'event-v', props: route => ({ query: route.query }), component: () => import('../views/Admin/Events/event.vue') },
+      { path: 'event', name: 'Event', props: route => ({ query: route.query }), component: () => import('../views/Admin/Events/event.vue') },
     ],
   },
 

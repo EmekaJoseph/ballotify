@@ -109,4 +109,8 @@ export default {
         obj.org_id = thisOrgId
         return bus.post('/saveNewEvent', JSON.stringify(obj))
     },
+
+    getEvents() {
+        return bus.post('/getEvents/' + thisOrgId)
+    },
 }

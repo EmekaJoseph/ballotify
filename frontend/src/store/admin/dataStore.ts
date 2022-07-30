@@ -31,6 +31,7 @@ export const dataStore = defineStore('dataStore', {
         loadMaster() {
             this.getGroupNames()
             this.getMembers()
+            this.getEvents()
         },
 
         async getMembers() {
@@ -54,13 +55,28 @@ export const dataStore = defineStore('dataStore', {
                 var { data } = await server.getGroupNames()
                 if (data) {
                     let grp = data.groups;
-                    this.groups = grp.map((x: { id: string; group_name: string; created: string }) => ({
-                        id: x.id,
-                        created: x.created,
-                        name: x.group_name,
-                        label: x.group_name
-                    }))
+                    grp.forEach((x: { name: any; group_name: any; label: any; }) => {
+                        x.name = x.group_name;
+                        x.label = x.group_name
+                    })
+                    this.groups = grp
+                    // this.groups = grp.map((x: { id: string; group_name: string; created: string }) => ({
+                    //     id: x.id,
+                    //     created: x.created,
+                    //     name: x.group_name,
+                    //     label: x.group_name
+                    // }))
                 }
+            } catch (error) {
+                console.log(error);
+            }
+        },
+
+        async getEvents() {
+            try {
+                var { data } = await server.getEvents()
+                if (data) this.events = data
+
             } catch (error) {
                 console.log(error);
             }

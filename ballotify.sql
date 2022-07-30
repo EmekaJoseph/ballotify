@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jun 28, 2022 at 10:56 PM
+-- Generation Time: Jul 30, 2022 at 02:50 PM
 -- Server version: 10.4.22-MariaDB
 -- PHP Version: 8.1.2
 
@@ -57,7 +57,8 @@ CREATE TABLE `tbl_groups` (
 --
 
 INSERT INTO `tbl_groups` (`id`, `org_id`, `group_name`, `created`) VALUES
-(1, 'BBHK', 'family', '2022-06-28 15:41:30');
+(1, 'BBHK', 'familys', '2022-06-28 15:41:30'),
+(3, 'BBHK', 'yarn', '2022-06-28 17:54:00');
 
 -- --------------------------------------------------------
 
@@ -83,8 +84,9 @@ CREATE TABLE `tbl_members` (
 --
 
 INSERT INTO `tbl_members` (`id`, `org_id`, `firstname`, `lastname`, `email`, `phone`, `verified`, `group_id`, `gender`, `birthday`) VALUES
-(1, 'BBHK', 'fredrick', 'Johnson', 'john@gmail.com', '09087634527', '1', '1', 'M', '8-20'),
-(2, 'BBHK', 'aliya', 'Faridah', 'aliya02@mail.com', '07012547896', '1', '1', 'F', '11-24');
+(1, 'BBHK', 'fredrick', 'Johnson', 'john@gmail.com', '09087634527', '1', '3', 'M', '8-27'),
+(2, 'BBHK', 'aliya', 'Faridah', 'aliya02@mail.com', '07012547896', '1', '3', 'F', '11-24'),
+(3, 'BBHK', 'Buchi', 'Samuel', 'sammybu09@gmail.com', '09087675890', '1', '3', 'M', '9-24');
 
 -- --------------------------------------------------------
 
@@ -106,7 +108,7 @@ CREATE TABLE `tbl_org` (
 --
 
 INSERT INTO `tbl_org` (`id`, `org_id`, `org_name`, `org_logo`, `org_address`, `org_events`) VALUES
-(1, 'BBHK', 'Proffix Academy', NULL, 'proffix address', 0);
+(1, 'BBHK', 'Proffix Academy', NULL, 'Sweet Address London street', 0);
 
 -- --------------------------------------------------------
 
@@ -131,7 +133,7 @@ CREATE TABLE `tbl_users` (
 --
 
 INSERT INTO `tbl_users` (`id`, `org_id`, `firstname`, `lastname`, `email`, `image`, `role`, `isActive`, `password`) VALUES
-(1, 'BBHK', 'emeka', 'iwuji', 'emeka@mail.com', NULL, 'master', '1', '$2y$10$ZkY6L0dz9TosKIr0OYXgGurUUC/LWmKcykp5T3RYPefhRMZSF/qQ.');
+(1, 'BBHK', 'Emeka', 'Joseph', 'emeka@mail.com', NULL, 'master', '1', '$2y$10$ZkY6L0dz9TosKIr0OYXgGurUUC/LWmKcykp5T3RYPefhRMZSF/qQ.');
 
 --
 -- Indexes for dumped tables
@@ -181,13 +183,13 @@ ALTER TABLE `tbl_events`
 -- AUTO_INCREMENT for table `tbl_groups`
 --
 ALTER TABLE `tbl_groups`
-  MODIFY `id` int(50) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(50) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `tbl_members`
 --
 ALTER TABLE `tbl_members`
-  MODIFY `id` int(50) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(50) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `tbl_org`

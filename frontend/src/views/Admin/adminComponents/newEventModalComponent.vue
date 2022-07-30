@@ -57,6 +57,8 @@
 import { ref, reactive, computed } from 'vue';
 import server from '@/store/apiStore'
 import router from '@/router';
+import { dataStore } from '@/store/admin/dataStore';
+const mStore = dataStore()
 
 const event = reactive({
     name: '',
@@ -117,6 +119,7 @@ async function saveEvent() {
         var { data } = await server.saveNewEvent(obj)
         if (data.state != 0) {
             event.isSaving = false
+            mStore.getEvents()
             modalClose.value.click()
             navigateToEvent(data.id)
         }
@@ -135,7 +138,7 @@ async function saveEvent() {
 function navigateToEvent(id: any) {
     router.push({
         path: 'event',
-        query: { org: id, e: event.name }
+        query: { id: id, e: event.name }
     })
 }
 

@@ -13,8 +13,8 @@ class EventsController extends BaseController
     public function getEvents($org_id)
     {
         $events = new EventsModel();
-        $rr = $events->where('org_id', $org_id)->orderBy('id', 'desc')->findAll(1, 0);
-        $rr = $events->where('org_id', $org_id)->findAll();
+        // $rr = $events->where('org_id', $org_id)->orderBy('id', 'desc')->findAll(1, 0);
+        $rr = $events->where('org_id', $org_id)->orderBy('id', 'desc')->findAll();
         return $this->response->setJSON($rr);
     }
 
@@ -52,5 +52,13 @@ class EventsController extends BaseController
         }
 
         return $this->response->setJSON(array('state' => $resp, 'id' => $event_id));
+    }
+
+
+    function eventsCount($org_id)
+    {
+        $eventsTable = new EventsModel();
+        $count = $eventsTable->where('org_id', $org_id)->countAllResults();
+        return ($count);
     }
 }
