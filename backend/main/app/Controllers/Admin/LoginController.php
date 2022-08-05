@@ -5,6 +5,7 @@ namespace App\Controllers\Admin;
 use App\Controllers\BaseController;
 use App\Controllers\Admin\UserController as User;
 use App\Controllers\Admin\OrgController as Org;
+use App\Controllers\SendMail;
 
 class LoginController extends BaseController
 {
@@ -24,13 +25,16 @@ class LoginController extends BaseController
             } else {
                 $rArray['status'] = 1;
                 $rArray['data'] = array(
-                    'id' => $admin['id'],
+                    'user_id' => $admin['id'],
                     'org_id' => $admin['org_id'],
-                    'name' => $admin['firstname'] . ' ' . $admin['lastname'],
-                    'role' => $admin['role'],
+                    'user_name' => $admin['firstname'] . ' ' . $admin['lastname'],
+                    'user_role' => $admin['role'],
                     'org_name' => (new Org())->getUserOrg($admin['org_id'])['org_name']
                 );
             }
+            $message = 'Hello, ' . $admin['firstname'] . ' ' . $admin['lastname'] . ', 
+            You just signed in!, if this is not you, call this number <i>+2348139590011</i> immediately';
+            (new SendMail())->sendMail($email, 'Ballotify Notification', $message);
         }
         return $this->response->setJSON($rArray);
     }

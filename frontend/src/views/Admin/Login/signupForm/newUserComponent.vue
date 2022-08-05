@@ -30,21 +30,22 @@
                 </div>
                 <div class="col-md-6">
                     <div class="form-floating passF">
-                        <input :class="{ 'formError': err.password }" :type="pw.pw1" v-model="user.password"
-                            class="form-control" id="flpasswd1" placeholder="password" />
+                        <input @keyup="testPassword" :class="{ 'formError': err.password }" :type="pw.pw1"
+                            v-model="user.password" class="form-control" id="flpasswd1" placeholder="password" />
                         <span @click="pw.toggle('pw1')">
                             <i v-if="(pw.pw1 == 'password')" class="bi bi-eye-slash"></i>
                             <i v-else class="bi bi-eye"></i>
                         </span>
                         <label for="flpasswd1">Password:</label>
-                        <small class="text-danger" v-if="err.password">{{ err.password }}</small>
+                        <small class="text-danger" v-if="err.password">{{ err.password
+                        }}</small>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="form-floating passF">
                         <input :class="{ 'formError': err.rpassword }" :type="pw.pw2" v-model="user.rpassword"
                             class="form-control" id="flpasswd2" placeholder="password"
-                            :disabled="!(user.password.length > 1)" />
+                            :disabled="err.password.length > 1" />
 
                         <span @click="pw.toggle('pw2')">
                             <i v-if="(pw.pw2 == 'password')" class="bi bi-eye-slash"></i>
@@ -92,8 +93,8 @@ async function checkForm() {
         err.email = 'This field is empty'
         return
     }
-    else if (!user.password || (user.password.length < 5)) {
-        err.password = 'enter password not less than 5 characters'
+    else if (!user.password || !(userMthds.testPassword(user.password))) {
+        err.password = 'enter a valid password'
         return
     }
     else if (!user.rpassword) {
@@ -125,12 +126,18 @@ async function checkForm() {
 
 }
 
-
 const pw = reactive({
     pw1: 'password',
     pw2: 'password',
-    toggle: (field) => { pw[field] = pw[field] === 'password' ? 'text' : 'password' }
+    toggle: (field) => { pw[field] = (pw[field] === 'password') ? 'text' : 'password' }
 })
+
+function testPassword(e) {
+    if (!(userMthds.testPassword(e.target.value)))
+        err.password = 'Minimum 8 characters, at least one Upper Case, one number and one special character'
+    else
+        err.password = ''
+}
 
 </script>
 

@@ -58,6 +58,11 @@ const methods = {
         return regex.test(email)
     },
 
+    testPassword: (password: string) => {
+        var regex = /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$ %^&*-]).{8,}$/;
+        return regex.test(password)
+    },
+
     emailExists: async (email: string) => {
         state.loading = true
         try {

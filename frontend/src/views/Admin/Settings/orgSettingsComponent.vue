@@ -12,7 +12,7 @@
                         <label>Name:</label>
                         <div>
                             {{ org.name }} &nbsp;
-                            (<span class="fw-bold text-custom">{{ orgId }}</span>)
+                            <span class="fw-bold text-custom">{{ org.org_id }}</span>
                         </div>
                     </div>
 
@@ -39,12 +39,11 @@
 </template>
 
 <script setup lang="ts">
-import { adminAccount } from '@/store/admin/account'
 import server from '@/store/apiStore'
 import { onMounted, reactive } from 'vue';
-const orgId = adminAccount().getData.org_id
 const org = reactive({
     id: '',
+    org_id: '',
     name: '',
     address: '',
     name_bk: '',
@@ -63,6 +62,7 @@ async function getOrgDetails() {
         org.name = org.name_bk = data.org_name
         org.address = org.address_bk = data.org_address
         org.id = data.id
+        org.org_id = data.org_id
         org.keyIn = false;
         org.isLoading = false
     } catch (error) {

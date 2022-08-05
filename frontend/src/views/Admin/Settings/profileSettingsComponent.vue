@@ -51,7 +51,7 @@ import { adminAccount } from '@/store/admin/account'
 import server from '@/store/apiStore'
 import { onMounted, reactive, ref } from 'vue';
 const admin = adminAccount()
-const id = admin.getData.id
+const user_id = admin.getData.user_id
 const user = reactive({
     firstname: '',
     lastname: '',
@@ -71,7 +71,7 @@ onMounted(() => {
 
 async function getUserDetails() {
     try {
-        var { data } = await server.getUserDetails(id);
+        var { data } = await server.getUserDetails(user_id);
         user.firstname = user.firstname_bk = data.data.firstname
         user.lastname = user.lastname_bk = data.data.lastname
         user.email = data.data.email
@@ -92,7 +92,7 @@ function cancelKeyIn() {
 async function updateUser() {
     user.isLoading = true
     let obj = {
-        id: id,
+        id: user_id,
         firstname: user.firstname,
         lastname: user.lastname
     }

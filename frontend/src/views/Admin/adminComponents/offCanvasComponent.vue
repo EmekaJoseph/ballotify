@@ -16,7 +16,7 @@
 
             <div class="offcanvas-body"></div>
             <span class="name-section">
-                <div><i class="bi bi-person"></i> {{ current_user == '' ? fullName : current_user }}</div>
+                <div><i class="bi bi-person"></i> {{ _user == '' ? fullName : _user }}</div>
             </span>
             <span class="logOutSection">
                 <span class="logOutBtn" @click="logOut">
@@ -39,7 +39,7 @@ const { cc1, cc2, ccThk, ccBg, ccBtnH } = inject("c$");
 const router = useRouter()
 
 const admin = adminAccount()
-const { fullName, orgName, current_user } = storeToRefs(admin)
+const { fullName, _user } = storeToRefs(admin)
 
 function logOut() {
     admin.signOut()

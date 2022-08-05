@@ -15,7 +15,7 @@
 
                         {{ orgName }} <br>
                         <div class="fw-lighter float-end" style="font-size:12px;">
-                            {{ current_user == '' ? fullName : current_user }}
+                            {{ _user == '' ? fullName : _user }}
                             <i class="bi bi-chevron-down"></i>
                         </div>
                     </a>
@@ -69,7 +69,7 @@ const route = useRoute()
 const { cc1, cc2, ccThk, ccBg, ccBtnH } = inject("c$");
 
 const admin = adminAccount()
-const { fullName, orgName, current_user } = storeToRefs(admin)
+const { fullName, orgName, _user } = storeToRefs(admin)
 
 function logOut() {
     admin.signOut()

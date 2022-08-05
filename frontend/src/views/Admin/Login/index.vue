@@ -62,6 +62,7 @@ function showSuccessToast() {
     background-size: cover;
     background-color: #00BD8C21;
     transition: 1.8s ease-in-out;
+    overflow: hidden;
 }
 
 

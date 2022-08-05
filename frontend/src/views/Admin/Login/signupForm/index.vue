@@ -8,10 +8,12 @@
                     </span>
                     <newUserForm v-if="currForm == 1" @next="currForm = 2" @error="emit('error')" />
                     <newOrgForm v-else @back="currForm = 1" @done="submitForm" @error="emit('error')" />
+
+                    <div class=" d-md-none text-center AcntBtn my-3" @click="emit('switchForm', 'login')">
+                        <span class="btn">I already have an Account</span>
+                    </div>
                 </div>
-                <div class=" d-md-none text-center AcntBtn my-3" @click="emit('switchForm', 'login')">
-                    <span class="btn">I already have an Account</span>
-                </div>
+
             </div>
             <div class="col-lg-4 col-md-12 sideWriteUp order-1 order-lg-2">
                 <div class="container spanni">
