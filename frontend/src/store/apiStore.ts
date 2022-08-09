@@ -115,4 +115,8 @@ export default {
     getEvents() {
         return bus.post('/getEvents/' + thisOrgId.value)
     },
+
+    getEventDetails(event_id: any) {
+        return bus.post('/getEventDetails/' + event_id)
+    }
 }

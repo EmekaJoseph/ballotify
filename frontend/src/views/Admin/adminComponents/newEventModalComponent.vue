@@ -19,7 +19,7 @@
                         <div class="col-md-12 col-lg-6">
                             <label>Type:</label>
                             <v-select v-model="event.type" :clearable="false" :searchable="false" class="vSelect"
-                                :options="['People', 'Opinion']" />
+                                :options="['Candidacy', 'Multi-Choice']" />
                         </div>
                         <div class="col-md-12 col-lg-12">
                             <label>Description (optional):</label>
@@ -58,11 +58,12 @@ import { ref, reactive, computed } from 'vue';
 import server from '@/store/apiStore'
 import router from '@/router';
 import { dataStore } from '@/store/admin/dataStore';
+
 const mStore = dataStore()
 
 const event = reactive({
     name: '',
-    type: 'People',
+    type: 'Candidacy',
     desc: '',
     start: <any>new Date(),
     expiry: <any>new Date(),
@@ -110,8 +111,8 @@ async function saveEvent() {
     let obj = {
         event_name: event.name,
         event_description: event.desc,
-        event_start: event.start,
-        event_expiry: event.expiry,
+        event_start: event.start.toISOString(),
+        event_expiry: event.expiry.toISOString(),
         event_type: event.type
     }
 

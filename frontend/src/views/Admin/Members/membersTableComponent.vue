@@ -5,15 +5,14 @@
             }}</span>
                 <span v-if="members.length" class="float-end">
                     <button ref="btnOpenModal" type="button" data-bs-toggle="modal" data-bs-target="#newMemberModal"
-                        class="btn float-end btn-sm customBtnLine p-0 px-3 m-0">
+                        class="btn float-end btn-sm customBtn p-1 px-2 m-0">
                         <i class="bi bi-plus-circle"></i> add members
                     </button>
                 </span>
                 <transition name="xSlide">
-                    <span v-if="aMember.isChecked" class="float-end">
-                        <button @click="sendSetToDelete"
-                            class="btn btn-outline-danger me-2 float-end btn-sm p-0 px-3 m-0">
-                            <i class="bi bi-trash3"></i> Delete
+                    <span v-if="aMember.isChecked.length > 0" class="float-end">
+                        <button @click="sendSetToDelete" class="btn btn-danger me-2 float-end btn-sm p-1 px-2 m-0">
+                            <i class="bi bi-trash3"></i> Delete ({{ aMember.isChecked.length }})
                         </button>
                     </span>
                 </transition>
@@ -129,10 +128,8 @@ const whatGroupName = (id: string) => {
 }
 
 const aMember = reactive({
-    isChecked: computed(() => { return members.value.find(x => x.checked == true) })
+    isChecked: computed(() => { return members.value.filter(x => x.checked == true) })
 })
-
-
 
 function conFirmDelete(id: string) {
     Swal.fire({
@@ -165,8 +162,6 @@ const btnOpenModal: any = ref(null)
 function reOpenThis() {
     btnOpenModal.value.click()
 }
-
-
 </script>
 
 <style scoped>
@@ -175,8 +170,6 @@ function reOpenThis() {
     font-size: 10rem;
     cursor: pointer;
 }
-
-
 
 table td:nth-child(1),
 th:nth-child(1) {

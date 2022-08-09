@@ -10,14 +10,6 @@ use DateTime;
 
 class EventsController extends BaseController
 {
-    public function getEvents($org_id)
-    {
-        $events = new EventsModel();
-        // $rr = $events->where('org_id', $org_id)->orderBy('id', 'desc')->findAll(1, 0);
-        $rr = $events->where('org_id', $org_id)->orderBy('id', 'desc')->findAll();
-        return $this->response->setJSON($rr);
-    }
-
     public function saveNewEvent()
     {
         $eventsTable = new EventsModel();
@@ -52,6 +44,23 @@ class EventsController extends BaseController
         }
 
         return $this->response->setJSON(array('state' => $resp, 'id' => $event_id));
+    }
+
+    public function getEvents($org_id)
+    {
+        $eventsTable = new EventsModel();
+        // $rr = $events->where('org_id', $org_id)->orderBy('id', 'desc')->findAll(1, 0);
+        $array = $eventsTable->where('org_id', $org_id)->orderBy('id', 'desc')->findAll();
+        return $this->response->setJSON($array);
+    }
+
+    public function getEventDetails($event_id)
+    {
+        $eventsTable = new EventsModel();
+        $thisObj = $eventsTable->where('event_id', $event_id)->first();
+        $thisTime = Time::parse($thisObj['created'], 'America/Chicago');
+        $thisObj['created'] = $thisTime->humanize();
+        return $this->response->setJSON($thisObj);
     }
 
 

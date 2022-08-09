@@ -7,13 +7,13 @@
                 </span>
                 <span class="float-end">
                     <button @click="mStore.groupAddQuery()" data-bs-toggle="modal" data-bs-target="#mListModal"
-                        class="btn btn-sm customBtnLine p-0 px-3 m-0">
+                        class="btn btn-sm customBtn p-1 px-2 m-0">
                         <i class="bi bi-plus-circle"></i> add members
                     </button>
                 </span>
                 <transition name="xSlide">
                     <span v-if="aMember.isChecked" class="float-end">
-                        <button @click="remove()" class="btn btn-outline-danger me-2 float-end btn-sm p-0 px-3 m-0">
+                        <button @click="remove()" class="btn btn-danger me-2 float-end btn-sm p-1 px-2  m-0">
                             <i class="bi bi-folder-minus"></i> Remove
                         </button>
                         <!-- <button class="btn btn-outline-primary me-2 float-end btn-sm p-0 px-3 m-0">
@@ -24,7 +24,7 @@
             </div>
             <div v-if="data.length" class="card-body row">
                 <div class="table-responsive">
-                    <table class="table table-sm text-nowrap table-borderless">
+                    <table class="table table-sm text-nowrap">
                         <thead>
                             <tr>
 

@@ -2,7 +2,8 @@
     <div>
         <nav class="navbar navbar-light fixed-top shadow-sm">
             <div class="container-fluid">
-                <span>Admin <span>| {{ route.name }}</span></span>
+                <span class="d-md-none">Admin <span>| {{ route.name }}</span></span>
+                <span></span>
                 <!-- <div class="inputSearch d-none d-md-block">
                     <input type="text" class=" form-control form-control-sm" placeholder="search.." style="width:250px">
                     <span class="icon">

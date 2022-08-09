@@ -14,8 +14,9 @@
                         <form>
                             <div class="row gy-3">
                                 <div class="col-md-12">
-                                    <label>Group Name:</label>
-                                    <input v-model="group.name" type="text" class="form-control w-100">
+                                    <!-- <label>Group Name:</label> -->
+                                    <input placeholder="enter name..." v-model="group.name" type="text"
+                                        class="form-control w-100">
                                     <small v-if="group.error" class="text-danger">{{ group.error }}</small>
                                 </div>
 
@@ -69,6 +70,7 @@ async function saveName() {
         if (data == 1) {
             group.isSaving = false
             btnX.value.click()
+            group.name = ''
             emit('added')
         }
         else {

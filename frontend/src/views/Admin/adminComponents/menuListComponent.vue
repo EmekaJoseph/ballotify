@@ -41,12 +41,15 @@
                                             :class="{ 'focused': route.query.id == list.event_id }" href="/"
                                             @click.prevent="navigateToEvent(list.event_id, list.event_name)">
                                             <i class="bi bi-calendar4-event"></i>&nbsp; {{ list.event_name }}
+                                            <i v-if="route.query.id == list.event_id"
+                                                class="bi bi-circle-fill indicator ms-2"></i>
                                         </a>
                                     </li>
                                     <li class="dropItem">
                                         <a class="add-new" data-bs-toggle="modal" data-bs-target="#newEventModal"
                                             href="#newEvent">
-                                            <i class="bi bi-plus-square-dotted"></i>&nbsp; Create new
+                                            <button :data-bs-dismiss="showOn"><i
+                                                    class="bi bi-plus-square-fill"></i>&nbsp; create</button>
                                         </a>
                                     </li>
                                 </ul>
@@ -78,6 +81,7 @@ import { inject, ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router';
 import { dataStore } from '@/store/admin/dataStore';
 import { storeToRefs } from 'pinia'
+
 
 const route = useRoute()
 const router = useRouter()
@@ -198,7 +202,7 @@ a:not(.gActive):hover {
 
 .dropItem a {
     text-decoration: none;
-    margin-left: 50px;
+    margin-left: 35px;
 }
 
 .dropItem a:hover {
@@ -206,12 +210,18 @@ a:not(.gActive):hover {
 }
 
 .focused {
-    /* font-weight: bolder; */
-    color: rgb(148, 144, 144) !important;
+    color: v-bind(cc1) !important;
 }
 
-.add-new {
-    font-weight: bolder;
+.add-new button {
     color: v-bind(cc1) !important;
+    border: none;
+    margin: 0px;
+    background: transparent;
+    padding: 0px;
+}
+
+.indicator {
+    font-size: 7px;
 }
 </style>

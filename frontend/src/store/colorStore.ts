@@ -5,7 +5,7 @@ export const useColorStore = defineStore({
     state: () => ({
         cc1: '#03787c',
         cc2: '#04C3C9',
-        ccThk: '#026063',
+        ccThk: '#012A2B',
         ccBg: '#03787c11',
         ccBtnH: '#03858A'
 
