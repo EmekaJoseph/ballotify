@@ -24,7 +24,7 @@
             </div>
             <div v-if="data.length" class="card-body row">
                 <div class="table-responsive">
-                    <table class="table table-sm text-nowrap">
+                    <table class="table table-sm text-nowrap table-hover">
                         <thead>
                             <tr>
 
@@ -71,7 +71,7 @@
     </div>
 </template>
 
-<script setup lang="ts">
+<script  lang="ts" setup>
 import { computed, reactive, ref } from 'vue';
 import { dataStore } from '@/store/admin/dataStore';
 
@@ -97,7 +97,7 @@ const aMember = reactive({
 
 
 function remove(id?: string) {
-    let arr = <any>[]
+    let arr: any[] = []
     if (id) {
         let data = prop.data.find(x => x.id == id)
         arr.push(data)

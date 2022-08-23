@@ -12,7 +12,7 @@
                             <div class="group-content">
                                 <i class="bi bi-plus-square-dotted bi-lg text-white"></i>
                                 <div class="text-center group-name text-white">&nbsp;</div>
-                                <small class="info-text text-white">add a new group.</small>
+                                <small class="info-text text-white">new group.</small>
                             </div>
                         </div>
                     </div>
@@ -33,7 +33,7 @@
                                             <i class="bi bi-pencil text-white"></i>
                                         </button>
                                     </div>
-                                    <div class="col-md-6 text-center">
+                                    <div v-if="numInGrp(g.id) == 0" class="col-md-6 text-center">
                                         <button @click="deleteGroup(g.id)" class="btn btn-sm btn-danger optionsBtn">
                                             <i class="bi bi-trash3 text-white"></i>
                                         </button>
@@ -194,8 +194,8 @@ async function continueDelete(id: any) {
     width: 100%;
     top: 0;
     left: 0;
-    background-color: rgba(243, 240, 240, 0.7);
-    border: 1px solid #eee;
+    background-color: rgba(243, 240, 240, 0.555);
+    /* border: 1px solid #eee; */
     padding: 30px 10px;
     border-radius: 20px;
     display: none;

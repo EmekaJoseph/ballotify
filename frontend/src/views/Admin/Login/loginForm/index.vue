@@ -45,7 +45,6 @@
                                 </div>
                             </div>
                             <div class="col-md-12 mt-4">
-
                                 <button :disabled="loading" @click.prevent="checkForm" type="submit"
                                     class="btn-lg customBtn w-100">
                                     <span class="text-white" v-if="!loading">Login</span>

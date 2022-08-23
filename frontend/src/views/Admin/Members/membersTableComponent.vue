@@ -12,19 +12,20 @@
                 <transition name="xSlide">
                     <span v-if="aMember.isChecked.length > 0" class="float-end">
                         <button @click="sendSetToDelete" class="btn btn-danger me-2 float-end btn-sm p-1 px-2 m-0">
-                            <i class="bi bi-trash3"></i> Delete ({{ aMember.isChecked.length }})
+                            <i class="bi bi-trash3"></i> Delete
+                            <span class="badge rounded-pill bg-white text-dark small">
+                                {{ aMember.isChecked.length }}
+                            </span>
                         </button>
                     </span>
                 </transition>
+                <div v-if="members.length" class="me-4 float-end">
+                    <!-- <input type="text" class="form-control form-control-sm" placeholder="search.."> -->
+                    <button class="btn btn-link m-0 p-0"><i class="bi bi-search"></i></button>
+                </div>
             </div>
             <div class="card-body">
                 <div class="row">
-                    <div class="col-12">
-                        <div v-if="members.length" class="me-3 mb-3 float-end">
-                            <!-- <input type="text" class="form-control form-control-sm" placeholder="search.."> -->
-                            <button class="btn btn-link m-0 p-0"><i class="bi bi-search"></i></button>
-                        </div>
-                    </div>
                     <div class="col-12">
                         <div v-if="!members.length" class="row justify-content-center my-4">
                             <span class="text-center"><i class="bi bi-person-x plus"></i></span>
@@ -43,7 +44,7 @@
                                         <tr>
                                             <th class="smallCol">S/N</th>
                                             <th>Name</th>
-                                            <th>Email</th>
+                                            <th>Phone No.</th>
                                             <th>Group</th>
                                             <th>Birthday</th>
                                             <th>Satus</th>
@@ -58,7 +59,7 @@
                                             <td class="text-capitalize">{{ i.firstname }} {{ i.lastname }}, ({{ i.gender
                                             }})
                                             </td>
-                                            <td>{{ i.email }}</td>
+                                            <td>{{ i.phone }}</td>
                                             <td>
                                                 <i v-if="i.group_id != '0'" class="bi bi-folder-check"></i>
                                                 {{ whatGroupName(i.group_id) }}
@@ -182,8 +183,9 @@ th:nth-child(1) {
 
 
 .bg-successs {
-    /* background-color: #1987541e; */
+    background-color: #cae9dab6;
     color: #198754;
+    color: #24bd75;
 }
 
 .bg-warningg {

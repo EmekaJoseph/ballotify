@@ -61,12 +61,12 @@ import { dataStore } from '@/store/admin/dataStore';
 
 const mStore = dataStore()
 
-const event = reactive({
+const event: any = reactive({
     name: '',
     type: 'Candidacy',
     desc: '',
-    start: <any>new Date(),
-    expiry: <any>new Date(),
+    start: new Date(),
+    expiry: new Date(),
     isSaving: false,
 
     days: computed(() => {
@@ -105,7 +105,7 @@ function checkForm() {
     saveEvent()
 }
 
-const modalClose = ref<any>(null)
+const modalClose: any = ref(null)
 async function saveEvent() {
     event.isSaving = true
     let obj = {

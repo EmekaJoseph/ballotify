@@ -76,10 +76,21 @@ $routes->add('/updateMember', 'Admin\MembersController::updateMember');
 $routes->add('/updateMembersGroup/(:any)', 'Admin\MembersController::updateMembersGroup/$1');
 
 
-// events
+// Admin Vote Settings - events
 $routes->add('/saveNewEvent', 'Admin\EventsController::saveNewEvent');
 $routes->add('/getEvents/(:any)', 'Admin\EventsController::getEvents/$1');
 $routes->add('/getEventDetails/(:any)', 'Admin\EventsController::getEventDetails/$1');
+
+
+// Admin Vote Settings - positions
+$routes->add('/saveNewPosition', 'Admin\VotingSettingsController::saveNewPosition');
+$routes->add('/getPositions/(:any)', 'Admin\VotingSettingsController::getPositions/$1');
+$routes->add('/removePosition/(:any)', 'Admin\VotingSettingsController::removePosition/$1');
+
+
+
+
+
 
 /*
  * --------------------------------------------------------------------

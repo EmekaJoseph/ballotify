@@ -1,55 +1,84 @@
 <template>
     <div>
-        <span class="large-name">{{ route.query.e }}</span>
-        <span>
-            <ul>
-                <li><b>created:</b> {{ event.data.created }}</li>
-                <li><b>Start:</b> {{ (new Date(event.data.event_start)).toLocaleString() }}</li>
-                <li><b>Expiry:</b> {{ (new Date(event.data.event_expiry)).toLocaleString() }}</li>
-            </ul>
-        </span>
+        <div class="name-span"><span></span>
+            <span class="large-name">{{ event.name }}</span>
+
+            <div class="dropdown">
+                <span class="dropdown-toggle" type="button" id="dropdownMenu2" data-bs-toggle="dropdown"
+                    aria-expanded="false">
+                    <i class="bi bi-three-dots-vertical"></i>
+                </span>
+                <ul v-if="!(event.isLoading)" class="dropdown-menu" aria-labelledby="dropdownMenu2">
+                    <li><a class="dropdown-item" href="#"><i class="bi bi-trash3"></i> Delete</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div v-if="event.isLoading" class="page-loader">
+            <div class="c-loader loaderBlack"></div>
+        </div>
+        <div v-else>
+            <div class="row justify-content-center gy-4">
+                <div class="col-12 col-lg-5">
+                    <modifyComponent />
+                </div>
+                <div class="col-lg-7">
+                    <candidatesComponent />
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, watchEffect, onUnmounted, watch } from 'vue';
+import modifyComponent from './modify/modifyComponent.vue';
+import candidatesComponent from './candidates/candidatesComponent.vue';
+import { reactive, ref, watchEffect, inject, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import server from '@/store/apiStore'
+import { eventStore } from './event-data';
+import { storeToRefs } from 'pinia';
 
+const event_ = eventStore()
+const { event }: any = storeToRefs(event_)
+
+const { cc1, cc2, ccThk, ccBg, ccBtnH }: any = inject("c$");
 const route = useRoute()
 
-const event = reactive({
-    data: <any>''
+
+watch(() => route.query, () => {
+    loadThisEvent()
+
 })
 
-watchEffect(async () => {
+onMounted(() => {
+    loadThisEvent()
+})
+
+function loadThisEvent() {
     let event_id = route.query.id;
     if (event_id != undefined) {
-        try {
-            var { data } = await server.getEventDetails(event_id)
-            console.log(data);
-
-            event.data = data
-
-        } catch (error) {
-            console.log(error);
-        }
+        event_.getEventDetails()
     }
-})
+}
 </script>
 
 <style scoped>
-.large-name {
+.name-span {
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
+    background-color: v-bind(ccBg);
+    /* text-align: center; */
+    padding: 10px;
+    margin-bottom: 20px;
+    border-left: 4px solid v-bind(cc1);
+}
+
+.large-name {
     font-weight: 900;
     font-size: 1.7rem;
+    color: v-bind(cc1);
     text-transform: uppercase;
-    background-color: #fff;
     text-align: center;
-    padding: 10px;
-    border-radius: 5px;
-    margin-bottom: 20px;
 }
 
 @media (max-width: 991px) {
@@ -57,5 +86,22 @@ watchEffect(async () => {
         font-size: 0.8rem;
 
     }
+
+    .dropdown-toggle .bi {
+        font-size: 0.8rem;
+    }
+}
+
+.dropdown-toggle .bi {
+    color: v-bind(cc1) !important;
+    font-size: 1.7rem;
+}
+
+.dropdown-menu .bi {
+    color: red !important;
+}
+
+.dropdown-item:hover {
+    background-color: transparent;
 }
 </style>

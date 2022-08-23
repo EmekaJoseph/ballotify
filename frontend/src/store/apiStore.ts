@@ -118,5 +118,20 @@ export default {
 
     getEventDetails(event_id: any) {
         return bus.post('/getEventDetails/' + event_id)
-    }
+    },
+
+
+    // voting
+    saveNewPosition(obj: any) {
+        obj.org_id = thisOrgId.value
+        return bus.post('/saveNewPosition', JSON.stringify(obj))
+    },
+
+    getPositions(event_id: any) {
+        return bus.post('/getPositions/' + event_id)
+    },
+
+    removePosition(id: any) {
+        return bus.post('/removePosition/' + id)
+    },
 }

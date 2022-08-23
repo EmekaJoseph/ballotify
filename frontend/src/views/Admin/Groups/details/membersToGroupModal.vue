@@ -11,7 +11,7 @@
                 </div>
                 <div v-if="mems.length" class="modal-body p-sm-4">
                     <div class="table-responsive">
-                        <table class="table text-nowrap table-borderless">
+                        <table class="table text-nowrap table-borderless table-hover">
                             <thead>
                                 <tr>
                                     <th>Name</th>

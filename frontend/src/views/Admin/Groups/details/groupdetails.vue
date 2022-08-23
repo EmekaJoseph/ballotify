@@ -3,8 +3,8 @@
         <div class="card">
             <h5 class="px-3 pt-3 ">
                 <div class="d-none d-md-inline me-2">
-                    <button @click="router.go(-1)" class="btn m-0">
-                        <i class="bi bi-chevron-left"></i>
+                    <button @click="router.go(-1)" class="btn m-0 fw-bold float-end btn-link">
+                        <i class="bi bi-chevron-left"></i> Go back
                     </button>
                 </div>
                 <span class="text-capitalize"><i class="bi bi-folder"></i> {{ group.name }}</span>

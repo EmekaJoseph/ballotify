@@ -1,19 +1,20 @@
 <template>
     <div>
+        <div v-html="greet()" class="greeting"> </div>
         <div class="fw-bold mb-2">Overview:</div>
         <div class="row justify-content-center gy-3">
-            <infoCard :name="spell('Member', iRates.Member)" icon="bi-people" color="#BD6C13" :rate="iRates.Member" />
-            <infoCard :name="spell('Group', iRates.Group)" icon="bi-folder-plus" color="#18B4F0" :rate="iRates.Group" />
-            <infoCard :name="'Voting  ' + spell('Event', iRates.Event)" icon="bi-list-check" color="#F01844"
+            <InfoCard :name="spell('Member', iRates.Member)" icon="bi-people" color="#BD6C13" :rate="iRates.Member" />
+            <InfoCard :name="spell('Group', iRates.Group)" icon="bi-folder-plus" color="#18B4F0" :rate="iRates.Group" />
+            <InfoCard :name="'Voting  ' + spell('Event', iRates.Event)" icon="bi-list-check" color="#F01844"
                 :rate="iRates.Event" />
-            <infoCard :name="spell('Message', iRates.Message)" icon="bi-app-indicator" color="#2c3e50"
+            <InfoCard :name="spell('Message', iRates.Message)" icon="bi-app-indicator" color="#2c3e50"
                 :rate="iRates.Message" />
         </div>
 
         <div class="mt-4">
             <div class="row justify-content-center gy-3">
-                <recents :data="recentsTable" />
-                <calender :days="birthdaysFormatted()" />
+                <Recents :data="recentsTable" />
+                <Calender :days="birthdaysFormatted()" />
             </div>
         </div>
     </div>
@@ -24,9 +25,9 @@ import { onMounted, ref, reactive } from 'vue'
 import server from '@/store/apiStore'
 import useFunc from '@/store/useFunction'
 
-import infoCard from './infoCardComponent.vue'
-import recents from './recentsComponent.vue'
-import calender from './calenderComponent.vue'
+import InfoCard from './infoCardComponent.vue'
+import Recents from './recentsComponent.vue'
+import Calender from './calenderComponent.vue'
 
 const spell = useFunc.fx.spell
 
@@ -42,9 +43,9 @@ const iRates = reactive({
 
 const birthdaysFormatted: any = () => {
     let bds = birthdays.value
-    let newArr = <any>[]
+    let newArr: any[] = []
     bds.forEach((x: string) => {
-        let appended = x + '-' + (new Date()).getFullYear()
+        let appended: any = x + '-' + (new Date()).getFullYear()
         newArr.push(new Date(appended));
     })
     return newArr
@@ -66,7 +67,33 @@ onMounted(async () => {
 })
 
 
+const greet = () => {
+    let now: Date = new Date();
+    let curHr = now.getHours();
+    let str: string = '';
+    if (curHr < 12) str = '<i class="bi bi-emoji-smile"></i>&nbsp;Good morning';
+    else if (curHr < 16) str = '<i class="bi bi-sun"></i>&nbsp;Good afternoon';
+    else str = '<i class="bi bi-moon"></i>&nbsp;Good evening';
+    return str
+}
+
+
 </script>
 
 <style scoped>
+.greeting {
+    display: flex;
+    justify-content: end;
+    padding: 15px;
+    color: #d6d3d3;
+    font-size: 17px;
+    font-weight: 600;
+}
+
+@media (max-width: 991px) {
+    .greeting {
+        padding: 7px;
+        font-size: 15px;
+    }
+}
 </style>

@@ -202,6 +202,20 @@ label {
     border: 0.3rem solid #000;
 }
 
+
+.page-loader {
+    height: 300px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.page-loader .c-loader {
+    width: 4rem;
+    height: 4rem;
+}
+
+
 @-webkit-keyframes c-loader {
     from {
         transform: scale(0);
@@ -299,7 +313,8 @@ input[type=number] {
 }
 
 .vs__dropdown-option--highlight {
-    background: #03787c !important;
+    background: #b7b8b854 !important;
+    color: #111 !important;
 }
 
 .dp__overlay_cell_active {

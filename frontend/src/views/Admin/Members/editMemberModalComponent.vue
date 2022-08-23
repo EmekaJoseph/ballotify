@@ -63,9 +63,6 @@
                                             <button v-if="isEditing" @click.prevent="checkForm"
                                                 class="customBtn btn w-100"><i class="bi bi-save2"></i>&nbsp;
                                                 Update</button>
-                                            <button v-else disabled class="btn btn-secondary w-100"><i
-                                                    class="bi bi-save2"></i>&nbsp;
-                                                Update</button>
                                         </div>
                                     </span>
                                 </div>
