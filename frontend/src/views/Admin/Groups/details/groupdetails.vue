@@ -2,19 +2,21 @@
     <div>
         <div class="card">
             <h5 class="px-3 pt-3 ">
-                <div class="d-none d-md-inline me-2">
-                    <button @click="router.go(-1)" class="btn m-0 fw-bold float-end btn-link">
-                        <i class="bi bi-chevron-left"></i> Go back
+                <div class="d-none d-md-inline ">
+                    <button @click="router.go(-1)" class="btn m-0 fw-bold  btn-link">
+                        <i class="bi bi-chevron-left"></i> back
                     </button>
                 </div>
-                <span class="text-capitalize"><i class="bi bi-folder"></i> {{ group.name }}</span>
-                <small class="created">created {{ group.created }} </small>
+                <div class="float-end me-2">
+                    <span class="text-capitalize"><i class="bi bi-folder"></i> {{ group.name }}</span>
+                    <small class="created">created {{ group.created }} </small>
+                </div>
 
             </h5>
 
             <div class="card-body">
                 <div class="row gy-3">
-                    <tableComp :data="membersList()" @remove="confirmRemove" />
+                    <tableComp @remove="confirmRemove" />
                     <settingComp :name="group.name" :name_bk="group.name" @delete="deleteGroup" @rename="renameGroup" />
                     <addMembersModal @add="confirmAdd" />
                 </div>
@@ -28,58 +30,41 @@
 import tableComp from './groupTableComponent.vue'
 import settingComp from './groupSettingsComponent.vue'
 import addMembersModal from './membersToGroupModal.vue';
-import { useRoute, useRouter } from 'vue-router'
+import { useRouter } from 'vue-router'
 import server from '@/store/apiStore'
-import { reactive, onMounted, ref } from 'vue';
+import { onMounted, } from 'vue';
 import Swal from 'sweetalert2'
 import { dataStore } from '@/store/admin/dataStore';
+import { groudDetailStore } from './groupDetailStore';
 import { storeToRefs } from 'pinia'
 
 
 const mStore = dataStore()
 const { members, groups }: any = storeToRefs(mStore)
+const groupStore = groudDetailStore()
+const { group }: any = storeToRefs(groupStore)
 
-const route = useRoute()
+
+
 const router = useRouter()
-const query = ref<any>(route.query.g)
-
-
-const group = reactive({
-    name: '',
-    created: '',
-    id: '',
-    members: []
-})
-
 
 onMounted(() => {
+    groupStore.$reset
     updateData()
 })
 
 
 async function updateData() {
+
     await mStore.getMembers()
     await mStore.getGroupNames()
-    let data = groups.value.find((x: { id: any }) => x.id == query.value)
-    group.name = data.name
-    group.created = data.created
-    group.id = query.value
-    group.members = members.value.filter((x: { group_id: any }) => x.group_id == query.value)
-    mStore.currentGroup = query.value
+    groupStore.setData(groups.value, members.value)
 }
 
-
-const membersList: any = () => {
-    let tableGroup = group.members
-    tableGroup.forEach((x: { checked: boolean }) => {
-        x.checked = false
-    });
-    return tableGroup
-}
 
 
 async function deleteGroup() {
-    let hasMembers = members.value.some((x: { group_id: string }) => x.group_id == group.id)
+    let hasMembers = members.value.some((x: { group_id: string }) => x.group_id == group.value.id)
     if (hasMembers) {
         Swal.fire({
             toast: true,
@@ -94,12 +79,12 @@ async function deleteGroup() {
     }
     else {
         try {
-            var { data } = await server.deleteGroup(group.id);
+            var { data } = await server.deleteGroup(group.value.id);
             if (data == 1) {
                 Swal.fire({
                     toast: true,
                     icon: 'success',
-                    title: `'${group.name}' deleted`,
+                    title: `'${group.value.name}' deleted`,
                     position: 'top-end',
                     showConfirmButton: false,
                     timer: 3000,
@@ -118,11 +103,11 @@ async function deleteGroup() {
 }
 
 async function renameGroup(name: string) {
-    if (group.name.toLowerCase() == name.toLowerCase()) {
+    if (group.value.name.toLowerCase() == name.toLowerCase()) {
         return
     }
     let obj = {
-        id: group.id,
+        id: group.value.id,
         group_name: name
     }
     try {
@@ -149,8 +134,7 @@ async function renameGroup(name: string) {
                 timer: 3000,
                 timerProgressBar: false,
             })
-            mStore.getGroupNames()
-            group.name = name
+            updateData()
         }
 
     } catch (error) {

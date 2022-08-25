@@ -39,7 +39,7 @@
                             </form>
                             <div class="row mt-3">
                                 <div class="col-md-12 col-lg-12">
-                                    <div class="list-panel">
+                                    <div class="list-span">
                                         <div v-if="!(positions.length > 0)">
                                             <div class="text-center empty-list-text mt-5 pt-5">
                                                 List is Empty
@@ -124,7 +124,7 @@
 <script setup lang="ts">
 import { reactive, ref, inject } from 'vue';
 import server from '@/store/apiStore'
-import { eventStore } from '../event-data';
+import { eventStore } from '../eventStore';
 import { storeToRefs } from 'pinia';
 import { useRoute } from 'vue-router';
 
@@ -206,15 +206,6 @@ const isLoading = ref(false)
     background-color: v-bind(ccBg);
     color: #fff;
     /* background-color: #f8f8f88e; */
-}
-
-
-.list-panel {
-    background-color: #eeeeee2f;
-    padding: 20px 10px;
-    border: 1px solid #eee;
-    height: 300px;
-    overflow-y: auto;
 }
 
 

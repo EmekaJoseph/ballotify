@@ -1,34 +1,32 @@
 <template>
-    <div class="col-lg-12 col-xl-5">
+    <div class="col-lg-12 col-xl-4">
         <div class="card" style="border: 2px solid #eee;">
             <div class="card-header">Settings</div>
             <div class="card-body">
                 <div class="row g-5">
                     <div class="col-md-12">
-                        <div class="p-lg-4">
-                            <form>
-                                <div class="row g-3">
-                                    <div class="col-md-12">
-                                        <label>Edit name</label>
-                                        <input @input="watchInput" v-model="name" type="text"
-                                            class="form-control form-control-lg">
-                                        <small v-if="nameErr" class="text-danger">{{ nameErr }}</small>
-                                    </div>
-                                    <div class="col-md-12">
-                                        <button @click.prevent="sendName" class="btn btn-secondary btn-lg  w-100"
-                                            :disabled="!isInput">Change</button>
-                                    </div>
+                        <form>
+                            <div class="row g-3">
+                                <div class="col-md-12">
+                                    <label>Rename</label>
+                                    <input @input="watchInput" v-model="name" type="text"
+                                        class="form-control form-control-lg">
+                                    <small v-if="nameErr" class="text-danger">{{ nameErr }}</small>
                                 </div>
-                            </form>
-                        </div>
+                                <div class="col-md-12">
+                                    <button @click.prevent="sendName" class="btn btn-secondary btn-lg  w-100"
+                                        :disabled="!isInput">Rename</button>
+                                </div>
+                            </div>
+                        </form>
                     </div>
                     <div class="col-md-12">
-                        <div class="shadow-sm p-2 p-lg-3 settCard">
+                        <div class="shadow-sm p-1 p-lg-2 settCard">
                             <form>
                                 <div class="row g-3">
                                     <div class="col-md-12">
                                         <button @click.prevent="deleteGroup"
-                                            class="btn-lg btn btn-link text-danger w-100">
+                                            class="btn-lg btn btn-lin text-danger w-100">
                                             <i class="bi bi-folder-x"></i> Delete
                                             Group</button>
                                         <!-- <div class="small text-center"><b>NB:</b> can not be undone!
@@ -104,6 +102,11 @@ function deleteGroup() {
 
 <style scoped>
 .settCard {
-    border: 1px solid rgba(221, 51, 51, 0.219);
+    border: 1px solid #dd333338;
+    background-color: #f5aeae38;
+}
+
+.settCard:hover {
+    background-color: #f57e7e38;
 }
 </style>

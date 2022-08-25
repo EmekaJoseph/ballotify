@@ -7,8 +7,6 @@ export const dataStore = defineStore('dataStore', {
         events: <any>[],
         defaultGrp: { id: 0, label: 'None' },
         internetError: <boolean>false,
-        currentGroup: <string>'',
-        groupAddArray: <any>[]
     }),
     actions: {
         memberQuery(id: string) {
@@ -17,15 +15,6 @@ export const dataStore = defineStore('dataStore', {
             if (thisGrp == undefined) thisGrp = this.defaultGrp
             thisMember.group = thisGrp
             return thisMember
-        },
-
-        groupAddQuery() {
-            let list = this.members.filter(x => x.group_id != this.currentGroup)
-            list.forEach((x: { checked: boolean }) => {
-                x.checked = false
-            })
-            this.groupAddArray = list;
-
         },
 
         loadMaster() {

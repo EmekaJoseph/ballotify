@@ -26,7 +26,7 @@
 <script setup lang="ts">
 import { reactive, computed } from 'vue';
 import { dataStore } from '@/store/admin/dataStore';
-import { eventStore } from '../event-data';
+import { eventStore } from '../eventStore';
 import { storeToRefs } from 'pinia'
 
 

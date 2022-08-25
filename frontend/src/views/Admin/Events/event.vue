@@ -1,16 +1,16 @@
 <template>
     <div>
         <div class="name-span"><span></span>
-            <span class="large-name">{{ event.name }}</span>
+            <span class="large-name">{{ event.name }} <span class="created">created {{ event.created }}</span></span>
 
             <div class="dropdown">
-                <span class="dropdown-toggle" type="button" id="dropdownMenu2" data-bs-toggle="dropdown"
+                <!-- <span class="dropdown-toggle" type="button" id="dropdownMenu2" data-bs-toggle="dropdown"
                     aria-expanded="false">
                     <i class="bi bi-three-dots-vertical"></i>
                 </span>
                 <ul v-if="!(event.isLoading)" class="dropdown-menu" aria-labelledby="dropdownMenu2">
                     <li><a class="dropdown-item" href="#"><i class="bi bi-trash3"></i> Delete</a></li>
-                </ul>
+                </ul> -->
             </div>
         </div>
 
@@ -33,15 +33,15 @@
 <script setup lang="ts">
 import modifyComponent from './modify/modifyComponent.vue';
 import candidatesComponent from './candidates/candidatesComponent.vue';
-import { reactive, ref, watchEffect, inject, onMounted, watch } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import { eventStore } from './event-data';
+import { inject, onMounted, watch } from 'vue';
+import { useRoute } from 'vue-router';
+import { eventStore } from './eventStore';
 import { storeToRefs } from 'pinia';
 
 const event_ = eventStore()
 const { event }: any = storeToRefs(event_)
 
-const { cc1, cc2, ccThk, ccBg, ccBtnH }: any = inject("c$");
+const { cc1, ccBg }: any = inject("c$");
 const route = useRoute()
 
 
@@ -103,5 +103,12 @@ function loadThisEvent() {
 
 .dropdown-item:hover {
     background-color: transparent;
+}
+
+.created {
+    font-size: 11px;
+    text-transform: lowercase !important;
+    font-weight: 400;
+
 }
 </style>

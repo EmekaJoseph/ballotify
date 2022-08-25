@@ -1,12 +1,12 @@
 <template>
-    <div class="col-lg-12 col-xl-7">
-        <div class="card mainCard">
+    <div class="col-lg-12 col-xl-8">
+        <div class="card mainCard p-lg-3">
             <div class="card-header">List
                 <span class="badge rounded-pill bg-light text-dark">
-                    {{ data.length }}
+                    {{ data.list.length }}
                 </span>
                 <span class="float-end">
-                    <button @click="mStore.groupAddQuery()" data-bs-toggle="modal" data-bs-target="#mListModal"
+                    <button @click="groupStore.membersAddQuery()" data-bs-toggle="modal" data-bs-target="#mListModal"
                         class="btn btn-sm customBtn p-1 px-2 m-0">
                         <i class="bi bi-plus-circle"></i> add members
                     </button>
@@ -22,8 +22,8 @@
                     </span>
                 </transition>
             </div>
-            <div v-if="data.length" class="card-body row">
-                <div class="table-responsive">
+            <div v-if="data.list.length" class="card-body row ">
+                <div class="table-responsive list-span">
                     <table class="table table-sm text-nowrap table-hover">
                         <thead>
                             <tr>
@@ -31,14 +31,15 @@
                                 <th class="smallCol"></th>
                                 <th></th>
                                 <th class="smallCol">
-                                    <input v-if="data.length > 1" @change="toggleAll" v-model="allCheck"
+                                    <input v-if="data.list.length > 1" @change="toggleAll" v-model="allCheck"
                                         class="form-check-input" type="checkbox">
                                 </th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="(val, index) in data" :key="val.id">
-                                <th>{{ index + 1 }}</th>
+                            <tr v-for="(val, index) in data.list" :key="val.id">
+                                <!-- <th>{{ index + 1 }}</th> -->
+                                <th></th>
                                 <td class="text-capitalize">{{ val.firstname + ' ' + val.lastname }} ({{ val.gender }})
                                 </td>
                                 <!-- <td>
@@ -73,37 +74,45 @@
 
 <script  lang="ts" setup>
 import { computed, reactive, ref } from 'vue';
-import { dataStore } from '@/store/admin/dataStore';
+import { groudDetailStore } from './groupDetailStore';
+import { storeToRefs } from 'pinia'
 
-const mStore = dataStore()
+const groupStore = groudDetailStore()
+const { group }: any = storeToRefs(groupStore)
 
 const emit = defineEmits(['remove',])
 
-interface Props {
-    data: any[]
-}
-const prop = defineProps<Props>()
+const data = reactive({
+    list: computed(() => {
+        let tableGroup = group.value.members
+        tableGroup.forEach((x: { checked: boolean }) => {
+            x.checked = false
+        });
+        return tableGroup
+    })
+})
+
 
 const allCheck = ref(false)
 function toggleAll() {
-    prop.data.forEach(chk => {
+    data.list.forEach((chk: { checked: boolean; }) => {
         chk.checked = allCheck.value
     });
 }
 
 const aMember = reactive({
-    isChecked: computed(() => { return prop.data.find(x => x.checked == true) })
+    isChecked: computed(() => { return data.list.find((x: { checked: boolean; }) => x.checked == true) })
 })
 
 
 function remove(id?: string) {
     let arr: any[] = []
     if (id) {
-        let data = prop.data.find(x => x.id == id)
-        arr.push(data)
+        let _data = data.list.find((x: { id: string; }) => x.id == id)
+        arr.push(_data)
     }
     else {
-        arr = prop.data.filter((x: any) => x.checked == true)
+        arr = data.list.filter((x: any) => x.checked == true)
     }
     arr = arr.map((x) => ({ id: x.id, group_id: '0' }))
     emit('remove', arr)
@@ -116,6 +125,8 @@ function remove(id?: string) {
 .card {
     border: 2px solid #eee;
 }
+
+
 
 .mainCard {
     min-height: 70vh;

@@ -339,3 +339,12 @@ input[type=number] {
 .vs__search:focus {
     line-height: 1.7 !important;
 }
+
+
+.list-span {
+    background-color: #eeeeee2f;
+    padding: 30px 10px;
+    border: 1px solid #eee;
+    height: 350px;
+    overflow-y: auto;
+}

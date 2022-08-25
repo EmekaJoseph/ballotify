@@ -1,6 +1,6 @@
 <template>
     <div class="col-md-12">
-        <div class="card" style="min-height: 85vh">
+        <div class="card p-lg-3" style="min-height: 85vh">
             <div class="card-header">List <span class="badge rounded-pill bg-light text-dark">{{ members.length
             }}</span>
                 <span v-if="members.length" class="float-end">
@@ -26,7 +26,7 @@
             </div>
             <div class="card-body">
                 <div class="row">
-                    <div class="col-12">
+                    <div class="col-12 list-span">
                         <div v-if="!members.length" class="row justify-content-center my-4">
                             <span class="text-center"><i class="bi bi-person-x plus"></i></span>
                             <div class="text-center text-muted">You do not have any members yet.</div> <br>
@@ -125,7 +125,7 @@ function sendSetToDelete() {
 
 const whatGroupName = (id: string) => {
     let grpObj = groups.value.find((x: { id: any; }) => x.id == id)
-    return grpObj == undefined ? '---' : grpObj.name
+    return grpObj == undefined ? 'No Group' : grpObj.name
 }
 
 const aMember = reactive({
@@ -195,5 +195,9 @@ th:nth-child(1) {
 
 .actnbtn:hover {
     background-color: #eee;
+}
+
+.list-span {
+    height: 450px !important;
 }
 </style>

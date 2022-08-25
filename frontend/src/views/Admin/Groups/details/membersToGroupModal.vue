@@ -3,43 +3,49 @@
         aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <div class="modal-header"> Add to group ({{ fGroupName(currentGroup) }})
+                <div class="modal-header text-capitalize">
+                    <span class="text-white">
+                        Add to: &nbsp;<span class="text-warning">{{ groupStore.fGroupName(group.group_id) }}</span>
+                    </span>
                     <span class="float-end">
                         <button ref="btnX" class="btn btn-close btn-close-white" data-bs-dismiss="modal"
                             aria-label="Close"></button>
                     </span>
                 </div>
-                <div v-if="mems.length" class="modal-body p-sm-4">
-                    <div class="table-responsive">
-                        <table class="table text-nowrap table-borderless table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Group</th>
-                                    <th class="smallCol"></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="(v, i) in mems">
-                                    <td>{{ v.firstname }} {{ v.lastname }} ({{ v.gender }})</td>
-                                    <td>{{ fGroupName(v.group_id) }}</td>
-                                    <td><input v-model="v.checked" class="form-check-input" type="checkbox"></td>
-                                </tr>
-                            </tbody>
-                        </table>
+                <div v-if="membersAddList.length">
+                    <div class="modal-body p-sm-4">
+                        <div class="table-responsive list-span">
+                            <table class="table text-nowrap table-borderless table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Group</th>
+                                        <th class="smallCol"></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="(v, i) in membersAddList">
+                                        <td>{{ v.firstname }} {{ v.lastname }} ({{ v.gender }})</td>
+                                        <td>{{ groupStore.fGroupName(v.group_id) }}</td>
+                                        <td><input v-model="v.checked" class="form-check-input" type="checkbox">
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0">
+                        <button @click="addToGroup()" v-if="isChecked.some" type="button" class=" customBtn btn-sm">Add
+                            selection</button>
+                        <button @click="addToGroup('all')" type="button" class="btn btn-sm btn-outline-dark px-4">Add
+                            all</button>
+                        <!-- <button ref="btnX" data-bs-dismiss="modal" type="button"
+                        class="btn btn-secondary btn-sm">cancel</button> -->
                     </div>
                 </div>
-                <div v-if="mems.length" class="modal-footer border-0">
-                    <button @click="addToGroup()" v-if="isChecked.some" type="button" class=" customBtn btn-sm">Add
-                        selection</button>
-                    <button @click="addToGroup('all')" type="button" class="btn btn-sm customBtnLine px-4">Add
-                        all</button>
-                    <!-- <button ref="btnX" data-bs-dismiss="modal" type="button"
-                        class="btn btn-secondary btn-sm">cancel</button> -->
-                </div>
 
-                <div v-else class="modal-body text-center" style="padding: 50px;">
-                    No record to add
+                <div v-else class="modal-body text-center ">
+                    <div class="list-span"> No record to add</div>
                 </div>
 
             </div>
@@ -48,39 +54,29 @@
 </template>
 
 <script setup lang="ts">
-import { dataStore } from '@/store/admin/dataStore'
+import { groudDetailStore } from './groupDetailStore';
 import { storeToRefs } from 'pinia'
 import { ref, computed, reactive } from 'vue';
 
 const emit = defineEmits(['add'])
 
-
-const mStore = dataStore()
-const { groups, groupAddArray: mems, currentGroup }: any = storeToRefs(mStore)
+const groupStore = groudDetailStore()
+const { group, membersAddList }: any = storeToRefs(groupStore)
 
 const isChecked = reactive({
-    some: computed(() => { return mems.value.some((x: { checked: boolean; }) => x.checked == true) ? true : false })
+    some: computed(() => { return membersAddList.value.some((x: { checked: boolean; }) => x.checked == true) ? true : false })
 })
-
-const fGroupName = (id: string) => {
-    let grpObj = groups.value.find((x: { id: any; }) => x.id == id)
-    return grpObj == undefined ? 'None' : grpObj.name
-}
 
 const btnX = ref<any>(null)
 function addToGroup(w?: string) {
-    let arr = mems.value
+    let arr = membersAddList.value
     if (w != 'all') {
-        arr = mems.value.filter((x: any) => x.checked == true)
+        arr = membersAddList.value.filter((x: any) => x.checked == true)
     }
-    arr = arr.map((x) => ({ id: x.id, group_id: currentGroup.value }))
+    arr = arr.map((x: { id: any; }) => ({ id: x.id, group_id: group.value.group_id }))
     emit('add', arr)
     btnX.value.click()
 }
-
-
-
-
 </script>
 
 <style scoped>

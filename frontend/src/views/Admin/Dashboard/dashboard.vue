@@ -1,6 +1,6 @@
 <template>
     <div>
-        <div v-html="greet()" class="greeting"> </div>
+        <div v-html="greet()" class="greeting d-md-none"> </div>
         <div class="fw-bold mb-2">Overview:</div>
         <div class="row justify-content-center gy-3">
             <InfoCard :name="spell('Member', iRates.Member)" icon="bi-people" color="#BD6C13" :rate="iRates.Member" />
