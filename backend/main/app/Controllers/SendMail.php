@@ -10,7 +10,7 @@ class SendMail extends Controller
     {
         $email = \Config\Services::email();
         $email->setTo($to);
-        $email->setFrom('support@ballotify.com', 'noreply');
+        $email->setFrom('support@ballotify.com', 'Ballotify Notification');
         $email->setSubject($subject);
         $email->setMessage($message);
 

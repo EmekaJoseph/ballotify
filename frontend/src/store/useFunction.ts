@@ -29,6 +29,10 @@ const fx = reactive({
         var regex = /^([a-zA-Z0-9_\.\-\+])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/;
         return regex.test(email)
     },
+
+    shortenText(text: string, max: number) {
+        return (text.length > max) ? text.substring(0, max) + '..' : text
+    }
 })
 
 export default {

@@ -6,9 +6,12 @@ use App\Controllers\BaseController;
 use App\Controllers\Admin\UserController as User;
 use App\Controllers\Admin\OrgController as Org;
 use App\Controllers\SendMail;
+use CodeIgniter\API\ResponseTrait;
 
 class LoginController extends BaseController
 {
+    use ResponseTrait;
+
     public function login()
     {
         $email = $this->request->getVar('email');
@@ -34,8 +37,9 @@ class LoginController extends BaseController
             }
             $message = 'Hello, ' . $admin['firstname'] . ' ' . $admin['lastname'] . ', 
             You just signed in!, if this is not you, call this number <i>+2348139590011</i> immediately';
-            (new SendMail())->sendMail($email, 'Ballotify Notification', $message);
+            $mailSender = new SendMail();
+            $mailSender->sendMail($email, 'You just Logged in', $message);
         }
-        return $this->response->setJSON($rArray);
+        return $this->respond($rArray);
     }
 }

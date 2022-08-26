@@ -5,9 +5,12 @@ namespace App\Controllers\Admin;
 use App\Controllers\BaseController;
 use App\Controllers\Admin\OrgController as Org;
 use App\Controllers\Admin\UserController as User;
+use CodeIgniter\API\ResponseTrait;
 
 class SignupController extends BaseController
 {
+    use ResponseTrait;
+
     public function registerNew($recievedJSON)
     {
         $data = json_decode($recievedJSON);
@@ -39,7 +42,7 @@ class SignupController extends BaseController
             //throw $th;
             $response = 0;
         }
-        return $this->response->setJSON($response);
+        return $this->respond($response);
     }
 
 

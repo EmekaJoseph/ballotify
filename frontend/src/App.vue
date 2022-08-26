@@ -63,8 +63,8 @@ provide("c$", allColors);
   text-decoration: none !important;
 }
 
-.btn-link:hover {
-  /* background-color: #eee; */
-  font-weight: bold;
-}
+/* .btn-link:hover { */
+/* background-color: #eee; */
+/* font-weight: bold; */
+/* } */
 </style>

@@ -71,9 +71,9 @@ const greet = () => {
     let now: Date = new Date();
     let curHr = now.getHours();
     let str: string = '';
-    if (curHr < 12) str = '<i class="bi bi-emoji-smile"></i>&nbsp;Good morning';
-    else if (curHr < 16) str = '<i class="bi bi-sun"></i>&nbsp;Good afternoon';
-    else str = '<i class="bi bi-moon"></i>&nbsp;Good evening';
+    if (curHr < 12) str = 'Good morning&nbsp;<i class="bi bi-emoji-sunglasses"></i>';
+    else if (curHr < 16) str = 'Good afternoon&nbsp;<i class="bi bi-sun"></i>';
+    else str = 'Good evening&nbsp;<i class="bi bi-moon"></i>';
     return str
 }
 

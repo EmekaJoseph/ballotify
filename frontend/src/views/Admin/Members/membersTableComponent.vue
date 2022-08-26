@@ -61,8 +61,16 @@
                                             </td>
                                             <td>{{ i.phone }}</td>
                                             <td>
-                                                <i v-if="i.group_id != '0'" class="bi bi-folder-check"></i>
-                                                {{ whatGroupName(i.group_id) }}
+                                                <span v-if="i.group_id != '0'">
+                                                    <i class="bi bi-folder-check"></i>
+                                                    {{ fx.shortenText(whatGroupName(i.group_id), 6) }}
+                                                </span>
+                                                <span v-else style="color: #ccc">
+                                                    <i class="bi bi-folder-x"></i>
+                                                    {{ whatGroupName(i.group_id) }}
+                                                </span>
+
+
                                                 <!-- <i v-if="i.group_id != '0'" class="bi bi-folder"></i> -->
                                             </td>
                                             <td>{{ fx.displayBD(i.birthday) }}</td>
@@ -71,7 +79,7 @@
                                             <td v-else><span class="badge bg-warningg fst-italic">pending</span></td>
                                             <td><button @click="openModalEdit(i.id)"
                                                     class="btn btn-link btn-sm actnbtn"><i
-                                                        class="bi bi-pencil"></i></button>
+                                                        class="bi bi-pencil"></i>__</button>
                                             </td>
                                             <td><input v-model="i.checked" class="form-check-input" type="checkbox">
                                             </td>
@@ -125,7 +133,7 @@ function sendSetToDelete() {
 
 const whatGroupName = (id: string) => {
     let grpObj = groups.value.find((x: { id: any; }) => x.id == id)
-    return grpObj == undefined ? 'No Group' : grpObj.name
+    return grpObj == undefined ? 'None' : grpObj.name
 }
 
 const aMember = reactive({

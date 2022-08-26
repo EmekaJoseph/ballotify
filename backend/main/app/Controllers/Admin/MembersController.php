@@ -4,9 +4,11 @@ namespace App\Controllers\Admin;
 
 use App\Controllers\BaseController;
 use App\Models\MembersModel;
+use CodeIgniter\API\ResponseTrait;
 
 class MembersController extends BaseController
 {
+    use ResponseTrait;
 
     public function getMembers($org_id)
     {
@@ -39,7 +41,7 @@ class MembersController extends BaseController
             $table->save($data);
             $val = 1;
         }
-        return $this->response->setJSON($val);
+        return $this->respond($val);
     }
 
 
@@ -57,7 +59,7 @@ class MembersController extends BaseController
             'gender' => $this->request->getVar('gender'),
         ];
         $table->save($data);
-        return $this->response->setJSON(1);
+        return $this->respond(1);
     }
 
 
@@ -73,7 +75,7 @@ class MembersController extends BaseController
             ]);
         }
         $table->updateBatch($dataToSave, 'id');
-        return $this->response->setJSON(1);
+        return $this->respond(1);
     }
 
 
@@ -92,7 +94,7 @@ class MembersController extends BaseController
             return $this->response->setJSON(1);
         } catch (\Throwable $th) {
             //throw $th;
-            return $this->response->setJSON(0);
+            return $this->respond(0);
         }
     }
 

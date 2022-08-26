@@ -4,9 +4,12 @@ namespace App\Controllers\Admin;
 
 use App\Controllers\BaseController;
 use App\Models\UserModel;
+use CodeIgniter\API\ResponseTrait;
 
 class UserController extends BaseController
 {
+    use ResponseTrait;
+
     public function ifEmailIsFound($email)
     {
         $usersTable = new UserModel();
@@ -34,7 +37,7 @@ class UserController extends BaseController
             'isActive' => $admin['isActive'],
             'role' => $admin['role']
         );
-        return $this->response->setJSON($rArray);
+        return $this->respond($rArray);
     }
 
 
@@ -47,8 +50,14 @@ class UserController extends BaseController
         ];
         $table = new UserModel();
         $table->save($data);
-        return $this->response->setJSON(1);
+        return $this->respond(1);
     }
+
+
+
+
+
+
 
     function storeToDB($data)
     {

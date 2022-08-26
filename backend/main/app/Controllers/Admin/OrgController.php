@@ -7,9 +7,12 @@ use App\Models\OrgModel;
 use App\Controllers\Admin\MembersController as memberTable;
 use App\Controllers\Admin\GroupsController as groupTable;
 use App\Controllers\Admin\EventsController as eventsTable;
+use CodeIgniter\API\ResponseTrait;
 
 class OrgController extends BaseController
 {
+    use ResponseTrait;
+
     public function getOverview($org_id)
     {
         $membersCount = (new memberTable)->countMembersInOrg($org_id);
@@ -24,7 +27,7 @@ class OrgController extends BaseController
             'events' => $eventCount,
             'messages' => 0,
         );
-        return $this->response->setJSON($data2);
+        return $this->respond($data2);
     }
 
 
@@ -43,7 +46,7 @@ class OrgController extends BaseController
         if ($exists != 0) {
             $val = true;
         }
-        return $this->response->setJSON($val);
+        return $this->respond($val);
     }
 
     public function updateOrg()
@@ -55,7 +58,7 @@ class OrgController extends BaseController
         ];
         $table = new OrgModel();
         $table->save($data);
-        return $this->response->setJSON(1);
+        return $this->respond(1);
     }
 
 

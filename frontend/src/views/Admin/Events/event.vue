@@ -1,7 +1,9 @@
 <template>
     <div>
-        <div class="name-span"><span></span>
-            <span class="large-name">{{ event.name }} <span class="created">created {{ event.created }}</span></span>
+        <div class="name-span">
+            <!-- <span></span> -->
+            <span class="large-name ms-3">{{ event.name }} <span class="created">created {{ event.created
+            }}</span></span>
 
             <div class="dropdown">
                 <!-- <span class="dropdown-toggle" type="button" id="dropdownMenu2" data-bs-toggle="dropdown"

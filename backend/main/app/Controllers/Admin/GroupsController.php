@@ -4,11 +4,13 @@ namespace App\Controllers\Admin;
 
 use App\Controllers\BaseController;
 use App\Models\GroupsModel;
-use App\Controllers\Admin\MembersController as Members;
 use CodeIgniter\I18n\Time;
+use CodeIgniter\API\ResponseTrait;
 
 class GroupsController extends BaseController
 {
+    use ResponseTrait;
+
     public function saveNewGroup()
     {
         $org_id = $this->request->getVar('org_id');
@@ -27,7 +29,7 @@ class GroupsController extends BaseController
             $table->save($data);
             $val = 1;
         }
-        return $this->response->setJSON($val);
+        return $this->respond($val);
     }
 
     public function getGroupNames($org_id)
@@ -51,7 +53,7 @@ class GroupsController extends BaseController
         }
 
 
-        return $this->response->setJSON(array('groups' => $Groups));
+        return $this->respond(array('groups' => $Groups));
     }
 
 
@@ -65,7 +67,7 @@ class GroupsController extends BaseController
             return $this->response->setJSON(1);
         } catch (\Throwable $th) {
             //throw $th;
-            return $this->response->setJSON(0);
+            return $this->respond(0);
         }
     }
 
@@ -87,7 +89,7 @@ class GroupsController extends BaseController
             $table->save($data);
             $val = 1;
         }
-        return $this->response->setJSON($val);
+        return $this->respond($val);
     }
 
 

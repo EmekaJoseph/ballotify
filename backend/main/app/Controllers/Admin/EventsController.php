@@ -6,10 +6,12 @@ use App\Controllers\BaseController;
 use App\Models\OrgModel;
 use App\Models\EventsModel;
 use CodeIgniter\I18n\Time;
-use DateTime;
+use CodeIgniter\API\ResponseTrait;
 
 class EventsController extends BaseController
 {
+    use ResponseTrait;
+
     public function saveNewEvent()
     {
         $eventsTable = new EventsModel();
@@ -43,7 +45,7 @@ class EventsController extends BaseController
             $resp = 1;
         }
 
-        return $this->response->setJSON(array('state' => $resp, 'id' => $event_id));
+        return $this->respond(array('state' => $resp, 'id' => $event_id));
     }
 
     public function getEvents($org_id)
@@ -51,7 +53,7 @@ class EventsController extends BaseController
         $eventsTable = new EventsModel();
         // $rr = $events->where('org_id', $org_id)->orderBy('id', 'desc')->findAll(1, 0);
         $array = $eventsTable->where('org_id', $org_id)->orderBy('id', 'desc')->findAll();
-        return $this->response->setJSON($array);
+        return $this->respond($array);
     }
 
     public function getEventDetails($event_id)
@@ -60,8 +62,10 @@ class EventsController extends BaseController
         $thisObj = $eventsTable->where('event_id', $event_id)->first();
         $thisTime = Time::parse($thisObj['created'], 'America/Chicago');
         $thisObj['created'] = $thisTime->humanize();
-        return $this->response->setJSON($thisObj);
+        return $this->respond($thisObj);
     }
+
+
 
 
     function eventsCount($org_id)

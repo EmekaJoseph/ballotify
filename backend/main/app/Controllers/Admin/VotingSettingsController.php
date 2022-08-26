@@ -4,10 +4,13 @@ namespace App\Controllers\Admin;
 
 use App\Controllers\BaseController;
 use App\Models\PositionsModel;
-
+use CodeIgniter\API\ResponseTrait;
 
 class VotingSettingsController extends BaseController
 {
+
+    use ResponseTrait;
+
     public function saveNewPosition()
     {
         $org_id = $this->request->getVar('org_id');
@@ -27,7 +30,7 @@ class VotingSettingsController extends BaseController
             $table->save($data);
             $val = 1;
         }
-        return $this->response->setJSON($val);
+        return $this->respond($val);
     }
 
     public function getPositions($event_id)
@@ -41,34 +44,6 @@ class VotingSettingsController extends BaseController
     {
         $table = new PositionsModel();
         $table->where('id', $id)->delete($id);
-        return $this->response->setJSON(1);
+        return $this->respond(1);
     }
-
-
-    // public function deleteGroup()
-    // {
-    //     try {
-    //         $org_id = $this->request->getVar('org_id');
-    //         $id = $this->request->getVar('id');
-    //         $table = new GroupsModel();
-    //         $table->where('org_id', $org_id)->delete($id);
-    //         return $this->response->setJSON(1);
-    //     } catch (\Throwable $th) {
-    //         //throw $th;
-    //         return $this->response->setJSON(0);
-    //     }
-    // }
-
-
-
-
-
-
-
-    // function countGroupsInOrg($org_id)
-    // {
-    //     $table = new GroupsModel();
-    //     $dataSize = $table->where('org_id', $org_id)->countAllResults();
-    //     return ($dataSize);
-    // }
 }
