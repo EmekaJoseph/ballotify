@@ -128,8 +128,8 @@ import { eventStore } from '../eventStore';
 import { storeToRefs } from 'pinia';
 import { useRoute } from 'vue-router';
 
-const event_ = eventStore()
-const { event, positions }: any = storeToRefs(event_)
+const evtStore = eventStore()
+const { event, positions }: any = storeToRefs(evtStore)
 
 const { cc1, cc2, ccThk, ccBg, ccBtnH }: any = inject("c$");
 
@@ -146,7 +146,7 @@ const posClick: any = ref(null)
 async function removePosition(id: any) {
     try {
         await server.removePosition(id)
-        event_.getPositions()
+        evtStore.getPositions()
     } catch (error) {
         console.log(error);
 
@@ -163,7 +163,7 @@ async function savePosition() {
         var { data } = await server.saveNewPosition(obj)
         positionInput.value = ''
         if (data != 0) {
-            event_.getPositions()
+            evtStore.getPositions()
         }
     } catch (error) {
         console.log(error);

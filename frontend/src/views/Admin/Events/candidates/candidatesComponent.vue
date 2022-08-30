@@ -1,6 +1,6 @@
 <template>
     <div class="card px-2">
-        <div class="card-head"><i class="bi bi-person-check-fill"></i>Candidates:
+        <div class="card-head"><i class="bi bi-person-check-fill"></i> Candidates:
             <span class="badge rounded-pill bg-secondary text-white fw-light">
                 {{ candidate.list.length }}
             </span>
@@ -8,34 +8,44 @@
         <div class="card-body">
             <div class="row justify-content-center gy-3">
                 <div class="col-12 col-xl-7">
-                    <v-select v-model="candidate.name" placeholder="select candidate.." :clearable="false"
+                    <v-select v-model="candidate.details" placeholder="select candidate.." :clearable="false"
                         class="vSelect" :options="data.members" />
                 </div>
                 <div class="col-12 col-xl-5">
                     <v-select v-model="candidate.post" placeholder="select position.." class="vSelect"
                         :options="data.posts" :disabled="!(data.posts.length)" />
                 </div>
-                <div class="col-12 col-xl-6">
+                <!-- <div class="col-12 col-xl-6">
                     <input v-model="candidate.info" placeholder="info (optional).." type="text" class="form-control">
+                </div> -->
+                <div class="col-12 col-xl-7">
+                    <form ref="ImgForm">
+                        <input class="form-control" accept="image/jpg, image/png" ref="mainImgBtn" id="fileUp"
+                            type="file" @change="handleFileUpload" hidden />
+                        <span v-if="!imageURL" @click.prevent="chooseImage" class="imagePicker">
+                            select photo (optional)
+                        </span>
+                        <span v-else class="imagePicker">
+                            <small> Photo: &nbsp;</small><span class="imagePreviewWrapper"
+                                :style="{ 'background-image': `url(${imageURL})` }"></span>
+                            &nbsp;&nbsp;<button @click.prevent="chooseImage"
+                                class="btn btn-link text-info m-0 p-0 btn-sm" style="font-size: 16px">change</button>
+                            &nbsp; &nbsp;<button @click.prevent="clearImage"
+                                class="btn btn-link text-danger m-0 p-0 btn-sm" style="font-size: 16px">cancel</button>
+                        </span>
+                    </form>
                 </div>
-                <input class="form-control" accept="image/jpg, image/png" ref="mainImgBtn" id="fileUp" type="file"
-                    @change="handleFileUpload" hidden />
-                <div class="col-xl-3 ">
 
-                    <span v-if="!imageURL" @click.prevent="chooseImage" class="imagePicker">
-                        optional image
-                    </span>
-                    <span v-else class="imagePicker">
-                        <span class="imagePreviewWrapper" :style="{ 'background-image': `url(${imageURL})` }"></span>
-                        &nbsp;<button @click.prevent="chooseImage" class="btn btn-link text-info m-0 p-0 btn-sm"
-                            style="font-size: 16px">Change</button>
-                    </span>
-                </div>
+                <div class="col-xl-2 "> </div>
                 <div class="col-12 col-xl-3">
-                    <button class="w-100 btn customBtn">Add <i
-                            class="bi text-white bi-arrow-down-circle fs-6"></i></button>
+                    <button :disabled="(candidate.details === null) || (candidate.post === null)" @click="saveCandidate"
+                        class="w-100 btn customBtn">Add <i class="bi text-white bi-arrow-down-circle fs-6"></i></button>
+
                 </div>
                 <div class="col-md-12 col-lg-12 mt-4">
+                    <small v-if="candidate.inputError" class="text-danger">{{
+                            candidate.inputError
+                    }}</small>
                     <div class="list-span">
                         <!-- <div class="text-center empty-list-text mt-5 pt-5">
                             List is Empty
@@ -78,45 +88,41 @@
 
 <script setup lang="ts">
 import { reactive, computed, watchEffect, ref } from 'vue';
+import server from '@/store/apiStore'
 import { dataStore } from '@/store/admin/dataStore';
 import { useImageUpload } from "@/store/useImageUpload";
 import { eventStore } from '../eventStore';
 import { storeToRefs } from 'pinia'
 
-
 const mStore = dataStore()
 const { members }: any = storeToRefs(mStore)
-const event_ = eventStore()
-const { positions }: any = storeToRefs(event_)
+const evtStore = eventStore()
+const { positions, event }: any = storeToRefs(evtStore)
 
 interface Cand {
-    name: any,
+    details: any,
     post: any,
-    info: string,
-    photo: any,
-    list: any[]
+    info?: string,
+    list: any[],
+    inputError: string
 }
 
 const candidate: Cand = reactive({
-    name: null,
+    details: null,
     post: null,
-    info: '',
-    photo: null,
-    list: []
+    list: [],
+    inputError: ''
 })
-
-
-
 
 const data: any = reactive({
     members: computed(() => {
         let data = members.value.map((x: any) => ({ id: x.id, label: x.firstname + ' ' + x.lastname + ', (' + x.gender + ')' }))
         return data
     }),
-    posts: computed(() => {
-        let data = positions.value.map((x: any) => ({ id: x.id, label: x.name }))
-        return data
-    })
+    posts: computed(() =>
+        (positions.value.map((x: any) => ({ id: x.id, label: x.name })))
+    ),
+
 })
 
 watchEffect(() => {
@@ -127,12 +133,45 @@ watchEffect(() => {
 })
 
 
+
+// image###########################################
 let { handleFileUpload, imageURL, imageFile, imgSize } = useImageUpload();
 const mainImgBtn = ref<any>(null);
-const ImgForm = ref(null);
+const ImgForm = ref<any>(null);
 function chooseImage() {
     mainImgBtn.value.click();
 }
+
+function clearImage() {
+    imageURL.value = "";
+    imageFile.value = "";
+    ImgForm.value.reset();
+}
+// image###########################################
+
+
+
+// submiting ##########################################
+async function saveCandidate() {
+
+
+    let formData = new FormData();
+    formData.append("image", imageFile.value);
+    formData.append("member_id", candidate.details.id);
+    formData.append("event_id", event.value.event_id);
+    formData.append("position_id", candidate.post.id);
+
+    try {
+        var { data } = await server.saveCandidate(formData)
+        console.log(data);
+
+    } catch (error) {
+        console.log(error);
+
+    }
+}
+// submiting ##########################################
+
 </script>
 
 <style scoped>
@@ -172,7 +211,7 @@ function chooseImage() {
 .imagePicker {
     /* padding: 8px 10px; */
     border: 1px solid #eee;
-    background-color: #f3f0f0;
+    background-color: #fcfafa;
     cursor: pointer;
     /* margin-top: 70px; */
     border-radius: 5px;
@@ -185,6 +224,6 @@ function chooseImage() {
 }
 
 .imagePicker:hover {
-    background-color: #e9e7e7;
+    background-color: #f1eeee;
 }
 </style>

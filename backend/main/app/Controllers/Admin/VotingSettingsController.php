@@ -4,6 +4,7 @@ namespace App\Controllers\Admin;
 
 use App\Controllers\BaseController;
 use App\Models\PositionsModel;
+use App\Models\CandidatesModel;
 use CodeIgniter\API\ResponseTrait;
 
 class VotingSettingsController extends BaseController
@@ -45,5 +46,55 @@ class VotingSettingsController extends BaseController
         $table = new PositionsModel();
         $table->where('id', $id)->delete($id);
         return $this->respond(1);
+    }
+
+    public function saveCandidate()
+    {
+        $org_id = $this->request->getVar('org_id');
+        $event_id = $this->request->getVar('event_id');
+        $member_id = $this->request->getVar('member_id');
+        $position_id = $this->request->getVar('member_id');
+        $file = $this->request->getFile('image');
+
+
+        if ($file !== null) {
+            $timestamp = time();
+            $fileName = $timestamp;
+            if ($file->isValid() && !$file->hasMoved()) {
+                $file->move('images/uploads/', $fileName);
+                $image = \Config\Services::image();
+                $image->withFile('images/uploads/' . $fileName)
+                    ->convert(IMAGETYPE_JPEG)
+                    ->save('images/uploads/' . $fileName . '_thumb.jpg', 20);
+                unlink('images/uploads/' . $fileName);
+            }
+        } else {
+            $fileName = null;
+        }
+
+        $data = [
+            'org_id' => $org_id,
+            'event_id' => $event_id,
+            'member_id' => $member_id,
+            'position_id' => $position_id,
+            'photo' => $fileName
+        ];
+
+
+
+
+        // $table = new PositionsModel();
+        // $exists = $table->where('event_id', $event_id)->where('name', $name)->countAllResults();
+        // if ($exists != 0) {
+        //     $val = 0;
+        // } else {
+        //     $data = [
+        //         'org_id' => $org_id,
+        //         'event_id' => $event_id
+        //     ];
+        //     $table->save($data);
+        //     $val = 1;
+        // }
+        return $this->respond($data);
     }
 }

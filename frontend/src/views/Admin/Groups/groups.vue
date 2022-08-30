@@ -12,7 +12,7 @@
                             <div class="group-content">
                                 <i class="bi bi-plus-square-dotted bi-lg text-white"></i>
                                 <div class="text-center group-name text-white">&nbsp;</div>
-                                <small class="info-text text-white">new group.</small>
+                                <small class="info-text text-white">Add a group.</small>
                             </div>
                         </div>
                     </div>

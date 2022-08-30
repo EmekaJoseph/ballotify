@@ -9,6 +9,15 @@ const bus = axios.create({
         'Content-Type': 'application/json'
     },
 })
+
+const busImage = axios.create({
+    baseURL: 'http://localhost',
+    headers: {
+        "Content-Type": "multipart/form-data",
+        "X-Requested-With": "XMLHttpRequest",
+    }
+})
+
 const admin = adminAccount()
 const { thisOrgId } = storeToRefs(admin)
 
@@ -134,4 +143,9 @@ export default {
     removePosition(id: any) {
         return bus.post('/removePosition/' + id)
     },
+
+    saveCandidate(formData: any) {
+        formData.append("org_id", thisOrgId.value);
+        return busImage.post('/saveCandidate', formData)
+    }
 }

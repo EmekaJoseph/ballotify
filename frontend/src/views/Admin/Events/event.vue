@@ -2,7 +2,8 @@
     <div>
         <div class="name-span">
             <!-- <span></span> -->
-            <span class="large-name ms-3">{{ event.name }} <span class="created">created {{ event.created
+            <span v-if="event.name" class="large-name ms-3">{{ event.name }} <span class="created">created {{
+                    event.created
             }}</span></span>
 
             <div class="dropdown">
