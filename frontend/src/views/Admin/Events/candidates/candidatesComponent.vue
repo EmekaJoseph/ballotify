@@ -2,7 +2,7 @@
     <div class="card px-2">
         <div class="card-head"><i class="bi bi-person-check-fill"></i> Candidates:
             <span class="badge rounded-pill bg-secondary text-white fw-light">
-                {{ candidate.list.length }}
+                {{  candidate.list.length  }}
             </span>
         </div>
         <div class="card-body">
@@ -44,8 +44,8 @@
                 </div>
                 <div class="col-md-12 col-lg-12 mt-4">
                     <small v-if="candidate.inputError" class="text-danger">{{
-                            candidate.inputError
-                    }}</small>
+                         candidate.inputError 
+                        }}</small>
                     <div class="list-span">
                         <!-- <div class="text-center empty-list-text mt-5 pt-5">
                             List is Empty

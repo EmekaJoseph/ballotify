@@ -43,51 +43,51 @@ $routes->get('/', 'HomeController::index');
 
 
 // admin signUp
-$routes->add('/checkIfEmailExists/(:any)', 'Admin\UserController::ifEmailIsFound/$1');
-$routes->add('/checkIfOrgExists/(:any)', 'Admin\OrgController::ifOrgIsFound/$1');
-$routes->add('/registerNew/(:any)', 'Admin\SignupController::registerNew/$1');
+$routes->post('/checkIfEmailExists/(:any)', 'Admin\UserController::ifEmailIsFound/$1');
+$routes->post('/checkIfOrgExists/(:any)', 'Admin\OrgController::ifOrgIsFound/$1');
+$routes->post('/registerNew/(:any)', 'Admin\SignupController::registerNew/$1');
 
 //admin login
-$routes->add('/login', 'Admin\LoginController::login');
+$routes->post('/login', 'Admin\LoginController::login');
 
 
 // overview-dashboard
-$routes->add('/getOverview/(:any)', 'Admin\OrgController::getOverview/$1');
+$routes->get('/getOverview/(:any)', 'Admin\OrgController::getOverview/$1');
 
 //settings
-$routes->add('/getOrgDetails/(:any)', 'Admin\OrgController::getOrgDetails/$1');
-$routes->add('/getUserDetails', 'Admin\UserController::getUserDetails');
-$routes->add('/updateOrg', 'Admin\OrgController::updateOrg');
-$routes->add('/updateUser', 'Admin\UserController::updateUser');
+$routes->get('/getOrgDetails/(:any)', 'Admin\OrgController::getOrgDetails/$1');
+$routes->post('/getUserDetails', 'Admin\UserController::getUserDetails');
+$routes->post('/updateOrg', 'Admin\OrgController::updateOrg');
+$routes->post('/updateUser', 'Admin\UserController::updateUser');
 
 
 // Groups
-$routes->add('/saveNewGroup', 'Admin\GroupsController::saveNewGroup');
-$routes->add('/getGroupNames/(:any)', 'Admin\GroupsController::getGroupNames/$1');
-$routes->add('/deleteGroup', 'Admin\GroupsController::deleteGroup');
-$routes->add('/renameGroup', 'Admin\GroupsController::renameGroup');
+$routes->post('/saveNewGroup', 'Admin\GroupsController::saveNewGroup');
+$routes->get('/getGroupNames/(:any)', 'Admin\GroupsController::getGroupNames/$1');
+$routes->post('/deleteGroup', 'Admin\GroupsController::deleteGroup');
+$routes->post('/renameGroup', 'Admin\GroupsController::renameGroup');
 
 
 // members
 $routes->add('/saveNewMember', 'Admin\MembersController::saveNewMember');
-$routes->add('/getMembers/(:any)', 'Admin\MembersController::getMembers/$1');
-$routes->add('/deleteMember', 'Admin\MembersController::deleteMember');
-$routes->add('/updateMember', 'Admin\MembersController::updateMember');
-$routes->add('/updateMembersGroup/(:any)', 'Admin\MembersController::updateMembersGroup/$1');
+$routes->get('/getMembers/(:any)', 'Admin\MembersController::getMembers/$1');
+$routes->post('/deleteMember', 'Admin\MembersController::deleteMember');
+$routes->post('/updateMember', 'Admin\MembersController::updateMember');
+$routes->get('/updateMembersGroup/(:any)', 'Admin\MembersController::updateMembersGroup/$1');
 
 
 // Admin Vote Settings - events
-$routes->add('/saveNewEvent', 'Admin\EventsController::saveNewEvent');
-$routes->add('/getEvents/(:any)', 'Admin\EventsController::getEvents/$1');
-$routes->add('/getEventDetails/(:any)', 'Admin\EventsController::getEventDetails/$1');
+$routes->post('/saveNewEvent', 'Admin\EventsController::saveNewEvent');
+$routes->get('/getEvents/(:any)', 'Admin\EventsController::getEvents/$1');
+$routes->get('/getEventDetails/(:any)', 'Admin\EventsController::getEventDetails/$1');
 
 
 // Admin Vote Settings - positions
-$routes->add('/saveNewPosition', 'Admin\VotingSettingsController::saveNewPosition');
-$routes->add('/getPositions/(:any)', 'Admin\VotingSettingsController::getPositions/$1');
-$routes->add('/removePosition/(:any)', 'Admin\VotingSettingsController::removePosition/$1');
+$routes->post('/saveNewPosition', 'Admin\VotingSettingsController::saveNewPosition');
+$routes->get('/getPositions/(:any)', 'Admin\VotingSettingsController::getPositions/$1');
+$routes->get('/removePosition/(:any)', 'Admin\VotingSettingsController::removePosition/$1');
 
-
+$routes->post('/saveCandidate', 'Admin\VotingSettingsController::saveCandidate');
 
 
 

@@ -6,14 +6,26 @@ const bus = axios.create({
     baseURL: 'http://localhost',
     headers: {
         Accept: 'application/json',
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json;charset=UTF-8;text/json',
+        // 'Content-Type': 'application/x-www-form-urlencoded',
     },
 })
+
+const AxConfig = {
+    headers: {
+        'Content-Type': 'application/json;charset=UTF-8;text/json',
+        "X-Requested-With": "XMLHttpRequest",
+        Accept: 'application/json',
+        'Access-Control-Allow-Origin': '*'
+    }
+}
+
 
 const busImage = axios.create({
     baseURL: 'http://localhost',
     headers: {
-        "Content-Type": "multipart/form-data",
+        // "Content-Type": "multipart/form-data;",
+        "Content-Type": "application/x-www-form-urlencoded",
         "X-Requested-With": "XMLHttpRequest",
     }
 })
@@ -26,24 +38,24 @@ const { thisOrgId } = storeToRefs(admin)
 export default {
     // overview
     getOverview() {
-        return bus.post('/getOverview/' + thisOrgId.value)
+        return bus.get('/getOverview/' + thisOrgId.value)
     },
 
 
 
     // checks
     checkIfEmailExists(email: string) {
-        return bus.post('/checkIfEmailExists/' + email)
+        return bus.get('/checkIfEmailExists/' + email)
     },
     checkIfOrgExists(name: string) {
-        return bus.post('/checkIfOrgExists/' + name)
+        return bus.get('/checkIfOrgExists/' + name)
     },
 
 
 
     // init
     registerNew(obj: string) {
-        return bus.post('/registerNew/' + obj)
+        return bus.get('/registerNew/' + obj)
     },
     login(obj: object) {
         return bus.post('/login', obj)
@@ -65,7 +77,7 @@ export default {
 
     // org
     getOrgDetails() {
-        return bus.post('/getOrgDetails/' + thisOrgId.value)
+        return bus.get('/getOrgDetails/' + thisOrgId.value)
     },
     updateOrg(obj: object) {
         return bus.post('/updateOrg', obj)
@@ -75,7 +87,7 @@ export default {
 
     // groups
     getGroupNames() {
-        return bus.post('/getGroupNames/' + thisOrgId.value)
+        return bus.get('/getGroupNames/' + thisOrgId.value)
     },
     saveNewGroup(obj: any) {
         obj.org_id = thisOrgId.value
@@ -99,7 +111,7 @@ export default {
         return bus.post('/saveNewMember', obj)
     },
     getMembers() {
-        return bus.post('/getMembers/' + thisOrgId.value)
+        return bus.get('/getMembers/' + thisOrgId.value)
     },
     deleteMember(id: any) {
         let data: object = { id: id, org_id: thisOrgId.value }
@@ -110,7 +122,7 @@ export default {
     },
 
     updateMembersGroup(obj: any) {
-        return bus.post('/updateMembersGroup/' + obj)
+        return bus.get('/updateMembersGroup/' + obj)
     },
 
 
@@ -122,11 +134,11 @@ export default {
     },
 
     getEvents() {
-        return bus.post('/getEvents/' + thisOrgId.value)
+        return bus.get('/getEvents/' + thisOrgId.value)
     },
 
     getEventDetails(event_id: any) {
-        return bus.post('/getEventDetails/' + event_id)
+        return bus.get('/getEventDetails/' + event_id)
     },
 
 
@@ -137,11 +149,11 @@ export default {
     },
 
     getPositions(event_id: any) {
-        return bus.post('/getPositions/' + event_id)
+        return bus.get('/getPositions/' + event_id)
     },
 
     removePosition(id: any) {
-        return bus.post('/removePosition/' + id)
+        return bus.get('/removePosition/' + id)
     },
 
     saveCandidate(formData: any) {

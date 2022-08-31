@@ -1,0 +1,5 @@
+######## To let CORS preflight work for post in Development
+PRESS 'windows + R'
+THEN TYPE:
+'chrome.exe --user-data-dir="C://Chrome dev session" --disable-web-security'
+############################################
