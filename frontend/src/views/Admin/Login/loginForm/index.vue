@@ -18,7 +18,7 @@
                         <!-- <img src="@/assets/house34_logo1.png" width="130" /> -->
                     </span>
                     <small class="text-center fw-bold text-muted mb-2">Admin</small>
-                    <div v-if="errMsg.length" class="errMsg">{{ errMsg }}</div>
+                    <div v-if="errMsg.length" class="errMsg">{{  errMsg  }}</div>
                     <form>
                         <div class="row gy-3">
                             <div class="col-md-12">
@@ -26,8 +26,8 @@
                                     <input :class="{ 'formError': err.username }" v-model="form.username" type="text"
                                         class="form-control" id="floatUserName" placeholder="username" />
                                     <label for="floatUserName">email:</label>
-                                    <small class="text-danger" v-if="err.username">{{ err.username
-                                    }}</small>
+                                    <small class="text-danger" v-if="err.username">{{  err.username 
+                                        }}</small>
                                 </div>
                             </div>
                             <div class="col-md-12">
@@ -40,8 +40,8 @@
                                         <i v-else class="bi bi-eye"></i>
                                     </span>
                                     <label for="floatpassw">password:</label>
-                                    <small class="text-danger" v-if="err.password">{{ err.password
-                                    }}</small>
+                                    <small class="text-danger" v-if="err.password">{{  err.password 
+                                        }}</small>
                                 </div>
                             </div>
                             <div class="col-md-12 mt-4">

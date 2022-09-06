@@ -1,5 +1,5 @@
 <template>
-    <div class="col-md-7">
+    <div class="col-lg-7">
         <div class="card">
             <div class="card-header">My Profile:
                 <span class="float-end">
@@ -10,18 +10,18 @@
                 <div class="row gy-3">
                     <div class="col-sm-12">
                         <label>Email:</label>
-                        <div>{{ user.email }}</div>
+                        <div>{{  user.email  }}</div>
                         <!-- <input v-model="user.email" type="text" class="form-control w-100" disabled> -->
                     </div>
                     <div class="col-sm-6">
                         <label>Firstname:</label>
-                        <div v-if="!user.keyIn">{{ user.firstname }}</div>
+                        <div v-if="!user.keyIn">{{  user.firstname  }}</div>
                         <input v-else v-model="user.firstname" type="text" class="form-control w-100">
                     </div>
 
                     <div class="col-sm-6">
                         <label>Lastname:</label>
-                        <div v-if="!user.keyIn">{{ user.lastname }}</div>
+                        <div v-if="!user.keyIn">{{  user.lastname  }}</div>
                         <input v-else v-model="user.lastname" type="text" class="form-control w-100">
                     </div>
                     <!-- <div class="col-sm-6">

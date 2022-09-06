@@ -48,7 +48,7 @@ $routes->post('/checkIfOrgExists/(:any)', 'Admin\OrgController::ifOrgIsFound/$1'
 $routes->post('/registerNew/(:any)', 'Admin\SignupController::registerNew/$1');
 
 //admin login
-$routes->post('/login', 'Admin\LoginController::login');
+$routes->add('/login/(:any)', 'Admin\LoginController::login/$1');
 
 
 // overview-dashboard
@@ -62,24 +62,19 @@ $routes->post('/updateUser', 'Admin\UserController::updateUser');
 
 
 // Groups
-$routes->post('/saveNewGroup', 'Admin\GroupsController::saveNewGroup');
-$routes->get('/getGroupNames/(:any)', 'Admin\GroupsController::getGroupNames/$1');
-$routes->post('/deleteGroup', 'Admin\GroupsController::deleteGroup');
-$routes->post('/renameGroup', 'Admin\GroupsController::renameGroup');
+$routes->resource('groups', ['controller' => 'Admin\GroupsController']);
+$routes->add('/updateMembersGroup/(:any)', 'Admin\MembersController::updateMembersGroup/$1');
 
 
 // members
-$routes->add('/saveNewMember', 'Admin\MembersController::saveNewMember');
-$routes->get('/getMembers/(:any)', 'Admin\MembersController::getMembers/$1');
-$routes->post('/deleteMember', 'Admin\MembersController::deleteMember');
-$routes->post('/updateMember', 'Admin\MembersController::updateMember');
-$routes->get('/updateMembersGroup/(:any)', 'Admin\MembersController::updateMembersGroup/$1');
+$routes->resource('members', ['controller' => 'Admin\MembersController']);
+
 
 
 // Admin Vote Settings - events
-$routes->post('/saveNewEvent', 'Admin\EventsController::saveNewEvent');
-$routes->get('/getEvents/(:any)', 'Admin\EventsController::getEvents/$1');
-$routes->get('/getEventDetails/(:any)', 'Admin\EventsController::getEventDetails/$1');
+$routes->resource('events', ['controller' => 'Admin\EventsController']);
+
+$routes->add('/getEventDetails/(:any)', 'Admin\EventsController::getEventDetails/$1');
 
 
 // Admin Vote Settings - positions
@@ -88,6 +83,8 @@ $routes->get('/getPositions/(:any)', 'Admin\VotingSettingsController::getPositio
 $routes->get('/removePosition/(:any)', 'Admin\VotingSettingsController::removePosition/$1');
 
 $routes->post('/saveCandidate', 'Admin\VotingSettingsController::saveCandidate');
+$routes->get('/getCandidates/(:any)', 'Admin\VotingSettingsController::getCandidates/$1');
+$routes->get('/removeCandidate/(:any)', 'Admin\VotingSettingsController::removeCandidate/$1');
 
 
 

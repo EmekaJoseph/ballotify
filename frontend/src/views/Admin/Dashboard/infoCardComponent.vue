@@ -5,8 +5,8 @@
                 <div class="row">
                     <div class="col-4 sticker"><i class="bi" :class="props.icon"></i></div>
                     <div class="col-8">
-                        <div class="digit">{{ props.rate }}</div>
-                        <div>{{ props.name }}</div>
+                        <div class="digit">{{  props.rate  }}</div>
+                        <div>{{  props.name  }}</div>
 
                     </div>
                 </div>
@@ -49,6 +49,6 @@ const bgColor = props.color + '09'
 }
 
 .card {
-    border-right: 2px solid v-bind(color);
+    border-left: 2px solid v-bind(color);
 }
 </style>

@@ -4,13 +4,15 @@ namespace App\Controllers\Admin;
 
 use App\Controllers\BaseController;
 use App\Models\MembersModel;
+
+use CodeIgniter\RESTful\ResourceController;
 use CodeIgniter\API\ResponseTrait;
 
-class MembersController extends BaseController
+class MembersController extends ResourceController
 {
     use ResponseTrait;
 
-    public function getMembers($org_id)
+    public function show($org_id = null)
     {
         $table = new MembersModel();
         $members = $table->where('org_id', $org_id)->findAll();
@@ -18,7 +20,7 @@ class MembersController extends BaseController
         return $this->response->setJSON(array('data' => $members));
     }
 
-    public function saveNewMember()
+    public function create()
     {
         $table = new MembersModel();
         $email = $this->request->getVar('email');
@@ -46,7 +48,7 @@ class MembersController extends BaseController
 
 
 
-    public function updateMember()
+    public function update($idd = null)
     {
         $table = new MembersModel();
         $data = [
@@ -60,6 +62,22 @@ class MembersController extends BaseController
         ];
         $table->save($data);
         return $this->respond(1);
+    }
+
+
+
+    public  function delete($ids = null)
+    {
+        try {
+            //$id = $this->request->getVar('id');
+            $exploded = explode(",", $ids);
+            $table = new MembersModel();
+            $table->delete($exploded);
+            return $this->response->setJSON(1);
+        } catch (\Throwable $th) {
+            //throw $th;
+            return $this->respond(0);
+        }
     }
 
 
@@ -83,20 +101,7 @@ class MembersController extends BaseController
 
 
 
-    public  function deleteMember()
-    {
-        try {
-            $org_id = $this->request->getVar('org_id');
-            $id = $this->request->getVar('id');
-            $ids = explode(",", $id);
-            $table = new MembersModel();
-            $table->where('org_id', $org_id)->delete($ids);
-            return $this->response->setJSON(1);
-        } catch (\Throwable $th) {
-            //throw $th;
-            return $this->respond(0);
-        }
-    }
+
 
 
 

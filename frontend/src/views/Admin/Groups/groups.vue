@@ -1,8 +1,8 @@
 <template>
     <div>
         <div class="card" style="min-height: 100vh">
-            <div class="card-header">Groups:<span class="badge rounded-pill bg-light text-dark">{{ groups.length
-            }}</span>
+            <div class="card-header">Groups:<span class="badge rounded-pill bg-light text-dark">{{  groups.length 
+                    }}</span>
             </div>
             <div class="card-body p-lg-4">
                 <div class="row g-3">
@@ -22,9 +22,9 @@
                         <div class="d-none d-md-block card groupCard">
                             <i v-if="numInGrp(g.id) > 0" class="bi bi-folder-fill bi-lg"></i>
                             <i v-else class="bi bi-folder2-open bi-lg"></i>
-                            <div class="group-name text-center">{{ g.name }}</div>
+                            <div class="group-name text-center">{{  g.name  }}</div>
                             <small class="info-text text-muted">
-                                {{ numInGrp(g.id) }} {{ spell('member', numInGrp(g.id)) }}
+                                {{  numInGrp(g.id)  }} {{  spell('member', numInGrp(g.id))  }}
                             </small>
                             <div class="optionsBg">
                                 <div class="row justify-content-center mt-5">
@@ -46,9 +46,9 @@
                         <div class="d-md-none card groupCard" @click="showThisGroup(g.id)">
                             <i v-if="numInGrp(g.id) > 0" class="bi bi-folder-fill bi-lg"></i>
                             <i v-else class="bi bi-folder2-open bi-lg"></i>
-                            <div class="group-name text-center">{{ g.name }}</div>
+                            <div class="group-name text-center">{{  g.name  }}</div>
                             <small class="info-text text-muted">
-                                {{ numInGrp(g.id) }} {{ spell('member', numInGrp(g.id)) }}
+                                {{  numInGrp(g.id)  }} {{  spell('member', numInGrp(g.id))  }}
                             </small>
                         </div>
                     </div>
@@ -97,7 +97,7 @@ function deleteGroup(id: any) {
         Swal.fire({
             toast: true,
             icon: 'error',
-            title: 'Group is not empty',
+            text: 'Group is not empty',
             position: 'top-end',
             showConfirmButton: false,
             timer: 1000,
@@ -135,7 +135,7 @@ async function continueDelete(id: any) {
             Swal.fire({
                 toast: true,
                 icon: 'success',
-                title: `'${group.name}' deleted`,
+                text: `'${group.name}' deleted`,
                 position: 'top-end',
                 showConfirmButton: false,
                 timer: 3000,

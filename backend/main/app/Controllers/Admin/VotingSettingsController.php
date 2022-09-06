@@ -44,57 +44,73 @@ class VotingSettingsController extends BaseController
     public function removePosition($id)
     {
         $table = new PositionsModel();
-        $table->where('id', $id)->delete($id);
+        $table->delete($id);
         return $this->respond(1);
     }
 
+
+
+
+
+
+
+
+
     public function saveCandidate()
     {
-        $org_id = $this->request->getVar('org_id');
         $event_id = $this->request->getVar('event_id');
         $member_id = $this->request->getVar('member_id');
-        $position_id = $this->request->getVar('member_id');
-        $file = $this->request->getFile('image');
+        $position_id = $this->request->getVar('position_id');
+        //$file = $this->request->getFile('image');
 
 
-        if ($file !== null) {
-            $timestamp = time();
-            $fileName = $timestamp;
-            if ($file->isValid() && !$file->hasMoved()) {
-                $file->move('images/uploads/', $fileName);
-                $image = \Config\Services::image();
-                $image->withFile('images/uploads/' . $fileName)
-                    ->convert(IMAGETYPE_JPEG)
-                    ->save('images/uploads/' . $fileName . '_thumb.jpg', 20);
-                unlink('images/uploads/' . $fileName);
-            }
-        } else {
-            $fileName = null;
-        }
+        // if ($file !== null) {
+        //     $timestamp = time();
+        //     $fileName = $timestamp;
+        //     if ($file->isValid() && !$file->hasMoved()) {
+        //         $file->move('images/uploads/', $fileName);
+        //         $image = \Config\Services::image();
+        //         $image->withFile('images/uploads/' . $fileName)
+        //             ->convert(IMAGETYPE_JPEG)
+        //             ->save('images/uploads/' . $fileName . '_thumb.jpg', 20);
+        //         unlink('images/uploads/' . $fileName);
+        //     }
+        // } else {
+        //     $fileName = null;
+        // }
 
         $data = [
-            'org_id' => $org_id,
             'event_id' => $event_id,
             'member_id' => $member_id,
             'position_id' => $position_id,
-            'photo' => $fileName
+            // 'photo' => $fileName
         ];
 
+        $table = new CandidatesModel();
+        $exists = $table->where('event_id', $event_id)
+            ->where('member_id', $member_id)
+            ->where('position_id', $position_id)
+            ->countAllResults();
+        if ($exists != 0) {
+            $val = 0;
+        } else {
+            $table->save($data);
+            $val = 1;
+        }
+        return $this->respond($val);
+    }
 
+    public function getCandidates($event_id)
+    {
+        $table = new CandidatesModel();
+        $Candidates = $table->where('event_id', $event_id)->findAll();
+        return $this->respond(array('candidates' => $Candidates));
+    }
 
-
-        // $table = new PositionsModel();
-        // $exists = $table->where('event_id', $event_id)->where('name', $name)->countAllResults();
-        // if ($exists != 0) {
-        //     $val = 0;
-        // } else {
-        //     $data = [
-        //         'org_id' => $org_id,
-        //         'event_id' => $event_id
-        //     ];
-        //     $table->save($data);
-        //     $val = 1;
-        // }
-        return $this->respond($data);
+    public function removeCandidate($id)
+    {
+        $table = new CandidatesModel();
+        $table->delete($id);
+        return $this->respond(1);
     }
 }

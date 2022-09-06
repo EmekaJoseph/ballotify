@@ -2,30 +2,21 @@ import axios from 'axios'
 import { adminAccount } from '@/store/admin/account'
 import { storeToRefs } from 'pinia'
 
+const mainURL = 'http://localhost'
+
 const bus = axios.create({
-    baseURL: 'http://localhost',
+    baseURL: mainURL,
     headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json;charset=UTF-8;text/json',
-        // 'Content-Type': 'application/x-www-form-urlencoded',
     },
 })
 
-const AxConfig = {
-    headers: {
-        'Content-Type': 'application/json;charset=UTF-8;text/json',
-        "X-Requested-With": "XMLHttpRequest",
-        Accept: 'application/json',
-        'Access-Control-Allow-Origin': '*'
-    }
-}
-
-
 const busImage = axios.create({
-    baseURL: 'http://localhost',
+    baseURL: mainURL,
     headers: {
-        // "Content-Type": "multipart/form-data;",
-        "Content-Type": "application/x-www-form-urlencoded",
+        "Content-Type": "multipart/form-data;",
+        // "Content-Type": "application/x-www-form-urlencoded",
         "X-Requested-With": "XMLHttpRequest",
     }
 })
@@ -57,8 +48,9 @@ export default {
     registerNew(obj: string) {
         return bus.get('/registerNew/' + obj)
     },
-    login(obj: object) {
-        return bus.post('/login', obj)
+    login(obj: any) {
+        let encoded = window.btoa(JSON.stringify(obj))
+        return bus.get('/login/' + encoded)
     },
 
 
@@ -87,19 +79,18 @@ export default {
 
     // groups
     getGroupNames() {
-        return bus.get('/getGroupNames/' + thisOrgId.value)
+        return bus.get('groups/' + thisOrgId.value)
     },
     saveNewGroup(obj: any) {
         obj.org_id = thisOrgId.value
-        return bus.post('/saveNewGroup', obj)
+        return bus.post('/groups', obj)
     },
     deleteGroup(group_id: any) {
-        let data: object = { id: group_id, org_id: thisOrgId.value }
-        return bus.post('/deleteGroup', data)
+        return bus.delete('/groups/' + group_id)
     },
     renameGroup(obj: any) {
         obj.org_id = thisOrgId.value
-        return bus.post('/renameGroup', obj)
+        return bus.put('/groups/' + obj.id, obj)
     },
 
 
@@ -108,17 +99,16 @@ export default {
     // members
     saveNewMember(obj: any) {
         obj.org_id = thisOrgId.value
-        return bus.post('/saveNewMember', obj)
+        return bus.post('/members', obj)
     },
     getMembers() {
-        return bus.get('/getMembers/' + thisOrgId.value)
+        return bus.get('/members/' + thisOrgId.value)
     },
     deleteMember(id: any) {
-        let data: object = { id: id, org_id: thisOrgId.value }
-        return bus.post('/deleteMember', data)
+        return bus.delete('/members/' + id)
     },
     updateMember(obj: any) {
-        return bus.post('/updateMember', obj)
+        return bus.put('/members/' + obj.id, obj)
     },
 
     updateMembersGroup(obj: any) {
@@ -130,15 +120,19 @@ export default {
     // events
     saveNewEvent(obj: any) {
         obj.org_id = thisOrgId.value
-        return bus.post('/saveNewEvent', JSON.stringify(obj))
+        return bus.post('/events', obj)
     },
 
     getEvents() {
-        return bus.get('/getEvents/' + thisOrgId.value)
+        return bus.get('/events/' + thisOrgId.value)
     },
 
     getEventDetails(event_id: any) {
         return bus.get('/getEventDetails/' + event_id)
+    },
+
+    updateEvent(obj: any) {
+        return bus.put('/events/' + obj.id, obj)
     },
 
 
@@ -157,7 +151,14 @@ export default {
     },
 
     saveCandidate(formData: any) {
-        formData.append("org_id", thisOrgId.value);
         return busImage.post('/saveCandidate', formData)
-    }
+    },
+
+    getCandidates(event_id: any) {
+        return bus.get('/getCandidates/' + event_id)
+    },
+
+    removeCandidate(id: any) {
+        return bus.get('/removeCandidate/' + id)
+    },
 }

@@ -35,6 +35,7 @@ export const eventStore = defineStore('eventStore', {
                 this.event.desc = data.event_description
                 this.event.created = data.created
                 this.getPositions()
+                this.getCandidates()
                 this.event.isLoading = false
             } catch (error) {
                 console.log(error);
@@ -44,6 +45,15 @@ export const eventStore = defineStore('eventStore', {
             try {
                 var { data } = await server.getPositions(this.event_id.query.id)
                 this.positions = data.positions
+            } catch (error) {
+                console.log(error);
+            }
+        },
+
+        async getCandidates() {
+            try {
+                var { data } = await server.getCandidates(this.event_id.query.id)
+                this.candidates = data.candidates
             } catch (error) {
                 console.log(error);
             }

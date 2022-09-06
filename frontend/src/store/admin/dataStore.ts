@@ -57,6 +57,7 @@ export const dataStore = defineStore('dataStore', {
                     // }))
                 }
             } catch (error) {
+                this.internetError = true
                 console.log(error);
             }
         },
@@ -67,6 +68,7 @@ export const dataStore = defineStore('dataStore', {
                 if (data) this.events = data
 
             } catch (error) {
+                this.internetError = true
                 console.log(error);
             }
         }

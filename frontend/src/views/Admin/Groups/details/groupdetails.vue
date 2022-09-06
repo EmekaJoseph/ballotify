@@ -8,8 +8,8 @@
                     </button>
                 </div>
                 <div class="float-end me-2">
-                    <span class="text-capitalize"><i class="bi bi-folder"></i> {{ group.name }}</span>
-                    <small class="created">created {{ group.created }} </small>
+                    <span class="text-capitalize"><i class="bi bi-folder"></i> {{  group.name  }}</span>
+                    <small class="created">created {{  group.created  }} </small>
                 </div>
 
             </h5>
@@ -69,7 +69,7 @@ async function deleteGroup() {
         Swal.fire({
             toast: true,
             icon: 'error',
-            title: 'Group not empty',
+            title: 'Group must be empty',
             position: 'top-end',
             showConfirmButton: false,
             timer: 3000,

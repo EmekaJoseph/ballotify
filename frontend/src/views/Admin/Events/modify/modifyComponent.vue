@@ -7,9 +7,9 @@
                 <ul class="nav nav-pills mb-3">
                     <li>
                         <a ref="posClick" class="nav-link active" data-bs-toggle="pill" href="#tab1">
-                            <i class="bi bi-list-check"></i> Positions
+                            <i class="bi bi-list-check"></i> Posts
                             <span class="badge rounded-pill bg-secondary text-white fw-light">
-                                {{ positions.length }}
+                                {{  positions.length  }}
                             </span>
                         </a>
                     </li>
@@ -28,7 +28,7 @@
                         <div class="row justify-content-center  gy-3">
                             <form class="row gy-3">
                                 <div class="col-12 col-xl-8">
-                                    <input v-model="positionInput" type="text" placeholder="enter position..."
+                                    <input v-model="positionInput" type="text" placeholder="enter post here..."
                                         class="form-control">
                                 </div>
                                 <div class="col-12 col-xl-4">
@@ -58,10 +58,11 @@
                                             <table class="table table-sm text-nowrap text-capitalize">
                                                 <tbody>
                                                     <tr v-for="i in positions" :key="i">
-                                                        <td>{{ i.name }}</td>
+                                                        <td>{{  i.name  }}</td>
                                                         <td>
                                                             <span @click="removePosition(i.id)" class="remove-btn">
-                                                                <button class="btn btn-close btn-sm float-end"></button>
+                                                                <button
+                                                                    class="btn btn-sm btn-link text-danger">Remove</button>
                                                             </span>
                                                         </td>
                                                     </tr>
@@ -81,34 +82,35 @@
                         <form class="row g-3">
                             <div class="col-md-12 col-lg-12">
                                 <label>Name:</label>
-                                <input v-model="event.name" :class="{ 'formError': inputErr.name }" type="text"
-                                    class="form-control">
-                                <small class="text-center text-danger">{{ inputErr.name }}</small>
+                                <input disabled v-model="thisData.name" :class="{ 'formError': inputErr.name }"
+                                    type="text" class="form-control">
+                                <small class="text-center text-danger">{{  inputErr.name  }}</small>
                             </div>
                             <div class="col-md-12 col-lg-12">
-                                <label>Description (optional):</label>
-                                <textarea placeholder="describe this event" v-model="event.desc" class="form-control"
+                                <label>Description</label>
+                                <textarea placeholder="describe this event" v-model="thisData.desc" class="form-control"
                                     rows="2"></textarea>
                             </div>
 
                             <div class="col-md-12 col-lg-6">
                                 <label>Start:</label>
                                 <Datepicker monthNameFormat="long" :previewFormat="format" :minDate="new Date()"
-                                    hideOffsetDates v-model="event.start" :is24="false" :clearable="false"
+                                    hideOffsetDates v-model="thisData.start" :is24="false" :clearable="false"
                                     placeholder="birthday" autoApply />
                             </div>
                             <div class="col-md-12 col-lg-6">
                                 <label>expiry:</label>
                                 <Datepicker :class="{ 'formError': inputErr.expiry }" monthNameFormat="long"
-                                    :previewFormat="format" :minDate="new Date()" hideOffsetDates v-model="event.end"
+                                    :previewFormat="format" :minDate="new Date()" hideOffsetDates v-model="thisData.end"
                                     :is24="false" :clearable="false" placeholder="birthday" autoApply />
-                                <small class="text-center text-danger">{{ inputErr.expiry }}</small>
+                                <small class="text-center text-danger">{{  inputErr.expiry  }}</small>
                             </div>
 
                             <div class="col-md-12 col-lg-12">
-                                <button v-if="!isLoading" @click.prevent="" type="button"
-                                    class="btn customBtn w-100 mt-3">Save</button>
-                                <button v-else disabled type="button" class="btn customBtn w-100 mt-3">saving..</button>
+                                <button v-if="!isLoading" @click.prevent="checkForm" type="button"
+                                    class="btn btn-lg customBtn w-100 mt-3">Update</button>
+                                <button v-else disabled type="button"
+                                    class="btn customBtn btn-lg w-100 mt-3">updating..</button>
                             </div>
                         </form>
 
@@ -127,23 +129,32 @@ import server from '@/store/apiStore'
 import { eventStore } from '../eventStore';
 import { storeToRefs } from 'pinia';
 import { useRoute } from 'vue-router';
+import Swal from 'sweetalert2'
 
 const evtStore = eventStore()
-const { event, positions }: any = storeToRefs(evtStore)
+const { event, positions, candidates }: any = storeToRefs(evtStore)
 
 const { cc1, cc2, ccThk, ccBg, ccBtnH }: any = inject("c$");
 
 const route = useRoute()
 
 // ###################### positions ########################################
-
 const positionInput = ref('')
 const posClick: any = ref(null)
 
-
-
-
 async function removePosition(id: any) {
+    let postInUse = candidates.value.some(x => x.position_id == id)
+    if (postInUse) {
+        Swal.fire({
+            text: 'Remove candidate(s) on POST first',
+            // text: `Already added`,
+            icon: 'warning',
+            showConfirmButton: false,
+            timer: 3000,
+        })
+        return
+    }
+
     try {
         await server.removePosition(id)
         evtStore.getPositions()
@@ -170,8 +181,6 @@ async function savePosition() {
 
     }
 }
-
-
 // ###################### positions ########################################
 
 
@@ -179,10 +188,14 @@ async function savePosition() {
 
 
 
-
-
-
 // ###################### details ########################################
+
+const thisData = reactive({
+    name: event.value.name,
+    desc: event.value.desc,
+    start: event.value.start,
+    end: event.value.end
+})
 
 const format = (date: Date) => {
     const day = date.getDate();
@@ -197,7 +210,56 @@ const inputErr = reactive({
 
 })
 const isLoading = ref(false)
+
+function checkForm() {
+    inputErr.name = inputErr.expiry = '';
+    if (thisData.name == '') { inputErr.name = 'fill in name'; return }
+
+    let timediff = thisData.end - thisData.start
+    if (timediff <= 0) { inputErr.expiry = 'choose date later than start date.'; return }
+    saveEvent()
+}
+
+async function saveEvent() {
+    isLoading.value = true
+    let obj = {
+        id: event.value.id,
+        event_name: thisData.name,
+        event_description: thisData.desc,
+        event_start: thisData.start.toISOString(),
+        event_expiry: thisData.end.toISOString(),
+    }
+
+    try {
+        var { data } = await server.updateEvent(obj)
+        if (data.state != 0) {
+            isLoading.value = false
+            evtStore.getEventDetails()
+            Swal.fire({
+                toast: true,
+                icon: 'success',
+                title: `Updated`,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: false,
+            })
+        }
+        else {
+            isLoading.value = false
+            return
+        }
+    } catch (error) {
+        isLoading.value = false
+        console.log(error);
+
+    }
+}
 // ###################### details ########################################
+
+
+
+
 </script>
 
 <style scoped>

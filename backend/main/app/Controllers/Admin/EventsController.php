@@ -6,13 +6,14 @@ use App\Controllers\BaseController;
 use App\Models\OrgModel;
 use App\Models\EventsModel;
 use CodeIgniter\I18n\Time;
+use CodeIgniter\RESTful\ResourceController;
 use CodeIgniter\API\ResponseTrait;
 
-class EventsController extends BaseController
+class EventsController extends ResourceController
 {
     use ResponseTrait;
 
-    public function saveNewEvent()
+    public function create()
     {
         $eventsTable = new EventsModel();
         $orgTable = new OrgModel();
@@ -48,13 +49,28 @@ class EventsController extends BaseController
         return $this->respond(array('state' => $resp, 'id' => $event_id));
     }
 
-    public function getEvents($org_id)
+    public function show($org_id = null)
     {
         $eventsTable = new EventsModel();
         // $rr = $events->where('org_id', $org_id)->orderBy('id', 'desc')->findAll(1, 0);
         $array = $eventsTable->where('org_id', $org_id)->orderBy('id', 'desc')->findAll();
         return $this->respond($array);
     }
+
+    public function update($idd = null)
+    {
+        $table = new EventsModel();
+        $data = [
+            'id' => $this->request->getVar('id'),
+            'event_name' => $this->request->getVar('event_name'),
+            'event_description' => $this->request->getVar('event_description'),
+            'event_start' => $this->request->getVar('event_start'),
+            'event_expiry' => $this->request->getVar('event_expiry'),
+        ];
+        $table->save($data);
+        return $this->respond(1);
+    }
+
 
     public function getEventDetails($event_id)
     {

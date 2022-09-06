@@ -6,7 +6,7 @@
                     <div class="modal-header">
                         <span class="text-white">
                             <i class="bi bi-person-fill"></i>
-                            {{ person.firstname + ' ' + person.lastname }}
+                            {{  person.firstname + ' ' + person.lastname  }}
                         </span>
                         <span class="float-end">
                             <button @click="emit('close')" class="btn btn-close btn-close-white"></button>
@@ -19,14 +19,14 @@
                                     <label>first name: <span class="text-danger">*</span></label>
                                     <input :class="{ 'formError': err.firstname }" v-model="person.firstname"
                                         type="text" class="form-control w-100">
-                                    <small class="text-danger">{{ err.firstname }}</small>
+                                    <small class="text-danger">{{  err.firstname  }}</small>
                                 </div>
 
                                 <div class="col-sm-6">
                                     <label>last name: <span class="text-danger">*</span></label>
                                     <input :class="{ 'formError': err.lastname }" v-model="person.lastname" type="text"
                                         class="form-control w-100">
-                                    <small class="text-danger">{{ err.lastname }}</small>
+                                    <small class="text-danger">{{  err.lastname  }}</small>
                                 </div>
                                 <div class="col-sm-6">
                                     <label>email:</label>
@@ -37,7 +37,7 @@
                                     <label>phone: <span class="text-danger">*</span></label>
                                     <input :class="{ 'formError': err.phone }" v-model="person.phone" type="text"
                                         @input="replace" class="form-control w-100">
-                                    <small class="text-danger">{{ err.phone }}</small>
+                                    <small class="text-danger">{{  err.phone  }}</small>
                                 </div>
 
                                 <div class="col-sm-6">
@@ -61,7 +61,7 @@
                                     <span class="mt-2">
                                         <div class="col-md-12 mt-4">
                                             <button v-if="isEditing" @click.prevent="checkForm"
-                                                class="customBtn btn w-100"><i class="bi bi-save2"></i>&nbsp;
+                                                class="customBtn btn btn-lg w-100"><i class="bi bi-save2"></i>&nbsp;
                                                 Update</button>
                                         </div>
                                     </span>

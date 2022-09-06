@@ -2,26 +2,27 @@
     <div class="card px-2">
         <div class="card-head"><i class="bi bi-person-check-fill"></i> Candidates:
             <span class="badge rounded-pill bg-secondary text-white fw-light">
-                {{  candidate.list.length  }}
+                {{  list.length  }}
             </span>
         </div>
         <div class="card-body">
             <div class="row justify-content-center gy-3">
                 <div class="col-12 col-xl-7">
-                    <v-select v-model="candidate.details" placeholder="select candidate.." :clearable="false"
-                        class="vSelect" :options="data.members" />
+                    <label>Candidate:</label>
+                    <v-select v-model="candidate.details" placeholder="select.." :clearable="false" class="vSelect"
+                        :options="data.members" />
                 </div>
                 <div class="col-12 col-xl-5">
-                    <v-select v-model="candidate.post" placeholder="select position.." class="vSelect"
+                    <label>Select Post:</label>
+                    <v-select v-model="candidate.post"
+                        :placeholder="(data.posts.length) ? 'select..' : 'add a post first'" class="vSelect"
                         :options="data.posts" :disabled="!(data.posts.length)" />
                 </div>
-                <!-- <div class="col-12 col-xl-6">
-                    <input v-model="candidate.info" placeholder="info (optional).." type="text" class="form-control">
-                </div> -->
+
                 <div class="col-12 col-xl-7">
-                    <form ref="ImgForm">
-                        <input class="form-control" accept="image/jpg, image/png" ref="mainImgBtn" id="fileUp"
-                            type="file" @change="handleFileUpload" hidden />
+                    <!-- <form ref="ImgForm">
+                        <input class="form-control" accept="image/jpeg, image/png, image/jpg" ref="mainImgBtn"
+                            id="fileUp" type="file" @change="handleFileUpload" hidden />
                         <span v-if="!imageURL" @click.prevent="chooseImage" class="imagePicker">
                             select photo (optional)
                         </span>
@@ -33,13 +34,15 @@
                             &nbsp; &nbsp;<button @click.prevent="clearImage"
                                 class="btn btn-link text-danger m-0 p-0 btn-sm" style="font-size: 16px">cancel</button>
                         </span>
-                    </form>
+                    </form> -->
                 </div>
 
-                <div class="col-xl-2 "> </div>
-                <div class="col-12 col-xl-3">
-                    <button :disabled="(candidate.details === null) || (candidate.post === null)" @click="saveCandidate"
-                        class="w-100 btn customBtn">Add <i class="bi text-white bi-arrow-down-circle fs-6"></i></button>
+                <!-- <div class="col-xl-2 "> </div> -->
+                <div class="col-12 col-xl-5">
+                    <button
+                        :disabled="(candidate.details === null) || (candidate.post === null) || (candidate.isSaving)"
+                        @click="saveCandidate" class="w-100 btn customBtn">Add <i
+                            class="bi text-white bi-arrow-down-circle fs-6"></i></button>
 
                 </div>
                 <div class="col-md-12 col-lg-12 mt-4">
@@ -47,33 +50,31 @@
                          candidate.inputError 
                         }}</small>
                     <div class="list-span">
-                        <!-- <div class="text-center empty-list-text mt-5 pt-5">
+                        <div v-if="!(list.length)" class="text-center empty-list-text mt-5 pt-5">
                             List is Empty
-                        </div> -->
-                        <div class="table-responsive">
+                        </div>
+                        <div v-else class="table-responsive">
                             <table class="table table-sm text-nowrap text-capitalize">
-                                <tbody>
+                                <thead>
                                     <tr>
-                                        <th>1</th>
+                                        <th>#</th>
+                                        <th>Name</th>
+                                        <th>Post</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="(cand, index) in list">
+                                        <th>{{  index + 1  }}</th>
                                         <td>
-                                            <span class="candidate-image-span">
-
-
-
-                                            </span>
-                                            <!-- <figure class="figure">
-                                                <img src="@/assets/images/about.jpg"
-                                                    class="figure-img img-fluid rounded"
-                                                    alt="A generic square placeholder image with rounded corners in a figure.">
-                                            </figure> -->
+                                            {{  m_name(cand.member_id)  }}
                                         </td>
                                         <td>
-                                            <div>Emmanuel Josiah</div>
-                                            <div class="candidate-desc">ss</div>
+                                            {{  p_name(cand.position_id)  }}
                                         </td>
-
                                         <td>
-                                            <button class="btn btn-sm btn-link text-danger">Remove</button>
+                                            <button @click="removeCandidate(cand.id)"
+                                                class="btn btn-sm btn-link text-danger remove-btn">Remove</button>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -87,32 +88,35 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, computed, watchEffect, ref } from 'vue';
+import { reactive, computed, watchEffect, ref, onMounted } from 'vue';
 import server from '@/store/apiStore'
 import { dataStore } from '@/store/admin/dataStore';
 import { useImageUpload } from "@/store/useImageUpload";
 import { eventStore } from '../eventStore';
 import { storeToRefs } from 'pinia'
+import Swal from 'sweetalert2'
 
 const mStore = dataStore()
 const { members }: any = storeToRefs(mStore)
+
 const evtStore = eventStore()
-const { positions, event }: any = storeToRefs(evtStore)
+const { positions, event, candidates: list }: any = storeToRefs(evtStore)
 
 interface Cand {
     details: any,
     post: any,
     info?: string,
-    list: any[],
     inputError: string
+    isSaving: boolean
 }
 
 const candidate: Cand = reactive({
     details: null,
     post: null,
-    list: [],
-    inputError: ''
+    inputError: '',
+    isSaving: false
 })
+
 
 const data: any = reactive({
     members: computed(() => {
@@ -121,9 +125,19 @@ const data: any = reactive({
     }),
     posts: computed(() =>
         (positions.value.map((x: any) => ({ id: x.id, label: x.name })))
-    ),
-
+    )
 })
+
+const m_name = (id: string) => {
+    let thisMember = members.value.find((x: { id: string; }) => x.id == id)
+    return thisMember == undefined ? '...' : `${thisMember.firstname} ${thisMember.lastname} (${thisMember.gender})`
+}
+
+const p_name = (id: string) => {
+    let thisPosition = positions.value.find((x: { id: string; }) => x.id == id)
+    return thisPosition == undefined ? '...' : `${thisPosition.name}`
+}
+
 
 watchEffect(() => {
     if (candidate.post !== null) {
@@ -150,27 +164,92 @@ function clearImage() {
 // image###########################################
 
 
-
 // submiting ##########################################
 async function saveCandidate() {
 
+    // if (imageFile.value) {
+    //     // get the file name
+    //     let fileName = imageFile.value.name
+    //     let regex = new RegExp('[^.]+$');
+    //     let ext = fileName.match(regex);
+    //     // get the extension
+    //     let fileExtension = ext[0].toLowerCase()
+    //     const validFormats = ['png', 'jpg', 'jpeg']
+
+    //     //make sure the file is a valid picture format
+    //     if (!(validFormats.some(x => x == fileExtension.toLowerCase()))) {
+    //         Swal.fire({
+    //             title: 'Invalid format',
+    //             text: '...image should be a picture',
+    //             icon: 'warning',
+    //             showConfirmButton: false,
+    //             timer: 3000,
+    //         })
+    //         return
+    //     }
+
+    //     //picture not greater than 50k
+    //     if (imgSize.kb > 50) {
+    //         Swal.fire({
+    //             title: 'Image too large!',
+    //             text: `NB: not more than 50kb`,
+    //             icon: 'warning',
+    //             showConfirmButton: false,
+    //             timer: 3000,
+    //         })
+    //         return
+    //     }
+
+    // }
+    candidate.isSaving = true
 
     let formData = new FormData();
-    formData.append("image", imageFile.value);
+    //formData.append("image", imageFile.value);
     formData.append("member_id", candidate.details.id);
     formData.append("event_id", event.value.event_id);
     formData.append("position_id", candidate.post.id);
 
     try {
         var { data } = await server.saveCandidate(formData)
-        console.log(data);
+        if (data == 1) {
+            //ImgForm.value.reset();
+            candidate.details = null;
+            candidate.post = null;
+            candidate.isSaving = false
+            evtStore.getCandidates()
+        }
+        else {
+            Swal.fire({
+                text: 'Duplicate data',
+                // text: `Already added`,
+                icon: 'warning',
+                showConfirmButton: false,
+                timer: 3000,
+            })
+            candidate.isSaving = false
+            return
+        }
 
     } catch (error) {
+        candidate.isSaving = false
         console.log(error);
 
     }
 }
 // submiting ##########################################
+
+
+
+
+async function removeCandidate(id: any) {
+    try {
+        await server.removeCandidate(id)
+        evtStore.getCandidates()
+    } catch (error) {
+        console.log(error);
+
+    }
+}
 
 </script>
 
@@ -211,7 +290,7 @@ async function saveCandidate() {
 .imagePicker {
     /* padding: 8px 10px; */
     border: 1px solid #eee;
-    background-color: #fcfafa;
+    background-color: #fcfafa7a;
     cursor: pointer;
     /* margin-top: 70px; */
     border-radius: 5px;
@@ -225,5 +304,18 @@ async function saveCandidate() {
 
 .imagePicker:hover {
     background-color: #f1eeee;
+}
+
+
+.remove-btn {
+    float: right;
+    margin-right: 15px;
+    cursor: pointer;
+    padding-inline: 5px;
+    border-radius: 5px;
+}
+
+.remove-btn:hover {
+    background-color: rgb(250, 212, 212);
 }
 </style>

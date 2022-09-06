@@ -58,9 +58,11 @@ button:focus,
 }
 
 input[type="password"]:disabled,
-input[type="text"]:disabled {
-    background-color: #fff;
+input[type="text"]:disabled,
+textarea:disabled {
+    background-color: rgba(250, 228, 228, 0.144) !important;
 }
+
 
 .page-not-home {
     margin-top: 50px;

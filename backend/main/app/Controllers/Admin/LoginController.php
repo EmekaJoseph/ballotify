@@ -12,10 +12,11 @@ class LoginController extends BaseController
 {
     use ResponseTrait;
 
-    public function login()
+    public function login($data)
     {
-        $email = $this->request->getVar('email');
-        $password = $this->request->getVar('password');
+        $recv = json_decode(base64_decode($data));
+        $email = $recv->email;
+        $password = $recv->password;
         $rArray = array();
 
         $admin = (new User())->getUserWithEmail($email);
@@ -40,6 +41,7 @@ class LoginController extends BaseController
             $mailSender = new SendMail();
             $mailSender->sendMail($email, 'You just Logged in', $message);
         }
+        // return $this->respond($rArray);
         return $this->respond($rArray);
     }
 }

@@ -5,13 +5,15 @@ namespace App\Controllers\Admin;
 use App\Controllers\BaseController;
 use App\Models\GroupsModel;
 use CodeIgniter\I18n\Time;
+
+use CodeIgniter\RESTful\ResourceController;
 use CodeIgniter\API\ResponseTrait;
 
-class GroupsController extends BaseController
+class GroupsController extends ResourceController
 {
     use ResponseTrait;
 
-    public function saveNewGroup()
+    public function create()
     {
         $org_id = $this->request->getVar('org_id');
         $group_name = $this->request->getVar('group_name');
@@ -32,7 +34,7 @@ class GroupsController extends BaseController
         return $this->respond($val);
     }
 
-    public function getGroupNames($org_id)
+    public function show($org_id = null)
     {
         $table = new GroupsModel();
         $groups = $table->where('org_id', $org_id)->findAll();
@@ -57,21 +59,21 @@ class GroupsController extends BaseController
     }
 
 
-    public function deleteGroup()
+    public function delete($id = null)
     {
         try {
-            $org_id = $this->request->getVar('org_id');
-            $id = $this->request->getVar('id');
+            // $org_id = $this->request->getVar('org_id');
+            // $id = $this->request->getVar('id');
             $table = new GroupsModel();
-            $table->where('org_id', $org_id)->delete($id);
-            return $this->response->setJSON(1);
+            $table->delete($id);
+            return $this->respond(1);
         } catch (\Throwable $th) {
             //throw $th;
             return $this->respond(0);
         }
     }
 
-    public function renameGroup()
+    public function update($id = null)
     {
         $id = $this->request->getVar('id');
         $org_id = $this->request->getVar('org_id');

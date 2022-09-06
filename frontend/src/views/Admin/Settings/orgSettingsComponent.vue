@@ -1,5 +1,5 @@
 <template>
-    <div class="col-md-5">
+    <div class="col-lg-5">
         <div class="card">
             <div class="card-header">Organisation:
                 <span class="float-end">
@@ -11,14 +11,14 @@
                     <div class="col-12">
                         <label>Name:</label>
                         <div>
-                            {{ org.name }} &nbsp;
-                            <span class="fw-bold text-custom">{{ org.org_id }}</span>
+                            {{  org.name  }} &nbsp;
+                            <span class="fw-bold text-custom">{{  org.org_id  }}</span>
                         </div>
                     </div>
 
                     <div class="col-12">
                         <label>Address:</label>
-                        <div v-if="!org.keyIn">{{ org.address }}</div>
+                        <div v-if="!org.keyIn">{{  org.address  }}</div>
                         <textarea v-else v-model="org.address" class="form-control" rows="2"></textarea>
                     </div>
                     <div>

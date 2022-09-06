@@ -11,9 +11,9 @@ class SignupController extends BaseController
 {
     use ResponseTrait;
 
-    public function registerNew($recievedJSON)
+    public function registerNew($recieved)
     {
-        $data = json_decode($recievedJSON);
+        $data = json_decode(base64_decode($recieved));
         $response = 0;
         $org_id = $this->getOrgId();
         try {

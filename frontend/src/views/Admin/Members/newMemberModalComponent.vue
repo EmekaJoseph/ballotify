@@ -17,27 +17,27 @@
                                     <label>first name: <span class="text-danger">*</span></label>
                                     <input :class="{ 'formError': err.firstname }" v-model="person.firstname"
                                         type="text" class="form-control w-100">
-                                    <small class="text-danger">{{ err.firstname }}</small>
+                                    <small class="text-danger">{{  err.firstname  }}</small>
                                 </div>
 
                                 <div class="col-sm-6">
                                     <label>last name: <span class="text-danger">*</span></label>
                                     <input :class="{ 'formError': err.lastname }" v-model="person.lastname" type="text"
                                         class="form-control w-100">
-                                    <small class="text-danger">{{ err.lastname }}</small>
+                                    <small class="text-danger">{{  err.lastname  }}</small>
                                 </div>
                                 <div class="col-sm-6">
                                     <label>email:</label> <span class="text-danger">*</span><small class="text-muted">
                                         valid email</small>
                                     <input :class="{ 'formError': err.email }" v-model="person.email" type="text"
                                         class="form-control w-100">
-                                    <small class="text-danger">{{ err.email }}</small>
+                                    <small class="text-danger">{{  err.email  }}</small>
                                 </div>
                                 <div class="col-sm-6">
                                     <label>phone: <span class="text-danger">*</span></label>
                                     <input :class="{ 'formError': err.phone }" v-model="person.phone" type="text"
                                         @input="replace" class="form-control w-100">
-                                    <small class="text-danger">{{ err.phone }}</small>
+                                    <small class="text-danger">{{  err.phone  }}</small>
                                 </div>
 
                                 <div class="col-sm-6">
@@ -50,7 +50,7 @@
                                     <!-- <Datepicker v-model="person.birthday" autoApply :enableTimePicker="false">
                                     </Datepicker> -->
 
-                                    <small class="text-danger">{{ err.birthday }}</small>
+                                    <small class="text-danger">{{  err.birthday  }}</small>
                                 </div>
                                 <div class="col-sm-6">
                                     <label>gender:</label>
@@ -70,7 +70,7 @@
                                 <div>
                                     <span class="mt-2">
                                         <div class="col-md-12">
-                                            <button @click.prevent="checkForm" class="customBtn btn w-100"><i
+                                            <button @click.prevent="checkForm" class="customBtn btn btn-lg w-100"><i
                                                     class="bi bi-save2"></i>&nbsp;
                                                 Save</button>
                                         </div>

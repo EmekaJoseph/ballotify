@@ -62,9 +62,9 @@ function submitForm() {
 
 async function sendToServer(obj: object) {
     state.loading = true
-    let jsonData = JSON.stringify(obj)
+    let _Data = window.btoa(JSON.stringify(obj))
     try {
-        var { data } = await server.registerNew(jsonData);
+        var { data } = await server.registerNew(_Data);
         switch (data) {
             case 1:
                 emit("success")
