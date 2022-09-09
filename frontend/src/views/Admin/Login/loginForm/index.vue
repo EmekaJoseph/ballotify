@@ -1,7 +1,7 @@
 <template>
     <div class="col-md-10">
         <div class="row justify-content-center">
-            <div class="col-lg-4 col-md-12 sideWriteUp">
+            <div class="col-lg-5 col-md-12 sideWriteUp">
                 <div class="container spanni">
                     <h2>Login</h2>
                     <p>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Adipisci aspernatur ea et
@@ -12,7 +12,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-11 col-lg-4">
+            <div class="col-11 col-lg-5">
                 <div class="card p-4 shadow-sm border-0">
                     <span class="text-center fw-bold mb-2">
                         <!-- <img src="@/assets/house34_logo1.png" width="130" /> -->

@@ -5,9 +5,11 @@ namespace App\Controllers\Admin;
 use App\Controllers\BaseController;
 use App\Controllers\Admin\OrgController as Org;
 use App\Controllers\Admin\UserController as User;
+use CodeIgniter\RESTful\ResourceController;
 use CodeIgniter\API\ResponseTrait;
 
-class SignupController extends BaseController
+
+class SignupController extends ResourceController
 {
     use ResponseTrait;
 

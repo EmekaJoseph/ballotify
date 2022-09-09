@@ -1,52 +1,28 @@
 <template>
     <div class="card px-2">
-        <div class="card-head"><i class="bi bi-person-check-fill"></i> Candidates:
+        <div class="card-head"><i class="bi bi-person-check-fill"></i> Eligible Voters:
             <span class="badge rounded-pill bg-secondary text-white fw-light">
                 {{  list.length  }}
             </span>
         </div>
         <div class="card-body">
             <div class="row justify-content-center gy-3">
-                <div class="col-12 col-xl-7">
-                    <label>Select Candidate:</label>
-                    <v-select v-model="candidate.details" placeholder="select.." :clearable="false" class="vSelect"
+                <div class="col-12 col-xl-6">
+                    <v-select v-model="voter.details" placeholder="select voter.." :clearable="false" class="vSelect"
                         :options="data.members" />
                 </div>
-                <div class="col-12 col-xl-5">
-                    <label>Select Post:</label>
-                    <v-select v-model="candidate.post"
-                        :placeholder="(data.posts.length) ? 'select..' : 'add a post first'" class="vSelect"
-                        :options="data.posts" :disabled="!(data.posts.length)" />
+                <div class="col-12 col-xl-4">
+                    <button @click.prevent="" class="w-100 btn btn-outline-secondary">Add by groups <i
+                            class="bi  bi-folder fs-6"></i></button>
                 </div>
-
-                <div class="col-12 col-xl-7">
-                    <!-- <form ref="ImgForm">
-                        <input class="form-control" accept="image/jpeg, image/png, image/jpg" ref="mainImgBtn"
-                            id="fileUp" type="file" @change="handleFileUpload" hidden />
-                        <span v-if="!imageURL" @click.prevent="chooseImage" class="imagePicker">
-                            select photo (optional)
-                        </span>
-                        <span v-else class="imagePicker">
-                            <small> Photo: &nbsp;</small><span class="imagePreviewWrapper"
-                                :style="{ 'background-image': `url(${imageURL})` }"></span>
-                            &nbsp;&nbsp;<button @click.prevent="chooseImage"
-                                class="btn btn-link text-info m-0 p-0 btn-sm" style="font-size: 16px">change</button>
-                            &nbsp; &nbsp;<button @click.prevent="clearImage"
-                                class="btn btn-link text-danger m-0 p-0 btn-sm" style="font-size: 16px">cancel</button>
-                        </span>
-                    </form> -->
-                </div>
-
-                <!-- <div class="col-xl-2 "> </div> -->
-                <div class="col-12 col-xl-5">
-                    <button v-if="(candidate.details !== null) && (candidate.post !== null)"
-                        :disabled="(candidate.isSaving)" @click="saveCandidate" class="w-100 btn customBtn">Add <i
+                <div class="col-12 col-xl-2">
+                    <button @click.prevent="" class="w-100 btn customBtn">Add <i
                             class="bi text-white bi-arrow-down-circle fs-6"></i></button>
-
                 </div>
+
                 <div class="col-md-12 col-lg-12 mt-4">
-                    <small v-if="candidate.inputError" class="text-danger">{{
-                         candidate.inputError 
+                    <small v-if="voter.inputError" class="text-danger">{{
+                         voter.inputError 
                         }}</small>
                     <div class="list-span">
                         <div v-if="!(list.length)" class="text-center empty-list-text mt-5 pt-5">
@@ -101,7 +77,7 @@ const { members }: any = storeToRefs(mStore)
 const evtStore = eventStore()
 const { positions, event, candidates: list }: any = storeToRefs(evtStore)
 
-interface Cand {
+interface Voter {
     details: any,
     post: any,
     info?: string,
@@ -109,7 +85,7 @@ interface Cand {
     isSaving: boolean
 }
 
-const candidate: Cand = reactive({
+const voter: Voter = reactive({
     details: null,
     post: null,
     inputError: '',
@@ -122,9 +98,7 @@ const data: any = reactive({
         let data = members.value.map((x: any) => ({ id: x.id, label: x.firstname + ' ' + x.lastname + ', (' + x.gender + ')' }))
         return data
     }),
-    posts: computed(() =>
-        (positions.value.map((x: any) => ({ id: x.id, label: x.name })))
-    )
+
 })
 
 const m_name = (id: string) => {
@@ -138,12 +112,6 @@ const p_name = (id: string) => {
 }
 
 
-watchEffect(() => {
-    if (candidate.post !== null) {
-        if (positions.value.find((x: { name: any; }) => x.name == candidate.post.label) == undefined)
-            candidate.post = null
-    }
-})
 
 
 
@@ -166,55 +134,17 @@ function clearImage() {
 // submiting ##########################################
 async function saveCandidate() {
 
-    // if (imageFile.value) {
-    //     // get the file name
-    //     let fileName = imageFile.value.name
-    //     let regex = new RegExp('[^.]+$');
-    //     let ext = fileName.match(regex);
-    //     // get the extension
-    //     let fileExtension = ext[0].toLowerCase()
-    //     const validFormats = ['png', 'jpg', 'jpeg']
 
-    //     //make sure the file is a valid picture format
-    //     if (!(validFormats.some(x => x == fileExtension.toLowerCase()))) {
-    //         Swal.fire({
-    //             title: 'Invalid format',
-    //             text: '...image should be a picture',
-    //             icon: 'warning',
-    //             showConfirmButton: false,
-    //             timer: 3000,
-    //         })
-    //         return
-    //     }
-
-    //     //picture not greater than 50k
-    //     if (imgSize.kb > 50) {
-    //         Swal.fire({
-    //             title: 'Image too large!',
-    //             text: `NB: not more than 50kb`,
-    //             icon: 'warning',
-    //             showConfirmButton: false,
-    //             timer: 3000,
-    //         })
-    //         return
-    //     }
-
-    // }
-    candidate.isSaving = true
+    voter.isSaving = true
 
     let formData = new FormData();
-    //formData.append("image", imageFile.value);
-    formData.append("member_id", candidate.details.id);
-    formData.append("event_id", event.value.event_id);
-    formData.append("position_id", candidate.post.id);
 
     try {
         var { data } = await server.saveCandidate(formData)
         if (data == 1) {
             //ImgForm.value.reset();
-            candidate.details = null;
-            candidate.post = null;
-            candidate.isSaving = false
+            voter.details = null;
+            voter.isSaving = false
             evtStore.getCandidates()
         }
         else {
@@ -225,14 +155,13 @@ async function saveCandidate() {
                 showConfirmButton: false,
                 timer: 1100,
             })
-            candidate.details = null;
-            candidate.post = null;
-            candidate.isSaving = false
+            voter.details = null;
+            voter.isSaving = false
             return
         }
 
     } catch (error) {
-        candidate.isSaving = false
+        voter.isSaving = false
         console.log(error);
 
     }

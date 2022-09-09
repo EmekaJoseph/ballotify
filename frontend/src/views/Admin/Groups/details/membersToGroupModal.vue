@@ -5,7 +5,7 @@
             <div class="modal-content">
                 <div class="modal-header text-capitalize">
                     <span class="text-white">
-                        Add to: &nbsp;<span class="text-warning">{{ groupStore.fGroupName(group.group_id) }}</span>
+                        Add to: &nbsp;<span class="text-warning">{{  groupStore.fGroupName(group.group_id)  }}</span>
                     </span>
                     <span class="float-end">
                         <button ref="btnX" class="btn btn-close btn-close-white" data-bs-dismiss="modal"
@@ -13,7 +13,13 @@
                     </span>
                 </div>
                 <div v-if="membersAddList.length">
+
                     <div class="modal-body p-sm-4">
+                        <!-- <div class="d-flex justify-content-center">
+                            <div class="col-md-4 mb-2">
+                                <input class="form-control" type="text"> &nbsp; Show All
+                            </div>
+                        </div> -->
                         <div class="table-responsive list-span">
                             <table class="table text-nowrap table-borderless table-hover">
                                 <thead>
@@ -25,8 +31,8 @@
                                 </thead>
                                 <tbody>
                                     <tr v-for="(v, i) in membersAddList">
-                                        <td>{{ v.firstname }} {{ v.lastname }} ({{ v.gender }})</td>
-                                        <td>{{ groupStore.fGroupName(v.group_id) }}</td>
+                                        <td>{{  v.lastname  }} {{  v.firstname  }} ({{  v.gender  }})</td>
+                                        <td>{{  groupStore.fGroupName(v.group_id)  }}</td>
                                         <td><input v-model="v.checked" class="form-check-input" type="checkbox">
                                         </td>
                                     </tr>

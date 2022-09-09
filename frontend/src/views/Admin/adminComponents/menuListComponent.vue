@@ -12,7 +12,10 @@
                 <li class="list-group-item" :class="{ 'gActive': (route.name == 'Members') }" :data-bs-dismiss="showOn">
                     <router-link :to="{ name: 'Members' }">
                         <i class="bi bi-people"></i>&nbsp;
-                        Members
+                        Members &nbsp;
+                        <span class="badge rounded-pill bg-secondary text-black">
+                            {{  members.length  }}
+                        </span>
                     </router-link>
                 </li>
                 <li class="list-group-item"
@@ -20,7 +23,10 @@
                     :data-bs-dismiss="showOn">
                     <router-link :to="{ name: 'Groups' }">
                         <i class="bi bi-folder"></i>&nbsp;
-                        Groups
+                        Groups &nbsp;
+                        <span class="badge rounded-pill bg-secondary text-black">
+                            {{  groups.length  }}
+                        </span>
                     </router-link>
                 </li>
                 <li class="accordion" id="votingsDropdown">
@@ -29,7 +35,10 @@
                             :class="{ 'gActive': (route.name == 'Event') }">
                             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
                                 data-bs-target="#flush-votings" aria-expanded="false" aria-controls="flush-votings">
-                                <i class="bi bi-list-check"></i>&nbsp; Votings
+                                <i class="bi bi-list-check"></i>&nbsp; Votings &nbsp;
+                                <span class="badge rounded-pill bg-secondary text-black">
+                                    {{  events.length  }}
+                                </span>
                             </button>
                         </h2>
                         <div id="flush-votings" class="accordion-collapse collapse" aria-labelledby="flush-headingTwo"
@@ -40,7 +49,7 @@
                                         <a :data-bs-dismiss="showOn"
                                             :class="{ 'focused': route.query.id == list.event_id }" href="/"
                                             @click.prevent="navigateToEvent(list.event_id, list.event_name)">
-                                            <i class="bi bi-calendar4-event"></i>&nbsp; {{ list.event_name }}
+                                            <i class="bi bi-calendar4-event"></i>&nbsp; {{  list.event_name  }}
                                             <i v-if="route.query.id == list.event_id"
                                                 class="bi bi-circle-fill indicator ms-2"></i>
                                         </a>
@@ -77,7 +86,7 @@
 </template>
 
 <script setup lang="ts">
-import { inject, ref, onMounted } from 'vue'
+import { inject } from 'vue'
 import { useRoute, useRouter } from 'vue-router';
 import { dataStore } from '@/store/admin/dataStore';
 import { storeToRefs } from 'pinia'
@@ -95,7 +104,7 @@ defineProps({
     }
 })
 
-const { events }: any = storeToRefs(dataStore())
+const { events, groups, members }: any = storeToRefs(dataStore())
 
 function navigateToEvent(id: any, name: string) {
     router.push({
@@ -202,7 +211,7 @@ a:not(.gActive):hover {
 
 .dropItem a {
     text-decoration: none;
-    margin-left: 35px;
+    margin-left: 47px;
 }
 
 .dropItem a:hover {
@@ -223,5 +232,11 @@ a:not(.gActive):hover {
 
 .indicator {
     font-size: 7px;
+}
+
+.badge {
+    font-size: 9px;
+    background-color: #f5f5f5 !important;
+    border: 1px solid #ccc !important;
 }
 </style>

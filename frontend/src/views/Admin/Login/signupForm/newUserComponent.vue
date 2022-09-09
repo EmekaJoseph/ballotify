@@ -9,7 +9,7 @@
                         <input :class="{ 'formError': err.firstname }" v-model="user.firstname" type="text"
                             class="form-control" id="flFirstname" placeholder="firstname" />
                         <label for="flFirstname">First Name:</label>
-                        <small class="text-danger" v-if="err.firstname">{{ err.firstname }}</small>
+                        <small class="text-danger" v-if="err.firstname">{{  err.firstname  }}</small>
                     </div>
                 </div>
                 <div class="col-md-6">
@@ -17,15 +17,15 @@
                         <input :class="{ 'formError': err.lastname }" v-model="user.lastname" type="text"
                             class="form-control" id="flLastname" placeholder="lastname" />
                         <label for="flLastname">Last Name:</label>
-                        <small class="text-danger" v-if="err.lastname">{{ err.lastname }}</small>
+                        <small class="text-danger" v-if="err.lastname">{{  err.lastname  }}</small>
                     </div>
                 </div>
                 <div class="col-md-12">
                     <div class="form-floating">
-                        <input :class="{ 'formError': err.email }" v-model="user.email" type="text" class="form-control"
-                            id="flemail" placeholder="username" />
+                        <input :class="{ 'formError': err.email }" v-model="user.email" type="email"
+                            class="form-control" id="flemail" placeholder="email" />
                         <label for="flemail">Email:</label>
-                        <small class="text-danger" v-if="err.email">{{ err.email }}</small>
+                        <small class="text-danger" v-if="err.email">{{  err.email  }}</small>
                     </div>
                 </div>
                 <div class="col-md-6">
@@ -37,8 +37,8 @@
                             <i v-else class="bi bi-eye"></i>
                         </span>
                         <label for="flpasswd1">Password:</label>
-                        <small class="text-danger" v-if="err.password">{{ err.password
-                        }}</small>
+                        <small class="text-danger" v-if="err.password">{{  err.password 
+                            }}</small>
                     </div>
                 </div>
                 <div class="col-md-6">
@@ -52,7 +52,7 @@
                             <i v-else class="bi bi-eye"></i>
                         </span>
                         <label for="flpasswd2">Repeat:</label>
-                        <small class="text-danger" v-if="err.rpassword">{{ err.rpassword }}</small>
+                        <small class="text-danger" v-if="err.rpassword">{{  err.rpassword  }}</small>
                     </div>
                 </div>
                 <div class="col-md-12 mt-5">
@@ -94,7 +94,7 @@ async function checkForm() {
         return
     }
     else if (!user.password || !(userMthds.testPassword(user.password))) {
-        err.password = 'enter a valid password'
+        err.password = 'Minimum 8 characters, at least one Upper Case, one number and one special character'
         return
     }
     else if (!user.rpassword) {

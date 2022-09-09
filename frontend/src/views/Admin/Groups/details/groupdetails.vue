@@ -2,16 +2,21 @@
     <div>
         <div class="card">
             <h5 class="px-3 pt-3 ">
-                <div class="d-none d-md-inline ">
+                <span class="d-none d-md-inline ">
                     <button @click="router.go(-1)" class="btn m-0 fw-bold  btn-link">
                         <i class="bi bi-chevron-left"></i> back
                     </button>
-                </div>
-                <div class="float-end me-2">
+                </span>
+                <span class=" me-2">
                     <span class="text-capitalize"><i class="bi bi-folder"></i> {{  group.name  }}</span>
-                    <small class="created">created {{  group.created  }} </small>
-                </div>
-
+                    <small class="created">{{  group.created  }} </small>
+                </span>
+                <span class="float-end">
+                    <button @click="groupStore.membersAddQuery()" data-bs-toggle="modal" data-bs-target="#mListModal"
+                        class="btn btn-sm customBtn p-1 px-2">
+                        <i class="bi bi-plus-circle"></i> add to group
+                    </button>
+                </span>
             </h5>
 
             <div class="card-body">

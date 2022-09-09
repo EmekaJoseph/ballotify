@@ -32,7 +32,7 @@
                                         class="form-control">
                                 </div>
                                 <div class="col-12 col-xl-4">
-                                    <button type="submit" :disabled="!(positionInput.length > 0)"
+                                    <button type="submit" :disabled="!(positionInput.length > 1)"
                                         @click.prevent="savePosition" class="w-100 btn customBtn">Add <i
                                             class="bi text-white bi-arrow-down-circle fs-6"></i></button>
                                 </div>
@@ -144,9 +144,10 @@ const posClick: any = ref(null)
 
 async function removePosition(id: any) {
     let postInUse = candidates.value.some(x => x.position_id == id)
+    let thisPostName = (positions.value.find(x => x.id == id)).name
     if (postInUse) {
         Swal.fire({
-            text: 'Remove candidate(s) on POST first',
+            text: `Remove candidate(s) for ${thisPostName} first!`,
             // text: `Already added`,
             icon: 'warning',
             showConfirmButton: false,

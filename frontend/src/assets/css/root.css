@@ -1,5 +1,5 @@
 html * {
-    font-family: 'Encode Sans Semi Condensed', sans-serif;
+    font-family: 'Rubik', 'Encode Sans Semi Condensed', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     color: #2c3e50;
@@ -304,6 +304,7 @@ input[type=number] {
     border-color: #03787c;
 }
 
+
 /* end of form -check */
 
 
@@ -347,6 +348,6 @@ input[type=number] {
     background-color: #eeeeee2f;
     padding: 30px 10px;
     border: 1px solid #eee;
-    height: 350px;
+    height: 400px;
     overflow-y: auto;
 }

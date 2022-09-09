@@ -1,16 +1,12 @@
 <template>
     <div class="col-lg-12 col-xl-8">
         <div class="card mainCard p-lg-3">
-            <div class="card-header">List
-                <span class="badge rounded-pill bg-light text-dark">
-                    {{ data.list.length }}
-                </span>
-                <span class="float-end">
-                    <button @click="groupStore.membersAddQuery()" data-bs-toggle="modal" data-bs-target="#mListModal"
-                        class="btn btn-sm customBtn p-1 px-2 m-0">
-                        <i class="bi bi-plus-circle"></i> add members
-                    </button>
-                </span>
+            <div class="card-heade m-2">
+                <!-- List -->
+                <!-- <span class="badge rounded-pill bg-light text-dark">
+                    {{  data.list.length  }}
+                </span> -->
+
                 <transition name="xSlide">
                     <span v-if="aMember.isChecked" class="float-end">
                         <button @click="remove()" class="btn btn-danger me-2 float-end btn-sm p-1 px-2  m-0">
@@ -22,13 +18,14 @@
                     </span>
                 </transition>
             </div>
-            <div v-if="data.list.length" class="card-body row ">
-                <div class="table-responsive list-span">
+            <div v-if="data.list.length" class="list-span ">
+                <div class="table-responsive">
                     <table class="table table-sm text-nowrap table-hover">
                         <thead>
                             <tr>
 
                                 <th class="smallCol"></th>
+                                <th></th>
                                 <th></th>
                                 <th class="smallCol">
                                     <input v-if="data.list.length > 1" @change="toggleAll" v-model="allCheck"
@@ -38,9 +35,9 @@
                         </thead>
                         <tbody>
                             <tr v-for="(val, index) in data.list" :key="val.id">
-                                <!-- <th>{{ index + 1 }}</th> -->
+                                <th>{{  index + 1  }}</th>
                                 <th></th>
-                                <td class="text-capitalize">{{ val.firstname + ' ' + val.lastname }} ({{ val.gender }})
+                                <td class="text-capitalize">{{  val.lastname + ' ' + val.firstname  }} ({{  val.gender  }})
                                 </td>
                                 <!-- <td>
                                     <button @click="remove(val.id)" class="m-0 p-0 btn btn-sm text-danger actnbtn">

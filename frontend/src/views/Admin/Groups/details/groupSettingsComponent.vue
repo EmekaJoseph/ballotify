@@ -1,7 +1,7 @@
 <template>
     <div class="col-lg-12 col-xl-4">
         <div class="card" style="border: 2px solid #eee;">
-            <div class="card-header">Settings</div>
+            <!-- <div class="card-header">Settings</div> -->
             <div class="card-body">
                 <div class="row g-5">
                     <div class="col-md-12">
@@ -11,7 +11,7 @@
                                     <label>Rename</label>
                                     <input @input="watchInput" v-model="name" type="text"
                                         class="form-control form-control-lg">
-                                    <small v-if="nameErr" class="text-danger">{{ nameErr }}</small>
+                                    <small v-if="nameErr" class="text-danger">{{  nameErr  }}</small>
                                 </div>
                                 <div class="col-md-12">
                                     <button @click.prevent="sendName" class="btn btn-secondary btn-lg  w-100"

@@ -67,6 +67,8 @@ const methods = {
         state.loading = true
         try {
             var { data } = await server.checkIfEmailExists(email);
+            console.log(data);
+
             var val = (data == true) ? true : (data == false ? false : null);
             state.loading = false
         } catch (error) {

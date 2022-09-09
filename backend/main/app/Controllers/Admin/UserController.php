@@ -4,9 +4,10 @@ namespace App\Controllers\Admin;
 
 use App\Controllers\BaseController;
 use App\Models\UserModel;
+use CodeIgniter\RESTful\ResourceController;
 use CodeIgniter\API\ResponseTrait;
 
-class UserController extends BaseController
+class UserController extends ResourceController
 {
     use ResponseTrait;
 
@@ -18,7 +19,7 @@ class UserController extends BaseController
         if ($exists != 0) {
             $val = true;
         }
-        return $this->response->setJSON($val);
+        return $this->respond($val);
     }
 
 

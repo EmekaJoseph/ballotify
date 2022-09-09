@@ -1,7 +1,7 @@
 <template>
     <div class="col-md-10">
         <div class="row justify-content-center">
-            <div class="col-11 col-lg-6 order-lg-1 order-2">
+            <div class="col-11 col-lg-7 order-lg-1 order-2">
                 <div class="card p-4 shadow-sm border-0">
                     <span class="text-center fw-bold mb-2">
                         <!-- <img src="@/assets/house34_logo1.png" width="130" /> -->

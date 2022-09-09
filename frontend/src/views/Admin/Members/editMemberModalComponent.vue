@@ -6,7 +6,7 @@
                     <div class="modal-header">
                         <span class="text-white">
                             <i class="bi bi-person-fill"></i>
-                            {{  person.firstname + ' ' + person.lastname  }}
+                            {{  person.lastname + ' ' + person.firstname  }}
                         </span>
                         <span class="float-end">
                             <button @click="emit('close')" class="btn btn-close btn-close-white"></button>
