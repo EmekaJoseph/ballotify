@@ -29,6 +29,10 @@ import InfoCard from './infoCardComponent.vue'
 import Recents from './recentsComponent.vue'
 import Calender from './calenderComponent.vue'
 
+import { dataStore } from '@/store/admin/dataStore';
+
+const mStore = dataStore()
+
 const spell = useFunc.fx.spell
 
 
@@ -61,7 +65,9 @@ onMounted(async () => {
             iRates.Message = data.messages
             birthdays.value = data.birthdays
         }
+        mStore.internetError = false
     } catch (error) {
+        mStore.internetError = true
         console.log(error);
     }
 })

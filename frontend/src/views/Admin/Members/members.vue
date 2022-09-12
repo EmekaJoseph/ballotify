@@ -5,10 +5,15 @@
 </template>
 
 <script setup lang="ts">
+import { onMounted } from 'vue';
 import server from '@/store/apiStore'
 import List from './membersTableComponent.vue'
 import Swal from 'sweetalert2'
 import { dataStore } from '@/store/admin/dataStore';
+
+onMounted(() => {
+    mStore.getMembers()
+})
 
 const mStore = dataStore()
 

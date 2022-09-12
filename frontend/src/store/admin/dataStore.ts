@@ -7,6 +7,8 @@ export const dataStore = defineStore('dataStore', {
         events: <any>[],
         defaultGrp: { id: 0, label: 'None' },
         internetError: <boolean>false,
+        membersLoading: true,
+        groupsLoading: true
     }),
     actions: {
         memberQuery(id: string) {
@@ -32,10 +34,18 @@ export const dataStore = defineStore('dataStore', {
                         x.checked = false
                     })
                     this.members = list
+
+                    this.internetError = false
+                    this.membersLoading = false
                 }
-                this.internetError = false
+                else {
+                    this.internetError = false
+                    this.membersLoading = false
+                }
+
             } catch (error) {
                 console.log(error);
+                this.membersLoading = false
                 this.internetError = true
             }
         },
@@ -55,9 +65,17 @@ export const dataStore = defineStore('dataStore', {
                     //     name: x.group_name,
                     //     label: x.group_name
                     // }))
+                    this.internetError = false
+                    this.groupsLoading = false
                 }
+                else {
+                    this.internetError = false
+                    this.groupsLoading = false
+                }
+
             } catch (error) {
                 this.internetError = true
+                this.groupsLoading = false
                 console.log(error);
             }
         },

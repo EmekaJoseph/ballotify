@@ -1,6 +1,6 @@
 <template>
     <div class="col-lg-12 col-xl-8">
-        <div class="card mainCard p-lg-3">
+        <div class="card mainCard px-3">
             <div class="card-heade m-2">
                 <!-- List -->
                 <!-- <span class="badge rounded-pill bg-light text-dark">

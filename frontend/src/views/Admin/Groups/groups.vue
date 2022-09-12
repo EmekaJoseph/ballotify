@@ -1,10 +1,16 @@
 <template>
     <div>
         <div class="card" style="min-height: 100vh">
-            <div class="card-header">Groups:<span class="badge rounded-pill bg-light text-dark">{{  groups.length 
-                    }}</span>
+            <div class="card-header">Groups:
+                <span class="badge rounded-pill bg-light text-dark">
+                    {{  groups.length  }}
+                </span>
+                <div v-if="mStore.groupsLoading" class="spinner-border spinner-border-sm" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
             </div>
             <div class="card-body p-lg-4">
+
                 <div class="row g-3">
                     <div class="col-4 col-md-4 col-lg-4 col-xl-2" data-bs-toggle="modal"
                         data-bs-target="#newGroupModal">
@@ -69,6 +75,12 @@ import { storeToRefs } from 'pinia'
 import useFunc from '@/store/useFunction'
 import Swal from 'sweetalert2'
 import server from '@/store/apiStore'
+
+
+onMounted(() => {
+    mStore.getGroupNames()
+})
+
 
 const spell = useFunc.fx.spell
 const { cc1, ccBtnH }: any = inject("c$");

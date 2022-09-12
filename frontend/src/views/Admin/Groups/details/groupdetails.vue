@@ -11,7 +11,7 @@
                     <span class="text-capitalize"><i class="bi bi-folder"></i> {{  group.name  }}</span>
                     <small class="created">{{  group.created  }} </small>
                 </span>
-                <span class="float-end">
+                <span v-if="!mStore.groupsLoading && !mStore.internetError" class="float-end">
                     <button @click="groupStore.membersAddQuery()" data-bs-toggle="modal" data-bs-target="#mListModal"
                         class="btn btn-sm customBtn p-1 px-2">
                         <i class="bi bi-plus-circle"></i> add to group
@@ -20,7 +20,11 @@
             </h5>
 
             <div class="card-body">
-                <div class="row gy-3">
+                <div v-if="mStore.groupsLoading || mStore.internetError" class="spinner-border spinner-border-sm"
+                    role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <div v-else class="row gy-3">
                     <tableComp @remove="confirmRemove" />
                     <settingComp :name="group.name" :name_bk="group.name" @delete="deleteGroup" @rename="renameGroup" />
                     <addMembersModal @add="confirmAdd" />
@@ -52,7 +56,6 @@ const { group }: any = storeToRefs(groupStore)
 
 
 const router = useRouter()
-
 onMounted(() => {
     groupStore.$reset
     updateData()
@@ -60,7 +63,7 @@ onMounted(() => {
 
 
 async function updateData() {
-
+    mStore.groupsLoading = true
     await mStore.getMembers()
     await mStore.getGroupNames()
     groupStore.setData(groups.value, members.value)
