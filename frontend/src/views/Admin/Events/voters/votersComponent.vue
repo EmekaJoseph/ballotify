@@ -16,7 +16,7 @@
                             class="bi  bi-folder fs-6"></i></button>
                 </div>
                 <div class="col-12 col-xl-2">
-                    <button @click.prevent="" class="w-100 btn customBtn">Add <i
+                    <button v-if="voter.details != null" @click.prevent="saveVoter" class="w-100 btn customBtn">Add <i
                             class="bi text-white bi-arrow-down-circle fs-6"></i></button>
                 </div>
 
@@ -34,7 +34,6 @@
                                     <tr>
                                         <th>#</th>
                                         <th>Name</th>
-                                        <th>Post</th>
                                         <th></th>
                                     </tr>
                                 </thead>
@@ -45,10 +44,7 @@
                                             {{  m_name(cand.member_id)  }}
                                         </td>
                                         <td>
-                                            {{  p_name(cand.position_id)  }}
-                                        </td>
-                                        <td>
-                                            <button @click="removeCandidate(cand.id)"
+                                            <button @click="removeVoter(cand.id)"
                                                 class="btn btn-sm btn-link text-danger remove-btn">Remove</button>
                                         </td>
                                     </tr>
@@ -63,10 +59,9 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, computed, watchEffect, ref, onMounted } from 'vue';
+import { reactive, computed, ref } from 'vue';
 import server from '@/store/apiStore'
 import { dataStore } from '@/store/admin/dataStore';
-import { useImageUpload } from "@/store/useImageUpload";
 import { eventStore } from '../eventStore';
 import { storeToRefs } from 'pinia'
 import Swal from 'sweetalert2'
@@ -75,7 +70,7 @@ const mStore = dataStore()
 const { members }: any = storeToRefs(mStore)
 
 const evtStore = eventStore()
-const { positions, event, candidates: list }: any = storeToRefs(evtStore)
+const { voters: list, event }: any = storeToRefs(evtStore)
 
 interface Voter {
     details: any,
@@ -106,46 +101,32 @@ const m_name = (id: string) => {
     return thisMember == undefined ? '...' : `${thisMember.firstname} ${thisMember.lastname} (${thisMember.gender})`
 }
 
-const p_name = (id: string) => {
-    let thisPosition = positions.value.find((x: { id: string; }) => x.id == id)
-    return thisPosition == undefined ? '...' : `${thisPosition.name}`
-}
 
 
 
 
 
-// image###########################################
-let { handleFileUpload, imageURL, imageFile, imgSize } = useImageUpload();
-const mainImgBtn = ref<any>(null);
-const ImgForm = ref<any>(null);
-function chooseImage() {
-    mainImgBtn.value.click();
-}
 
-function clearImage() {
-    imageURL.value = "";
-    imageFile.value = "";
-    ImgForm.value.reset();
-}
-// image###########################################
+
 
 
 // submiting ##########################################
-async function saveCandidate() {
+async function saveVoter() {
 
 
     voter.isSaving = true
 
     let formData = new FormData();
+    formData.append("member_id", voter.details.id);
+    formData.append("event_id", event.value.event_id);
 
     try {
-        var { data } = await server.saveCandidate(formData)
+        var { data } = await server.saveVoter(formData)
         if (data == 1) {
             //ImgForm.value.reset();
             voter.details = null;
             voter.isSaving = false
-            evtStore.getCandidates()
+            evtStore.getVoters()
         }
         else {
             Swal.fire({
@@ -171,10 +152,10 @@ async function saveCandidate() {
 
 
 
-async function removeCandidate(id: any) {
+async function removeVoter(id: any) {
     try {
-        await server.removeCandidate(id)
-        evtStore.getCandidates()
+        await server.removeVoter(id)
+        evtStore.getVoters()
     } catch (error) {
         console.log(error);
 

@@ -8,5 +8,5 @@ class CandidatesModel extends Model
 {
     protected $table      = 'tbl_candidates';
     protected $primaryKey = 'id';
-    protected $allowedFields = ['org_id', 'event_id', 'member_id', 'position_id', 'votes', 'photo'];
+    protected $allowedFields = ['event_id', 'member_id', 'position_id', 'votes', 'photo'];
 }

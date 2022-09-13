@@ -5,7 +5,9 @@ namespace App\Controllers\Admin;
 use App\Controllers\BaseController;
 use App\Models\PositionsModel;
 use App\Models\CandidatesModel;
+use App\Models\VotersModel;
 use CodeIgniter\API\ResponseTrait;
+use CodeIgniter\I18n\Time;
 
 class VotingSettingsController extends BaseController
 {
@@ -112,5 +114,76 @@ class VotingSettingsController extends BaseController
         $table = new CandidatesModel();
         $table->delete($id);
         return $this->respond(1);
+    }
+
+
+
+
+
+    public function saveVoter()
+    {
+        $event_id = $this->request->getVar('event_id');
+        $member_id = $this->request->getVar('member_id');
+
+        $table = new VotersModel();
+        $exists = $table->where('event_id', $event_id)
+            ->where('member_id', $member_id)
+            ->countAllResults();
+        if ($exists != 0) {
+            $val = 0;
+        } else {
+            $data = [
+                'event_id' => $event_id,
+                'member_id' => $member_id,
+                'voted_status' => 0,
+                'voted_date' => new Time('now'),
+                'code' => $this->votingCode($event_id),
+            ];
+
+            $table->save($data);
+            $val = 1;
+        }
+        return $this->respond($val);
+    }
+
+    public function getVoters($event_id)
+    {
+        $table = new VotersModel();
+        $voters = $table->where('event_id', $event_id)->findAll();
+        return $this->respond(array('voters' => $voters));
+    }
+
+
+    public function removeVoter($id)
+    {
+        $table = new VotersModel();
+        $table->delete($id);
+        return $this->respond(1);
+    }
+
+
+
+
+
+
+    private function votingCode($event_id)
+    {
+        $code = $this->generateCode($event_id);
+        $table = new VotersModel();
+        $exists = $table->where('event_id', $event_id)
+            ->where('code', $code)
+            ->countAllResults();
+        if ($exists != 0) {
+            $this->votingCode($event_id);
+        }
+        return $code;
+    }
+
+    private function generateCode($event_id)
+    {
+        $str = 'AC56789DEFGHJKLMNPQRTUVWXYZ234';
+        $a = substr(str_shuffle($str), 0, 3);
+        // $b = substr(str_shuffle('23456789'), 0, 2);
+        return $event_id . '-V' . $a;
     }
 }

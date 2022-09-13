@@ -161,4 +161,16 @@ export default {
     removeCandidate(id: any) {
         return bus.get('/removeCandidate/' + id)
     },
+
+    saveVoter(formData: any) {
+        return bus.post('/saveVoter', formData)
+    },
+
+    getVoters(event_id: any) {
+        return bus.get('/getVoters/' + event_id)
+    },
+
+    removeVoter(id: any) {
+        return bus.get('/removeVoter/' + id)
+    },
 }

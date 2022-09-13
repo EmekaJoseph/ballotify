@@ -86,6 +86,10 @@ $routes->post('/saveCandidate', 'Admin\VotingSettingsController::saveCandidate')
 $routes->get('/getCandidates/(:any)', 'Admin\VotingSettingsController::getCandidates/$1');
 $routes->get('/removeCandidate/(:any)', 'Admin\VotingSettingsController::removeCandidate/$1');
 
+$routes->post('/saveVoter', 'Admin\VotingSettingsController::saveVoter');
+$routes->get('/getVoters/(:any)', 'Admin\VotingSettingsController::getVoters/$1');
+$routes->get('/removeVoter/(:any)', 'Admin\VotingSettingsController::removeVoter/$1');
+
 
 
 
