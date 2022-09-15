@@ -39,9 +39,12 @@
 
                 <!-- <div class="col-xl-2 "> </div> -->
                 <div class="col-12 col-xl-5">
-                    <button v-if="(candidate.details !== null) && (candidate.post !== null)"
-                        :disabled="(candidate.isSaving)" @click="saveCandidate" class="w-100 btn customBtn">Add <i
-                            class="bi text-white bi-arrow-down-circle fs-6"></i></button>
+                    <transition name="xSlide">
+                        <button v-if="(candidate.details !== null) && (candidate.post !== null)"
+                            :disabled="(candidate.isSaving)" @click="saveCandidate" class="w-100 btn customBtn">
+                            Add <i class="bi text-white bi-arrow-down-circle fs-6"></i>
+                        </button>
+                    </transition>
 
                 </div>
                 <div class="col-md-12 col-lg-12 mt-4">

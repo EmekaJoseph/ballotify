@@ -6,18 +6,21 @@
             </span>
         </div>
         <div class="card-body">
-            <div class="row justify-content-center gy-3">
+            <div class="row justify-content-cente gy-3">
                 <div class="col-12 col-xl-6">
                     <v-select v-model="voter.details" placeholder="select voter.." :clearable="false" class="vSelect"
                         :options="data.members" />
                 </div>
-                <div class="col-12 col-xl-4">
+                <!-- <div class="col-12 col-xl-4">
                     <button @click.prevent="" class="w-100 btn btn-outline-secondary">Add by groups <i
                             class="bi  bi-folder fs-6"></i></button>
-                </div>
+                </div> -->
                 <div class="col-12 col-xl-2">
-                    <button v-if="voter.details != null" @click.prevent="saveVoter" class="w-100 btn customBtn">Add <i
-                            class="bi text-white bi-arrow-down-circle fs-6"></i></button>
+                    <transition name="xSlide">
+                        <button :disabled="voter.isSaving" v-if="voter.details != null" @click.prevent="saveVoter"
+                            class="w-100 btn customBtn">Add <i class="bi text-white bi-arrow-down-circle fs-6"></i>
+                        </button>
+                    </transition>
                 </div>
 
                 <div class="col-md-12 col-lg-12 mt-4">
@@ -34,7 +37,13 @@
                                     <tr>
                                         <th>#</th>
                                         <th>Name</th>
-                                        <th></th>
+                                        <td>
+                                            <span @click.prevent="removeAll" v-if="list.length > 1">
+                                                <span v-if="!isRemovingAll" class="text-danger remove-btn">Remove
+                                                    All</span>
+                                                <span v-else class="text-muted remove-btn">Removing...</span>
+                                            </span>
+                                        </td>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -67,7 +76,7 @@ import { storeToRefs } from 'pinia'
 import Swal from 'sweetalert2'
 
 const mStore = dataStore()
-const { members }: any = storeToRefs(mStore)
+const { members: membrsList }: any = storeToRefs(mStore)
 
 const evtStore = eventStore()
 const { voters: list, event }: any = storeToRefs(evtStore)
@@ -90,14 +99,25 @@ const voter: Voter = reactive({
 
 const data: any = reactive({
     members: computed(() => {
-        let data = members.value.map((x: any) => ({ id: x.id, label: x.firstname + ' ' + x.lastname + ', (' + x.gender + ')' }))
-        return data
+        let alreadyAddedLst: any[] = []
+        if (list.value.length > 0) {
+            alreadyAddedLst = list.value.map((x: { member_id: any; }) => x.member_id)
+        }
+
+
+        //remove alreadyAddedLst from dropdown
+        let filteredDropdown = membrsList.value.filter((person: { id: any; }) => {
+            return !alreadyAddedLst.includes(person.id);
+        })
+
+        let data1 = filteredDropdown.map((x: any) => ({ id: x.id, label: x.firstname + ' ' + x.lastname + ', (' + x.gender + ')' }))
+        return data1
     }),
 
 })
 
 const m_name = (id: string) => {
-    let thisMember = members.value.find((x: { id: string; }) => x.id == id)
+    let thisMember = membrsList.value.find((x: { id: string; }) => x.id == id)
     return thisMember == undefined ? '...' : `${thisMember.firstname} ${thisMember.lastname} (${thisMember.gender})`
 }
 
@@ -112,10 +132,7 @@ const m_name = (id: string) => {
 
 // submiting ##########################################
 async function saveVoter() {
-
-
     voter.isSaving = true
-
     let formData = new FormData();
     formData.append("member_id", voter.details.id);
     formData.append("event_id", event.value.event_id);
@@ -142,24 +159,42 @@ async function saveVoter() {
         }
 
     } catch (error) {
+        Swal.fire({
+            text: 'Internet Error',
+            icon: 'error',
+            showConfirmButton: false,
+            timer: 1100,
+        })
         voter.isSaving = false
         console.log(error);
 
     }
 }
 // submiting ##########################################
-
-
-
-
 async function removeVoter(id: any) {
     try {
         await server.removeVoter(id)
         evtStore.getVoters()
     } catch (error) {
+        Swal.fire({
+            text: 'Internet Error',
+            icon: 'error',
+            showConfirmButton: false,
+            timer: 1100,
+        })
         console.log(error);
 
     }
+}
+
+
+const isRemovingAll = ref(false)
+function removeAll() {
+    isRemovingAll.value = true
+    list.value.forEach(async (el: { id: any; }) => {
+        await removeVoter(el.id)
+    });
+    isRemovingAll.value = false
 }
 
 </script>
@@ -225,6 +260,7 @@ async function removeVoter(id: any) {
     padding-inline: 5px;
     border-radius: 5px;
 }
+
 
 .remove-btn:hover {
     background-color: rgb(250, 212, 212);

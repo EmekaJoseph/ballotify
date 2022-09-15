@@ -14,12 +14,12 @@
                             <label>Name:</label>
                             <input v-model="event.name" :class="{ 'formError': err.name }" type="text"
                                 class="form-control">
-                            <small class="text-center text-danger">{{ err.name }}</small>
+                            <small class="text-center text-danger">{{  err.name  }}</small>
                         </div>
                         <div class="col-md-12 col-lg-6">
                             <label>Type:</label>
                             <v-select v-model="event.type" :clearable="false" :searchable="false" class="vSelect"
-                                :options="['Candidacy', 'Multi-Choice']" />
+                                :options="['Candidacy']" />
                         </div>
                         <div class="col-md-12 col-lg-12">
                             <label>Description (optional):</label>
@@ -38,7 +38,7 @@
                             <Datepicker :class="{ 'formError': err.expiry }" monthNameFormat="long"
                                 :previewFormat="format" :minDate="new Date()" hideOffsetDates v-model="event.expiry"
                                 :is24="false" :clearable="false" placeholder="birthday" autoApply />
-                            <small class="text-center text-danger">{{ err.expiry }}</small>
+                            <small class="text-center text-danger">{{  err.expiry  }}</small>
                         </div>
 
                         <div class="col-md-12 col-lg-12">
@@ -98,10 +98,10 @@ const format = (date: Date) => {
 
 function checkForm() {
     err.name = err.expiry = '';
-    if (event.name == '') { err.name = 'fill in name'; return }
+    if (event.name == '') { err.name = 'name is required'; return }
 
     let timediff = event.expiry - event.start
-    if (timediff <= 0) { err.expiry = 'invalid event duration!'; return }
+    if (timediff <= 0) { err.expiry = 'choose date later than start date.'; return }
     saveEvent()
 }
 

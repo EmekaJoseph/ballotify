@@ -66,13 +66,13 @@
                         </div>
                     </div>
                 </li>
-                <li class="list-group-item" :class="{ 'gActive': (route.name == 'Messages') }"
+                <!-- <li class="list-group-item" :class="{ 'gActive': (route.name == 'Messages') }"
                     :data-bs-dismiss="showOn">
                     <router-link :to="{ name: 'Messages' }">
                         <i class="bi bi-envelope-paper"></i>&nbsp;
                         Messages
                     </router-link>
-                </li>
+                </li> -->
 
                 <li class="list-group-item" :class="{ 'gActive': (route.name == 'Settings') }"
                     :data-bs-dismiss="showOn">

@@ -181,9 +181,8 @@ class VotingSettingsController extends BaseController
 
     private function generateCode($event_id)
     {
-        $str = 'AC56789DEFGHJKLMNPQRTUVWXYZ234';
-        $a = substr(str_shuffle($str), 0, 3);
-        // $b = substr(str_shuffle('23456789'), 0, 2);
+        $str = 'ABC56789DEFGHJKLMNPQRTUWXYZ234';
+        $a = substr(str_shuffle($str), 0, 4);
         return $event_id . '-V' . $a;
     }
 }
