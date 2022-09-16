@@ -45,10 +45,10 @@ $routes->get('/', 'HomeController::index');
 // admin signUp
 $routes->add('/checkIfEmailExists/(:any)', 'Admin\UserController::ifEmailIsFound/$1');
 $routes->add('/checkIfOrgExists/(:any)', 'Admin\OrgController::ifOrgIsFound/$1');
-$routes->add('/registerNew/(:any)', 'Admin\SignupController::registerNew/$1');
+$routes->add('/registerNew/(:any)', 'Admin\UserController::registerNew/$1');
 
 //admin login
-$routes->add('/login/(:any)', 'Admin\LoginController::login/$1');
+$routes->add('/login/(:any)', 'Admin\UserController::login/$1');
 
 
 // overview-dashboard

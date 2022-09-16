@@ -1,49 +1,37 @@
 <template>
-    <div class="col-xl-8">
-        <div class="fw-bold mb-2">Recently Added:</div>
+    <div class="col-xl-7">
+        <div class="fw-bold mb-2">Recently Activities:</div>
         <div class="card" style="min-height: 300px">
             <div v-if="data.length" class="card-body">
-                <div class="table-responsive">
+                <div class="table-responsive list-span">
                     <table class="table table-sm text-nowrap">
                         <thead>
                             <tr>
-                                <th>S/N</th>
-                                <th>Name</th>
-                                <th>Email</th>
-                                <th>Phone</th>
-                                <th>Satus</th>
+                                <th></th>
+                                <th>&nbsp;</th>
+                                <th></th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="(val, index) in data" :key="val.name">
-                                <th>{{ index + 1 }}</th>
-                                <td>{{ val.name }}</td>
-                                <td>{{ val.email }}</td>
-                                <td>{{ val.phone }}</td>
-                                <td v-if="val.status == 1"><span class="text-success"><i
-                                            class="bi bi-check-circle-fill text-success"></i> verified</span></td>
-                                <td v-else><span class="text-warning"><i
-                                            class="bi text-warning bi-exclamation-circle-fill"></i>
-                                        pending</span></td>
+                            <tr v-for="(val, index) in data" :key="index">
+                                <td><i class="bi bi-check-circle text-secondary"></i></td>
+                                <td class="fst-italic small">{{  val.activity  }}</td>
+                                <td class="fst-italic small text-muted"><small>{{  val.date  }}</small></td>
+
                             </tr>
                         </tbody>
                     </table>
                 </div>
-                <div v-if="data.length > 4" class="my-3 text-center">
+                <!-- <div v-if="data.length > 4" class="my-3 text-center">
                     <router-link class="" :to="{ name: 'Members' }">
                         see all...
                     </router-link>
-                </div>
+                </div> -->
             </div>
             <div v-else class="card-body ">
                 <div class="row justify-content-center my-4">
-                    <span class="text-center"><i class="bi bi-person-x" style="font-size: 8rem"></i></span>
-                    <small class="text-center text-muted">You do not have any members yet.</small> <br>
-                    <small class="text-center">
-                        <router-link class="" :to="{ name: 'Members' }">
-                            add new members..
-                        </router-link>
-                    </small>
+                    <span class="text-center"><i class="bi bi-reception-2" style="font-size: 8rem"></i></span>
+                    <small class="text-center text-muted">No Recent Activities.</small> <br>
                 </div>
 
 

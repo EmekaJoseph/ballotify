@@ -3,8 +3,8 @@
         <newEventModal />
         <div class="sidenav">
             <span class="brand">
-                <!-- <img src="@/assets/house34_logo2.png" width="95" alt /> -->
-                Ballotify
+                <img src="@/assets/images/ballotify-logo.png" width="45" alt="">
+                <!-- Ballotify -->
             </span>
             <menuList />
         </div>

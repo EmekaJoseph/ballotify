@@ -136,7 +136,7 @@ class VotingSettingsController extends BaseController
                 'event_id' => $event_id,
                 'member_id' => $member_id,
                 'voted_status' => 0,
-                'voted_date' => new Time('now'),
+                'voted_date' => '',
                 'code' => $this->votingCode($event_id),
             ];
 

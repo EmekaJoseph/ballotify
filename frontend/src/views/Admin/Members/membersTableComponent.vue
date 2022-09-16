@@ -1,7 +1,7 @@
 <template>
     <div class="col-md-12">
-        <div class="card p-lg-3" style="min-height: 85vh">
-            <div class="card-header">Members <span class="badge rounded-pill bg-light text-dark">
+        <div class="card" style="min-height: 85vh">
+            <div class="card-header">Members: <span class="badge rounded-pill bg-light text-dark">
                     {{  list.length  }} </span>
                 <span v-if="list.length" class="float-end">
                     <button ref="btnOpenModal" type="button" data-bs-toggle="modal" data-bs-target="#newMemberModal"
@@ -33,8 +33,10 @@
 
                 </div>
             </div>
-            <div class="card-body">
-                <div class="row">
+            <div class="card-body p-lg-4">
+                <div class="row g-3">
+                    <span class="alert small m-0 p-1">Add & Modify members in your
+                        orginisation.</span>
                     <div v-if="!list.length" class="col-12 list-span">
                         <div class="row justify-content-center my-4">
                             <span class="text-center"><i class="bi bi-person-x plus"></i></span>
@@ -163,7 +165,7 @@
 </template>
 <!-- :class="edit.modal ? 'animate__animated animate__bounce' : ''" -->
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, watchEffect } from 'vue'
 import useFunc from '@/store/useFunction'
 import { dataStore } from '@/store/admin/dataStore';
 import { storeToRefs } from 'pinia'
@@ -186,9 +188,9 @@ const membersToShow = computed(() => {
     if (list.value.length > 0) {
         const filtered = searchField.value === ""
             ? divideByChunck()
-            // : divideByChunck().filter(wo => Object.values(wo).join("").indexOf(searchField.value) !== -1);
-            : list.value.filter(w => (w.lastname.toLocaleLowerCase()).startsWith(searchField.value.toLocaleLowerCase()) ||
-                (w.firstname.toLocaleLowerCase()).startsWith(searchField.value.toLocaleLowerCase()));
+            : list.value.filter(wo => Object.values(wo).join("").toLocaleLowerCase().indexOf(searchField.value.toLocaleLowerCase()) !== -1);
+        // : list.value.filter(w => (w.lastname.toLocaleLowerCase()).startsWith(searchField.value.toLocaleLowerCase()) ||
+        //     (w.firstname.toLocaleLowerCase()).startsWith(searchField.value.toLocaleLowerCase()));
         return filtered;
 
     }
@@ -298,6 +300,12 @@ function toggleAll() {
         chk.checked = mCheck.value
     });
 }
+
+watchEffect(() => {
+    if (membersToShow.value.some(x => x.checked == false)) {
+        mCheck.value = false
+    }
+})
 
 
 function sendSetToDelete() {

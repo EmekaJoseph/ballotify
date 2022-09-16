@@ -19,8 +19,8 @@
                         :options="data.posts" :disabled="!(data.posts.length)" />
                 </div>
 
-                <div class="col-12 col-xl-7">
-                    <!-- <form ref="ImgForm">
+                <!-- <div class="col-12 col-xl-7"> -->
+                <!-- <form ref="ImgForm">
                         <input class="form-control" accept="image/jpeg, image/png, image/jpg" ref="mainImgBtn"
                             id="fileUp" type="file" @change="handleFileUpload" hidden />
                         <span v-if="!imageURL" @click.prevent="chooseImage" class="imagePicker">
@@ -35,10 +35,10 @@
                                 class="btn btn-link text-danger m-0 p-0 btn-sm" style="font-size: 16px">cancel</button>
                         </span>
                     </form> -->
-                </div>
+                <!-- </div> -->
 
                 <!-- <div class="col-xl-2 "> </div> -->
-                <div class="col-12 col-xl-5">
+                <div class="col-12 col-xl-12">
                     <transition name="xSlide">
                         <button v-if="(candidate.details !== null) && (candidate.post !== null)"
                             :disabled="(candidate.isSaving)" @click="saveCandidate" class="w-100 btn customBtn">
@@ -47,7 +47,7 @@
                     </transition>
 
                 </div>
-                <div class="col-md-12 col-lg-12 mt-4">
+                <div class="col-md-12 col-lg-12">
                     <small v-if="candidate.inputError" class="text-danger">{{
                          candidate.inputError 
                         }}</small>

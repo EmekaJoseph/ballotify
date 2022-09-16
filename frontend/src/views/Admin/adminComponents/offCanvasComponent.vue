@@ -3,10 +3,11 @@
         <div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasAdmin" aria-labelledby="offcanvasAdminLabel">
             <div class="offcanvas-header">
                 <span id="offcanvasAdminLabel text-muted">
-                    <!-- <img src="@/assets/house34_logo2.png" width="90" alt /> -->
-                    <span class="ms-3"> Menu</span>
+                    <img src="@/assets/images/ballotify-logo.png" width="40" alt="">
+                    <!-- <span class="ms-5"> Menu</span> -->
+                    <hr>
                 </span>
-                <button type="button" class="btn btn-link text-white fs-1" data-bs-dismiss="offcanvas">
+                <button type="button" class="btn btn-link text-muted fs-1" data-bs-dismiss="offcanvas">
                     <i class="bi bi-x"></i>
                 </button>
             </div>
@@ -16,7 +17,7 @@
 
             <div class="offcanvas-body"></div>
             <span class="name-section">
-                <div><i class="bi bi-person"></i> {{ _user == '' ? fullName : _user }}</div>
+                <div><i class="bi bi-person"></i> {{  _user == '' ? fullName : _user  }}</div>
             </span>
             <span class="logOutSection">
                 <span class="logOutBtn" @click="logOut">
@@ -43,7 +44,7 @@ const { fullName, _user } = storeToRefs(admin)
 
 function logOut() {
     admin.signOut()
-    router.replace({ name: 'Admin' })
+    router.replace({ name: 'Home' })
 }
 
 

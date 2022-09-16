@@ -5,13 +5,13 @@
                 <li class="list-group-item" :class="{ 'gActive': (route.name == 'Dashboard') }"
                     :data-bs-dismiss="showOn">
                     <router-link :to="{ name: 'Dashboard' }">
-                        <i class="bi bi-layout-wtf"></i>&nbsp;
+                        <i class="bi bi-grid-1x2-fill"></i>&nbsp;
                         Dashboard
                     </router-link>
                 </li>
                 <li class="list-group-item" :class="{ 'gActive': (route.name == 'Members') }" :data-bs-dismiss="showOn">
                     <router-link :to="{ name: 'Members' }">
-                        <i class="bi bi-people"></i>&nbsp;
+                        <i class="bi bi-people-fill"></i>&nbsp;
                         Members &nbsp;
                         <span class="badge rounded-pill bg-secondary text-black">
                             {{  members.length  }}
@@ -22,7 +22,7 @@
                     :class="{ 'gActive': (route.name == 'Groups') || (route.name == 'Grp(details)') }"
                     :data-bs-dismiss="showOn">
                     <router-link :to="{ name: 'Groups' }">
-                        <i class="bi bi-folder"></i>&nbsp;
+                        <i class="bi bi-folder-fill"></i>&nbsp;
                         Groups &nbsp;
                         <span class="badge rounded-pill bg-secondary text-black">
                             {{  groups.length  }}
@@ -35,7 +35,7 @@
                             :class="{ 'gActive': (route.name == 'Event') }">
                             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
                                 data-bs-target="#flush-votings" aria-expanded="false" aria-controls="flush-votings">
-                                <i class="bi bi-list-check"></i>&nbsp; Votings &nbsp;
+                                <i class="bi bi-person-lines-fill"></i>&nbsp; Votings &nbsp;
                                 <span class="badge rounded-pill bg-secondary text-black">
                                     {{  events.length  }}
                                 </span>

@@ -7,8 +7,8 @@
             <InfoCard :name="spell('Group', iRates.Group)" icon="bi-folder-plus" color="#18B4F0" :rate="iRates.Group" />
             <InfoCard :name="'Voting  ' + spell('Event', iRates.Event)" icon="bi-list-check" color="#F01844"
                 :rate="iRates.Event" />
-            <InfoCard :name="spell('Message', iRates.Message)" icon="bi-app-indicator" color="#2c3e50"
-                :rate="iRates.Message" />
+            <InfoCard :name="spell('Update', iRates.Updates)" icon="bi-app-indicator" color="#2c3e50"
+                :rate="iRates.Updates" />
         </div>
 
         <div class="mt-4">
@@ -42,7 +42,7 @@ const iRates = reactive({
     Member: 0,
     Group: 0,
     Event: 0,
-    Message: 0
+    Updates: 0
 })
 
 const birthdaysFormatted: any = () => {
@@ -59,10 +59,12 @@ onMounted(async () => {
     try {
         var { data } = await server.getOverview()
         if (data) {
+            // console.log(data);
+            recentsTable.value = data.activities
             iRates.Member = data.members
             iRates.Group = data.groups
             iRates.Event = data.events
-            iRates.Message = data.messages
+            // iRates.Message = data.messages
             birthdays.value = data.birthdays
         }
         mStore.internetError = false

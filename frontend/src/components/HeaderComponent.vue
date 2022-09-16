@@ -18,11 +18,12 @@ const route = useRoute()
             :class="{ 'shadow-sm': scrolled > 50, 'bg-white': scrolled > 50 }">
             <div class="container d-flex align-items-center justify-content-between">
                 <div class="logo">
-                    <span class="fw-bold">
+                    <img src="@/assets/images/ballotify-logo.png" width="40" alt="">
+                    <!-- <span class="fw-bold">
                         <router-link class="text-decoration-none brand-Name" to="/">
                             Ballotify
                         </router-link>
-                    </span>
+                    </span> -->
                 </div>
                 <div v-for="i in 10" :key="i"></div>
                 <div>

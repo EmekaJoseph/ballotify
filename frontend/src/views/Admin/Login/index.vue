@@ -3,7 +3,7 @@
         <nav class="navbar fixed-top bg-none">
             <div class="container">
                 <div></div>
-                <router-link class="homeBtn" to="/"><i class="bi bi-house-fill"></i></router-link>
+                <router-link class="homeBtn" to="/"><i class="bi bi-house-fill"></i> Home</router-link>
             </div>
         </nav>
         <transition name="xSlide" mode="out-in">
@@ -20,8 +20,8 @@ import SignUpForm from './signupForm/index.vue'
 import Swal from 'sweetalert2'
 const { cc1, cc2, ccThk, ccBg, ccBtnH }: any = inject("c$");
 
-const formShowing = ref('login')
-function switchTo(name) {
+const formShowing = ref('signup')
+function switchTo(name: string) {
     formShowing.value = name
 }
 
@@ -69,7 +69,7 @@ function showSuccessToast() {
 .homeBtn {
     text-decoration: none;
     background-color: v-bind(ccBg);
-    font-size: 18px;
+    font-size: 14px;
     padding: 2px 7px;
     font-weight: bold;
     border-radius: 5px;
@@ -78,6 +78,10 @@ function showSuccessToast() {
 }
 
 .homeBtn i {
+    color: v-bind(cc1);
+}
+
+.homeBtn:hover {
     color: v-bind(cc1);
 }
 </style>

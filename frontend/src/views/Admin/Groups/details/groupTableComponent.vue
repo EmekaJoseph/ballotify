@@ -9,12 +9,17 @@
 
                 <transition name="xSlide">
                     <span v-if="aMember.isChecked" class="float-end">
-                        <button @click="remove()" class="btn btn-danger me-2 float-end btn-sm p-1 px-2  m-0">
+                        <button @click="remove()" class="btn btn-outline-danger me-2 float-end btn-sm p-0 px-3  m-0">
                             <i class="bi bi-folder-minus"></i> Remove
                         </button>
                         <!-- <button class="btn btn-outline-primary me-2 float-end btn-sm p-0 px-3 m-0">
                             <i class="bi bi-folder-symlink"></i> Move
                         </button> -->
+                    </span>
+                    <span v-else>
+                        <button class="btn btn-link text-white p-0 btn-sm m-0">
+                            <!-- <i class="bi bi-folder-minus"></i> -->
+                        </button>
                     </span>
                 </transition>
             </div>
@@ -70,7 +75,7 @@
 </template>
 
 <script  lang="ts" setup>
-import { computed, reactive, ref } from 'vue';
+import { computed, reactive, ref, watchEffect } from 'vue';
 import { groudDetailStore } from './groupDetailStore';
 import { storeToRefs } from 'pinia'
 
@@ -96,6 +101,12 @@ function toggleAll() {
         chk.checked = allCheck.value
     });
 }
+
+watchEffect(() => {
+    if (data.list.some(x => x.checked == false)) {
+        allCheck.value = false
+    }
+})
 
 const aMember = reactive({
     isChecked: computed(() => { return data.list.find((x: { checked: boolean; }) => x.checked == true) })

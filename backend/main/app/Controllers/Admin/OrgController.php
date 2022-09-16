@@ -7,6 +7,7 @@ use App\Models\OrgModel;
 use App\Controllers\Admin\MembersController as memberTable;
 use App\Controllers\Admin\GroupsController as groupTable;
 use App\Controllers\Admin\EventsController as eventsTable;
+use App\Controllers\Admin\ActivitiesController as activitiesTable;
 use CodeIgniter\API\ResponseTrait;
 
 class OrgController extends BaseController
@@ -19,13 +20,15 @@ class OrgController extends BaseController
         $groupsCount = (new groupTable)->countGroupsInOrg($org_id);
         $birthdays = (new memberTable)->getBirthdays($org_id);
         $eventCount = (new eventsTable)->eventsCount($org_id);
+        $activities = (new activitiesTable)->getActivities($org_id);
 
         $data2 = array(
             'members' => $membersCount,
             'groups' => $groupsCount,
             'birthdays' => $birthdays,
             'events' => $eventCount,
-            'messages' => 0,
+            'activities' => $activities,
+            // 'messages' => 0,
         );
         return $this->respond($data2);
     }

@@ -45,7 +45,7 @@ const bgColor = props.color + '09'
 
 .digit {
     font-size: 1.6rem;
-    /* font-weight: bold; */
+    font-weight: bold;
 }
 
 .card {

@@ -10,13 +10,14 @@
                 </div>
             </div>
             <div class="card-body p-lg-4">
-
                 <div class="row g-3">
+                    <span class="alert small m-0 p-1">Create groups, Organise members into
+                        groups</span>
                     <div class="col-4 col-md-4 col-lg-4 col-xl-2" data-bs-toggle="modal"
                         data-bs-target="#newGroupModal">
                         <div class="card groupCard groupCardAdd">
                             <div class="group-content">
-                                <i class="bi bi-plus-square-dotted bi-lg text-white"></i>
+                                <i class="bi bi-folder-plus bi-lg text-white"></i>
                                 <div class="text-center group-name text-white">&nbsp;</div>
                                 <small class="info-text text-white">Add a group.</small>
                             </div>

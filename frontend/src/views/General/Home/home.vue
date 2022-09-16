@@ -5,15 +5,16 @@
         <section id="hero-animated" class="hero-animated d-flex align-items-center">
             <div class="container d-flex flex-column justify-content-center align-items-center text-center position-relative"
                 data-aos="zoom-out">
-                <img src="@/assets/images/hero-img2.svg" class="img-fluid animated">
+                <!-- <img src="@/assets/images/hero-img2.svg" class="img-fluid animated"> -->
+                <img src="@/assets/images/ballotify-logo.png" width="250" class="img-fluid animated">
                 <h2 id="account_" class="fw-bold">Welcome to <span>Ballotify</span></h2>
                 <p>
                     <VueWriter :array="textArr" :typeSpeed="70" />
                 </p>
 
                 <div class="d-flex">
-                    <router-link to="/admin" class="btn btn-primary btn-get-started">Admin</router-link>
-                    <button class="btn btn-primary btn-get-started">Voter</button>
+                    <router-link to="/admin" class="btn btn-primary btn-get-started">Create Account</router-link>
+                    <!-- <button class="btn btn-primary btn-get-started">Vote</button> -->
                 </div>
             </div>
         </section>

@@ -28,7 +28,17 @@
                                     <thead>
                                         <tr>
                                             <th>Name</th>
-                                            <th>Group</th>
+                                            <th>Group
+                                                &nbsp;
+                                                <span @click="sortByGroup()">
+                                                    <span v-if="groupSortedFrom == '0'" class="sort-btn">
+                                                        <i class="bi bi-funnel"></i>
+                                                    </span>
+                                                    <span v-else class="sort-btn">
+                                                        <i class="bi bi-funnel-fill"></i>
+                                                    </span>
+                                                </span>
+                                            </th>
                                             <th class="smallCol"></th>
                                         </tr>
                                     </thead>
@@ -77,8 +87,7 @@ const membersToShow = computed(() => {
     if (list.value.length > 0) {
         const filtered = searchBox.value === ""
             ? list.value
-            : list.value.filter(w => (w.lastname.toLocaleLowerCase()).startsWith(searchBox.value.toLocaleLowerCase()) ||
-                (w.firstname.toLocaleLowerCase()).startsWith(searchBox.value.toLocaleLowerCase()));
+            : list.value.filter(wo => Object.values(wo).join("").toLocaleLowerCase().indexOf(searchBox.value.toLocaleLowerCase()) !== -1);
         return filtered;
 
     }
@@ -107,6 +116,28 @@ function addToGroup(w?: string) {
     emit('add', arr)
     btnX.value.click()
 }
+
+
+
+//    sorting start ###############################
+const groupSortedFrom = ref('1')
+function sortByGroup() {
+    groupSortedFrom.value = groupSortedFrom.value == '1' ? '0' : '1'
+    list.value.sort((a, b) => {
+        const groupA = a.group_id.toLowerCase();
+        const groupB = b.group_id.toLowerCase();
+
+        let comparison = 0;
+        if (groupA > groupB) {
+            comparison = (groupSortedFrom.value == '1') ? 1 : -1;
+        } else if (groupA < groupB) {
+            comparison = (groupSortedFrom.value == '1') ? -1 : 1;
+        }
+        return comparison;
+    })
+}
+//
+
 </script>
 
 <style scoped>
