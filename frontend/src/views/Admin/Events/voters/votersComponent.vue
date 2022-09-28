@@ -2,7 +2,7 @@
     <div class="card px-2">
         <div class="card-head"><i class="bi bi-person-check-fill"></i> Eligible Voters:
             <span class="badge rounded-pill bg-secondary text-white fw-light">
-                {{  list.length  }}
+                {{ list.length }}
             </span>
         </div>
         <div class="card-body">
@@ -25,8 +25,8 @@
 
                 <div class="col-md-12 col-lg-12 mt-4">
                     <small v-if="voter.inputError" class="text-danger">{{
-                         voter.inputError 
-                        }}</small>
+                    voter.inputError
+                    }}</small>
                     <div class="list-span">
                         <div v-if="!(list.length)" class="text-center empty-list-text mt-5 pt-5">
                             List is Empty
@@ -39,8 +39,9 @@
                                         <th>Name</th>
                                         <td>
                                             <span @click.prevent="removeAll" v-if="list.length > 1">
-                                                <span v-if="!isRemovingAll" class="text-danger remove-btn">Remove
-                                                    All</span>
+                                                <span v-if="!isRemovingAll" class="text-danger remove-btn">
+                                                    <i class="bi bi-trash3-fill"></i>
+                                                </span>
                                                 <span v-else class="text-muted remove-btn">Removing...</span>
                                             </span>
                                         </td>
@@ -48,13 +49,15 @@
                                 </thead>
                                 <tbody>
                                     <tr v-for="(cand, index) in list">
-                                        <th>{{  index + 1  }}</th>
+                                        <th>{{ index + 1 }}</th>
                                         <td>
-                                            {{  m_name(cand.member_id)  }}
+                                            {{ m_name(cand.member_id) }}
                                         </td>
                                         <td>
                                             <button @click="removeVoter(cand.id)"
-                                                class="btn btn-sm btn-link text-danger remove-btn">Remove</button>
+                                                class="btn btn-sm btn-link text-danger remove-btn">
+                                                <i class="bi bi-trash3"></i>
+                                            </button>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -188,8 +191,30 @@ async function removeVoter(id: any) {
 }
 
 
-const isRemovingAll = ref(false)
 function removeAll() {
+    Swal.fire({
+        title: 'Remove entire list?',
+        text: "",
+        showCancelButton: true,
+        confirmButtonText: 'Yes, delete it!',
+        cancelButtonText: 'cancel',
+        confirmButtonColor: '#922B21 ',
+        cancelButtonColor: '#922B21',
+        background: `#A93226`,
+        color: '#fff',
+        width: 'auto'
+
+    }).then((result) => {
+        if (result.isConfirmed) {
+            removeAllCont()
+
+        }
+    })
+}
+
+
+const isRemovingAll = ref(false)
+function removeAllCont() {
     isRemovingAll.value = true
     list.value.forEach(async (el: { id: any; }) => {
         await removeVoter(el.id)

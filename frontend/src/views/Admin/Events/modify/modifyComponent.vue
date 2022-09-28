@@ -9,7 +9,7 @@
                         <a ref="posClick" class="nav-link active" data-bs-toggle="pill" href="#tab1">
                             <i class="bi bi-list-check"></i> Posts
                             <span class="badge rounded-pill bg-secondary text-white fw-light">
-                                {{  positions.length  }}
+                                {{ positions.length }}
                             </span>
                         </a>
                     </li>
@@ -56,14 +56,20 @@
                                         </ul> -->
                                         <div v-else class="table-responsive">
                                             <table class="table table-sm text-nowrap text-capitalize">
+                                                <thead>
+                                                    <tr>
+                                                        <th></th>
+                                                        <th></th>
+                                                    </tr>
+                                                </thead>
                                                 <tbody>
                                                     <tr v-for="i in positions" :key="i">
-                                                        <td>{{  i.name  }}</td>
+                                                        <td>{{ i.name }}</td>
                                                         <td>
-                                                            <span @click="removePosition(i.id)" class="remove-btn">
-                                                                <button
-                                                                    class="btn btn-sm btn-link text-danger">Remove</button>
-                                                            </span>
+                                                            <button @click="removePosition(i.id)"
+                                                                class="btn btn-sm btn-link text-danger remove-btn">
+                                                                <i class="bi bi-trash3 text-danger"></i>
+                                                            </button>
                                                         </td>
                                                     </tr>
                                                 </tbody>
@@ -84,7 +90,7 @@
                                 <label>Name:</label>
                                 <input disabled v-model="thisData.name" :class="{ 'formError': inputErr.name }"
                                     type="text" class="form-control">
-                                <small class="text-center text-danger">{{  inputErr.name  }}</small>
+                                <small class="text-center text-danger">{{ inputErr.name }}</small>
                             </div>
                             <div class="col-md-12 col-lg-12">
                                 <label>Description</label>
@@ -103,7 +109,7 @@
                                 <Datepicker :class="{ 'formError': inputErr.expiry }" monthNameFormat="long"
                                     :previewFormat="format" :minDate="new Date()" hideOffsetDates v-model="thisData.end"
                                     :is24="false" :clearable="false" placeholder="birthday" autoApply />
-                                <small class="text-center text-danger">{{  inputErr.expiry  }}</small>
+                                <small class="text-center text-danger">{{ inputErr.expiry }}</small>
                             </div>
 
                             <div class="col-md-12 col-lg-12">
@@ -147,11 +153,12 @@ async function removePosition(id: any) {
     let thisPostName = (positions.value.find(x => x.id == id)).name
     if (postInUse) {
         Swal.fire({
-            text: `Remove candidate(s) for ${thisPostName} first!`,
-            // text: `Already added`,
-            icon: 'warning',
+            text: `Remove slots for '${thisPostName}' first!`,
             showConfirmButton: false,
-            timer: 3000,
+            timer: 2000,
+            background: `#A93226`,
+            color: '#fff',
+            width: 'auto'
         })
         return
     }

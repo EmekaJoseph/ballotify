@@ -38,11 +38,7 @@ class GroupsController extends ResourceController
     {
         $table = new GroupsModel();
         $groups = $table->where('org_id', $org_id)->findAll();
-        // $memberGroups = (new Members())->getGroupsCount($org_id);
-        // $counted = null;
-        // if (sizeof($memberGroups) > 0) {
-        //     $counted = array_count_values($memberGroups);
-        // }
+
         $Groups = array();
 
         foreach ($groups as $object) {
@@ -62,8 +58,6 @@ class GroupsController extends ResourceController
     public function delete($id = null)
     {
         try {
-            // $org_id = $this->request->getVar('org_id');
-            // $id = $this->request->getVar('id');
             $table = new GroupsModel();
             $table->delete($id);
             return $this->respond(1);

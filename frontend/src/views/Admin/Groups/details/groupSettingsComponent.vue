@@ -11,7 +11,7 @@
                                     <label>Rename</label>
                                     <input @input="watchInput" v-model="name" type="text"
                                         class="form-control form-control-lg">
-                                    <small v-if="nameErr" class="text-danger">{{  nameErr  }}</small>
+                                    <small v-if="nameErr" class="text-danger">{{ nameErr }}</small>
                                 </div>
                                 <div class="col-md-12">
                                     <button @click.prevent="sendName" class="btn btn-secondary btn-lg  w-100"
@@ -84,14 +84,16 @@ function sendName() {
 
 function deleteGroup() {
     Swal.fire({
-        title: 'Confirm Delete?',
+        title: 'Delete this group?',
         text: "You won't be able to revert this!",
-        icon: 'warning',
         showCancelButton: true,
         confirmButtonText: 'Yes, delete it!',
         cancelButtonText: 'cancel',
-        confirmButtonColor: '#d33',
-        reverseButtons: true
+        confirmButtonColor: '#922B21',
+        cancelButtonColor: '#922B21',
+        background: `#A93226`,
+        color: '#fff',
+        width: 'auto'
     }).then((result) => {
         if (result.isConfirmed) {
             emit('delete')

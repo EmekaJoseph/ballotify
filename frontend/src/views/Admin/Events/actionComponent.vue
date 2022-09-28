@@ -3,11 +3,11 @@
         <div class="card-body">
             <div class="row justify-content-center g-3">
                 <div class="col-lg-7 text-center text-lg-start">
-                    <span v-if="isActive" class="fst-italic alert alert-success py-1 px-4 border-0">
+                    <span v-if="isActive" class="fst-italic  py-1 px-4 border-0">
                         <i class="bi bi-check-circle-fill"></i>
                         Currently Active!
                     </span>
-                    <span v-else class="fst-italic alert alert-secondary py-1 px-4 border-0">
+                    <span v-else class="fst-italic py-1 px-4 border-0">
                         <i class="bi bi-x-circle-fill"></i>
                         Voting is Inactive!
                     </span>
@@ -31,7 +31,7 @@
                                 type="button" id="button-addon2">
                                 <i class="bi bi-clipboard2"></i> copy
                             </button>
-                            <button v-else class="btn-sm  btn btn-outline-light text-dark">
+                            <button v-else class="btn-sm  btn btn-outline-light text-success">
                                 <i class="bi bi-check"></i> copied!
                             </button>
                         </div>
@@ -78,7 +78,7 @@ function generateLink() {
 
 <style scoped>
 .actionCard {
-    background-color: #ccd1d183;
-    border: 1px solid #ccc;
+    background-color: #f6f7f383;
+    border: 1px solid #07787C;
 }
 </style>

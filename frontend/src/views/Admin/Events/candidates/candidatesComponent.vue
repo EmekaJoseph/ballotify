@@ -2,7 +2,7 @@
     <div class="card px-2">
         <div class="card-head"><i class="bi bi-person-check-fill"></i> Candidates:
             <span class="badge rounded-pill bg-secondary text-white fw-light">
-                {{  list.length  }}
+                {{ list.length }}
             </span>
         </div>
         <div class="card-body">
@@ -49,8 +49,8 @@
                 </div>
                 <div class="col-md-12 col-lg-12">
                     <small v-if="candidate.inputError" class="text-danger">{{
-                         candidate.inputError 
-                        }}</small>
+                    candidate.inputError
+                    }}</small>
                     <div class="list-span">
                         <div v-if="!(list.length)" class="text-center empty-list-text mt-5 pt-5">
                             List is Empty
@@ -67,16 +67,18 @@
                                 </thead>
                                 <tbody>
                                     <tr v-for="(cand, index) in list">
-                                        <th>{{  index + 1  }}</th>
+                                        <th>{{ index + 1 }}</th>
                                         <td>
-                                            {{  m_name(cand.member_id)  }}
+                                            {{ m_name(cand.member_id) }}
                                         </td>
                                         <td>
-                                            {{  p_name(cand.position_id)  }}
+                                            {{ p_name(cand.position_id) }}
                                         </td>
                                         <td>
                                             <button @click="removeCandidate(cand.id)"
-                                                class="btn btn-sm btn-link text-danger remove-btn">Remove</button>
+                                                class="btn btn-sm btn-link text-danger remove-btn">
+                                                <i class="bi bi-trash3"></i>
+                                            </button>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -222,11 +224,12 @@ async function saveCandidate() {
         }
         else {
             Swal.fire({
-                text: 'Duplicate data',
-                // text: `Already added`,
-                icon: 'warning',
+                text: 'Duplicate entry!',
                 showConfirmButton: false,
-                timer: 1100,
+                timer: 1000,
+                background: `#A93226`,
+                color: '#fff',
+                width: 'auto'
             })
             candidate.details = null;
             candidate.post = null;

@@ -3,7 +3,7 @@
         <div class="card" style="min-height: 100vh">
             <div class="card-header">Groups:
                 <span class="badge rounded-pill bg-light text-dark">
-                    {{  groups.length  }}
+                    {{ groups.length }}
                 </span>
                 <div v-if="mStore.groupsLoading" class="spinner-border spinner-border-sm" role="status">
                     <span class="visually-hidden">Loading...</span>
@@ -17,9 +17,9 @@
                         data-bs-target="#newGroupModal">
                         <div class="card groupCard groupCardAdd">
                             <div class="group-content">
-                                <i class="bi bi-folder-plus bi-lg text-white"></i>
+                                <i class="bi bi-folder-plus bi-lg"></i>
                                 <div class="text-center group-name text-white">&nbsp;</div>
-                                <small class="info-text text-white">Add a group.</small>
+                                <small class="info-text">Create group.</small>
                             </div>
                         </div>
                     </div>
@@ -29,9 +29,9 @@
                         <div class="d-none d-md-block card groupCard">
                             <i v-if="numInGrp(g.id) > 0" class="bi bi-folder-fill bi-lg"></i>
                             <i v-else class="bi bi-folder2-open bi-lg"></i>
-                            <div class="group-name text-center">{{  g.name  }}</div>
+                            <div class="group-name text-center">{{ g.name }}</div>
                             <small class="info-text text-muted">
-                                {{  numInGrp(g.id)  }} {{  spell('member', numInGrp(g.id))  }}
+                                {{ numInGrp(g.id) }} {{ spell('member', numInGrp(g.id)) }}
                             </small>
                             <div class="optionsBg">
                                 <div class="row justify-content-center mt-5">
@@ -42,7 +42,7 @@
                                     </div>
                                     <div v-if="numInGrp(g.id) == 0" class="col-md-6 text-center">
                                         <button @click="deleteGroup(g.id)" class="btn btn-sm btn-danger optionsBtn">
-                                            <i class="bi bi-trash3 text-white"></i>
+                                            <i class="bi bi-x-lg text-white"></i>
                                         </button>
                                     </div>
                                 </div>
@@ -53,9 +53,9 @@
                         <div class="d-md-none card groupCard" @click="showThisGroup(g.id)">
                             <i v-if="numInGrp(g.id) > 0" class="bi bi-folder-fill bi-lg"></i>
                             <i v-else class="bi bi-folder2-open bi-lg"></i>
-                            <div class="group-name text-center">{{  g.name  }}</div>
+                            <div class="group-name text-center">{{ g.name }}</div>
                             <small class="info-text text-muted">
-                                {{  numInGrp(g.id)  }} {{  spell('member', numInGrp(g.id))  }}
+                                {{ numInGrp(g.id) }} {{ spell('member', numInGrp(g.id)) }}
                             </small>
                         </div>
                     </div>
@@ -121,14 +121,17 @@ function deleteGroup(id: any) {
     else {
 
         Swal.fire({
-            title: 'Confirm Delete?',
+            title: 'Delete this group?',
             text: "You won't be able to revert this!",
-            icon: 'warning',
             showCancelButton: true,
             confirmButtonText: 'Yes, delete it!',
             cancelButtonText: 'cancel',
-            confirmButtonColor: '#d33',
-            reverseButtons: true
+            confirmButtonColor: '#922B21 ',
+            cancelButtonColor: '#922B21',
+            background: `#A93226`,
+            color: '#fff',
+            width: 'auto'
+
         }).then((result) => {
             if (result.isConfirmed) {
                 continueDelete(id)
@@ -148,7 +151,7 @@ async function continueDelete(id: any) {
             Swal.fire({
                 toast: true,
                 icon: 'success',
-                text: `'${group.name}' deleted`,
+                title: `'${group.name}' deleted`,
                 position: 'top-end',
                 showConfirmButton: false,
                 timer: 3000,
@@ -220,19 +223,27 @@ async function continueDelete(id: any) {
 
 .optionsBtn {
     font-size: 11px;
+    width: 70%;
+    padding: 0px 1px;
+}
+
+.optionsBtn:hover {
     width: 100%;
-    padding: 0px 2px;
 }
 
 
 
 .groupCardAdd {
-    border: none;
-    background-color: v-bind(cc1);
+    border: #ccc 1px dashed;
+    background-color: #f5f5f5;
+    color: v-bind(cc1)
 }
 
 .groupCardAdd:hover {
-    background-color: v-bind(ccBtnH);
+    background-color: #fff !important;
+    color: v-bind(cc1) !important;
+    font-weight: bold;
+
 }
 
 @media (max-width: 550px) {

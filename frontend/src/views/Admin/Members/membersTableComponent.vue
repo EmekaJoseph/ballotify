@@ -2,7 +2,7 @@
     <div class="col-md-12">
         <div class="card" style="min-height: 85vh">
             <div class="card-header">Members: <span class="badge rounded-pill bg-light text-dark">
-                    {{  list.length  }} </span>
+                    {{ list.length }} </span>
                 <span v-if="list.length" class="float-end">
                     <button ref="btnOpenModal" type="button" data-bs-toggle="modal" data-bs-target="#newMemberModal"
                         class="btn float-end btn-sm customBtn p-1 px-4 m-0">
@@ -14,7 +14,7 @@
                         <button @click="sendSetToDelete" class="btn btn-danger me-2 float-end btn-sm p-1 px-2 m-0">
                             <i class="bi bi-trash3"></i> Delete
                             <span class="badge rounded-pill bg-white text-dark small">
-                                {{  aMember.isChecked.length  }}
+                                {{ aMember.isChecked.length }}
                             </span>
                         </button>
                     </span>
@@ -86,26 +86,26 @@
                                 </thead>
                                 <tbody>
                                     <tr v-for="(i, index) in membersToShow">
-                                        <th>{{  (currChunck > 0) ? (currChunck * 10) + (index + 1) : (index + 1)  }}</th>
-                                        <td class="text-capitalize">{{  i.lastname  }} {{  i.firstname  }}, ({{  i.gender 
-                                            }})
+                                        <th>{{ (currChunck > 0) ? (currChunck * 10) + (index + 1) : (index + 1) }}</th>
+                                        <td class="text-capitalize">{{ i.lastname }} {{ i.firstname }}, ({{ i.gender
+                                        }})
                                         </td>
-                                        <td>{{  i.phone  }}</td>
+                                        <td>{{ i.phone }}</td>
                                         <td>
                                             <span v-if="i.group_id != '0'" data-bs-toggle="tooltip"
                                                 data-bs-placement="top" :title="whatGroupName(i.group_id)">
                                                 <i class="bi bi-folder-check"></i>
-                                                {{  fx.shortenText(whatGroupName(i.group_id), 6)  }}
+                                                {{ fx.shortenText(whatGroupName(i.group_id), 6) }}
                                             </span>
                                             <span v-else style="color: #ccc">
                                                 <i class="bi bi-folder-x"></i>
-                                                {{  whatGroupName(i.group_id)  }}
+                                                {{ whatGroupName(i.group_id) }}
                                             </span>
 
 
                                             <!-- <i v-if="i.group_id != '0'" class="bi bi-folder"></i> -->
                                         </td>
-                                        <td>{{  fx.displayBD(i.birthday)  }}</td>
+                                        <td>{{ fx.displayBD(i.birthday) }}</td>
                                         <td v-if="i.verified == 1"><span class="badge bg-successs"><i
                                                     class="bi bi-check-circle"></i> verified</span>
                                         </td>
@@ -128,7 +128,7 @@
 
                     </div>
                     <div v-if="list.length" class="col-12 mt-4">
-                        <div class="small">Showing page <b>{{  currChunck + 1  }}/{{  paginateSize  }}</b></div>
+                        <div class="small">Showing page <b>{{ currChunck + 1 }}/{{ paginateSize }}</b></div>
                         <div class="float-end">
                             <nav aria-label="Page navigation example">
                                 <ul class="pagination">
@@ -140,8 +140,8 @@
                                     </li>
                                     <li v-for="(num, index) in paginateSize" :key="index" class="page-item"
                                         :class="{ 'active': (currChunck == index ? true : false) }">
-                                        <a @click.prevent="currChunck = index" class="page-link" href="">{{  num 
-                                            }}</a>
+                                        <a @click.prevent="currChunck = index" class="page-link" href="">{{ num
+                                        }}</a>
                                     </li>
 
 
@@ -325,13 +325,15 @@ const aMember = reactive({
 
 function conFirmDelete(id: string) {
     Swal.fire({
-        title: 'Confirm delete?',
+        title: 'Delete selection?',
         text: "entire record will be deleted!",
-        icon: 'question',
         showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#767676',
-        confirmButtonText: 'Confirm delete'
+        confirmButtonText: 'Confirm delete',
+        confirmButtonColor: '#922B21 ',
+        cancelButtonColor: '#922B21',
+        background: `#A93226`,
+        color: '#fff',
+        width: 'auto'
     }).then((result) => {
         if (result.isConfirmed) {
             emit('delete', id)
@@ -442,5 +444,9 @@ a.disabled {
 
 .mainSearchBox {
     width: 300px;
+}
+
+.page-link {
+    color: rgb(46, 45, 45);
 }
 </style>

@@ -29,6 +29,12 @@ const routes: Array<RouteRecordRaw> = [
     name: 'Admin',
     component: () => import('../views/Admin/Login/index.vue')
   },
+  {
+    path: '/vote/home',
+    name: 'Vote',
+    component: () => import('../views/General/Vote/home.vue'),
+    props: route => ({ query: route.query }),
+  },
 
   {
     path: '/account',

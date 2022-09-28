@@ -41,7 +41,7 @@ const { ccBg }: any = inject("c$")
 }
 
 .admin-content {
-    margin: 75px 10px;
+    margin: 80px 10px;
 }
 
 

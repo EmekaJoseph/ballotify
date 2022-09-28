@@ -5,7 +5,7 @@
             <div class="modal-content">
                 <div class="modal-header text-capitalize">
                     <span class="text-white">
-                        Add to: &nbsp;<span class="text-warning">{{  groupStore.fGroupName(group.group_id)  }}</span>
+                        Add to: &nbsp;<span class="text-warning">{{ groupStore.fGroupName(group.group_id) }}</span>
                     </span>
                     <span class="float-end">
                         <button ref="btnX" class="btn btn-close btn-close-white" data-bs-dismiss="modal"
@@ -24,7 +24,7 @@
                     <div class="modal-body p-sm-4">
                         <div>
                             <div class="table-responsive list-span">
-                                <table class="table text-nowrap table-borderless table-hover">
+                                <table class="table text-nowrap table-borderless table-hover table-sm">
                                     <thead>
                                         <tr>
                                             <th>Name</th>
@@ -44,8 +44,8 @@
                                     </thead>
                                     <tbody>
                                         <tr v-for="(v, i) in membersToShow">
-                                            <td>{{  v.lastname  }} {{  v.firstname  }} ({{  v.gender  }})</td>
-                                            <td>{{  groupStore.fGroupName(v.group_id)  }}</td>
+                                            <td>{{ v.lastname }} {{ v.firstname }} ({{ v.gender }})</td>
+                                            <td>{{ groupStore.fGroupName(v.group_id) }}</td>
                                             <td><input v-model="v.checked" class="form-check-input" type="checkbox">
                                             </td>
                                         </tr>
@@ -141,4 +141,5 @@ function sortByGroup() {
 </script>
 
 <style scoped>
+
 </style>

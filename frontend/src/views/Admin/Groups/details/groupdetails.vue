@@ -8,13 +8,13 @@
                     </button>
                 </span>
                 <span class=" me-2">
-                    <span class="text-capitalize"><i class="bi bi-folder"></i> {{  group.name  }}</span>
-                    <small class="created">{{  group.created  }} </small>
+                    <span class="text-capitalize"><i class="bi bi-folder"></i> {{ group.name }}</span>
+                    <small class="created">{{ group.created }} </small>
                 </span>
                 <span v-if="!mStore.groupsLoading && !mStore.internetError" class="float-end">
                     <button @click="groupStore.membersAddQuery()" data-bs-toggle="modal" data-bs-target="#mListModal"
-                        class="btn btn-sm customBtn p-1 px-2">
-                        <i class="bi bi-plus-circle"></i> add to group
+                        class="btn btn-sm customBtn p-1 px-4 m-0">
+                        <i class="bi bi-person-plus-fill"></i>
                     </button>
                 </span>
             </h5>
@@ -157,13 +157,16 @@ async function renameGroup(name: string) {
 
 function confirmRemove(arr: any[]) {
     Swal.fire({
-        title: 'Confirm?',
-        text: "Remove selection from group",
-        icon: 'question',
+        title: 'Confirm Remove?',
+        text: "Selection will be removed from this group",
         showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#767676',
-        confirmButtonText: 'Remove'
+        confirmButtonText: 'Remove',
+        confirmButtonColor: '#922B21 ',
+        cancelButtonColor: '#922B21',
+        background: `#A93226`,
+        color: '#fff',
+        width: 'auto'
+
     }).then((result) => {
         if (result.isConfirmed) {
             updateMembersGroup(arr)
