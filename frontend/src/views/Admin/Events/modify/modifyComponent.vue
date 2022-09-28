@@ -45,15 +45,6 @@
                                                 List is Empty
                                             </div>
                                         </div>
-                                        <!-- <ul v-else>
-                                            <li style="list-style-type: circle;" class="mb-2 text-capitalize"
-                                                v-for="i in positions" :key="i">
-                                                {{ i.name }}
-                                                <span @click="removePosition(i.id)" class="remove-btn">
-                                                    <button class="btn btn-close btn-sm float-end"></button>
-                                                </span>
-                                            </li>
-                                        </ul> -->
                                         <div v-else class="table-responsive">
                                             <table class="table table-sm text-nowrap text-capitalize">
                                                 <thead>
@@ -68,7 +59,7 @@
                                                         <td>
                                                             <button @click="removePosition(i.id)"
                                                                 class="btn btn-sm btn-link text-danger remove-btn">
-                                                                <i class="bi bi-trash3 text-danger"></i>
+                                                                <i class="bi bi-trash2 text-danger"></i>
                                                             </button>
                                                         </td>
                                                     </tr>
@@ -335,10 +326,11 @@ async function saveEvent() {
     color: var(--bs-secondary);
 }
 
+/* 
 .details .tab-content i {
     font-size: 22px;
     line-height: 0;
     margin-right: 8px;
     color: v-bind(cc1);
-}
+} */
 </style>

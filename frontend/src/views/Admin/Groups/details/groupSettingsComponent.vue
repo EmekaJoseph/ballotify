@@ -2,7 +2,7 @@
     <div class="col-lg-12 col-xl-4">
         <div class="card" style="border: 2px solid #eee;">
             <!-- <div class="card-header">Settings</div> -->
-            <div class="card-body">
+            <div class="card-body" style="margin-top: 30px">
                 <div class="row g-5">
                     <div class="col-md-12">
                         <form>
@@ -20,7 +20,7 @@
                             </div>
                         </form>
                     </div>
-                    <div class="col-md-12">
+                    <div class="col-md-12" style="margin-top: 130px">
                         <div class="shadow-sm p-1 p-lg-2 settCard">
                             <form>
                                 <div class="row g-3">
@@ -87,13 +87,15 @@ function deleteGroup() {
         title: 'Delete this group?',
         text: "You won't be able to revert this!",
         showCancelButton: true,
-        confirmButtonText: 'Yes, delete it!',
+        confirmButtonText: 'Yes, delete!',
         cancelButtonText: 'cancel',
-        confirmButtonColor: '#922B21',
-        cancelButtonColor: '#922B21',
-        background: `#A93226`,
+        confirmButtonColor: '#A93226',
+        cancelButtonColor: '#641E16',
+        background: `#641E16`,
+        reverseButtons: true,
         color: '#fff',
         width: 'auto'
+
     }).then((result) => {
         if (result.isConfirmed) {
             emit('delete')

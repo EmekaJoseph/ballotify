@@ -320,6 +320,11 @@ input[type=number] {
     color: #111 !important;
 }
 
+.voter-select .vs__selected {
+    background-color: transparent !important;
+    font-size: 11px !important;
+}
+
 .dp__overlay_cell_active {
     background: #03787c !important;
 }

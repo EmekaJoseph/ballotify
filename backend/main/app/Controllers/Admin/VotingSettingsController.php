@@ -123,26 +123,37 @@ class VotingSettingsController extends BaseController
     public function saveVoter()
     {
         $event_id = $this->request->getVar('event_id');
-        $member_id = $this->request->getVar('member_id');
-
+        $ids = $this->request->getVar('member_ids');
+        $ids_array = explode(",", $ids);
         $table = new VotersModel();
-        $exists = $table->where('event_id', $event_id)
-            ->where('member_id', $member_id)
-            ->countAllResults();
-        if ($exists != 0) {
-            $val = 0;
-        } else {
+        // $exists = $table->where('event_id', $event_id)
+        //     ->where('member_id', $member_id)
+        //     ->countAllResults();
+        // if ($exists != 0) {
+        //     $val = 0;
+        // } else {
+
+        // foreach ($ids_array as $id) {
+        //     array_push($data, (object)[
+        //         'id' => $object['id'],
+        //         'activity' =>  $object['activity'],
+        //         'date' =>   $thisTime->humanize(),
+        //     ]);
+        // }
+
+        foreach ($ids_array as $id) {
             $data = [
                 'event_id' => $event_id,
-                'member_id' => $member_id,
+                'member_id' => $id,
                 'voted_status' => 0,
                 'voted_date' => '',
                 'code' => $this->votingCode($event_id),
             ];
-
             $table->save($data);
-            $val = 1;
         }
+
+        $val = 1;
+        // }
         return $this->respond($val);
     }
 

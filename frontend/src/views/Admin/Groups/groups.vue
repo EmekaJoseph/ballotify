@@ -126,9 +126,10 @@ function deleteGroup(id: any) {
             showCancelButton: true,
             confirmButtonText: 'Yes, delete it!',
             cancelButtonText: 'cancel',
-            confirmButtonColor: '#922B21 ',
-            cancelButtonColor: '#922B21',
-            background: `#A93226`,
+            confirmButtonColor: '#A93226',
+            cancelButtonColor: '#641E16',
+            background: `#641E16`,
+            reverseButtons: true,
             color: '#fff',
             width: 'auto'
 
@@ -138,8 +139,6 @@ function deleteGroup(id: any) {
 
             }
         })
-
-
     }
 }
 

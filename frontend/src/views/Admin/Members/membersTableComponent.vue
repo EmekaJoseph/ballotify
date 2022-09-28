@@ -12,7 +12,7 @@
                 <transition name="xSlide">
                     <span v-if="aMember.isChecked.length > 0" class="float-end">
                         <button @click="sendSetToDelete" class="btn btn-danger me-2 float-end btn-sm p-1 px-2 m-0">
-                            <i class="bi bi-trash3"></i> Delete
+                            <i class="bi bi-trash2"></i> Delete
                             <span class="badge rounded-pill bg-white text-dark small">
                                 {{ aMember.isChecked.length }}
                             </span>
@@ -111,9 +111,9 @@
                                         </td>
                                         <td v-else><span class="badge bg-warningg fst-italic"><i
                                                     class="bi bi-exclamation-circle"></i> pending</span></td>
-                                        <td><button @click="openModalEdit(i.id)" class="btn btn-link btn-sm actnbtn"><i
+                                        <td><button @click="openModalEdit(i.id)" class="btn btn-link btn-sm actnbtn">_<i
                                                     class="bi bi-pencil"></i>
-                                                _</button>
+                                            </button>
                                         </td>
                                         <td><input v-model="i.checked" class="form-check-input" type="checkbox">
                                         </td>
@@ -329,9 +329,10 @@ function conFirmDelete(id: string) {
         text: "entire record will be deleted!",
         showCancelButton: true,
         confirmButtonText: 'Confirm delete',
-        confirmButtonColor: '#922B21 ',
-        cancelButtonColor: '#922B21',
-        background: `#A93226`,
+        confirmButtonColor: '#A93226',
+        cancelButtonColor: '#641E16',
+        background: `#641E16`,
+        reverseButtons: true,
         color: '#fff',
         width: 'auto'
     }).then((result) => {

@@ -66,7 +66,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr v-for="(cand, index) in list">
+                                    <tr v-for="(cand, index) in list" :key="index">
                                         <th>{{ index + 1 }}</th>
                                         <td>
                                             {{ m_name(cand.member_id) }}
@@ -77,7 +77,7 @@
                                         <td>
                                             <button @click="removeCandidate(cand.id)"
                                                 class="btn btn-sm btn-link text-danger remove-btn">
-                                                <i class="bi bi-trash3"></i>
+                                                <i class="bi bi-trash2"></i>
                                             </button>
                                         </td>
                                     </tr>

@@ -3,7 +3,7 @@
         <div class="card">
             <h5 class="px-3 pt-3 ">
                 <span class="d-none d-md-inline ">
-                    <button @click="router.go(-1)" class="btn m-0 fw-bold  btn-link">
+                    <button @click="router.go(-1)" class="btn m-0 me-3 fw-bold  btn-link">
                         <i class="bi bi-chevron-left"></i> back
                     </button>
                 </span>

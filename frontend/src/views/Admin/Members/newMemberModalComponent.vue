@@ -17,27 +17,27 @@
                                     <label>first name: <span class="text-danger">*</span></label>
                                     <input :class="{ 'formError': err.firstname }" v-model="person.firstname"
                                         type="text" class="form-control w-100" placeholder="firstname">
-                                    <small class="text-danger">{{  err.firstname  }}</small>
+                                    <small class="text-danger">{{ err.firstname }}</small>
                                 </div>
 
                                 <div class="col-sm-6">
                                     <label>last name: <span class="text-danger">*</span></label>
                                     <input :class="{ 'formError': err.lastname }" v-model="person.lastname" type="text"
                                         class="form-control w-100" placeholder="lastname">
-                                    <small class="text-danger">{{  err.lastname  }}</small>
+                                    <small class="text-danger">{{ err.lastname }}</small>
                                 </div>
                                 <div class="col-sm-6">
                                     <label>email:</label> <span class="text-danger">*</span><small class="text-muted">
                                         valid email</small>
                                     <input :class="{ 'formError': err.email }" v-model="person.email" type="email"
                                         class="form-control w-100">
-                                    <small class="text-danger">{{  err.email  }}</small>
+                                    <small class="text-danger">{{ err.email }}</small>
                                 </div>
                                 <div class="col-sm-6">
                                     <label>phone: <span class="text-danger">*</span></label>
                                     <input :class="{ 'formError': err.phone }" v-model="person.phone" type="number"
                                         @input="replace" class="form-control w-100">
-                                    <small class="text-danger">{{  err.phone  }}</small>
+                                    <small class="text-danger">{{ err.phone }}</small>
                                 </div>
 
                                 <div class="col-sm-6">
@@ -50,7 +50,7 @@
                                     <!-- <Datepicker v-model="person.birthday" autoApply :enableTimePicker="false">
                                     </Datepicker> -->
 
-                                    <small class="text-danger">{{  err.birthday  }}</small>
+                                    <small class="text-danger">{{ err.birthday }}</small>
                                 </div>
                                 <div class="col-sm-6">
                                     <label>gender:</label>
@@ -213,12 +213,13 @@ async function saveNewMember() {
 function askToContinue() {
     Swal.fire({
         title: 'Added Successfully',
-        text: "Do you want to add AGAIN?",
+        //text: "Do you want to add AGAIN?",
         icon: 'success',
         showCancelButton: true,
         confirmButtonColor: '#03787c',
         cancelButtonColor: '#767676',
-        confirmButtonText: 'Continue adding'
+        confirmButtonText: 'Continue adding',
+        width: 'auto'
     }).then((result) => {
         if (result.isConfirmed) {
 

@@ -8,7 +8,8 @@
         <div class="card-body">
             <div class="row justify-content-cente gy-3">
                 <div class="col-12 col-xl-6">
-                    <v-select v-model="voter.details" placeholder="select voter.." :clearable="false" class="vSelect"
+                    <v-select v-model="voter.details" :multiple="true" :closeOnSelect="false"
+                        placeholder="select voter.." :clearable="false" class="vSelect voter-select"
                         :options="data.members" />
                 </div>
                 <!-- <div class="col-12 col-xl-4">
@@ -40,7 +41,7 @@
                                         <td>
                                             <span @click.prevent="removeAll" v-if="list.length > 1">
                                                 <span v-if="!isRemovingAll" class="text-danger remove-btn">
-                                                    <i class="bi bi-trash3-fill"></i>
+                                                    <i class="bi bi-trash2"></i> Remove all
                                                 </span>
                                                 <span v-else class="text-muted remove-btn">Removing...</span>
                                             </span>
@@ -56,7 +57,7 @@
                                         <td>
                                             <button @click="removeVoter(cand.id)"
                                                 class="btn btn-sm btn-link text-danger remove-btn">
-                                                <i class="bi bi-trash3"></i>
+                                                <i class="bi bi-trash2"></i>
                                             </button>
                                         </td>
                                     </tr>
@@ -71,7 +72,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, computed, ref } from 'vue';
+import { reactive, computed, ref, watch } from 'vue';
 import server from '@/store/apiStore'
 import { dataStore } from '@/store/admin/dataStore';
 import { eventStore } from '../eventStore';
@@ -99,18 +100,22 @@ const voter: Voter = reactive({
     isSaving: false
 })
 
-
+const alreadyAddedVoters = ref<any[]>([])
 const data: any = reactive({
     members: computed(() => {
         let alreadyAddedLst: any[] = []
         if (list.value.length > 0) {
             alreadyAddedLst = list.value.map((x: { member_id: any; }) => x.member_id)
         }
+        alreadyAddedLst.forEach(x =>
+            alreadyAddedVoters.value.push(x)
+        )
 
 
-        //remove alreadyAddedLst from dropdown
+
+        //remove alreadyAddedVoters from dropdown
         let filteredDropdown = membrsList.value.filter((person: { id: any; }) => {
-            return !alreadyAddedLst.includes(person.id);
+            return !alreadyAddedVoters.value.includes(person.id);
         })
 
         let data1 = filteredDropdown.map((x: any) => ({ id: x.id, label: x.firstname + ' ' + x.lastname + ', (' + x.gender + ')' }))
@@ -126,6 +131,23 @@ const m_name = (id: string) => {
 
 
 
+watch(() => voter.details, () => {
+    if (voter.details !== null) {
+        alreadyAddedVoters.value = []
+        let alreadyAddedLst = voter.details.map((x: { id: any; }) => x.id)
+        let alreadyAddedLst2 = list.value.map((x: { member_id: any; }) => x.member_id)
+
+        alreadyAddedLst.forEach(x => {
+            alreadyAddedVoters.value.push(x)
+        })
+        alreadyAddedLst2.forEach(x => {
+            alreadyAddedVoters.value.push(x)
+        })
+    }
+
+})
+
+
 
 
 
@@ -135,32 +157,19 @@ const m_name = (id: string) => {
 
 // submiting ##########################################
 async function saveVoter() {
+    let ids = voter.details.map(x => x.id)
     voter.isSaving = true
     let formData = new FormData();
-    formData.append("member_id", voter.details.id);
+    formData.append("member_ids", ids);
     formData.append("event_id", event.value.event_id);
 
     try {
         var { data } = await server.saveVoter(formData)
         if (data == 1) {
-            //ImgForm.value.reset();
             voter.details = null;
             voter.isSaving = false
             evtStore.getVoters()
         }
-        else {
-            Swal.fire({
-                text: 'Duplicate data',
-                // text: `Already added`,
-                icon: 'warning',
-                showConfirmButton: false,
-                timer: 1100,
-            })
-            voter.details = null;
-            voter.isSaving = false
-            return
-        }
-
     } catch (error) {
         Swal.fire({
             text: 'Internet Error',
@@ -177,7 +186,8 @@ async function saveVoter() {
 async function removeVoter(id: any) {
     try {
         await server.removeVoter(id)
-        evtStore.getVoters()
+        await evtStore.getVoters()
+        alreadyAddedVoters.value = []
     } catch (error) {
         Swal.fire({
             text: 'Internet Error',
@@ -198,9 +208,10 @@ function removeAll() {
         showCancelButton: true,
         confirmButtonText: 'Yes, delete it!',
         cancelButtonText: 'cancel',
-        confirmButtonColor: '#922B21 ',
-        cancelButtonColor: '#922B21',
-        background: `#A93226`,
+        confirmButtonColor: '#A93226',
+        cancelButtonColor: '#641E16',
+        background: `#641E16`,
+        reverseButtons: true,
         color: '#fff',
         width: 'auto'
 
