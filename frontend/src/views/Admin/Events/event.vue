@@ -2,9 +2,9 @@
     <div>
         <div class="name-span">
             <!-- <span></span> -->
-            <span v-if="event.name" class="large-name ms-3">{{  event.name  }} <span class="created">created {{
-                     event.created 
-                    }}</span></span>
+            <span v-if="event.name" class="large-name ms-3">{{ event.name }} <span class="created">created {{
+            event.created
+            }}</span></span>
 
             <div class="dropdown">
                 <!-- <span class="dropdown-toggle" type="button" id="dropdownMenu2" data-bs-toggle="dropdown"
@@ -28,7 +28,7 @@
                 <div class="col-lg-7">
                     <candidatesComponent />
                 </div>
-                <div class="col-lg-12">
+                <div v-if="(candidates.length && positions.length)" class="col-lg-12">
                     <votersComponent />
                 </div>
                 <!-- <div class="col-lg-12"> -->

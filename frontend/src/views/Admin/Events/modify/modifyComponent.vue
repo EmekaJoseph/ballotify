@@ -144,12 +144,15 @@ async function removePosition(id: any) {
     let thisPostName = (positions.value.find(x => x.id == id)).name
     if (postInUse) {
         Swal.fire({
-            text: `Remove slots for '${thisPostName}' first!`,
+            toast: true,
+            title: `Remove slots for '${thisPostName}' first!`,
             showConfirmButton: false,
             timer: 2000,
-            background: `#A93226`,
-            color: '#fff',
-            width: 'auto'
+            icon: 'warning',
+            position: 'top-end',
+            timerProgressBar: false,
+            iconColor: '#eee',
+            color: '#641E16'
         })
         return
     }

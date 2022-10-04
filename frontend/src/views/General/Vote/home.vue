@@ -4,97 +4,128 @@
         <!-- ======= Contact Section ======= -->
         <section class="main">
             <transition name="xSlide">
-                <div v-if="pageIsLoading" class="page-loader">
+                <div v-if="event.isLoading" class="page-loader">
                     <div class="loading"></div>
                 </div>
 
                 <div v-else class="container">
-                    <div class="name-span">
-                        <span class="large-name ms-3">Name Of event </span>
-                    </div>
-
-
-
-                    <section class="menu-card">
-                        <div class="container">
-
-                            <div class="row justify-content-center gy-4">
-
-                                <!-- <div class="col-xl-4 col-md-6 d-flex" data-aos="zoom-out">
-                                    <div class="card-item card-item-link position-relative">
-                                        <div class="icon"><i class="bi bi-bar-chart-fill icon"></i></div>
-                                        <span class="hh">Leaderboard</span>
-                                        <p class="text-center">See progress and results
-                                        </p>
-                                    </div>
-                                </div> -->
-                                <!-- End Service Item -->
-                                <div class="col-xl-4 col-md-6 d-flex" data-aos="zoom-out" data-aos-delay="200">
-                                    <div class="card-item card-item-link position-relative">
-                                        <div class="icon"><i class="bi bi-bar-chart-fill icon"></i></div>
-                                        <span class="hh">Leaderboard</span>
-                                        <p class="text-center">See progress and results</p>
+                    <div v-if="event.error">
+                        <section class="menu-card">
+                            <div class="container">
+                                <div class="row justify-content-center gy-4">
+                                    <div class="col-md-6" data-aos="zoom-out" data-aos-delay="200">
+                                        <div class="card-item position-relative" @click="goToHome">
+                                            <div class="icon"><i class="bi bi-file-earmark icon text-muted"></i></div>
+                                            <span class="hh text-muted">Broken Link</span>
+                                            <p class="text-center">This page link is broken, has been removed or does
+                                                not exist</p>
+                                            <p class="text-center">
+                                                Visit home page instead
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
-
-                                <div class="col-xl-4 col-md-6 d-flex" data-aos="zoom-out" data-aos-delay="200">
-                                    <div class="card-item card-item-link position-relative">
-                                        <div class="icon"><i class="bi bi-people-fill icon"></i></div>
-                                        <span class="hh">Lorem Ipsum</span>
-                                        <p class="text-center">See event voters, details and others stats
-                                        </p>
-                                    </div>
-                                </div>
-                                <!-- End Service Item -->
-
-                                <div class="col-xl-4 col-md-6 d-flex" data-aos="zoom-out" data-aos-delay="400">
-                                    <div class="card-item  position-relative">
-                                        <div class="icon"><i class="bi bi-check-lg icon"></i></div>
-                                        <span class="hh">Leaderboard</span>
-                                        <p class="text-center">
-                                        <form @submit.prevent="">
-                                            <div class="row gy-2">
-                                                <div class="col-12">
-                                                    <input type="text" class="form-control" placeholder="voting code..">
-                                                </div>
-                                                <div class="col-12">
-                                                    <button class="btn customBtn w-100">Vote now</button>
-                                                </div>
-                                            </div>
-                                        </form>
-                                        </p>
-                                    </div>
-                                </div><!-- End Service Item -->
-
-
                             </div>
-
+                        </section>
+                    </div>
+                    <div v-else>
+                        <div class="name-span">
+                            <div>
+                                <div class="large-name">{{event.name}} </div>
+                                <div class="small text-center">{{event.desc}}</div>
+                            </div>
                         </div>
-                    </section>
+
+                        <section class="menu-card">
+                            <div class="container">
+
+                                <div class="row justify-content-center gy-4">
+                                    <div class="col-xl-3 col-md-6" data-aos="zoom-out" data-aos-delay="200">
+                                        <div class="card-item position-relative">
+                                            <div class="icon"><i class="bi bi-bar-chart-fill icon"></i></div>
+                                            <span class="hh">Leaderboard</span>
+                                            <p class="text-center">See progress and results</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-xl-3 col-md-6 " data-aos="zoom-out" data-aos-delay="200">
+                                        <div class="card-item position-relative">
+                                            <div class="icon"><i class="bi bi-people-fill icon"></i></div>
+                                            <span class="hh">Statistics</span>
+                                            <p class="text-center">See event voters, details and others stats
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-xl-3 col-md-6" data-aos="zoom-out" data-aos-delay="400">
+                                        <div class="card-item  position-relative" data-bs-toggle="modal"
+                                            data-bs-target="#codeEntryModal">
+                                            <div class="icon"><i class="bi bi-ui-checks-grid icon"></i></div>
+                                            <span class="hh">Vote Now</span>
+                                            <p class="text-center">
+                                                Enter voting code to vote.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                        <div class="text-center small fst-italic text-muted">
+                            Created <b>{{event.start.toDateString()}}, {{event.start.toLocaleTimeString()}}</b>, &nbsp;
+                            Expires <b>{{event.end.toDateString()}} , {{event.end.toLocaleTimeString()}}</b>
+                        </div>
+                    </div>
                 </div>
             </transition>
-
-
         </section>
-        <!-- End Contact Section -->
         <FooterComponent />
+        <codeEntryModal />
     </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { onMounted, ref, inject } from 'vue';
 import { useWindowScroll } from '@vueuse/core';
 import HeaderComponentVotingVue from '@/components/HeaderComponentVoting.vue';
-const { cc1, cc2, ccThk, ccBg, ccBtnH } = inject("c$");
+import codeEntryModal from './components/codeEntryModalComponent.vue';
+import { useRoute, useRouter } from "vue-router";
+import server from '@/store/apiStore'
+import { voteStore } from './voteStore'
+import { storeToRefs } from 'pinia';
+
+const vSt = voteStore()
+const { event } = storeToRefs(vSt)
+
+const { cc1, cc2, ccThk, ccBg, ccBtnH }: any = inject("c$");
 const { x, y } = useWindowScroll()
+const route = useRoute()
+const router = useRouter()
 onMounted(() => {
     window.scrollTo(0, 0);
-    setTimeout(() => {
-        pageIsLoading.value = false
-    }, 500);
+    loadPage()
+
 })
 
-const pageIsLoading = ref(true)
+
+
+async function loadPage() {
+    let Code: any = route.query.e
+    let event_id = ''
+    try {
+        event_id = atob(Code)
+        await vSt.getEventDetails(event_id)
+    } catch (error) {
+        event.value.error = true
+    }
+}
+
+function goToHome() {
+    router.push({
+        name: 'Home'
+    })
+}
+
+
 </script>
 
 <style scoped>
@@ -109,18 +140,14 @@ const pageIsLoading = ref(true)
 
 .large-name {
     font-weight: 900;
-    font-size: 1.7rem;
-    color: v-bind(cc1);
+    font-size: 1.8rem;
+    /* color: v-bind(cc1); */
     text-transform: uppercase;
-    text-align: center;
+    /* text-align: center; */
+    margin-bottom: 0px;
 }
 
-@media (max-width: 991px) {
-    .large-name {
-        font-size: 0.8rem;
 
-    }
-}
 
 
 
@@ -161,18 +188,16 @@ const pageIsLoading = ref(true)
 
 
 .menu-card .card-item {
-    padding: 50px;
     transition: all ease-in-out 0.4s;
     background: #fff;
     height: 100%;
-    width: 100%;
-    border: 1px #eee solid;
+    border: 1px #ccc solid;
     border-radius: 20px;
+    cursor: pointer;
+    padding: 50px;
 }
 
-.menu-card .card-item-link {
-    cursor: pointer;
-}
+
 
 .menu-card .card-item .icon {
     margin-bottom: 10px;
@@ -195,20 +220,32 @@ const pageIsLoading = ref(true)
     color: v-bind(cc1);
 }
 
-.menu-card .card-item h4 a {
-    color: #485664;
-    transition: ease-in-out 0.3s;
-}
-
 .menu-card .card-item p {
-    line-height: 24px;
+    /* line-height: 24px; */
     font-size: 12px;
     margin-bottom: 0;
 
 }
 
-.menu-card .card-item-link:hover {
+.menu-card .card-item:hover {
+    border: 1px solid v-bind(cc1);
     transform: translateY(-10px);
     box-shadow: 0px 0 60px 0 rgba(72, 86, 100, 0.1);
+}
+
+@media (max-width: 991px) {
+    .large-name {
+        font-size: 1.3rem;
+    }
+
+    .menu-card .card-item {
+        padding: 50px 30px;
+        margin-inline: 20px;
+        border: 1px solid v-bind(cc1);
+    }
+
+    .name-span {
+        margin-bottom: 0px;
+    }
 }
 </style>

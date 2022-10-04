@@ -141,5 +141,7 @@ function sortByGroup() {
 </script>
 
 <style scoped>
-
+.list-span {
+    height: 300px;
+}
 </style>

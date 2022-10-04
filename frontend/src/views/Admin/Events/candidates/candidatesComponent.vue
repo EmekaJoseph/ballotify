@@ -224,12 +224,15 @@ async function saveCandidate() {
         }
         else {
             Swal.fire({
-                text: 'Duplicate entry!',
+                title: 'Duplicate entry!',
                 showConfirmButton: false,
-                timer: 1000,
-                background: `#A93226`,
-                color: '#fff',
-                width: 'auto'
+                timer: 2000,
+                toast: true,
+                icon: 'warning',
+                position: 'top-end',
+                timerProgressBar: false,
+                iconColor: '#eee',
+                color: '#641E16'
             })
             candidate.details = null;
             candidate.post = null;

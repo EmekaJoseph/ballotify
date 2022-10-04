@@ -206,7 +206,7 @@ function removeAll() {
         title: 'Remove entire list?',
         text: "",
         showCancelButton: true,
-        confirmButtonText: 'Yes, delete it!',
+        confirmButtonText: 'Yes, Remove!',
         cancelButtonText: 'cancel',
         confirmButtonColor: '#A93226',
         cancelButtonColor: '#641E16',

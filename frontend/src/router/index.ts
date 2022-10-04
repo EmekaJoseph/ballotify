@@ -73,7 +73,7 @@ const router = createRouter({
 router.beforeEach(async (to, from, next) => {
   const admin = adminAccount()
   let isLoggedIn = admin.hasAccess
-  if (to.name == 'Home' || to.name == 'About' || to.name == 'Contact') {
+  if (to.name == 'Home' || to.name == 'About' || to.name == 'Contact' || to.name == 'Vote') {
     next()
   }
   else if (to.name !== 'Admin' && !isLoggedIn) {

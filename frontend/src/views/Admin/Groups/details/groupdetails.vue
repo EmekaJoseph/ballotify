@@ -160,12 +160,13 @@ function confirmRemove(arr: any[]) {
         title: 'Confirm Remove?',
         text: "Selection will be removed from this group",
         showCancelButton: true,
-        confirmButtonText: 'Remove',
-        confirmButtonColor: '#922B21 ',
-        cancelButtonColor: '#922B21',
-        background: `#A93226`,
+        confirmButtonText: 'Yes, Remove',
+        confirmButtonColor: '#A93226',
+        cancelButtonColor: '#641E16',
+        background: `#641E16`,
         color: '#fff',
-        width: 'auto'
+        width: 'auto',
+        reverseButtons: true,
 
     }).then((result) => {
         if (result.isConfirmed) {
@@ -179,12 +180,15 @@ function confirmAdd(arr: any[]) {
     let rec = arr.length == 1 ? 'record' : 'records'
     Swal.fire({
         title: `Add ${arr.length} ${rec}?`,
-        text: "NB: will be removed from previous groups",
-        icon: 'question',
+        text: "..will be removed from previous groups!",
         showCancelButton: true,
         confirmButtonColor: '#03787c',
-        cancelButtonColor: '#767676',
-        confirmButtonText: 'Continue'
+        cancelButtonColor: '#012A2B',
+        confirmButtonText: 'Yes, Continue',
+        background: `#012A2B`,
+        color: '#fff',
+        width: 'auto',
+        reverseButtons: true,
     }).then((result) => {
         if (result.isConfirmed) {
             updateMembersGroup(arr)

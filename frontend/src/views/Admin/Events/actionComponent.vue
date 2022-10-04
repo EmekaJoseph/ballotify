@@ -25,8 +25,8 @@
                 <div class="col-lg-5">
                     <transition name="xSlide">
                         <div v-if="isShowingLink" class="input-group">
-                            <input v-model="source" type="text" class="form-control" placeholder="" aria-label=""
-                                aria-describedby="button-addon2">
+                            <input readonly v-model="source" type="text" class="form-control bg-white" placeholder=""
+                                aria-label="" aria-describedby="button-addon2">
                             <button @click.prevent='copy()' v-if='!copied' class="btn-sm btn btn-outline-secondary"
                                 type="button" id="button-addon2">
                                 <i class="bi bi-clipboard2"></i> copy
@@ -71,7 +71,7 @@ const { text, copy, copied, isSupported } = useClipboard({ source })
 
 function generateLink() {
     isShowingLink.value = true
-    source.value = `${window.location.origin}/vote/home/?e=${btoa(event.value.event_id)}`
+    source.value = `${window.location.origin}/vote/home?e=${btoa(event.value.event_id)}`
 }
 
 </script>

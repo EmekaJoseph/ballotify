@@ -1,6 +1,6 @@
 <template>
     <div class="thForm">
-        <nav class="navbar fixed-top bg-none">
+        <nav class="navbar fixed-top">
             <div class="container">
                 <div></div>
                 <router-link class="homeBtn" to="/"><i class="bi bi-house-fill"></i> Home</router-link>
@@ -83,5 +83,11 @@ function showSuccessToast() {
 
 .homeBtn:hover {
     color: v-bind(cc1);
+}
+
+@media (max-width: 991px) {
+    .navbar {
+        background-color: #F5FCFA
+    }
 }
 </style>
