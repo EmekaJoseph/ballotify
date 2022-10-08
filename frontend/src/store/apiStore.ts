@@ -151,7 +151,7 @@ export default {
     },
 
     saveCandidate(formData: any) {
-        return busImage.post('/saveCandidate', formData)
+        return bus.post('/saveCandidate', formData)
     },
 
     getCandidates(event_id: any) {

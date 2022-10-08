@@ -4,6 +4,8 @@ namespace App\Controllers\Admin;
 
 use App\Controllers\BaseController;
 use App\Models\GroupsModel;
+use App\Controllers\Admin\ActivitiesController as Activity;
+
 use CodeIgniter\I18n\Time;
 
 use CodeIgniter\RESTful\ResourceController;
@@ -29,6 +31,7 @@ class GroupsController extends ResourceController
                 'created' => new Time('now')
             ];
             $table->save($data);
+            (new Activity())->saveNewActivity($org_id, "Created new group, '" . $group_name . "'");
             $val = 1;
         }
         return $this->respond($val);
@@ -39,19 +42,13 @@ class GroupsController extends ResourceController
         $table = new GroupsModel();
         $groups = $table->where('org_id', $org_id)->findAll();
 
-        $Groups = array();
-
-        foreach ($groups as $object) {
+        foreach ($groups as &$object) {
             $thisTime = Time::parse($object['created'], 'America/Chicago');
-            array_push($Groups, (object)[
-                'id' => $object['id'],
-                'group_name' =>  $object['group_name'],
-                'created' =>   $thisTime->humanize(),
-            ]);
+            $object['created'] = $thisTime->humanize();
         }
 
 
-        return $this->respond(array('groups' => $Groups));
+        return $this->respond(array('groups' => $groups));
     }
 
 

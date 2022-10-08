@@ -14,9 +14,9 @@
                         </thead>
                         <tbody>
                             <tr v-for="(val, index) in data" :key="index">
-                                <td><i class="bi bi-check-circle text-secondary"></i></td>
-                                <td class="fst-italic small">{{  val.activity  }}</td>
-                                <td class="fst-italic small text-muted"><small>{{  val.date  }}</small></td>
+                                <td><i class="bi bi-dot text-secondary"></i></td>
+                                <td class="fst-italic small">{{ val.activity }}</td>
+                                <td class="small"><small class="fst-italic activity-date">{{ val.date }}</small></td>
 
                             </tr>
                         </tbody>
@@ -57,5 +57,9 @@ a:hover {
 
 .bi {
     color: #ece8e8
+}
+
+.activity-date {
+    color: var(--bs-teal);
 }
 </style>

@@ -44,3 +44,11 @@ class sController extends BaseController
         return $this->response->setJSON($rr2);
     }
 }
+
+
+$candidatesJoin = $this->db->table('tbl_members t1')
+    ->join('tbl_candidates t2', 't2.member_id = t1.id')
+    ->join('tbl_positions t3', 't3.id = t2.position_id')
+    ->where('t2.event_id', $event_id)
+    ->get()
+    ->getResultArray();

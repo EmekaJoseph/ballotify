@@ -5,20 +5,20 @@
                 <span class="float-end">
                     <div v-if="org.isLoading" class="c-loader loaderBlack"></div>
                 </span>
+                <span class="float-end fw-bold text-custom">{{ org.org_id }}</span>
             </div>
             <div class="card-body">
                 <div class="row gy-3">
                     <div class="col-12">
                         <label>Name:</label>
                         <div>
-                            {{  org.name  }} &nbsp;
-                            <span class="fw-bold text-custom">{{  org.org_id  }}</span>
+                            {{ org.name }} &nbsp;
                         </div>
                     </div>
 
                     <div class="col-12">
                         <label>Address:</label>
-                        <div v-if="!org.keyIn">{{  org.address  }}</div>
+                        <div v-if="!org.keyIn">{{ org.address }}</div>
                         <textarea v-else v-model="org.address" class="form-control" rows="2"></textarea>
                     </div>
                     <div>

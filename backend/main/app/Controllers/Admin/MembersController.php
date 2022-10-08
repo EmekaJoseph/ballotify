@@ -5,6 +5,8 @@ namespace App\Controllers\Admin;
 use App\Controllers\BaseController;
 use App\Models\MembersModel;
 
+use App\Controllers\Admin\ActivitiesController as Activity;
+
 use CodeIgniter\RESTful\ResourceController;
 use CodeIgniter\API\ResponseTrait;
 
@@ -29,8 +31,9 @@ class MembersController extends ResourceController
         if (sizeof($existing) > 0) {
             $val = 0;
         } else {
+            $org_id = $this->request->getVar('org_id');
             $data = [
-                'org_id' => $this->request->getVar('org_id'),
+                'org_id' => $org_id,
                 'firstname' => $this->request->getVar('firstname'),
                 'lastname' => $this->request->getVar('lastname'),
                 'email' => $this->request->getVar('email'),
@@ -41,6 +44,7 @@ class MembersController extends ResourceController
                 'verified' => 1
             ];
             $table->save($data);
+            (new Activity())->saveNewActivity($org_id, "Added new member,");
             $val = 1;
         }
         return $this->respond($val);

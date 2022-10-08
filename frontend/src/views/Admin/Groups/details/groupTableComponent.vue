@@ -1,28 +1,6 @@
 <template>
     <div class="col-lg-12 col-xl-8">
-        <div class="card mainCard px-3">
-            <div class="card-heade m-2">
-                <!-- List -->
-                <!-- <span class="badge rounded-pill bg-light text-dark">
-                    {{  data.list.length  }}
-                </span> -->
-
-                <transition name="xSlide">
-                    <span v-if="aMember.isChecked" class="float-end">
-                        <button @click="remove()" class="btn btn-outline-danger me-2 float-end btn-sm p-0 px-3  m-0">
-                            <i class="bi bi-folder-minus"></i> Remove
-                        </button>
-                        <!-- <button class="btn btn-outline-primary me-2 float-end btn-sm p-0 px-3 m-0">
-                            <i class="bi bi-folder-symlink"></i> Move
-                        </button> -->
-                    </span>
-                    <span v-else>
-                        <button class="btn btn-link text-white p-0 btn-sm m-0">
-                            <!-- <i class="bi bi-folder-minus"></i> -->
-                        </button>
-                    </span>
-                </transition>
-            </div>
+        <div class="card mainCard p-3">
             <div v-if="data.list.length" class="list-span ">
                 <div class="table-responsive">
                     <table class="table table-sm text-nowrap table-hover">
@@ -40,9 +18,9 @@
                         </thead>
                         <tbody>
                             <tr v-for="(val, index) in data.list" :key="val.id">
-                                <th>{{  index + 1  }}</th>
+                                <th>{{ index + 1 }}</th>
                                 <th></th>
-                                <td class="text-capitalize">{{  val.lastname + ' ' + val.firstname  }} ({{  val.gender  }})
+                                <td class="text-capitalize">{{ val.lastname + ' ' + val.firstname }} ({{ val.gender }})
                                 </td>
                                 <!-- <td>
                                     <button @click="remove(val.id)" class="m-0 p-0 btn btn-sm text-danger actnbtn">
@@ -80,9 +58,7 @@ import { groudDetailStore } from './groupDetailStore';
 import { storeToRefs } from 'pinia'
 
 const groupStore = groudDetailStore()
-const { group }: any = storeToRefs(groupStore)
-
-const emit = defineEmits(['remove',])
+const { group, removeList }: any = storeToRefs(groupStore)
 
 const data = reactive({
     list: computed(() => {
@@ -106,26 +82,18 @@ watchEffect(() => {
     if (data.list.some(x => x.checked == false)) {
         allCheck.value = false
     }
-})
 
-const aMember = reactive({
-    isChecked: computed(() => { return data.list.find((x: { checked: boolean; }) => x.checked == true) })
-})
+    if (data.list.some(x => x.checked == true)) {
+        let arr = data.list.filter((x: any) => x.checked == true)
+        arr = arr.map((x) => ({ id: x.id, group_id: '0' }))
+        removeList.value = arr
+        console.log(removeList.value);
 
-
-function remove(id?: string) {
-    let arr: any[] = []
-    if (id) {
-        let _data = data.list.find((x: { id: string; }) => x.id == id)
-        arr.push(_data)
     }
     else {
-        arr = data.list.filter((x: any) => x.checked == true)
+        removeList.value = []
     }
-    arr = arr.map((x) => ({ id: x.id, group_id: '0' }))
-    emit('remove', arr)
-}
-
+})
 </script>
 
 

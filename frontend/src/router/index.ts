@@ -29,11 +29,17 @@ const routes: Array<RouteRecordRaw> = [
     name: 'Admin',
     component: () => import('../views/Admin/Login/index.vue')
   },
+
   {
-    path: '/vote/home',
+    path: '/vote',
     name: 'Vote',
-    component: () => import('../views/General/Vote/home.vue'),
-    props: route => ({ query: route.query }),
+    component: () => import('../views/General/Vote/_layout.vue'),
+    children: [
+      { path: 'home', name: 'Vote_Home', props: route => ({ query: route.query }), component: () => import('../views/General/Vote/home.vue') },
+      { path: 'leaderboard', name: 'Leaderboard', props: route => ({ query: route.query }), component: () => import('../views/General/Vote/board.vue') },
+      { path: 'stats', name: 'Vote_Stats', props: route => ({ query: route.query }), component: () => import('../views/General/Vote/stats.vue') },
+      { path: 'voting', name: 'Voting', props: route => ({ query: route.query }), component: () => import('../views/General/Vote/voting.vue') },
+    ],
   },
 
   {
@@ -73,9 +79,11 @@ const router = createRouter({
 router.beforeEach(async (to, from, next) => {
   const admin = adminAccount()
   let isLoggedIn = admin.hasAccess
-  if (to.name == 'Home' || to.name == 'About' || to.name == 'Contact' || to.name == 'Vote') {
+  if (to.name == 'Home' || to.name == 'About' || to.name == 'Contact' || to.name == 'Vote'
+    || to.name == 'Leaderboard' || to.name == 'Vote_Stats' || to.name == 'Voting') {
     next()
   }
+
   else if (to.name !== 'Admin' && !isLoggedIn) {
     next({ name: 'Admin' })
   }

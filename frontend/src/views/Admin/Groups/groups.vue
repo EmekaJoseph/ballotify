@@ -19,7 +19,7 @@
                             <div class="group-content">
                                 <i class="bi bi-folder-plus bi-lg"></i>
                                 <div class="text-center group-name text-white">&nbsp;</div>
-                                <small class="info-text">Create group.</small>
+                                <small class="info-text">Create a group.</small>
                             </div>
                         </div>
                     </div>

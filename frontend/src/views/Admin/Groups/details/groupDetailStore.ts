@@ -13,6 +13,7 @@ export const groudDetailStore = defineStore('groudDetailStore', {
         },
         route: useRoute(),
         membersAddList: [],
+        removeList: []
 
     }),
     getters: {

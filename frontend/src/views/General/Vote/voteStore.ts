@@ -32,12 +32,13 @@ export const voteStore = defineStore('voteStore', {
                 this.event.type = data.event_type
                 this.event.desc = data.event_description
                 this.event.created = data.created
-                // this.getPositions()
-                // this.getCandidates()
-                // this.getVoters()
+                await this.getPositions(id)
+                await this.getCandidates(id)
+                await this.getVoters(id)
                 this.event.isLoading = false
             } catch (error) {
-                console.log(error);
+                // console.log(error);
+                this.event.isLoading = false
                 this.event.error = true
             }
         },
@@ -46,25 +47,28 @@ export const voteStore = defineStore('voteStore', {
                 var { data } = await server.getPositions(id)
                 this.positions = data.positions
             } catch (error) {
-                console.log(error);
+                // console.log(error);
             }
         },
 
         async getCandidates(id) {
             try {
                 var { data } = await server.getCandidates(id)
+                console.log(data);
                 this.candidates = data.candidates
             } catch (error) {
-                console.log(error);
+                // console.log(error);
             }
         },
 
         async getVoters(id) {
             try {
                 var { data } = await server.getVoters(id)
+                console.log(data);
+
                 this.voters = data.voters
             } catch (error) {
-                console.log(error);
+                // console.log(error);
             }
         },
     }

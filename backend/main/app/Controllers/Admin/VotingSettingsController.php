@@ -14,6 +14,14 @@ class VotingSettingsController extends BaseController
 
     use ResponseTrait;
 
+    private $db;
+
+    public function __construct()
+    {
+        $this->db = db_connect(); // Loading database
+        // OR $this->db = \Config\Database::connect();
+    }
+
     public function saveNewPosition()
     {
         $org_id = $this->request->getVar('org_id');
@@ -117,29 +125,12 @@ class VotingSettingsController extends BaseController
     }
 
 
-
-
-
     public function saveVoter()
     {
         $event_id = $this->request->getVar('event_id');
         $ids = $this->request->getVar('member_ids');
         $ids_array = explode(",", $ids);
         $table = new VotersModel();
-        // $exists = $table->where('event_id', $event_id)
-        //     ->where('member_id', $member_id)
-        //     ->countAllResults();
-        // if ($exists != 0) {
-        //     $val = 0;
-        // } else {
-
-        // foreach ($ids_array as $id) {
-        //     array_push($data, (object)[
-        //         'id' => $object['id'],
-        //         'activity' =>  $object['activity'],
-        //         'date' =>   $thisTime->humanize(),
-        //     ]);
-        // }
 
         foreach ($ids_array as $id) {
             $data = [
@@ -151,17 +142,22 @@ class VotingSettingsController extends BaseController
             ];
             $table->save($data);
         }
-
         $val = 1;
-        // }
         return $this->respond($val);
     }
 
+
     public function getVoters($event_id)
     {
-        $table = new VotersModel();
-        $voters = $table->where('event_id', $event_id)->findAll();
-        return $this->respond(array('voters' => $voters));
+        $members = $this->db->table("tbl_members as mems");
+        $votersJoin = $members->where('event_id', $event_id)
+            ->select('*')->join('tbl_voters as voter', 'mems.id = voter.member_id')
+            ->get()->getResult();
+
+        foreach ($votersJoin as &$object) {
+            $object->code = '';
+        }
+        return $this->respond(array('voters' => $votersJoin));
     }
 
 

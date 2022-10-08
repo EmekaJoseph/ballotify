@@ -9,7 +9,11 @@
                 </span>
                 <span class=" me-2">
                     <span class="text-capitalize"><i class="bi bi-folder"></i> {{ group.name }}</span>
-                    <small class="created">{{ group.created }} </small>
+
+                    <small class="created d-none d-md-inline">created {{ group.created }} </small>
+                    <small class="created2 ">{{ group.members.length }}
+                        {{group.members.length == 1? 'member': 'members'}}
+                    </small>
                 </span>
                 <span v-if="!mStore.groupsLoading && !mStore.internetError" class="float-end">
                     <button @click="groupStore.membersAddQuery()" data-bs-toggle="modal" data-bs-target="#mListModal"
@@ -17,6 +21,17 @@
                         <i class="bi bi-person-plus-fill"></i>
                     </button>
                 </span>
+                <transition name="xSlide">
+                    <span v-if="!mStore.groupsLoading && !mStore.internetError && removeList.length"
+                        class="float-end me-2">
+                        <button @click.prevent="confirmRemove" class="btn btn-sm btn btn-danger  p-1 px-2 m-0">
+                            <i class="bi bi-folder-minus"></i> Remove
+                            <span class="badge rounded-pill bg-white text-dark small">
+                                {{ removeList.length }}
+                            </span>
+                        </button>
+                    </span>
+                </transition>
             </h5>
 
             <div class="card-body">
@@ -25,7 +40,7 @@
                     <span class="visually-hidden">Loading...</span>
                 </div>
                 <div v-else class="row gy-3">
-                    <tableComp @remove="confirmRemove" />
+                    <tableComp />
                     <settingComp :name="group.name" :name_bk="group.name" @delete="deleteGroup" @rename="renameGroup" />
                     <addMembersModal @add="confirmAdd" />
                 </div>
@@ -51,7 +66,7 @@ import { storeToRefs } from 'pinia'
 const mStore = dataStore()
 const { members, groups }: any = storeToRefs(mStore)
 const groupStore = groudDetailStore()
-const { group }: any = storeToRefs(groupStore)
+const { group, removeList }: any = storeToRefs(groupStore)
 
 
 
@@ -155,7 +170,7 @@ async function renameGroup(name: string) {
 
 
 
-function confirmRemove(arr: any[]) {
+function confirmRemove() {
     Swal.fire({
         title: 'Confirm Remove?',
         text: "Selection will be removed from this group",
@@ -170,7 +185,7 @@ function confirmRemove(arr: any[]) {
 
     }).then((result) => {
         if (result.isConfirmed) {
-            updateMembersGroup(arr)
+            updateMembersGroup(removeList.value)
         }
     })
 }
@@ -211,6 +226,12 @@ async function updateMembersGroup(arr: any[]) {
 
 <style scoped>
 .created {
+    font-size: 12px;
+    margin-left: 10px;
+    color: var(--bs-teal);
+}
+
+.created2 {
     font-size: 12px;
     margin-left: 10px;
     color: var(--bs-gray-500);

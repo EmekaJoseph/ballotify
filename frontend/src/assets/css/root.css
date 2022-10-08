@@ -218,17 +218,6 @@ label {
 }
 
 
-@-webkit-keyframes c-loader {
-    from {
-        transform: scale(0);
-        opacity: 1;
-    }
-
-    to {
-        transform: scale(1);
-        opacity: 0;
-    }
-}
 
 @keyframes c-loader {
     from {
@@ -241,6 +230,7 @@ label {
         opacity: 0;
     }
 }
+
 
 /* end of custom loader */
 

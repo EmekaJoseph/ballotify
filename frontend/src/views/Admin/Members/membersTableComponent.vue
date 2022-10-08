@@ -188,7 +188,8 @@ const membersToShow = computed(() => {
     if (list.value.length > 0) {
         const filtered = searchField.value === ""
             ? divideByChunck()
-            : list.value.filter(wo => Object.values(wo).join("").toLocaleLowerCase().indexOf(searchField.value.toLocaleLowerCase()) !== -1);
+            : list.value.filter(wo => Object.values(wo).join("").toLocaleLowerCase().indexOf(searchField.value.toLocaleLowerCase()) !== -1 ||
+                wo.group_id == groupIdOnSearch(searchField.value));
         // : list.value.filter(w => (w.lastname.toLocaleLowerCase()).startsWith(searchField.value.toLocaleLowerCase()) ||
         //     (w.firstname.toLocaleLowerCase()).startsWith(searchField.value.toLocaleLowerCase()));
         return filtered;
@@ -197,9 +198,6 @@ const membersToShow = computed(() => {
     else {
         return list.value
     }
-
-
-
 })
 
 const paginateSize = ref(0)
@@ -278,11 +276,17 @@ function openSearch() {
     setTimeout(() => {
         mainSearch.value.focus()
     }, 500);
-
 }
 function closeSearch() {
     isSearching.value = false
     searchField.value = ''
+
+}
+
+const groupIdOnSearch = (name: string) => {
+    let groupFound = groups.value.find(x => x.group_name.toLocaleLowerCase() == name.toLocaleLowerCase())
+    let groupId = groupFound === undefined ? 'a1' : groupFound.id
+    return groupId
 }
 
 // search end ##########################################

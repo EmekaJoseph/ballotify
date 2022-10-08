@@ -49,13 +49,13 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr v-for="(cand, index) in list">
+                                    <tr v-for="(voter, index) in list">
                                         <th>{{ index + 1 }}</th>
                                         <td>
-                                            {{ m_name(cand.member_id) }}
+                                            {{voter.lastname}} {{voter.firstname}}, ({{voter.gender}})
                                         </td>
                                         <td>
-                                            <button @click="removeVoter(cand.id)"
+                                            <button @click="removeVoter(voter.id)"
                                                 class="btn btn-sm btn-link text-danger remove-btn">
                                                 <i class="bi bi-trash2"></i>
                                             </button>
@@ -124,10 +124,6 @@ const data: any = reactive({
 
 })
 
-const m_name = (id: string) => {
-    let thisMember = membrsList.value.find((x: { id: string; }) => x.id == id)
-    return thisMember == undefined ? '...' : `${thisMember.firstname} ${thisMember.lastname} (${thisMember.gender})`
-}
 
 
 

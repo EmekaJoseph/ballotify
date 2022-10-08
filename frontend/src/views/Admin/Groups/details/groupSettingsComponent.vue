@@ -14,8 +14,8 @@
                                     <small v-if="nameErr" class="text-danger">{{ nameErr }}</small>
                                 </div>
                                 <div class="col-md-12">
-                                    <button @click.prevent="sendName" class="btn btn-secondary btn-lg  w-100"
-                                        :disabled="!isInput">Rename</button>
+                                    <button v-if="isInput" @click.prevent="sendName"
+                                        class="btn btn-secondary btn-lg  w-100">Rename</button>
                                 </div>
                             </div>
                         </form>

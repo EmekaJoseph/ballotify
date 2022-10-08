@@ -91,7 +91,7 @@ const greet = () => {
 <style scoped>
 .greeting {
     display: flex;
-    justify-content: end;
+    justify-content: flex-end;
     padding: 15px;
     color: #d6d3d3;
     font-size: 17px;
