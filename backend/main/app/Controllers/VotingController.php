@@ -1,54 +1,70 @@
 <?php
 
-namespace App\Controllers\Admin;
+namespace App\Controllers;
 
 use App\Controllers\BaseController;
-// use App\Models\PositionsModel;
+use App\Models\PositionsModel;
 use App\Models\CandidatesModel;
 use App\Models\VotersModel;
-use CodeIgniter\API\ResponseTrait;
 use CodeIgniter\I18n\Time;
 
-class VotingController extends BaseController
+use CodeIgniter\RESTful\ResourceController;
+use CodeIgniter\API\ResponseTrait;
+
+class VotingController extends ResourceController
 {
 
     use ResponseTrait;
 
+    private $db;
 
-
-    // public function voting_getPositions($event_id)
-    // {
-    //     $table = new PositionsModel();
-    //     $positions = $table->where('event_id', $event_id)->findAll();
-    //     return $this->response->setJSON(array('positions' => $positions));
-    // }
-
-    public function voting_getCandidates($event_id)
+    public function __construct()
     {
-        $table = new CandidatesModel();
-
-        $Candidates = $table->where('event_id', $event_id)
-            ->select('*')
-            ->join('tbl_positions as posts', 'tbl_candidates.member_id = posts.id')
-            ->get()
-            ->getResultArray();
-        return $this->respond(array('candidates' => $Candidates));
+        $this->db = db_connect();
     }
 
-
-    public function voting_getVoters($event_id)
+    public function votingMasterQuery($event_id)
     {
-        $table = new VotersModel();
 
-        $voters = $table->where('event_id', $event_id)
-            ->select('*')
-            ->join('tbl_members as mems', 'tbl_voters.member_id = mems.id')
+        $candidates = $this->db->table('tbl_members mem')
+            ->join('tbl_candidates cand', 'cand.member_id = mem.id')
+            ->join('tbl_positions post', 'post.position_id = cand.position_id')
+            ->where('cand.event_id', $event_id)
             ->get()
             ->getResultArray();
 
-        foreach ($voters as &$object) {
-            $object->code = '';
+        $positionsExtract = array();
+        if (sizeof($candidates) > 0) {
+            foreach ($candidates as $cand) {
+                array_push($positionsExtract, (object)[
+                    'position_id' =>  $cand['position_id'],
+                    'position_name' =>  $cand['position_name'],
+                ]);
+            }
         }
-        return $this->respond(array('voters' => $voters));
+
+        $positions = array_unique($positionsExtract, SORT_REGULAR);
+
+
+
+        $masterData = [];
+
+        foreach ($positions as $post) {
+            $tempRecord = (object)[];
+            $tempRecord->position_id = $post->position_id;
+            $tempRecord->position_name = $post->position_name;
+            $tempRecord->candidates = array();
+
+            foreach ($candidates as $cand) {
+                if ($cand['position_id'] == $post->position_id) {
+                    array_push($tempRecord->candidates, $cand);
+                }
+            }
+
+            array_push($masterData, $tempRecord);
+        }
+
+
+        return $this->respond(array('vote_data' => $masterData));
     }
 }

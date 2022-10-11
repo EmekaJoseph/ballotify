@@ -69,10 +69,10 @@
                                     <tr v-for="(cand, index) in list" :key="index">
                                         <th>{{ index + 1 }}</th>
                                         <td>
-                                            {{ m_name(cand.member_id) }}
+                                            {{cand.lastname}} {{cand.firstname}}, ({{cand.gender}})
                                         </td>
                                         <td>
-                                            {{ p_name(cand.position_id) }}
+                                            {{ cand.position_name }}
                                         </td>
                                         <td>
                                             <button @click="removeCandidate(cand.id)"
@@ -128,24 +128,13 @@ const data: any = reactive({
         return data
     }),
     posts: computed(() =>
-        (positions.value.map((x: any) => ({ id: x.id, label: x.name })))
+        (positions.value.map((x: any) => ({ id: x.position_id, label: x.position_name })))
     )
 })
 
-const m_name = (id: string) => {
-    let thisMember = members.value.find((x: { id: string; }) => x.id == id)
-    return thisMember == undefined ? '...' : `${thisMember.firstname} ${thisMember.lastname} (${thisMember.gender})`
-}
-
-const p_name = (id: string) => {
-    let thisPosition = positions.value.find((x: { id: string; }) => x.id == id)
-    return thisPosition == undefined ? '...' : `${thisPosition.name}`
-}
-
-
 watchEffect(() => {
     if (candidate.post !== null) {
-        if (positions.value.find((x: { name: any; }) => x.name == candidate.post.label) == undefined)
+        if (positions.value.find((x: { position_name: any; }) => x.position_name == candidate.post.label) == undefined)
             candidate.post = null
     }
 })

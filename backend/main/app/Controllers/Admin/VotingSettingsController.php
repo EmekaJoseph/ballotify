@@ -29,13 +29,13 @@ class VotingSettingsController extends BaseController
         $event_id = $this->request->getVar('event_id');
 
         $table = new PositionsModel();
-        $exists = $table->where('event_id', $event_id)->where('name', $name)->countAllResults();
+        $exists = $table->where('event_id', $event_id)->where('position_name', $name)->countAllResults();
         if ($exists != 0) {
             $val = 0;
         } else {
             $data = [
                 'org_id' => $org_id,
-                'name' => $name,
+                'position_name' => $name,
                 'event_id' => $event_id
             ];
             $table->save($data);
@@ -57,6 +57,8 @@ class VotingSettingsController extends BaseController
         $table->delete($id);
         return $this->respond(1);
     }
+
+
 
 
 
@@ -112,9 +114,13 @@ class VotingSettingsController extends BaseController
 
     public function getCandidates($event_id)
     {
-        $table = new CandidatesModel();
-        $Candidates = $table->where('event_id', $event_id)->findAll();
-        return $this->respond(array('candidates' => $Candidates));
+        $candidatesJoin = $this->db->table('tbl_members mem')
+            ->join('tbl_candidates cand', 'cand.member_id = mem.id')
+            ->join('tbl_positions post', 'post.position_id = cand.position_id')
+            ->where('cand.event_id', $event_id)
+            ->get()
+            ->getResultArray();
+        return $this->respond(array('candidates' => $candidatesJoin));
     }
 
     public function removeCandidate($id)

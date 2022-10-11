@@ -1,5 +1,6 @@
 import { defineStore } from "pinia";
 import server from '@/store/apiStore'
+import { useRoute } from 'vue-router';
 export const voteStore = defineStore('voteStore', {
     state: () => ({
         event: {
@@ -17,13 +18,17 @@ export const voteStore = defineStore('voteStore', {
         positions: <any>[],
         candidates: <any>[],
         voters: <any>[],
+        route: useRoute(),
+        votingMasterData: <any>[]
 
     }),
     actions: {
-        async getEventDetails(id) {
+        async getEventDetails() {
             try {
+                let Code: any = this.route.query.e
+                let event_id = atob(Code)
                 this.event.isLoading = true
-                var { data } = await server.getEventDetails(id)
+                var { data } = await server.getEventDetails(event_id)
                 this.event.id = data.id
                 this.event.event_id = data.event_id
                 this.event.name = data.event_name
@@ -32,9 +37,10 @@ export const voteStore = defineStore('voteStore', {
                 this.event.type = data.event_type
                 this.event.desc = data.event_description
                 this.event.created = data.created
-                await this.getPositions(id)
-                await this.getCandidates(id)
-                await this.getVoters(id)
+                // await this.getPositions()
+                // await this.getCandidates()
+                await this.getVoters()
+                await this.votingMasterQuery()
                 this.event.isLoading = false
             } catch (error) {
                 // console.log(error);
@@ -42,18 +48,20 @@ export const voteStore = defineStore('voteStore', {
                 this.event.error = true
             }
         },
-        async getPositions(id) {
+        async getPositions() {
             try {
-                var { data } = await server.getPositions(id)
+                var { data } = await server.getPositions(this.event.event_id)
+                // console.log(data);
                 this.positions = data.positions
             } catch (error) {
                 // console.log(error);
             }
         },
 
-        async getCandidates(id) {
+        async getCandidates() {
             try {
-                var { data } = await server.getCandidates(id)
+                this.candidates = []
+                var { data } = await server.getCandidates(this.event.event_id)
                 console.log(data);
                 this.candidates = data.candidates
             } catch (error) {
@@ -61,12 +69,23 @@ export const voteStore = defineStore('voteStore', {
             }
         },
 
-        async getVoters(id) {
+        async getVoters() {
             try {
-                var { data } = await server.getVoters(id)
+                this.voters = []
+                var { data } = await server.getVoters(this.event.event_id)
+                this.voters = data.voters
+            } catch (error) {
+                // console.log(error);
+            }
+        },
+
+        async votingMasterQuery() {
+            try {
+                this.voters = []
+                var { data } = await server.votingMasterQuery(this.event.event_id)
                 console.log(data);
 
-                this.voters = data.voters
+                this.votingMasterData = data.vote_data
             } catch (error) {
                 // console.log(error);
             }

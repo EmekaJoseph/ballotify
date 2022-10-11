@@ -4,16 +4,18 @@
         <section class="main">
             <div v-if="!event.error && !event.isLoading" class="name-span">
                 <div>
-                    <div class="large-name">{{event.name}} </div>
+                    <div class="large-name text-custom">{{event.name}} </div>
                     <div class="small text-center">{{event.desc}}</div>
                 </div>
             </div>
 
             <router-view></router-view>
 
-            <div v-if="!event.error && !event.isLoading" class="text-center small fst-italic text-muted">
-                Created <b>{{event.start.toDateString()}}, {{event.start.toLocaleTimeString()}}</b>, &nbsp;
-                Expires <b>{{event.end.toDateString()}} , {{event.end.toLocaleTimeString()}}</b>
+            <div class="container">
+                <div v-if="!event.error && !event.isLoading" class="text-center small fst-italic text-muted">
+                    Created <b>{{event.start.toDateString()}}, {{event.start.toLocaleTimeString()}}</b>, &nbsp;
+                    Expires <b>{{event.end.toDateString()}} , {{event.end.toLocaleTimeString()}}</b>
+                </div>
             </div>
         </section>
         <FooterComponent />
@@ -21,12 +23,14 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, watch } from 'vue';
+import { onMounted, watch, inject } from 'vue';
 import HeaderComponentVotingVue from '@/components/HeaderComponentVoting.vue';
 import { useRoute, useRouter } from "vue-router";
 import { useWindowScroll } from '@vueuse/core';
 import { voteStore } from './voteStore'
 import { storeToRefs } from 'pinia';
+
+const { cc1, cc2, ccThk, ccBg, ccBtnH }: any = inject("c$");
 
 const vSt = voteStore()
 const { event } = storeToRefs(vSt)
@@ -36,9 +40,10 @@ const { x, y } = useWindowScroll()
 const route = useRoute()
 const router = useRouter()
 
-onMounted(() => {
+onMounted(async () => {
     checkForQuery()
-    getEventDetails()
+    window.scrollTo(0, 0);
+    await vSt.getEventDetails()
 
 })
 
@@ -51,19 +56,8 @@ function checkForQuery() {
     }
 }
 
-async function getEventDetails() {
-    window.scrollTo(0, 0);
-    let Code: any = route.query.e
-    let event_id = ''
-    try {
-        event_id = atob(Code)
-        await vSt.getEventDetails(event_id)
-    } catch (error) {
-        event.value.error = true
-    }
-}
 watch(route, () => {
-    getEventDetails()
+    vSt.getEventDetails()
 })
 </script>
 
@@ -83,6 +77,7 @@ watch(route, () => {
     text-transform: uppercase;
     /* text-align: center; */
     margin-bottom: 0px;
+    /* color: v-bind(ccThk) */
 }
 
 

@@ -9,17 +9,25 @@
             </div>
             <div v-else class="row justify-content-center my-3">
                 <div class="col-md-8 mt-4">
-                    <div class="card">
-                        <h5 class="card-title h6 text-muted">Eligible Voters
-                            <span class="badge rounded-pill bg-white text-dark small">{{voters.length}}</span>
+                    <div class="card shadow-lg">
+                        <h5 class="card-title h6">Eligible Voters
+                            <span class="badge rounded-pill bg-secondary text-white small">{{voters.length}}</span>
+                            <span @click="vSt.getVoters()" class="float-end text-custom"><i
+                                    class=" bi bi-arrow-clockwise"></i></span>
                         </h5>
+
                         <div class="card-body list-span">
-                            <h6 class="card-subtitle mb-4 text-muted ">
+                            <h6 class="card-subtitle mb-4 text-muted small ">
                                 members who are eligble to vote in this election
                             </h6>
                             <p class="card-text">
-                            <div class="table-responsive">
-                                <table class="table table-sm">
+                            <div v-if="voters.length == 0">
+                                <div class=" my-5">
+                                    <div class="text-center text-muted">This list is empty, no data to show.</div> <br>
+                                </div>
+                            </div>
+                            <div v-else class="table-responsive">
+                                <table class="table table-sm table-borderless">
                                     <tbody>
                                         <tr v-for="(voter, index) in voters" key="index">
                                             <th>{{(index+1)}}</th>
@@ -41,7 +49,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, inject } from 'vue';
+import { inject } from 'vue';
 import brokenLinkVue from './components/brokenLink.vue';
 import { voteStore } from './voteStore'
 import { storeToRefs } from 'pinia';
@@ -88,14 +96,24 @@ const { cc1, cc2, ccThk, ccBg, ccBtnH }: any = inject("c$");
 }
 
 .card {
-    border: 1px solid #eee;
-
+    border: 1px solid #f7f3f3;
+    padding: 1.4rem;
 }
 
 .card-title {
     color: v-bind(ccThk);
-    background-color: v-bind(ccBg);
-    padding: 0.7rem;
+    padding-bottom: 0.9rem;
     margin: 0px;
+    font-weight: bolder;
+}
+
+.bi-arrow-clockwise {
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 5px;
+}
+
+.bi-arrow-clockwise:hover {
+    background-color: v-bind(ccBg);
 }
 </style>

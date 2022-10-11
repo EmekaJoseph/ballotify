@@ -7,6 +7,6 @@ use CodeIgniter\Model;
 class PositionsModel extends Model
 {
     protected $table      = 'tbl_positions';
-    protected $primaryKey = 'id';
-    protected $allowedFields = ['org_id', 'event_id', 'name'];
+    protected $primaryKey = 'position_id';
+    protected $allowedFields = ['org_id', 'event_id', 'position_name'];
 }

@@ -173,4 +173,9 @@ export default {
     removeVoter(id: any) {
         return bus.get('/removeVoter/' + id)
     },
+
+
+    votingMasterQuery(event_id: any) {
+        return bus.get('/votingMasterQuery/' + event_id)
+    },
 }

@@ -55,9 +55,9 @@
                                                 </thead>
                                                 <tbody>
                                                     <tr v-for="i in positions" :key="i">
-                                                        <td>{{ i.name }}</td>
+                                                        <td>{{ i.position_name }}</td>
                                                         <td>
-                                                            <button @click="removePosition(i.id)"
+                                                            <button @click="removePosition(i.position_id)"
                                                                 class="btn btn-sm btn-link text-danger remove-btn">
                                                                 <i class="bi bi-trash2 text-danger"></i>
                                                             </button>
@@ -141,7 +141,7 @@ const posClick: any = ref(null)
 
 async function removePosition(id: any) {
     let postInUse = candidates.value.some(x => x.position_id == id)
-    let thisPostName = (positions.value.find(x => x.id == id)).name
+    let thisPostName = (positions.value.find(x => x.position_id == id)).position_name
     if (postInUse) {
         Swal.fire({
             toast: true,

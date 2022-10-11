@@ -93,6 +93,12 @@ $routes->get('/removeVoter/(:any)', 'Admin\VotingSettingsController::removeVoter
 
 
 
+// main voting
+$routes->get('/votingMasterQuery/(:any)', 'VotingController::votingMasterQuery/$1');
+
+
+
+
 /*
  * --------------------------------------------------------------------
  * Additional Routing
