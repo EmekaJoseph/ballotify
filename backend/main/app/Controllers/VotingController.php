@@ -6,6 +6,7 @@ use App\Controllers\BaseController;
 use App\Models\PositionsModel;
 use App\Models\CandidatesModel;
 use App\Models\VotersModel;
+use App\Models\EventsModel;
 use CodeIgniter\I18n\Time;
 
 use CodeIgniter\RESTful\ResourceController;
@@ -23,9 +24,8 @@ class VotingController extends ResourceController
         $this->db = db_connect();
     }
 
-    public function votingMasterQuery($event_id)
+    public function votingDataQuery($event_id)
     {
-
         $candidates = $this->db->table('tbl_members mem')
             ->join('tbl_candidates cand', 'cand.member_id = mem.id')
             ->join('tbl_positions post', 'post.position_id = cand.position_id')
@@ -66,5 +66,26 @@ class VotingController extends ResourceController
 
 
         return $this->respond(array('vote_data' => $masterData));
+    }
+
+    public function checkVotingCode($code = null)
+    {
+        $votersTable = new VotersModel();
+        $voter = $votersTable->where('code', $code)->find();
+        $voterId = '';
+        $event_id = '';
+        if (sizeof($voter) == 0) {
+            $status = 0;
+        } else {
+            $voter = $voter[0];
+            if ($voter['voted_status'] == 1) {
+                $status = -1;
+            } else {
+                $status = 1;
+                $voterId = $voter['id'];
+                $event_id = $voter['event_id'];
+            }
+        }
+        return $this->respond(array('status' => $status, 'voter_id' => $voterId, 'event_id' => $event_id));
     }
 }

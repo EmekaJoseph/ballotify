@@ -12,7 +12,7 @@
                     <div class="card shadow-lg">
                         <h5 class="card-title h6">Eligible Voters
                             <span class="badge rounded-pill bg-secondary text-white small">{{voters.length}}</span>
-                            <span @click="vSt.getVoters()" class="float-end text-custom"><i
+                            <span @click="reloadVoters()" class="float-end text-custom"><i
                                     class=" bi bi-arrow-clockwise"></i></span>
                         </h5>
 
@@ -58,6 +58,11 @@ const vSt = voteStore()
 const { event, voters } = storeToRefs(vSt)
 
 const { cc1, cc2, ccThk, ccBg, ccBtnH }: any = inject("c$");
+
+function reloadVoters() {
+    voters.value = []
+    vSt.getVoters()
+}
 </script>
 
 
@@ -111,6 +116,8 @@ const { cc1, cc2, ccThk, ccBg, ccBtnH }: any = inject("c$");
     cursor: pointer;
     padding: 5px;
     border-radius: 5px;
+    font-weight: bold;
+    background-color: #f5f5f5;
 }
 
 .bi-arrow-clockwise:hover {

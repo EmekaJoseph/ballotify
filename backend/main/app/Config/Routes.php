@@ -94,7 +94,8 @@ $routes->get('/removeVoter/(:any)', 'Admin\VotingSettingsController::removeVoter
 
 
 // main voting
-$routes->get('/votingMasterQuery/(:any)', 'VotingController::votingMasterQuery/$1');
+$routes->get('/votingDataQuery/(:any)', 'VotingController::votingDataQuery/$1');
+$routes->get('/checkVotingCode/(:any)', 'VotingController::checkVotingCode/$1');
 
 
 

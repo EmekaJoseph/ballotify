@@ -38,7 +38,7 @@ class EventsController extends ResourceController
                 'event_start' => $this->request->getVar('event_start'),
                 'event_expiry' => $this->request->getVar('event_expiry'),
                 'event_type' => $this->request->getVar('event_type'),
-                'created' => new Time('now')
+                'created' => new Time('now', 'Africa/Lagos')
             ];
 
             $orgTable->where('org_id', $org_id)->set('org_events', '`org_events`+ 1', FALSE)->update();
@@ -76,8 +76,9 @@ class EventsController extends ResourceController
     {
         $eventsTable = new EventsModel();
         $thisObj = $eventsTable->where('event_id', $event_id)->first();
-        $thisTime = Time::parse($thisObj['created'], 'America/Chicago');
+        $thisTime = Time::parse($thisObj['created']);
         $thisObj['created'] = $thisTime->humanize();
+        $thisObj['todaysDate'] = new Time('now', 'Africa/Lagos');
         return $this->respond($thisObj);
     }
 

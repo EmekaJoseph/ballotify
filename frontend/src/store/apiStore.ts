@@ -175,7 +175,11 @@ export default {
     },
 
 
-    votingMasterQuery(event_id: any) {
-        return bus.get('/votingMasterQuery/' + event_id)
+    votingDataQuery(event_id: any) {
+        return bus.get('/votingDataQuery/' + event_id)
     },
+
+    checkVotingCode(code: string) {
+        return bus.get('/checkVotingCode/' + code)
+    }
 }

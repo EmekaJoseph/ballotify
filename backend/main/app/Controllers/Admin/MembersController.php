@@ -14,12 +14,26 @@ class MembersController extends ResourceController
 {
     use ResponseTrait;
 
+    private $db;
+
+    public function __construct()
+    {
+        $this->db = db_connect();
+    }
+
     public function show($org_id = null)
     {
-        $table = new MembersModel();
-        $members = $table->where('org_id', $org_id)->findAll();
+        // $table = new MembersModel();
+        // $members = $table->where('org_id', $org_id)->findAll();
 
-        return $this->response->setJSON(array('data' => $members));
+
+        $data = $this->db->table(' tbl_groups grp')
+            ->join('tbl_members mem', 'mem.group_id = grp.id', 'right')
+            ->where('mem.org_id', $org_id)
+            ->get()
+            ->getResultArray();
+
+        return $this->response->setJSON(array('data' => $data));
     }
 
     public function create()

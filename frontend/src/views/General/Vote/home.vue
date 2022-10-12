@@ -32,7 +32,7 @@
                             </div>
 
                             <div class="col-xl-3 col-md-6" data-aos="zoom-out" data-aos-delay="400">
-                                <div class="card-item  position-relative" data-bs-toggle="modal"
+                                <div ref="modalBtn" class="card-item  position-relative" data-bs-toggle="modal"
                                     data-bs-target="#codeEntryModal">
                                     <div class="icon"><i class="bi bi-ui-checks-grid icon"></i></div>
                                     <span class="hh">Vote Now</span>
@@ -46,7 +46,7 @@
                 </section>
             </div>
         </div>
-        <codeEntryModal />
+        <codeEntryModal @found="navigateToVoting" />
     </div>
 </template>
 
@@ -59,7 +59,7 @@ import { voteStore } from './voteStore'
 import { storeToRefs } from 'pinia';
 
 const vSt = voteStore()
-const { event } = storeToRefs(vSt)
+const { event, currentVoter } = storeToRefs(vSt)
 
 const { cc1 }: any = inject("c$");
 const route = useRoute()
@@ -72,6 +72,14 @@ function goTo(destination: string) {
         query: { e: route.query.e }
     })
 }
+
+const modalBtn = ref<any>(null)
+function navigateToVoting(id) {
+    currentVoter.value = id
+    goTo('Voting')
+    modalBtn.value.click()
+}
+
 </script>
 
 <style scoped>

@@ -92,14 +92,14 @@
                                         </td>
                                         <td>{{ i.phone }}</td>
                                         <td>
-                                            <span v-if="i.group_id != '0'" data-bs-toggle="tooltip"
-                                                data-bs-placement="top" :title="whatGroupName(i.group_id)">
+                                            <span v-if="i.group_name !== null" data-bs-toggle="tooltip"
+                                                data-bs-placement="top" :title="i.group_name">
                                                 <i class="bi bi-folder-check"></i>
-                                                {{ fx.shortenText(whatGroupName(i.group_id), 6) }}
+                                                {{ fx.shortenText(i.group_name, 6) }}
                                             </span>
                                             <span v-else style="color: #ccc">
                                                 <i class="bi bi-folder-x"></i>
-                                                {{ whatGroupName(i.group_id) }}
+                                                None
                                             </span>
 
 
@@ -188,8 +188,7 @@ const membersToShow = computed(() => {
     if (list.value.length > 0) {
         const filtered = searchField.value === ""
             ? divideByChunck()
-            : list.value.filter(wo => Object.values(wo).join("").toLocaleLowerCase().indexOf(searchField.value.toLocaleLowerCase()) !== -1 ||
-                wo.group_id == groupIdOnSearch(searchField.value));
+            : list.value.filter((wo: { [s: string]: unknown; } | ArrayLike<unknown>) => Object.values(wo).join("").toLocaleLowerCase().indexOf(searchField.value.toLocaleLowerCase()) !== -1);
         // : list.value.filter(w => (w.lastname.toLocaleLowerCase()).startsWith(searchField.value.toLocaleLowerCase()) ||
         //     (w.firstname.toLocaleLowerCase()).startsWith(searchField.value.toLocaleLowerCase()));
         return filtered;
@@ -222,7 +221,7 @@ const isnext = () => {
 }
 
 
-function move(d) {
+function move(d: string) {
     let direction = (d == 'p') ? -1 : 1
     currChunck.value += direction
 }
@@ -234,7 +233,7 @@ function move(d) {
 const nameSortedFrom = ref('z')
 function sortByName() {
     nameSortedFrom.value = nameSortedFrom.value == 'a' ? 'z' : 'a'
-    list.value.sort((a, b) => {
+    list.value.sort((a: { lastname: string; }, b: { lastname: string; }) => {
         const nameA = a.lastname.toLowerCase();
         const nameB = b.lastname.toLowerCase();
 
@@ -251,7 +250,7 @@ function sortByName() {
 const groupSortedFrom = ref('1')
 function sortByGroup() {
     groupSortedFrom.value = groupSortedFrom.value == '1' ? '0' : '1'
-    list.value.sort((a, b) => {
+    list.value.sort((a: { group_id: string; }, b: { group_id: string; }) => {
         const groupA = a.group_id.toLowerCase();
         const groupB = b.group_id.toLowerCase();
 
@@ -283,19 +282,7 @@ function closeSearch() {
 
 }
 
-const groupIdOnSearch = (name: string) => {
-    let groupFound = groups.value.find(x => x.group_name.toLocaleLowerCase() == name.toLocaleLowerCase())
-    let groupId = groupFound === undefined ? 'a1' : groupFound.id
-    return groupId
-}
-
 // search end ##########################################
-
-
-
-
-
-
 
 
 const mCheck = ref(false)
@@ -306,7 +293,7 @@ function toggleAll() {
 }
 
 watchEffect(() => {
-    if (membersToShow.value.some(x => x.checked == false)) {
+    if (membersToShow.value.some((x: { checked: boolean; }) => x.checked == false)) {
         mCheck.value = false
     }
 })
@@ -314,17 +301,12 @@ watchEffect(() => {
 
 function sendSetToDelete() {
     let newData = list.value.filter((x: any) => x.checked == true)
-    let ids = newData.map(x => x.id)
+    let ids = newData.map((x: { id: any; }) => x.id)
     conFirmDelete(ids.toString())
 }
 
-const whatGroupName = (id: string) => {
-    let grpObj = groups.value.find((x: { id: any; }) => x.id == id)
-    return grpObj == undefined ? 'None' : grpObj.name
-}
-
 const aMember = reactive({
-    isChecked: computed(() => { return list.value.filter(x => x.checked == true) })
+    isChecked: computed(() => { return list.value.filter((x: { checked: boolean; }) => x.checked == true) })
 })
 
 function conFirmDelete(id: string) {

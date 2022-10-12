@@ -9,6 +9,7 @@ export const voteStore = defineStore('voteStore', {
             name: '',
             start: new Date(),
             end: new Date(),
+            todaysDate: new Date(),
             type: '',
             created: '',
             desc: '',
@@ -19,7 +20,8 @@ export const voteStore = defineStore('voteStore', {
         candidates: <any>[],
         voters: <any>[],
         route: useRoute(),
-        votingMasterData: <any>[]
+        votingMasterData: <any>[],
+        currentVoter: null
 
     }),
     actions: {
@@ -34,13 +36,14 @@ export const voteStore = defineStore('voteStore', {
                 this.event.name = data.event_name
                 this.event.start = new Date(data.event_start)
                 this.event.end = new Date(data.event_expiry)
+                this.event.todaysDate = new Date(data.todaysDate.date)
                 this.event.type = data.event_type
                 this.event.desc = data.event_description
                 this.event.created = data.created
                 // await this.getPositions()
                 // await this.getCandidates()
                 await this.getVoters()
-                await this.votingMasterQuery()
+                await this.votingDataQuery()
                 this.event.isLoading = false
             } catch (error) {
                 // console.log(error);
@@ -60,9 +63,8 @@ export const voteStore = defineStore('voteStore', {
 
         async getCandidates() {
             try {
-                this.candidates = []
                 var { data } = await server.getCandidates(this.event.event_id)
-                console.log(data);
+                // console.log(data);
                 this.candidates = data.candidates
             } catch (error) {
                 // console.log(error);
@@ -71,18 +73,17 @@ export const voteStore = defineStore('voteStore', {
 
         async getVoters() {
             try {
-                this.voters = []
                 var { data } = await server.getVoters(this.event.event_id)
+                // console.log(data);
                 this.voters = data.voters
             } catch (error) {
                 // console.log(error);
             }
         },
 
-        async votingMasterQuery() {
+        async votingDataQuery() {
             try {
-                this.voters = []
-                var { data } = await server.votingMasterQuery(this.event.event_id)
+                var { data } = await server.votingDataQuery(this.event.event_id)
                 console.log(data);
 
                 this.votingMasterData = data.vote_data

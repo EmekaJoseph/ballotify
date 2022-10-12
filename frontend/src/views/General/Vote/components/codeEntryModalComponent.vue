@@ -25,7 +25,7 @@
                                 class="btn btn-link btn-lg fw-bold float-end">
                                 Continue</button>
                             <button v-else class="btn btn-link btn-lg fw-bold text-muted" disabled>
-                                Checking</button>
+                                Checking...</button>
                         </div>
                     </form>
                 </div>
@@ -37,11 +37,13 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue';
 import server from '@/store/apiStore'
-import { useRouter, useRoute } from "vue-router";
-const emit = defineEmits(["added"]);
+import { voteStore } from '../voteStore'
+import { storeToRefs } from 'pinia';
 
-const router = useRouter()
-const route = useRoute()
+const vSt = voteStore()
+const { event } = storeToRefs(vSt)
+
+const emit = defineEmits(["found"]);
 
 const codeForm = reactive({
     code: '',
@@ -49,32 +51,37 @@ const codeForm = reactive({
     isChecking: false
 })
 const btnX = ref<any>(null)
-function checkCode() {
+async function checkCode() {
     codeForm.error = ''
     if (!codeForm.code || codeForm.code.length < 4) {
         codeForm.error = 'invalid code format'
         return
     }
-    saveName()
-}
-
-async function saveName() {
     codeForm.isChecking = true
-    let obj = {
-        group_name: codeForm.code,
-    }
     try {
-        var { data } = await server.saveNewGroup(obj)
-        if (data == 1) {
-            codeForm.isChecking = false
-            btnX.value.click()
-            codeForm.code = ''
-            emit('added')
+        var { data } = await server.checkVotingCode(codeForm.code)
+        if (data.status == 1) {
+            if (data.event_id == event.value.event_id) {
+                codeForm.isChecking = false;
+                emit('found', data.voter_id)
+            }
+            else {
+                codeForm.isChecking = false
+                codeForm.error = 'invalid code'
+                return
+            }
         }
         else {
-            codeForm.isChecking = false
-            codeForm.error = 'invalid code'
-            return
+            if (data.status == 0) {
+                codeForm.isChecking = false
+                codeForm.error = 'invalid code'
+                return
+            }
+            else {
+                codeForm.isChecking = false
+                codeForm.error = 'code already used'
+                return
+            }
         }
     } catch (error) {
         console.log(error);
