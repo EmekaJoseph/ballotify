@@ -181,5 +181,9 @@ export default {
 
     checkVotingCode(code: string) {
         return bus.get('/checkVotingCode/' + code)
+    },
+
+    submitVote(obj: object) {
+        return bus.post('/submitVote', JSON.stringify(obj))
     }
 }

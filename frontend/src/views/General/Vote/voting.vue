@@ -24,9 +24,11 @@
                             <div class="card main-card">
                                 <div class="card-body">
                                     <div class="row gy-3">
-                                        <div v-for="(post, index) in list" :key="index" class="col-md-4">
+                                        <div v-for="(post, index) in list" :key="index" class="col-xl-4 col-lg-6">
                                             <div class="card post-card">
-                                                <h5 class="card-title h6 text-capitalize">{{post.position_name}}
+                                                <h5 class="card-title h6 text-capitalize"><i
+                                                        class="bi bi-person-bounding-box text-muted"></i>&nbsp;
+                                                    {{post.position_name}}
                                                 </h5>
                                                 <div class="card-body choice-span">
                                                     <div :class="{'chosen': i.chosen}"
@@ -38,14 +40,22 @@
                                                         <span
                                                             :class="[{'text-custom': i.chosen}, {'fw-bold': i.chosen}]"
                                                             class="ms-3 text-capitalize">{{i.lastname}}
-                                                            {{i.lastname}}</span>
+                                                            {{i.firstname}}</span>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
                                         <div class="col-md-12">
-                                            <button @click.prevent="SubmitVote" class="btn customBtn float-end"><i
-                                                    class="bi bi-check-circle-fill"></i> Submit</button>
+                                            <button v-if="!isSaving" @click.prevent="CheckChoices"
+                                                class="btn customBtn float-end"><i class="bi bi-check-circle-fill"></i>
+                                                Submit</button>
+                                            <button v-else class="btn customBtn float-end " disabled>
+                                                <i class="bi bi-hourglass-split"></i> Saving...
+                                            </button>
+                                            <button @click.prevent="router.back()" v-show="!isSaving"
+                                                class="btn btn-secondary float-end me-3">
+                                                <i class="bi bi-x-lg"></i> Cancel
+                                            </button>
                                         </div>
                                     </div>
 
@@ -62,11 +72,16 @@
 </template>
 
 <script setup lang="ts">
-import { inject } from 'vue';
+import { inject, ref } from 'vue';
+import { useRouter } from 'vue-router';
 import brokenLinkVue from './components/brokenLink.vue';
 import votingLinkExpired from './components/votingLinkExpired.vue';
 import { voteStore } from './voteStore'
 import { storeToRefs } from 'pinia';
+import Swal from 'sweetalert2'
+import server from '@/store/apiStore'
+
+const router = useRouter()
 
 const vSt = voteStore()
 const { event, voters, votingMasterData: list, currentVoter } = storeToRefs(vSt)
@@ -98,8 +113,10 @@ const chooseThis = (position_id: string, id: string) => {
     })
 }
 
-function SubmitVote() {
-    let array: any = []
+
+
+function CheckChoices() {
+    let ChoicesArray: any = []
 
     list.value.forEach((el: any) => {
         let newObj: any = {}
@@ -107,12 +124,82 @@ function SubmitVote() {
             if (x.chosen == true) {
                 newObj.position_id = x.position_id;
                 newObj.id = x.id
+                ChoicesArray.push(newObj)
             }
         })
-        array.push(newObj)
     })
-    console.log(array);
 
+
+    if (!ChoicesArray.length || (ChoicesArray.length !== list.value.length)) {
+        Swal.fire({
+            toast: true,
+            icon: 'warning',
+            title: 'Please Complete Voting',
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: false,
+        })
+    }
+    else {
+        Swal.fire({
+            title: `Submit Vote?`,
+            text: "You can ONLY do this once!",
+            showCancelButton: true,
+            confirmButtonColor: '#03787c',
+            cancelButtonColor: '#012A2B',
+            confirmButtonText: 'Yes, Submit',
+            background: `#012A2B`,
+            color: '#fff',
+            width: 'auto',
+            reverseButtons: true,
+        }).then((result) => {
+            if (result.isConfirmed) {
+                let ChoicesArrayMap = ChoicesArray.map(x => x.id)
+                let obj = {
+                    voter_id: currentVoter.value,
+                    choices: ChoicesArrayMap.toString()
+                }
+                submitVote(obj)
+            }
+        })
+    }
+
+}
+
+
+const isSaving = ref(false)
+
+async function submitVote(obj: object) {
+    isSaving.value = true
+    try {
+        var { data } = await server.submitVote(obj)
+        if (data == 1) {
+            isSaving.value = false
+            currentVoter.value = null
+            Swal.fire({
+                toast: true,
+                icon: 'success',
+                title: 'Vote Complete!',
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: false,
+            })
+            router.back()
+        }
+    } catch (error) {
+        Swal.fire({
+            toast: true,
+            icon: 'error',
+            title: 'Sorry, Operation Failed',
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: false,
+        })
+        isSaving.value = false
+    }
 }
 </script>
 

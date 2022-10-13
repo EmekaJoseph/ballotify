@@ -96,6 +96,7 @@ $routes->get('/removeVoter/(:any)', 'Admin\VotingSettingsController::removeVoter
 // main voting
 $routes->get('/votingDataQuery/(:any)', 'VotingController::votingDataQuery/$1');
 $routes->get('/checkVotingCode/(:any)', 'VotingController::checkVotingCode/$1');
+$routes->post('/submitVote', 'VotingController::submitVote');
 
 
 

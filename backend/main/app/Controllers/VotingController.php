@@ -88,4 +88,22 @@ class VotingController extends ResourceController
         }
         return $this->respond(array('status' => $status, 'voter_id' => $voterId, 'event_id' => $event_id));
     }
+
+    public function submitVote()
+    {
+        $voter_id = $this->request->getVar('voter_id');
+        $choicesString = $this->request->getVar('choices');
+        $choicesArray =  explode(",", $choicesString);
+
+        $votersTable = new VotersModel();
+        $votersTable->save([
+            'id' => $voter_id,
+            'voted_status' => 1
+        ]);
+
+        $candidatesTable = new CandidatesModel();
+        $candidatesTable->whereIn('id', $choicesArray)->set('votes', '`votes`+ 1', FALSE)->update();
+
+        return $this->respond(1);
+    }
 }

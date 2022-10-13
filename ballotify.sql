@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Sep 16, 2022 at 07:28 PM
+-- Generation Time: Oct 14, 2022 at 12:15 AM
 -- Server version: 10.4.22-MariaDB
 -- PHP Version: 8.1.2
 
@@ -40,7 +40,14 @@ CREATE TABLE `tbl_activities` (
 --
 
 INSERT INTO `tbl_activities` (`id`, `org_id`, `activity`, `date_done`, `done_by`) VALUES
-(1, 'BBHK', 'Added a new group', '2022-09-14 19:06:39', '');
+(4, 'BBHK', 'Created new group, \'new group\'', '2022-10-07 07:54:56', ''),
+(5, 'BBHK', 'Added new member,', '2022-10-07 08:01:16', ''),
+(6, 'BBHK', 'Created new group, \'united\'', '2022-10-07 08:01:44', ''),
+(7, 'BBHK', 'Added new member,', '2022-10-07 08:01:46', ''),
+(8, 'BBHK', 'Created new group, \'sasasasasa\'', '2022-10-07 19:00:07', ''),
+(9, 'BBHK', 'Created new group, \'Dollars\'', '2022-10-12 09:14:10', ''),
+(10, 'BBHK', 'Created new group, \'Dollars\'', '2022-10-12 09:15:35', ''),
+(11, 'BBHK', 'Created new group, \'dddd\'', '2022-10-13 03:33:45', '');
 
 -- --------------------------------------------------------
 
@@ -62,7 +69,20 @@ CREATE TABLE `tbl_candidates` (
 --
 
 INSERT INTO `tbl_candidates` (`id`, `event_id`, `member_id`, `position_id`, `votes`, `photo`) VALUES
-(72, 'BBHK-E18', '1', '239', 0, NULL);
+(101, 'BBHK-E21', '3', '252', 0, NULL),
+(110, 'BBHK-E18', '5', '261', 0, NULL),
+(112, 'BBHK-E18', '4', '261', 0, NULL),
+(117, 'BBHK-E18', '4', '264', 0, NULL),
+(121, 'BBHK-E21', '2', '266', 0, NULL),
+(123, 'BBHK-E21', '10', '268', 0, NULL),
+(125, 'BBHK-E21', '20', '266', 0, NULL),
+(127, 'BBHK-E21', '33', '267', 0, NULL),
+(128, 'BBHK-E21', '27', '267', 0, NULL),
+(129, 'BBHK-E21', '2', '268', 0, NULL),
+(130, 'BBHK-E21', '16', '266', 0, NULL),
+(131, 'BBHK-E21', '4', '269', 0, NULL),
+(132, 'BBHK-E21', '14', '269', 0, NULL),
+(133, 'BBHK-E21', '13', '269', 0, NULL);
 
 -- --------------------------------------------------------
 
@@ -108,9 +128,9 @@ CREATE TABLE `tbl_groups` (
 --
 
 INSERT INTO `tbl_groups` (`id`, `org_id`, `group_name`, `created`) VALUES
-(63, 'BBHK', 'adaptors ', '2022-09-09 10:01:19'),
-(64, 'BBHK', 'makkerss', '2022-09-09 10:15:14'),
-(65, 'BBHK', 'Music group', '2022-09-16 07:27:24');
+(82, 'BBHK', 'Sanity', '2022-10-05 16:51:22'),
+(83, 'BBHK', 'creatives', '2022-10-05 16:52:00'),
+(86, 'BBHK', 'Managers', '2022-10-07 07:54:56');
 
 -- --------------------------------------------------------
 
@@ -136,30 +156,35 @@ CREATE TABLE `tbl_members` (
 --
 
 INSERT INTO `tbl_members` (`id`, `org_id`, `firstname`, `lastname`, `email`, `phone`, `verified`, `group_id`, `gender`, `birthday`) VALUES
-(1, 'BBHK', 'Oluwafredrick', 'Johnson', 'john@gmail.com', '09087634527', '1', '0', 'F', '8-25'),
-(2, 'BBHK', 'aliya', 'moses', 'aliya02@mail.com', '07012547896', '1', '63', 'F', '11-24'),
-(3, 'BBHK', 'Buchi', 'Samuel', 'sammybu09@gmail.com', '09087675890', '0', '63', 'M', '9-24'),
-(4, 'BBHK', 'Taye', 'Joseph', 'joseph_56@gmail.com', '05021458795', '1', '63', 'F', '7-22'),
-(5, 'BBHK', 'Abijan', 'Atutu', 'abijan@gmail.com', '09034567893', '1', '63', 'M', '8-2'),
-(10, 'BBHK', 'meeka', 'meeka', 'meeka@mail.com', '07025698745', '1', '63', 'M', '9-6'),
-(13, 'BBHK', 'Sharon', 'Davidson', 'seroqiqare@mailinator.com', '08009878675', '1', '63', 'M', '9-9'),
-(14, 'BBHK', 'Keane', 'Tate', 'woqaxexex@mailinator.com', '065456732456', '1', '0', 'M', '9-9'),
-(15, 'BBHK', 'Leila', 'Edwards', 'risa@mailinator.com', '08025478569', '1', '63', 'F', '8-27'),
-(16, 'BBHK', 'Kylie', 'Dudley', 'tydepaziti@mailinator.com', '08089756733', '1', '0', 'M', '8-25'),
-(17, 'BBHK', 'Abraham', 'Bush', 'hogytuxusa@mailinator.com', '08045879658', '1', '0', 'M', '7-20'),
-(18, 'BBHK', 'Ria', 'Castillo', 'ginuviryqe@mailinator.com', '203455555555', '1', '63', 'F', '9-9'),
-(19, 'BBHK', 'Jin', 'Suarez', 'xonudumoge@mailinator.com', '080569874521', '1', '63', 'M', '9-9'),
-(20, 'BBHK', 'Abel', 'Taylor', 'lozyqe@mailinator.com', '225666666666', '1', '63', 'M', '5-27'),
-(21, 'BBHK', 'Cailin', 'Deleon', 'wawibop@mailinator.com', '09032548547', '1', '63', 'M', '7-21'),
-(22, 'BBHK', 'Scarlet', 'Campos', 'mygus@mailinator.com', '07045896521', '1', '63', 'F', '8-17'),
-(23, 'BBHK', 'Ifeoma', 'Williamson', 'wanu@mailinator.com', '058796548412', '1', '0', 'F', '5-19'),
-(24, 'BBHK', 'Barclay', 'Moody', 'judofyroby@mailinator.com', '45879652331', '1', '0', 'M', '8-25'),
-(25, 'BBHK', 'Blossom', 'Jacobson', 'citadicab@mailinator.com', '7896554125658', '1', '0', 'M', '12-31'),
-(26, 'BBHK', 'Zena', 'Henderson', 'mutibe@mailinator.com', '05021458796', '1', '0', 'F', '11-25'),
-(27, 'BBHK', 'Jerome', 'Turner', 'xawek@mailinator.com', '05896521458', '1', '0', 'M', '12-1'),
-(28, 'BBHK', 'Jeanette', 'Rosales', 'roqydixyf@mailinator.com', '02548565895', '1', '0', 'F', '8-27'),
-(29, 'BBHK', 'Jakeem', 'Bush', 'zoqoqiqi@mailinator.com', '09045821456', '1', '0', 'M', '11-25'),
-(30, 'BBHK', 'Xyla', 'Ferrell', 'jeca@mailinator.com', '0125487575', '1', '0', 'F', '12-25');
+(2, 'BBHK', 'aliyah', 'moses', 'aliya02@mail.com', '07012547896', '1', '86', 'F', '11-24'),
+(4, 'BBHK', 'Taye', 'Joseph', 'joseph_56@gmail.com', '05021458795', '1', '86', 'F', '7-22'),
+(5, 'BBHK', 'Abijan', 'Atutu', 'abijan@gmail.com', '09034567893', '1', '86', 'M', '8-2'),
+(10, 'BBHK', 'meeka', 'meeka', 'meeka@mail.com', '07025698745', '1', '86', 'M', '9-6'),
+(13, 'BBHK', 'Sharon', 'Davidson', 'seroqiqare@mailinator.com', '0800987867', '1', '86', 'M', '9-9'),
+(14, 'BBHK', 'Keane', 'Tate', 'woqaxexex@mailinator.com', '065456732456', '1', '82', 'M', '9-9'),
+(15, 'BBHK', 'Leila', 'Edwards', 'risa@mailinator.com', '08025478569', '1', '82', 'F', '8-27'),
+(16, 'BBHK', 'Kylie', 'Dudley', 'tydepaziti@mailinator.com', '08089756733', '1', '82', 'M', '8-25'),
+(17, 'BBHK', 'Abraham', 'Bush', 'hogytuxusa@mailinator.com', '08045879658', '1', '86', 'M', '7-20'),
+(20, 'BBHK', 'Abel', 'Taylor', 'lozyqe@mailinator.com', '22566666455', '1', '86', 'M', '5-27'),
+(21, 'BBHK', 'Cailin', 'Deleon', 'wawibop@mailinator.com', '09032548547', '1', '86', 'M', '7-21'),
+(22, 'BBHK', 'Scarlet', 'Campos', 'mygus@mailinator.com', '07045896521', '1', '82', 'F', '8-17'),
+(23, 'BBHK', 'Ifeoma', 'Williamson', 'wanu@mailinator.com', '058796548412', '1', '82', 'F', '5-19'),
+(24, 'BBHK', 'Barclay', 'Moody', 'judofyroby@mailinator.com', '45879652331', '1', '86', 'M', '8-25'),
+(25, 'BBHK', 'Blossom', 'Jacobson', 'citadicab@mailinator.com', '7896554125658', '1', '86', 'M', '12-31'),
+(26, 'BBHK', 'Zena', 'Henderson', 'mutibe@mailinator.com', '05021458796', '1', '86', 'F', '11-25'),
+(27, 'BBHK', 'Jerome', 'Turner', 'xawek@mailinator.com', '05896521458', '1', '86', 'M', '12-1'),
+(28, 'BBHK', 'Jeanette', 'Rosales', 'roqydixyf@mailinator.com', '02548565895', '1', '86', 'F', '8-27'),
+(29, 'BBHK', 'Jakeem', 'Bush', 'zoqoqiqi@mailinator.com', '09045821456', '1', '83', 'M', '11-25'),
+(30, 'BBHK', 'Xyla', 'Ferrell', 'jeca@mailinator.com', '0125487575', '1', '83', 'F', '12-25'),
+(31, 'BBHK', 'Edan', 'Santos', 'kibesedy@mailinator.com', '08052458965', '1', '83', 'F', '9-24'),
+(32, 'BBHK', 'Quail', 'Cantu', 'suticomyj@mailinator.com', '12548756213', '1', '83', 'M', '9-28'),
+(33, 'BBHK', 'Mira', 'Jackson', 'sotuhat@mailinator.com', '458796521215', '1', '83', 'M', '9-28'),
+(34, 'BBHK', 'Anika', 'Monroe', 'tygobopuzi@mailinator.com', '458965584521', '1', '83', 'M', '9-28'),
+(35, 'BBHK', 'Donna', 'Giles', 'milyfem@mailinator.com', '1111111111111', '1', '83', 'M', '9-28'),
+(36, 'BBHK', 'Valentine', 'Ewing', 'ninaxoh@mailinator.com', '070145896521', '1', '83', 'F', '8-24'),
+(37, 'BBHK', 'Inez', 'Pope', 'kenynoje@mailinator.com', '26458896547', '1', '83', 'M', '12-23'),
+(38, 'BBHK', 'Cedric', 'Dodson', 'dyvusa@mailinator.com', '09034567893', '1', '83', 'M', '10-13'),
+(40, 'BBHK', 'Winter', 'Goodman', 'lybigebac@mailinator.com', '7767889064455', '1', '83', 'M', '10-7');
 
 -- --------------------------------------------------------
 
@@ -181,8 +206,8 @@ CREATE TABLE `tbl_org` (
 --
 
 INSERT INTO `tbl_org` (`id`, `org_id`, `org_name`, `org_logo`, `org_address`, `org_events`) VALUES
-(1, 'BBHK', 'Proffix Academy', NULL, '11, Sweet Address London street, Uk, London', 21),
-(10, 'BEFN', 'emeka\'s heritage', NULL, 'No address', 0);
+(1, 'BBHK', 'Proffix Academy', NULL, '11, Sweet Address London street, Uk', 21),
+(10, 'BEFN', 'emeka\'s heritage', NULL, '241, demo street', 0);
 
 -- --------------------------------------------------------
 
@@ -191,18 +216,23 @@ INSERT INTO `tbl_org` (`id`, `org_id`, `org_name`, `org_logo`, `org_address`, `o
 --
 
 CREATE TABLE `tbl_positions` (
-  `id` int(255) NOT NULL,
+  `position_id` int(255) NOT NULL,
   `org_id` varchar(255) NOT NULL,
   `event_id` varchar(255) NOT NULL,
-  `name` varchar(255) NOT NULL
+  `position_name` varchar(255) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `tbl_positions`
 --
 
-INSERT INTO `tbl_positions` (`id`, `org_id`, `event_id`, `name`) VALUES
-(239, 'BBHK', 'BBHK-E18', 'reders');
+INSERT INTO `tbl_positions` (`position_id`, `org_id`, `event_id`, `position_name`) VALUES
+(261, 'BBHK', 'BBHK-E18', 'prsedo'),
+(264, 'BBHK', 'BBHK-E18', 'secc2'),
+(266, 'BBHK', 'BBHK-E21', 'president'),
+(267, 'BBHK', 'BBHK-E21', 'vice president'),
+(268, 'BBHK', 'BBHK-E21', 'provost'),
+(269, 'BBHK', 'BBHK-E21', 'Food cooker');
 
 -- --------------------------------------------------------
 
@@ -227,8 +257,8 @@ CREATE TABLE `tbl_users` (
 --
 
 INSERT INTO `tbl_users` (`id`, `org_id`, `firstname`, `lastname`, `email`, `image`, `role`, `isActive`, `password`) VALUES
-(1, 'BBHK', 'Proffix', 'Joseph', 'josephiwuji@gmail.com', NULL, 'master', '1', '$2y$10$ZkY6L0dz9TosKIr0OYXgGurUUC/LWmKcykp5T3RYPefhRMZSF/qQ.'),
-(10, 'BEFN', 'emeka', 'demo', 'emeka@demo.com', NULL, 'master', '1', '$2y$10$fGIC3GGLcvZzJ76K82VVE.f/2bo1i1cZFhjHtBdn2CazSFq.Z4PqG');
+(1, 'BBHK', 'Proffix', 'Josephs', 'josephiwuji@gmail.com', NULL, 'master', '1', '$2y$10$ZkY6L0dz9TosKIr0OYXgGurUUC/LWmKcykp5T3RYPefhRMZSF/qQ.'),
+(10, 'BEFN', 'Emeka', 'demoz', 'emeka@demo.com', NULL, 'master', '1', '$2y$10$fGIC3GGLcvZzJ76K82VVE.f/2bo1i1cZFhjHtBdn2CazSFq.Z4PqG');
 
 -- --------------------------------------------------------
 
@@ -250,7 +280,18 @@ CREATE TABLE `tbl_voters` (
 --
 
 INSERT INTO `tbl_voters` (`id`, `event_id`, `member_id`, `voted_status`, `voted_date`, `code`) VALUES
-(186, 'BBHK-E18', '2', 0, '', 'BBHK-E18-VHLA8');
+(521, 'BBHK-E18', '3', 0, '', 'BBHK-E18-VMGNQ'),
+(547, 'BBHK-E18', '21', 0, '', 'BBHK-E18-VN52W'),
+(549, 'BBHK-E18', '24', 0, '', 'BBHK-E18-V27GM'),
+(550, 'BBHK-E18', '26', 0, '', 'BBHK-E18-VTFGB'),
+(596, 'BBHK-E21', '17', 0, '', 'BBHK-E21-VFRZQ'),
+(600, 'BBHK-E21', '21', 0, '', 'BBHK-E21-VPM3F'),
+(601, 'BBHK-E21', '16', 0, '', 'BBHK-E21-VG4F6'),
+(603, 'BBHK-E21', '26', 0, '', 'BBHK-E21-VXGT2'),
+(606, 'BBHK-E21', '31', 0, '', 'BBHK-E21-V72YZ'),
+(608, 'BBHK-E21', '32', 0, '', 'BBHK-E21-VPFQJ'),
+(609, 'BBHK-E21', '30', 0, '', 'BBHK-E21-VYQD5'),
+(610, 'BBHK-E21', '34', 0, '', 'BBHK-E21-VPL8F');
 
 --
 -- Indexes for dumped tables
@@ -296,7 +337,7 @@ ALTER TABLE `tbl_org`
 -- Indexes for table `tbl_positions`
 --
 ALTER TABLE `tbl_positions`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`position_id`);
 
 --
 -- Indexes for table `tbl_users`
@@ -318,13 +359,13 @@ ALTER TABLE `tbl_voters`
 -- AUTO_INCREMENT for table `tbl_activities`
 --
 ALTER TABLE `tbl_activities`
-  MODIFY `id` int(50) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(50) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT for table `tbl_candidates`
 --
 ALTER TABLE `tbl_candidates`
-  MODIFY `id` int(10) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=73;
+  MODIFY `id` int(10) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=134;
 
 --
 -- AUTO_INCREMENT for table `tbl_events`
@@ -336,13 +377,13 @@ ALTER TABLE `tbl_events`
 -- AUTO_INCREMENT for table `tbl_groups`
 --
 ALTER TABLE `tbl_groups`
-  MODIFY `id` int(50) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=66;
+  MODIFY `id` int(50) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=92;
 
 --
 -- AUTO_INCREMENT for table `tbl_members`
 --
 ALTER TABLE `tbl_members`
-  MODIFY `id` int(50) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
+  MODIFY `id` int(50) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=41;
 
 --
 -- AUTO_INCREMENT for table `tbl_org`
@@ -354,7 +395,7 @@ ALTER TABLE `tbl_org`
 -- AUTO_INCREMENT for table `tbl_positions`
 --
 ALTER TABLE `tbl_positions`
-  MODIFY `id` int(255) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=240;
+  MODIFY `position_id` int(255) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=270;
 
 --
 -- AUTO_INCREMENT for table `tbl_users`
@@ -366,7 +407,7 @@ ALTER TABLE `tbl_users`
 -- AUTO_INCREMENT for table `tbl_voters`
 --
 ALTER TABLE `tbl_voters`
-  MODIFY `id` int(10) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=187;
+  MODIFY `id` int(10) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=611;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
