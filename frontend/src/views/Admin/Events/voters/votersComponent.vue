@@ -38,6 +38,7 @@
                                     <tr>
                                         <th>#</th>
                                         <th>Name</th>
+                                        <th>Date Voted</th>
                                         <td>
                                             <span @click.prevent="removeAll" v-if="list.length > 1">
                                                 <span v-if="!isRemovingAll" class="text-danger remove-btn">
@@ -53,6 +54,13 @@
                                         <th>{{ index + 1 }}</th>
                                         <td>
                                             {{voter.lastname}} {{voter.firstname}}, ({{voter.gender}})
+                                        </td>
+                                        <td v-if="voter.voted_status == '1'"
+                                            class="text-success fst-italic small text-lowercase">
+                                            <i class="bi bi-check-circle-fill"></i> voted {{voter.voted_date}}
+                                        </td>
+                                        <td v-else class="text-muted fst-italic small text-lowercase">
+                                            <i class="bi bi-dash-circle-dotted"></i> pending..
                                         </td>
                                         <td>
                                             <button @click="removeVoter(voter.id)"

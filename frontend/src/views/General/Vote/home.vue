@@ -69,7 +69,7 @@ import { voteStore } from './voteStore'
 import { storeToRefs } from 'pinia';
 
 const vSt = voteStore()
-const { event, currentVoter } = storeToRefs(vSt)
+const { event, voting } = storeToRefs(vSt)
 
 const { cc1 }: any = inject("c$");
 const route = useRoute()
@@ -85,7 +85,7 @@ function goTo(destination: string) {
 
 const modalBtn = ref<any>(null)
 function navigateToVoting(id) {
-    currentVoter.value = id
+    voting.value.thisVoter = id
     goTo('Voting')
     modalBtn.value.click()
 }

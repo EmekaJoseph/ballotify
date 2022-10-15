@@ -8,7 +8,7 @@
                 <brokenLinkVue />
             </div>
             <div v-else>
-                <div v-if="currentVoter === null">
+                <div v-if="voting.thisVoter=== null">
                     <votingLinkExpired />
                 </div>
                 <div v-else>
@@ -24,7 +24,8 @@
                             <div class="card main-card">
                                 <div class="card-body">
                                     <div class="row gy-3">
-                                        <div v-for="(post, index) in list" :key="index" class="col-xl-4 col-lg-6">
+                                        <div v-for="(post, index) in voting.votingData" :key="index"
+                                            class="col-xl-4 col-lg-6">
                                             <div class="card post-card">
                                                 <h5 class="card-title h6 text-capitalize"><i
                                                         class="bi bi-person-bounding-box text-muted"></i>&nbsp;
@@ -84,17 +85,18 @@ import server from '@/store/apiStore'
 const router = useRouter()
 
 const vSt = voteStore()
-const { event, voters, votingMasterData: list, currentVoter } = storeToRefs(vSt)
+const { event, voters, voting } = storeToRefs(vSt)
 
 const { cc1, cc2, ccThk, ccBg, ccBtnH }: any = inject("c$");
 
 
 onMounted(async () => {
     await vSt.getEventDetails()
+    await vSt.votingDataQuery()
 })
 
 const thisVoterName = () => {
-    let thisVoter = voters.value.find((x: { id: string; }) => x.id == currentVoter.value)
+    let thisVoter = voters.value.find((x: { id: string; }) => x.id == voting.value.thisVoter)
     return thisVoter == undefined ? '' : `${thisVoter.firstname}`
 }
 
@@ -107,7 +109,7 @@ const getChecked = (list: any[]) => {
 }
 
 const chooseThis = (position_id: string, id: string) => {
-    let thisPosition = list.value.find((x: { position_id: string; }) => x.position_id == position_id)
+    let thisPosition = voting.value.votingData.find((x: { position_id: string; }) => x.position_id == position_id)
     let candidates = thisPosition.candidates
 
     candidates.forEach((el: { chosen: boolean; id: any; }) => {
@@ -122,8 +124,8 @@ const chooseThis = (position_id: string, id: string) => {
 
 function CheckChoices() {
     let ChoicesArray: any = []
-
-    list.value.forEach((el: any) => {
+    let list = voting.value.votingData;
+    list.forEach((el: any) => {
         let newObj: any = {}
         el.candidates.forEach(x => {
             if (x.chosen == true) {
@@ -135,7 +137,7 @@ function CheckChoices() {
     })
 
 
-    if (!ChoicesArray.length || (ChoicesArray.length !== list.value.length)) {
+    if (!ChoicesArray.length || (ChoicesArray.length !== list.length)) {
         Swal.fire({
             toast: true,
             icon: 'warning',
@@ -162,7 +164,7 @@ function CheckChoices() {
             if (result.isConfirmed) {
                 let ChoicesArrayMap = ChoicesArray.map(x => x.id)
                 let obj = {
-                    voter_id: currentVoter.value,
+                    voter_id: voting.value.thisVoter,
                     choices: ChoicesArrayMap.toString()
                 }
                 submitVote(obj)
@@ -181,7 +183,7 @@ async function submitVote(obj: object) {
         var { data } = await server.submitVote(obj)
         if (data == 1) {
             isSaving.value = false
-            currentVoter.value = null
+            voting.value.votingData = null
             Swal.fire({
                 toast: true,
                 icon: 'success',

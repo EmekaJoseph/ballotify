@@ -3,10 +3,8 @@
 namespace App\Controllers;
 
 use App\Controllers\BaseController;
-use App\Models\PositionsModel;
 use App\Models\CandidatesModel;
 use App\Models\VotersModel;
-use App\Models\EventsModel;
 use CodeIgniter\I18n\Time;
 
 use CodeIgniter\RESTful\ResourceController;
@@ -70,12 +68,15 @@ class VotingController extends ResourceController
                         array_push($tempRecord->candidates, $cand);
                     }
                 }
-
                 array_push($vote_data, $tempRecord);
             }
         }
 
-        return $this->respond(array('vote_data' => $vote_data));
+        $votersTable = new VotersModel();
+        $voters = $votersTable->where('event_id', $event_id)->where('voted_status', '1')->findAll();
+
+
+        return $this->respond(array('vote_data' => $vote_data, 'voters' => sizeof(($voters))));
     }
 
     public function checkVotingCode($code = null)
@@ -110,7 +111,8 @@ class VotingController extends ResourceController
         $votersTable = new VotersModel();
         $votersTable->save([
             'id' => $voter_id,
-            'voted_status' => 1
+            'voted_status' => 1,
+            'voted_date' => new Time('now')
         ]);
 
         $candidatesTable = new CandidatesModel();

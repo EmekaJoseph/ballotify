@@ -13,7 +13,8 @@
                         <div class="card main-card">
                             <div class="card-body">
                                 <div class="row gy-3">
-                                    <div v-for="(post, index) in list" :key="index" class="col-xl-4 col-lg-6">
+                                    <div v-for="(post, index) in leaderBoard.showData" :key="index"
+                                        class="col-xl-4 col-lg-6">
                                         <div class="card post-card">
                                             <h5 class="card-title h6 text-uppercase text-center text-white m-0">
                                                 {{post.position_name}}
@@ -37,8 +38,8 @@
 
                                                         <span class=" text-warnin">{{getPercent(i.votes)}}%</span>
                                                         <span class="float-end text-warnin">
-                                                            {{ VotesFn(i.votes)}}
-                                                            {{VotesFn(i.votes) !== 1? 'votes': 'vote'}}
+                                                            {{ voteDecode(i.votes)}}
+                                                            {{voteDecode(i.votes) !== 1? 'votes': 'vote'}}
                                                         </span>
                                                     </div>
                                                 </div>
@@ -65,7 +66,7 @@ import { storeToRefs } from 'pinia';
 
 
 const vSt = voteStore()
-const { event, voters, votingMasterData: list } = storeToRefs(vSt)
+const { event, leaderBoard } = storeToRefs(vSt)
 
 const { cc1, cc2, ccThk, ccBg, ccBtnH }: any = inject("c$");
 
@@ -73,15 +74,14 @@ async function loadPage() {
     if (event.value.event_id == '') {
         await vSt.getEventDetails()
     }
-    await vSt.votingDataQuery()
+    await vSt.LeaderBoardQuery()
 }
 
 onMounted(() => {
     loadPage();
 
     setInterval(async () => {
-        await vSt.getVoters()
-        await vSt.votingDataQuery()
+        await vSt.LeaderBoardQuery()
 
     }, 5000);
 })
@@ -89,21 +89,24 @@ onMounted(() => {
 
 const sortByVotes = (candidates: any): any => {
     candidates.sort(function (a: any, b: any) {
-        return parseInt(atob(b.votes)) - parseInt(atob(a.votes));
+        return voteDecode(b.votes) - voteDecode(a.votes);
     });
     return candidates
 }
 
 
-const VotesFn = (votes: any) => {
-    let decoded = atob(votes)
+
+
+const voteDecode = (base64: any): number => {
+    let decoded = atob(base64)
     return parseInt(decoded)
 }
 
-const getPercent = (votes: string) => {
-    let decoded = atob(votes)
-    let votedVoters = voters.value.filter(x => x.voted_status == '1').length
-    let percent = (votedVoters == 0) ? 0 : (parseInt(decoded) / votedVoters) * 100
+const getPercent = (base64: string) => {
+    let votes: number = voteDecode(base64)
+    let num = leaderBoard.value.votedVoters
+    let percent = (num == 0) ? 0 : (votes / num) * 100
+    // decideWinner()
     return Math.floor(percent)
 }
 </script>

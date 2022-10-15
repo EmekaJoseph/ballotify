@@ -17,11 +17,16 @@ export const voteStore = defineStore('voteStore', {
             isLoading: true,
             error: false
         },
-        candidates: <any>[],
+        voting: {
+            thisVoter: null,
+            votingData: <any>[],
+        },
+        leaderBoard: {
+            votedVoters: 0,
+            showData: <any>[]
+        },
         voters: <any>[],
         route: useRoute(),
-        votingMasterData: <any>[],
-        currentVoter: null
 
     }),
     actions: {
@@ -42,7 +47,7 @@ export const voteStore = defineStore('voteStore', {
                 this.event.desc = data.event_description
                 this.event.created = data.created
                 await this.getVoters()
-                await this.votingDataQuery()
+                //await this.votingDataQuery()
                 this.event.isLoading = false
             } catch (error) {
                 // console.log(error);
@@ -61,11 +66,22 @@ export const voteStore = defineStore('voteStore', {
             }
         },
 
+
+        async LeaderBoardQuery() {
+            try {
+                var { data } = await server.votingDataQuery(this.event.event_id)
+                this.leaderBoard.showData = data.vote_data
+                this.leaderBoard.votedVoters = data.voters
+            } catch (error) {
+                // console.log(error);
+            }
+        },
+
         async votingDataQuery() {
             try {
                 var { data } = await server.votingDataQuery(this.event.event_id)
                 // console.log(data);
-                this.votingMasterData = data.vote_data
+                this.voting.votingData = data.vote_data
             } catch (error) {
                 // console.log(error);
             }

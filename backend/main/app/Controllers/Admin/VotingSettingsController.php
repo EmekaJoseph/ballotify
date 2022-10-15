@@ -170,6 +170,10 @@ class VotingSettingsController extends BaseController
                 $object->birthday,
                 $object->member_id,
             );
+            if ($object->voted_date != '') {
+                $thisTime = Time::parse($object->voted_date);
+                $object->voted_date = $thisTime->humanize();
+            }
         }
         return $this->respond(array('voters' => $votersJoin));
     }
