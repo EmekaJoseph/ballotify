@@ -10,6 +10,7 @@ export const voteStore = defineStore('voteStore', {
             start: new Date(),
             end: new Date(),
             todaysDate: new Date(),
+            isEpired: false,
             type: '',
             created: '',
             desc: '',

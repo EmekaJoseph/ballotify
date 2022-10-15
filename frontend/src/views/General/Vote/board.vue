@@ -80,6 +80,7 @@ onMounted(() => {
     loadPage();
 
     setInterval(async () => {
+        await vSt.getVoters()
         await vSt.votingDataQuery()
 
     }, 5000);
@@ -101,7 +102,8 @@ const VotesFn = (votes: any) => {
 
 const getPercent = (votes: string) => {
     let decoded = atob(votes)
-    let percent = (parseInt(decoded) / voters.value.length) * 100
+    let votedVoters = voters.value.filter(x => x.voted_status == '1').length
+    let percent = (votedVoters == 0) ? 0 : (parseInt(decoded) / votedVoters) * 100
     return Math.floor(percent)
 }
 </script>

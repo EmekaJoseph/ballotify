@@ -12,9 +12,16 @@
             <router-view></router-view>
 
             <div class="container">
-                <div v-if="!event.error && !event.isLoading" class="text-center small fst-italic text-muted">
-                    Created <b>{{event.start.toDateString()}}, {{event.start.toLocaleTimeString()}}</b>, &nbsp;
-                    Expires <b>{{event.end.toDateString()}} , {{event.end.toLocaleTimeString()}}</b>
+                <div v-if="!event.isEpired">
+                    <div v-if="!event.error && !event.isLoading" class="text-center small fst-italic text-muted">
+                        Created <b>{{event.start.toDateString()}}, {{event.start.toLocaleTimeString()}}</b>, &nbsp;
+                        Expires <b>{{event.end.toDateString()}} , {{event.end.toLocaleTimeString()}}</b>
+                    </div>
+                </div>
+                <div v-else>
+                    <div class="text-center fw-bold fs-5 text-danger">
+                        Voting ended {{event.end.toDateString()}} , {{event.end.toLocaleTimeString()}}
+                    </div>
                 </div>
             </div>
         </section>
@@ -44,7 +51,15 @@ onMounted(async () => {
     checkForQuery()
     window.scrollTo(0, 0);
     await vSt.getEventDetails()
+    checkIfVoteIsExpired()
 })
+
+function checkIfVoteIsExpired() {
+    let todayDate = event.value.todaysDate.setHours(0, 0, 0, 0)
+    let endDate = event.value.end.setHours(0, 0, 0, 0)
+    event.value.isEpired = (todayDate > endDate) ? true : false
+}
+
 
 function checkForQuery() {
     let Code: any = route.query.e

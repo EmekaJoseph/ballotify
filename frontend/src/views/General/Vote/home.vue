@@ -31,13 +31,23 @@
                                 </div>
                             </div>
 
-                            <div class="col-xl-3 col-md-6" data-aos="zoom-out" data-aos-delay="400">
+                            <div v-if="!event.isEpired" class="col-xl-3 col-md-6" data-aos="zoom-out"
+                                data-aos-delay="400">
                                 <div ref="modalBtn" class="card-item  position-relative" data-bs-toggle="modal"
                                     data-bs-target="#codeEntryModal">
                                     <div class="icon"><i class="bi bi-ui-checks-grid icon"></i></div>
                                     <span class="hh">Vote Now</span>
                                     <p class="text-center">
                                         Enter voting code to vote.
+                                    </p>
+                                </div>
+                            </div>
+                            <div v-else class="col-xl-3 col-md-6">
+                                <div class="card-item-grey  position-relative">
+                                    <div class="icon"><i class="bi bi-ui-checks-grid icon"></i></div>
+                                    <span class="hh">Vote Now</span>
+                                    <p class="text-center small text-danger">
+                                        Voting expired
                                     </p>
                                 </div>
                             </div>
@@ -126,9 +136,23 @@ function navigateToVoting(id) {
     padding: 50px;
 }
 
+.menu-card .card-item-grey {
+    background: #fff;
+    height: 100%;
+    border: 1px #ccc solid;
+    border-radius: 20px;
+    padding: 50px;
+}
+
 
 
 .menu-card .card-item .icon {
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: center;
+}
+
+.menu-card .card-item-grey .icon {
     margin-bottom: 10px;
     display: flex;
     justify-content: center;
@@ -140,6 +164,11 @@ function navigateToVoting(id) {
     transition: 0.3s;
 }
 
+.menu-card .card-item-grey .icon i {
+    color: #eee;
+    font-size: 4rem;
+}
+
 .menu-card .card-item .hh {
     font-weight: 600;
     /* margin-bottom: 15px; */
@@ -147,6 +176,15 @@ function navigateToVoting(id) {
     display: flex;
     justify-content: center;
     color: v-bind(cc1);
+}
+
+.menu-card .card-item-grey .hh {
+    font-weight: 600;
+    /* margin-bottom: 15px; */
+    font-size: 24px;
+    display: flex;
+    justify-content: center;
+    color: #eee;
 }
 
 .menu-card .card-item p {
@@ -169,6 +207,11 @@ function navigateToVoting(id) {
         padding: 50px 30px;
         margin-inline: 20px;
         border: 1px solid v-bind(cc1);
+    }
+
+    .menu-card .card-item-grey {
+        padding: 50px 30px;
+        margin-inline: 20px;
     }
 
 
