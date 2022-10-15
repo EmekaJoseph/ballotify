@@ -31,62 +31,74 @@ class VotingController extends ResourceController
             ->join('tbl_positions post', 'post.position_id = cand.position_id')
             ->where('cand.event_id', $event_id)
             ->get()
-            ->getResultArray();
+            ->getResult();
 
-        $positionsExtract = array();
+        $positions = array();
+        $vote_data = [];
+
         if (sizeof($candidates) > 0) {
             foreach ($candidates as $cand) {
-                array_push($positionsExtract, (object)[
-                    'position_id' =>  $cand['position_id'],
-                    'position_name' =>  $cand['position_name'],
+                array_push($positions, (object)[
+                    'position_id' =>  $cand->position_id,
+                    'position_name' =>  $cand->position_name,
                 ]);
+
+                unset(
+                    $cand->verified,
+                    $cand->email,
+                    $cand->phone,
+                    $cand->group_id,
+                    $cand->birthday,
+
+                );
+
+                $cand->votes = base64_encode($cand->votes);
             }
+            $positions = array_unique($positions, SORT_REGULAR);
         }
 
-        $positions = array_unique($positionsExtract, SORT_REGULAR);
 
+        if (sizeof($positions) > 0) {
+            foreach ($positions as $post) {
+                $tempRecord = (object)[];
+                $tempRecord->position_id = $post->position_id;
+                $tempRecord->position_name = $post->position_name;
+                $tempRecord->candidates = array();
 
-
-        $masterData = [];
-
-        foreach ($positions as $post) {
-            $tempRecord = (object)[];
-            $tempRecord->position_id = $post->position_id;
-            $tempRecord->position_name = $post->position_name;
-            $tempRecord->candidates = array();
-
-            foreach ($candidates as $cand) {
-                if ($cand['position_id'] == $post->position_id) {
-                    array_push($tempRecord->candidates, $cand);
+                foreach ($candidates as $cand) {
+                    if ($cand->position_id == $post->position_id) {
+                        array_push($tempRecord->candidates, $cand);
+                    }
                 }
-            }
 
-            array_push($masterData, $tempRecord);
+                array_push($vote_data, $tempRecord);
+            }
         }
 
-
-        return $this->respond(array('vote_data' => $masterData));
+        return $this->respond(array('vote_data' => $vote_data));
     }
 
     public function checkVotingCode($code = null)
     {
         $votersTable = new VotersModel();
-        $voter = $votersTable->where('code', $code)->find();
-        $voterId = '';
+        $thisVoter = $votersTable->where('code', $code)->find();
+
+        $thisVoterId = '';
         $event_id = '';
-        if (sizeof($voter) == 0) {
+
+        if (sizeof($thisVoter) == 0) {
             $status = 0;
         } else {
-            $voter = $voter[0];
-            if ($voter['voted_status'] == 1) {
+            $thisVoter = $thisVoter[0];
+            if ($thisVoter['voted_status'] == 1) {
                 $status = -1;
             } else {
                 $status = 1;
-                $voterId = $voter['id'];
-                $event_id = $voter['event_id'];
+                $thisVoterId = $thisVoter['id'];
+                $event_id = $thisVoter['event_id'];
             }
         }
-        return $this->respond(array('status' => $status, 'voter_id' => $voterId, 'event_id' => $event_id));
+        return $this->respond(array('status' => $status, 'voter_id' => $thisVoterId, 'event_id' => $event_id));
     }
 
     public function submitVote()

@@ -46,7 +46,7 @@
                 </section>
             </div>
         </div>
-        <codeEntryModal @found="navigateToVoting" />
+        <codeEntryModal @codeIsValid="navigateToVoting" />
     </div>
 </template>
 

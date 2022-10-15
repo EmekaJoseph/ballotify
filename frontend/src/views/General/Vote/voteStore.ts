@@ -30,6 +30,7 @@ export const voteStore = defineStore('voteStore', {
                 let event_id = atob(Code)
                 this.event.isLoading = true
                 var { data } = await server.getEventDetails(event_id)
+                // console.log(data);
                 this.event.id = data.id
                 this.event.event_id = data.event_id
                 this.event.name = data.event_name
@@ -46,17 +47,6 @@ export const voteStore = defineStore('voteStore', {
                 // console.log(error);
                 this.event.isLoading = false
                 this.event.error = true
-            }
-        },
-
-
-        async getCandidates() {
-            try {
-                var { data } = await server.getCandidates(this.event.event_id)
-                // console.log(data);
-                this.candidates = data.candidates
-            } catch (error) {
-                // console.log(error);
             }
         },
 

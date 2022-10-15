@@ -44,7 +44,6 @@ onMounted(async () => {
     checkForQuery()
     window.scrollTo(0, 0);
     await vSt.getEventDetails()
-
 })
 
 function checkForQuery() {

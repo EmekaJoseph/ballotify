@@ -13,7 +13,7 @@
                 </p>
 
                 <div class="d-flex">
-                    <router-link to="/admin" class="btn btn-primary btn-get-started">Create Account</router-link>
+                    <router-link to="/admin/signup" class="btn btn-primary btn-get-started">Create Account</router-link>
                     <!-- <button class="btn btn-primary btn-get-started">Vote</button> -->
                 </div>
             </div>

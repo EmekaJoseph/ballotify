@@ -25,9 +25,15 @@ const routes: Array<RouteRecordRaw> = [
   },
 
   {
-    path: '/admin',
-    name: 'Admin',
-    component: () => import('../views/Admin/Login/index.vue')
+    path: '/admin/login',
+    name: 'Login',
+    component: () => import('../views/Admin/Init/Login/index.vue')
+  },
+
+  {
+    path: '/admin/signup',
+    name: 'SignUp',
+    component: () => import('../views/Admin/Init/SignUp/index.vue')
   },
 
   {
@@ -79,15 +85,15 @@ const router = createRouter({
 router.beforeEach(async (to, from, next) => {
   const admin = adminAccount()
   let isLoggedIn = admin.hasAccess
-  if (to.name == 'Home' || to.name == 'About' || to.name == 'Contact' || to.name == 'Vote'
-    || to.name == 'Leaderboard' || to.name == 'Vote_Stats' || to.name == 'Voting') {
+  let genaralPages: string[] = ['Home', 'About', 'Contact', 'Vote', 'Leaderboard', 'Vote_Stats', 'Voting', 'Vote_Home']
+  let adminPages: string[] = ['Login', 'SignUp']
+  if (genaralPages.some(x => x == to.name)) {
     next()
   }
-
-  else if (to.name !== 'Admin' && !isLoggedIn) {
-    next({ name: 'Admin' })
+  else if (!adminPages.some(x => x == to.name) && !isLoggedIn) {
+    next({ name: 'Login' })
   }
-  else if (to.name == 'Admin' && isLoggedIn) {
+  else if (adminPages.some(x => x == to.name) && isLoggedIn) {
     next({ name: 'Dashboard' })
   }
   else {

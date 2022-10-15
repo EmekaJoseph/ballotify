@@ -2,7 +2,7 @@
     <div>
         <nav class="navbar navbar-light fixed-top shadow-sm">
             <div class="container-fluid">
-                <span class="d-md-none">Admin <span>| {{  route.name  }}</span></span>
+                <span class="d-md-none">Admin <span>| {{ route.name }}</span></span>
                 <span></span>
                 <!-- <div class="inputSearch d-none d-md-block">
                     <input type="text" class=" form-control form-control-sm" placeholder="search.." style="width:250px">
@@ -14,9 +14,9 @@
                     <a class="nav-link dropdown-toggle" href="#" id="accountDrop" role="button"
                         data-bs-toggle="dropdown" aria-expanded="false">
 
-                        {{  orgName  }} <br>
+                        {{ orgName }} <br>
                         <div class="fw-lighter float-end" style="font-size:12px;">
-                            {{  _user == '' ? fullName : _user  }}
+                            {{ _user == '' ? fullName : _user }}
                             <i class="bi bi-chevron-down"></i>
                         </div>
                     </a>
@@ -74,7 +74,7 @@ const { fullName, orgName, _user } = storeToRefs(admin)
 
 function logOut() {
     admin.signOut()
-    router.replace({ name: 'Home' })
+    router.replace({ name: 'Login' })
 }
 
 </script>

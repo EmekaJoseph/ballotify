@@ -43,7 +43,7 @@ import { storeToRefs } from 'pinia';
 const vSt = voteStore()
 const { event } = storeToRefs(vSt)
 
-const emit = defineEmits(["found"]);
+const emit = defineEmits(["codeIsValid"]);
 
 const codeForm = reactive({
     code: '',
@@ -63,7 +63,7 @@ async function checkCode() {
         if (data.status == 1) {
             if (data.event_id == event.value.event_id) {
                 codeForm.isChecking = false;
-                emit('found', data.voter_id)
+                emit('codeIsValid', data.voter_id)
             }
             else {
                 codeForm.isChecking = false

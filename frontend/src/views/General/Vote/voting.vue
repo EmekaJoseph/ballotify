@@ -72,7 +72,7 @@
 </template>
 
 <script setup lang="ts">
-import { inject, ref } from 'vue';
+import { inject, ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import brokenLinkVue from './components/brokenLink.vue';
 import votingLinkExpired from './components/votingLinkExpired.vue';
@@ -87,6 +87,11 @@ const vSt = voteStore()
 const { event, voters, votingMasterData: list, currentVoter } = storeToRefs(vSt)
 
 const { cc1, cc2, ccThk, ccBg, ccBtnH }: any = inject("c$");
+
+
+onMounted(async () => {
+    await vSt.getEventDetails()
+})
 
 const thisVoterName = () => {
     let thisVoter = voters.value.find((x: { id: string; }) => x.id == currentVoter.value)

@@ -161,7 +161,15 @@ class VotingSettingsController extends BaseController
             ->get()->getResult();
 
         foreach ($votersJoin as &$object) {
-            $object->code = '';
+            unset(
+                $object->code,
+                $object->email,
+                $object->verified,
+                $object->phone,
+                $object->group_id,
+                $object->birthday,
+                $object->member_id,
+            );
         }
         return $this->respond(array('voters' => $votersJoin));
     }
