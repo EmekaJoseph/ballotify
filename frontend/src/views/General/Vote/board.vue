@@ -153,7 +153,7 @@ const getPercent = (base64: string) => {
 }
 
 .post-card {
-    border: 1px solid #f7f3f3;
+    border: 1px solid v-bind(cc2);
     padding: 0.85rem;
     box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .15) !important;
     background-color: v-bind(ccBg);
@@ -174,7 +174,7 @@ const getPercent = (base64: string) => {
 
 
 .progress {
-    height: 7px;
+    height: 8px;
     background-color: rgba(255, 255, 255, 0.075);
 }
 

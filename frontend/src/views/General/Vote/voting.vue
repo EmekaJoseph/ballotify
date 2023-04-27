@@ -8,14 +8,14 @@
                 <brokenLinkVue />
             </div>
             <div v-else>
-                <div v-if="voting.thisVoter=== null">
+                <div v-if="voting.thisVoter === null">
                     <votingLinkExpired />
                 </div>
                 <div v-else>
                     <div class="my-3">
                         <div class="col-md-12 mt-5">
                             <span class="fs-5">Welcome <span
-                                    class="fw-bold text-capitalize">{{thisVoterName()}},</span></span>
+                                    class="fw-bold text-capitalize">{{ thisVoterName() }},</span></span>
                             <h5 class="small  text-danger">
                                 Do not refresh or leave this page until you are done!
                             </h5>
@@ -29,24 +29,24 @@
                                             <div class="card post-card">
                                                 <h5 class="card-title h6 text-capitalize"><i
                                                         class="bi bi-person-bounding-box text-muted"></i>&nbsp;
-                                                    {{post.position_name}}
+                                                    {{ post.position_name }}
                                                 </h5>
                                                 <div class="card-body choice-span">
-                                                    <div :class="{'chosen': i.chosen}"
-                                                        @click="chooseThis(i.position_id, i.id )"
+                                                    <div :class="{ 'chosen': i.chosen }"
+                                                        @click="chooseThis(i.position_id, i.id)"
                                                         v-for="(i, ind) in getChecked(post.candidates)"
                                                         class="name-card">
                                                         <i v-if="!(i.chosen)" class="bi bi-circle"></i>
                                                         <i v-else class="bi bi-check-circle-fill"></i>
                                                         <span
-                                                            :class="[{'text-custom': i.chosen}, {'fw-bold': i.chosen}]"
-                                                            class="ms-3 text-capitalize">{{i.lastname}}
-                                                            {{i.firstname}}</span>
+                                                            :class="[{ 'text-custom': i.chosen }, { 'fw-bold': i.chosen }]"
+                                                            class="ms-3 text-capitalize">{{ i.lastname }}
+                                                            {{ i.firstname }}</span>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="col-md-12">
+                                        <div class="col-md-12" v-if="voting.votingData.length">
                                             <button v-if="!isSaving" @click.prevent="CheckChoices"
                                                 class="btn customBtn float-end"><i class="bi bi-check-circle-fill"></i>
                                                 Submit</button>

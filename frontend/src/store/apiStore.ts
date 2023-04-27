@@ -2,7 +2,8 @@ import axios from 'axios'
 import { adminAccount } from '@/store/admin/account'
 import { storeToRefs } from 'pinia'
 
-const mainURL = 'http://localhost'
+// const mainURL = 'http://localhost'
+const mainURL = 'http://localhost:8080'
 
 const bus = axios.create({
     baseURL: mainURL,

@@ -49,7 +49,7 @@
                 </div>
                 <div class="col-md-12 col-lg-12">
                     <small v-if="candidate.inputError" class="text-danger">{{
-                    candidate.inputError
+                            candidate.inputError
                     }}</small>
                     <div class="list-span">
                         <div v-if="!(list.length)" class="text-center empty-list-text mt-5 pt-5">
@@ -69,7 +69,7 @@
                                     <tr v-for="(cand, index) in list" :key="index">
                                         <th>{{ index + 1 }}</th>
                                         <td>
-                                            {{cand.lastname}} {{cand.firstname}}, ({{cand.gender}})
+                                            {{ cand.lastname }} {{ cand.firstname }}, ({{ cand.gender }})
                                         </td>
                                         <td>
                                             {{ cand.position_name }}
