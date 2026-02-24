@@ -1,0 +1,84 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Models\Event;
+use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+
+class EventController extends Controller
+{
+    public function index(Request $request)
+    {
+        $events = Event::where('user_id', $request->user()->id)->latest()->get();
+        return response()->json($events);
+    }
+
+    public function store(Request $request)
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'expected_voters' => ['nullable', 'integer', 'min:0'],
+            'starts_at' => ['nullable', 'date'],
+            'ends_at' => ['nullable', 'date', 'after_or_equal:starts_at'],
+        ]);
+
+        $event = Event::create([
+            'user_id' => $request->user()->id,
+            'name' => $data['name'],
+            'link_token' => Str::uuid()->toString(),
+            'expected_voters' => $data['expected_voters'] ?? 0,
+            'starts_at' => $data['starts_at'] ?? null,
+            'ends_at' => $data['ends_at'] ?? null,
+        ]);
+
+        return response()->json($event, 201);
+    }
+
+    public function show(Request $request, Event $event)
+    {
+        abort_unless($event->user_id === $request->user()->id, 404);
+        $event->load(['categories', 'candidates', 'voters']);
+        return response()->json($event);
+    }
+
+    public function update(Request $request, Event $event)
+    {
+        abort_unless($event->user_id === $request->user()->id, 404);
+        $data = $request->validate([
+            'name' => ['sometimes', 'string', 'max:255'],
+            'expected_voters' => ['sometimes', 'integer', 'min:0'],
+            'starts_at' => ['nullable', 'date'],
+            'ends_at' => ['nullable', 'date', 'after_or_equal:starts_at'],
+        ]);
+        $event->update($data);
+        return response()->json($event);
+    }
+
+    public function destroy(Request $request, Event $event)
+    {
+        abort_unless($event->user_id === $request->user()->id, 404);
+        $event->delete();
+        return response()->json(['message' => 'Deleted']);
+    }
+
+    public function link(Request $request, Event $event)
+    {
+        abort_unless($event->user_id === $request->user()->id, 404);
+        return response()->json([
+            'token' => $event->link_token,
+            'public_url' => url("/api/public/events/{$event->link_token}"),
+        ]);
+    }
+
+    public function publicShow(string $token)
+    {
+        $event = Event::where('link_token', $token)->firstOrFail();
+        $event->load(['categories', 'candidates' => function ($q) {
+            $q->select(['id', 'event_id', 'category_id', 'name', 'image_path']);
+        }]);
+        return response()->json($event);
+    }
+}
+
