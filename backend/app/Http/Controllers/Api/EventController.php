@@ -91,4 +91,60 @@ class EventController extends Controller
         $event->setAttribute('selection_mode', $typeKey);
         return response()->json($event);
     }
+
+    public function results(string $token)
+    {
+        $event = Event::where('link_token', $token)->firstOrFail();
+        
+        $totalVotes = DB::table('votes')->where('event_id', $event->id)->count();
+        $totalCandidates = DB::table('candidates')->where('event_id', $event->id)->count();
+        
+        $categories = $event->categories()->get();
+        $results = [];
+        
+        foreach ($categories as $category) {
+            $candidates = DB::table('candidates')
+                ->where('category_id', $category->id)
+                ->select(['id', 'name', 'image_path'])
+                ->get();
+                
+            $candidateResults = [];
+            foreach ($candidates as $candidate) {
+                $voteCount = DB::table('votes')
+                    ->where('category_id', $category->id)
+                    ->where('candidate_id', $candidate->id)
+                    ->count();
+                    
+                $candidateResults[] = [
+                    'id' => $candidate->id,
+                    'name' => $candidate->name,
+                    'image_path' => $candidate->image_path,
+                    'votes' => $voteCount
+                ];
+            }
+            
+            // Sort by votes descending
+            usort($candidateResults, fn($a, $b) => $b['votes'] <=> $a['votes']);
+            
+            $results[] = [
+                'id' => $category->id,
+                'name' => $category->name,
+                'candidates' => $candidateResults,
+                'leader' => $candidateResults[0] ?? null
+            ];
+        }
+        
+        return response()->json([
+            'event' => [
+                'name' => $event->name,
+                'starts_at' => $event->starts_at,
+                'ends_at' => $event->ends_at,
+            ],
+            'stats' => [
+                'total_votes' => $totalVotes,
+                'total_candidates' => $totalCandidates,
+            ],
+            'categories' => $results
+        ]);
+    }
 }

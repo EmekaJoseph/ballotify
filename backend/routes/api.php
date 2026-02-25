@@ -41,6 +41,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
 Route::prefix('public')->group(function () {
     Route::get('events/{token}', [EventController::class, 'publicShow']);
+    Route::get('events/{token}/results', [EventController::class, 'results']);
     Route::post('events/{token}/code/validate', [VoterController::class, 'validateCode']);
     Route::post('events/{token}/vote', [VoteController::class, 'store']);
     Route::post('events/{event}/code/validate', [VoterController::class, 'validateCodeByEvent']);

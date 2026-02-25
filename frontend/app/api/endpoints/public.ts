@@ -20,6 +20,12 @@ export const publicApi = {
         api.post(`/public/events/${eventId}/code/validate`, { code }),
 
     /**
+     * Get public event results by token
+     */
+    getResultsByToken: (token: string) =>
+        api.get(`/public/events/${token}/results`),
+
+    /**
      * Cast a vote for an event
      */
     castVote: (token: string, payload: { code: string; choices: { category_id: number; candidate_id: number }[] }) =>

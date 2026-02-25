@@ -11,11 +11,15 @@
   },
   "dependencies": {
     "@popperjs/core": "^2.11.8",
+    "apexcharts": "^5.6.0",
     "axios": "^1.13.5",
     "bootstrap": "^5.3.8",
     "bootstrap-icons": "^1.13.1",
+    "laravel-echo": "^2.3.0",
     "nuxt": "^4.3.1",
+    "pusher-js": "^8.4.0",
     "vue": "^3.5.28",
-    "vue-router": "^4.6.4"
+    "vue-router": "^4.6.4",
+    "vue3-apexcharts": "^1.10.0"
   }
 }
