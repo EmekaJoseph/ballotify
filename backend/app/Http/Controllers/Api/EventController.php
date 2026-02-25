@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Event;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class EventController extends Controller
@@ -86,6 +87,8 @@ class EventController extends Controller
         $event->load(['categories', 'candidates' => function ($q) {
             $q->select(['id', 'event_id', 'category_id', 'name', 'image_path']);
         }]);
+        $typeKey = DB::table('event_types')->where('id', $event->event_type_id)->value('key') ?? 'single';
+        $event->setAttribute('selection_mode', $typeKey);
         return response()->json($event);
     }
 }

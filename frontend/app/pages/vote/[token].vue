@@ -22,10 +22,9 @@
                                     <i class="bi bi-shield-x fs-1"></i>
                                 </div>
                             </div>
-                            <h3 class="fw-bolder mb-3 text-dark">Access Denied</h3>
+                            <h3 class="fw-bolder mb-3 text-dark">{{ errorTitle }}</h3>
                             <p class="text-muted mb-5 text-balance lh-lg">
-                                This voting link is invalid, expired, or has already been used to cast a ballot. Please
-                                verify the link or contact your event administrator.
+                                {{ errorMessage }}
                             </p>
                             <NuxtLink to="/"
                                 class="btn btn-dark w-100 py-3 fw-bold rounded-pill shadow-sm transition-hover">
@@ -35,7 +34,8 @@
                     </div>
 
                     <!-- Success/Event State -->
-                    <div v-else-if="event" class="card border-0 modern-card rounded-4 overflow-hidden animate-fade-in">
+                    <div v-else-if="event && !ballotSubmitted"
+                        class="card border-0 modern-card rounded-4 overflow-hidden animate-fade-in">
                         <div class="card-body p-4 p-lg-5">
                             <div class="text-center mb-5">
                                 <div
@@ -45,7 +45,7 @@
                                 <h2 class="fw-bolder mb-2 text-dark">{{ event.name }}</h2>
                             </div>
 
-                            <div v-if="!showCodeInput" class="text-center">
+                            <div v-if="!showCodeInput && !ballotStage" class="text-center">
                                 <p class="text-muted mb-5 uppercase tracking-wider fw-bold">Ready to cast your vote?</p>
                                 <button @click="showCodeInput = true"
                                     class="btn modern-gradient-btn text-white btn-lg w-100 py-3 fw-bold rounded-pill shadow transition-hover">
@@ -53,9 +53,12 @@
                                 </button>
                             </div>
 
-                            <div v-else class="animate-slide-up">
-                                <p class="text-muted mb-4 text-center fw-medium">Please enter your unique 16-character
-                                    code.</p>
+                            <!-- Code Entry -->
+                            <div v-else-if="showCodeInput && !ballotStage" class="animate-slide-up">
+                                <p class="text-muted mb-4 text-center fw-medium">
+                                    Please enter your unique voting code (e.g. <span
+                                        class="fw-semibold">E1-0021</span>).
+                                </p>
                                 <form @submit.prevent="handleValidateCode">
                                     <div class="mb-4">
                                         <div class="modern-input-group">
@@ -63,7 +66,7 @@
                                                 <i class="bi bi-key text-primary"></i>
                                             </div>
                                             <input v-model="votingCode" type="text" class="form-control modern-input"
-                                                placeholder="e.g. VOTE-1234-5678" required :disabled="validating"
+                                                placeholder="e.g. E1-0021" required :disabled="validating"
                                                 autocomplete="off">
                                         </div>
                                         <div v-if="validationError"
@@ -88,12 +91,92 @@
                                     </button>
                                 </div>
                             </div>
+
+                            <!-- Ballot -->
+                            <div v-else-if="ballotStage" class="animate-slide-up">
+                                <div class="mb-4">
+                                    <div class="alert alert-primary rounded-4 border-0">
+                                        <i class="bi bi-info-circle-fill me-2"></i>
+                                        Select your preferred candidates below. Some elections may allow multiple
+                                        choices per category.
+                                    </div>
+                                </div>
+                                <div class="vstack gap-4">
+                                    <div v-for="cat in categories" :key="cat.id"
+                                        class="card border-0 shadow-sm rounded-4">
+                                        <div class="card-header bg-white border-0 py-3 px-4">
+                                            <h5 class="mb-0 fw-bold">
+                                                {{ cat.name }}
+                                            </h5>
+                                        </div>
+                                        <div class="card-body p-0">
+                                            <ul class="list-group list-group-flush">
+                                                <li v-for="cand in candidatesByCategory[cat.id] || []" :key="cand.id"
+                                                    class="list-group-item d-flex align-items-center justify-content-between py-3 px-4">
+                                                    <div class="d-flex align-items-center gap-3">
+                                                        <img v-if="cand.image_path" :src="imageUrl(cand.image_path)"
+                                                            class="rounded"
+                                                            style="width:48px;height:48px;object-fit:cover" />
+                                                        <span class="fw-medium">{{ cand.name }}</span>
+                                                    </div>
+                                                    <div>
+                                                        <template v-if="selectionMode === 'multiple'">
+                                                            <div class="form-check form-switch">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                    :id="`c-${cat.id}-${cand.id}`"
+                                                                    :checked="isSelected(cat.id, cand.id)"
+                                                                    @change="toggleSelection(cat.id, cand.id)">
+                                                            </div>
+                                                        </template>
+                                                        <template v-else>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="radio"
+                                                                    :name="`cat-${cat.id}`"
+                                                                    :id="`c-${cat.id}-${cand.id}`" :value="cand.id"
+                                                                    :checked="singleSelected[cat.id] === cand.id"
+                                                                    @change="selectSingle(cat.id, cand.id)">
+                                                            </div>
+                                                        </template>
+                                                    </div>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mt-4 d-grid">
+                                    <button @click="submitBallot"
+                                        class="btn btn-success btn-lg rounded-pill fw-bold py-3" :disabled="submitting">
+                                        <span v-if="submitting" class="spinner-grow spinner-grow-sm me-2"></span>
+                                        {{ submitting ? 'Submitting Vote...' : 'Submit Vote' }}
+                                    </button>
+                                </div>
+                                <div v-if="submitError"
+                                    class="text-danger small mt-3 d-flex align-items-center fw-medium bg-danger bg-opacity-10 p-2 rounded-3">
+                                    <i class="bi bi-exclamation-circle-fill me-2"></i> {{ submitError }}
+                                </div>
+                            </div>
                         </div>
                         <div class="card-footer bg-light border-top border-opacity-10 py-3 text-center">
                             <p class="small text-muted fw-medium mb-0 d-flex align-items-center justify-content-center">
                                 <i class="bi bi-lock-fill text-success me-2 opacity-75"></i>
                                 Secure & Anonymous Voting
                             </p>
+                        </div>
+                    </div>
+
+                    <!-- Success State -->
+                    <div v-else-if="ballotSubmitted"
+                        class="card border-0 modern-card rounded-4 overflow-hidden animate-fade-in">
+                        <div class="card-body p-5 text-center">
+                            <div class="mb-4">
+                                <div class="bg-success bg-opacity-10 text-success rounded-circle d-inline-flex align-items-center justify-content-center"
+                                    style="width:96px;height:96px">
+                                    <i class="bi bi-check2-circle fs-1"></i>
+                                </div>
+                            </div>
+                            <h3 class="fw-bolder text-dark mb-2">Your vote has been recorded</h3>
+                            <p class="text-muted mb-4">Thank you for participating in this election.</p>
+                            <NuxtLink to="/" class="btn btn-dark rounded-pill px-4">Return Home</NuxtLink>
                         </div>
                     </div>
 
@@ -118,10 +201,21 @@ const token = route.params.token as string;
 const loading = ref(true);
 const event = ref<any>(null);
 const error = ref(false);
+const errorTitle = ref('Access Denied');
+const errorMessage = ref('This voting link is invalid, expired, or not currently active. Please verify the link or contact your event administrator.');
 const showCodeInput = ref(false);
+const ballotStage = ref(false);
+const ballotSubmitted = ref(false);
 const votingCode = ref('');
 const validating = ref(false);
 const validationError = ref('');
+const submitting = ref(false);
+const submitError = ref('');
+const categories = ref<any[]>([]);
+const candidatesByCategory = ref<Record<number, any[]>>({});
+const selections = ref<Record<number, Set<number>>>({});
+const singleSelected = ref<Record<number, number | null>>({});
+const selectionMode = ref<'single' | 'multiple'>('single');
 
 const fetchEvent = async () => {
     try {
@@ -129,8 +223,22 @@ const fetchEvent = async () => {
         error.value = false;
         const response = await publicApi.getEventByToken(token);
         event.value = response.data;
-    } catch (err) {
+        categories.value = event.value?.categories || [];
+        const candidates = event.value?.candidates || [];
+        const map: Record<number, any[]> = {};
+        for (const cand of candidates) {
+            if (!map[cand.category_id]) map[cand.category_id] = [];
+            map[cand.category_id].push(cand);
+        }
+        candidatesByCategory.value = map;
+        selectionMode.value = (event.value?.selection_mode === 'multiple') ? 'multiple' : 'single';
+    } catch (err: any) {
         console.error('Failed to fetch event:', err);
+        const status = err?.response?.status;
+        if (status === 404) {
+            errorTitle.value = 'Election Unavailable';
+            errorMessage.value = 'This election has not started yet or has already ended.';
+        }
         error.value = true;
     } finally {
         loading.value = false;
@@ -146,10 +254,8 @@ const handleValidateCode = async () => {
         const response = await publicApi.validateCodeByToken(token, votingCode.value.trim());
 
         if (response.data.valid) {
-            // Redirect to next step (Candidate selection)
-            // For now, just alert or log
-            console.log('Code valid! Proceeding to ballot...');
-            alert('Code valid! In a real app, you would now see the candidates.');
+            ballotStage.value = true;
+            showCodeInput.value = false;
         } else {
             validationError.value = 'Invalid or used voting code.';
         }
@@ -158,6 +264,59 @@ const handleValidateCode = async () => {
         validationError.value = err.response?.data?.message || 'Failed to validate code. Please try again.';
     } finally {
         validating.value = false;
+    }
+};
+
+const isSelected = (categoryId: number, candidateId: number) => {
+    return !!selections.value[categoryId]?.has(candidateId);
+};
+
+const toggleSelection = (categoryId: number, candidateId: number) => {
+    if (!selections.value[categoryId]) selections.value[categoryId] = new Set<number>();
+    const set = selections.value[categoryId];
+    if (set.has(candidateId)) set.delete(candidateId);
+    else set.add(candidateId);
+    // force reactivity for Set changes
+    selections.value = { ...selections.value };
+};
+
+const selectSingle = (categoryId: number, candidateId: number) => {
+    singleSelected.value[categoryId] = candidateId;
+    singleSelected.value = { ...singleSelected.value };
+};
+
+const submitBallot = async () => {
+    submitError.value = '';
+    submitting.value = true;
+    try {
+        const choices: { category_id: number; candidate_id: number }[] = [];
+        if (selectionMode.value === 'multiple') {
+            for (const [catIdStr, set] of Object.entries(selections.value)) {
+                const catId = Number(catIdStr);
+                set?.forEach((candId) => {
+                    choices.push({ category_id: catId, candidate_id: candId });
+                });
+            }
+        } else {
+            for (const [catIdStr, candId] of Object.entries(singleSelected.value)) {
+                const catId = Number(catIdStr);
+                if (candId) {
+                    choices.push({ category_id: catId, candidate_id: candId });
+                }
+            }
+        }
+        if (choices.length === 0) {
+            submitError.value = 'Please select at least one candidate.';
+            submitting.value = false;
+            return;
+        }
+        await publicApi.castVote(token, { code: votingCode.value.trim(), choices });
+        ballotSubmitted.value = true;
+    } catch (err: any) {
+        console.error('Vote submit failed:', err);
+        submitError.value = err.response?.data?.message || 'Failed to submit your vote. Please try again.';
+    } finally {
+        submitting.value = false;
     }
 };
 
