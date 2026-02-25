@@ -140,6 +140,25 @@ Images
 - Candidate images are saved to backend/public/candidates
 - Clients should render using: http://<backend-host>/{image_path}
 
+Broadcasting
+
+- When a vote is recorded successfully, a broadcast event is emitted:
+    - Channel: event.{event_id} (public channel)
+    - Event name: vote.cast
+    - Payload:
+        - event_id: number
+        - choices: [{ category_id: number, candidate_id: number }, ...]
+        - time: ISO timestamp
+- Configure Pusher (example .env):
+    - BROADCAST_DRIVER=pusher
+    - PUSHER_APP_ID=your-app-id
+    - PUSHER_APP_KEY=your-key
+    - PUSHER_APP_SECRET=your-secret
+    - PUSHER_HOST=
+    - PUSHER_PORT=443
+    - PUSHER_SCHEME=https
+    - PUSHER_APP_CLUSTER=mt1
+
 Seeding
 
 - Three events seeded with 4 categories each and 3 candidates per category

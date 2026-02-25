@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Events\VoteCast;
 use App\Models\Candidate;
 use App\Models\Category;
 use App\Models\Event;
@@ -10,7 +11,6 @@ use App\Models\Voter;
 use App\Models\Vote;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\DB as FacadesDB;
 
 class VoteController extends Controller
 {
@@ -65,14 +65,19 @@ class VoteController extends Controller
             }
         }
 
-        DB::transaction(function () use ($event, $matched, $data, $request, $typeKey) {
-            $seen = [];
-            foreach ($data['choices'] as $choice) {
-                $key = $choice['category_id'] . ':' . $choice['candidate_id'];
-                if (isset($seen[$key])) {
-                    continue;
-                }
-                $seen[$key] = true;
+        $cleanChoices = [];
+        $seen = [];
+        foreach ($data['choices'] as $choice) {
+            $key = $choice['category_id'] . ':' . $choice['candidate_id'];
+            if (isset($seen[$key])) {
+                continue;
+            }
+            $seen[$key] = true;
+            $cleanChoices[] = ['category_id' => (int)$choice['category_id'], 'candidate_id' => (int)$choice['candidate_id']];
+        }
+
+        DB::transaction(function () use ($event, $matched, $cleanChoices, $request) {
+            foreach ($cleanChoices as $choice) {
                 Vote::create([
                     'event_id' => $event->id,
                     'voter_id' => $matched->id,
@@ -83,6 +88,9 @@ class VoteController extends Controller
             }
             $matched->used_at = now();
             $matched->save();
+        });
+        DB::afterCommit(function () use ($event, $cleanChoices) {
+            event(new VoteCast($event->id, $cleanChoices));
         });
 
         return response()->json(['message' => 'Vote recorded']);
