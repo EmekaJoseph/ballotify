@@ -41,10 +41,10 @@ return new class extends Migration
             $table->id();
             $table->foreignId('event_id')->constrained()->cascadeOnDelete();
             $table->string('name')->nullable();
-            $table->string('code_hash');
+            $table->string('code');
             $table->timestamp('used_at')->nullable()->index();
             $table->timestamps();
-            $table->unique(['event_id', 'code_hash']);
+            $table->unique(['event_id', 'code']);
         });
 
         Schema::create('votes', function (Blueprint $table) {
@@ -68,4 +68,3 @@ return new class extends Migration
         Schema::dropIfExists('events');
     }
 };
-

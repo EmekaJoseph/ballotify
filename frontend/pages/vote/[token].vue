@@ -81,5 +81,5 @@ const submit = async () => {
     submitErr.value = 'Submission failed'
   }
 }
-const imageUrl = (p: string) => `http://localhost:8883/storage/${p}`
+const imageUrl = (p: string) => `${useRuntimeConfig().public.backendBase}/${p}`
 </script>

@@ -10,7 +10,7 @@ use App\Models\Voter;
 use App\Models\Vote;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB as FacadesDB;
 
 class VoteController extends Controller
 {
@@ -25,14 +25,11 @@ class VoteController extends Controller
 
         $event = Event::where('link_token', $token)->firstOrFail();
 
-        $voter = Voter::where('event_id', $event->id)->whereNull('used_at')->lockForUpdate()->get();
-        $matched = null;
-        foreach ($voter as $v) {
-            if (Hash::check($data['code'], $v->code_hash)) {
-                $matched = $v;
-                break;
-            }
-        }
+        $matched = Voter::where('event_id', $event->id)
+            ->whereNull('used_at')
+            ->where('code', $data['code'])
+            ->lockForUpdate()
+            ->first();
         if (! $matched) {
             return response()->json(['message' => 'Invalid or used code'], 422);
         }
@@ -55,8 +52,27 @@ class VoteController extends Controller
             }
         }
 
-        DB::transaction(function () use ($event, $matched, $data, $request) {
+        $typeKey = DB::table('event_types')->where('id', $event->event_type_id)->value('key') ?? 'single';
+        if ($typeKey === 'single') {
+            $byCategory = [];
             foreach ($data['choices'] as $choice) {
+                $byCategory[$choice['category_id']] = ($byCategory[$choice['category_id']] ?? 0) + 1;
+            }
+            foreach ($byCategory as $count) {
+                if ($count > 1) {
+                    return response()->json(['message' => 'Only one candidate per category is allowed'], 422);
+                }
+            }
+        }
+
+        DB::transaction(function () use ($event, $matched, $data, $request, $typeKey) {
+            $seen = [];
+            foreach ($data['choices'] as $choice) {
+                $key = $choice['category_id'] . ':' . $choice['candidate_id'];
+                if (isset($seen[$key])) {
+                    continue;
+                }
+                $seen[$key] = true;
                 Vote::create([
                     'event_id' => $event->id,
                     'voter_id' => $matched->id,
@@ -72,4 +88,3 @@ class VoteController extends Controller
         return response()->json(['message' => 'Vote recorded']);
     }
 }
-

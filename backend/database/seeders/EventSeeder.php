@@ -7,6 +7,7 @@ use App\Models\Category;
 use App\Models\Event;
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class EventSeeder extends Seeder
@@ -19,37 +20,37 @@ class EventSeeder extends Seeder
             'password' => bcrypt('password'),
         ]);
 
-        $event = Event::create([
-            'user_id' => $user->id,
-            'name' => 'Campus Election',
-            'link_token' => Str::uuid()->toString(),
-            'expected_voters' => 100,
-        ]);
-
-        $categories = collect(['President', 'Secretary'])->map(function ($name) use ($event) {
-            return Category::create(['event_id' => $event->id, 'name' => $name]);
-        })->values();
-
-        foreach ($categories as $category) {
-            Candidate::create([
-                'event_id' => $event->id,
-                'category_id' => $category->id,
-                'name' => $category->name . ' A',
-                'image_path' => null,
-            ]);
-            Candidate::create([
-                'event_id' => $event->id,
-                'category_id' => $category->id,
-                'name' => $category->name . ' B',
-                'image_path' => null,
+        if (! DB::table('event_types')->where('key', 'single')->exists()) {
+            DB::table('event_types')->insert([
+                ['key' => 'single', 'name' => 'Single Choice', 'created_at' => now(), 'updated_at' => now()],
+                ['key' => 'multiple', 'name' => 'Multiple Choice', 'created_at' => now(), 'updated_at' => now()],
             ]);
         }
+        $singleId = DB::table('event_types')->where('key', 'single')->value('id');
+        $multipleId = DB::table('event_types')->where('key', 'multiple')->value('id');
 
-        Event::create([
-            'user_id' => $user->id,
-            'name' => 'Campus Election',
-            'link_token' => Str::uuid()->toString(),
-            'expected_voters' => 50,
-        ]);
+        $names = ['Campus Election', 'Faculty Awards', 'Tech Fest Poll'];
+        foreach ($names as $idx => $ename) {
+            $event = Event::create([
+                'user_id' => $user->id,
+                'name' => $ename,
+                'link_token' => Str::uuid()->toString(),
+                'expected_voters' => [100, 150, 200][$idx] ?? 100,
+                'event_type_id' => $idx === 0 ? $singleId : $multipleId,
+            ]);
+            $categories = collect(['President', 'Vice President', 'Secretary', 'Treasurer'])->map(function ($name) use ($event) {
+                return Category::create(['event_id' => $event->id, 'name' => $name]);
+            })->values();
+            foreach ($categories as $category) {
+                foreach (['A', 'B', 'C'] as $suffix) {
+                    Candidate::create([
+                        'event_id' => $event->id,
+                        'category_id' => $category->id,
+                        'name' => $category->name . ' ' . $suffix,
+                        'image_path' => null,
+                    ]);
+                }
+            }
+        }
     }
 }

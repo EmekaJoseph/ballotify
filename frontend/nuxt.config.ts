@@ -6,7 +6,8 @@ export default defineNuxtConfig({
   modules: ['@nuxtjs/tailwindcss'],
   runtimeConfig: {
     public: {
-      apiBase: '/api'
+      apiBase: '/api',
+      backendBase: 'http://localhost:8883'
     }
   },
   nitro: {

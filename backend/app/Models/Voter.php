@@ -14,7 +14,7 @@ class Voter extends Model
     protected $fillable = [
         'event_id',
         'name',
-        'code_hash',
+        'code',
         'used_at',
     ];
 
