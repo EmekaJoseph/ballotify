@@ -31,12 +31,22 @@ class EventSeeder extends Seeder
 
         $names = ['Campus Election', 'Faculty Awards', 'Tech Fest Poll'];
         foreach ($names as $idx => $ename) {
+            $now = now();
+            // Event windows: 0-active, 1-expired, 2-upcoming
+            $windows = [
+                ['starts_at' => $now->copy()->subHours(1), 'ends_at' => $now->copy()->addDays(1)],
+                ['starts_at' => $now->copy()->subDays(3), 'ends_at' => $now->copy()->subDay()],
+                ['starts_at' => $now->copy()->addDay(), 'ends_at' => $now->copy()->addDays(3)],
+            ];
+            $win = $windows[$idx] ?? ['starts_at' => null, 'ends_at' => null];
             $event = Event::create([
                 'user_id' => $user->id,
                 'name' => $ename,
                 'link_token' => Str::uuid()->toString(),
                 'expected_voters' => [100, 150, 200][$idx] ?? 100,
                 'event_type_id' => $idx === 0 ? $singleId : $multipleId,
+                'starts_at' => $win['starts_at'],
+                'ends_at' => $win['ends_at'],
             ]);
             $categories = collect(['President', 'Vice President', 'Secretary', 'Treasurer'])->map(function ($name) use ($event) {
                 return Category::create(['event_id' => $event->id, 'name' => $name]);

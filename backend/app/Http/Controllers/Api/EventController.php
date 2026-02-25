@@ -74,11 +74,18 @@ class EventController extends Controller
 
     public function publicShow(string $token)
     {
-        $event = Event::where('link_token', $token)->firstOrFail();
+        $now = now();
+        $event = Event::where('link_token', $token)
+            ->where(function ($q) use ($now) {
+                $q->whereNull('starts_at')->orWhere('starts_at', '<=', $now);
+            })
+            ->where(function ($q) use ($now) {
+                $q->whereNull('ends_at')->orWhere('ends_at', '>=', $now);
+            })
+            ->firstOrFail();
         $event->load(['categories', 'candidates' => function ($q) {
             $q->select(['id', 'event_id', 'category_id', 'name', 'image_path']);
         }]);
         return response()->json($event);
     }
 }
-

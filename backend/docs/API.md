@@ -105,6 +105,10 @@ Public (Voters)
 
 - GET /public/events/{token}
     - Returns public event data (categories and candidates) by link token
+    - Only returns when the event is “active”:
+        - starts_at is null or <= now, and
+        - ends_at is null or >= now
+    - Otherwise returns 404
 - POST /public/events/{token}/code/validate
     - Body: { code: string }
     - Returns 200 { valid: true } if code exists and is unused; otherwise 422 { valid: false }
