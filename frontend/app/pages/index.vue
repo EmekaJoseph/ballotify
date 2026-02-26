@@ -1,170 +1,127 @@
 <template>
-    <div class="main-wrapper">
-        <main>
+    <div class="main-wrapper page-bg py-5">
+        <main class="container py-lg-5">
             <!-- Hero Section -->
-            <section class="hero-section py-5 overflow-hidden">
-                <div class="container py-lg-5">
-                    <div class="row align-items-center gy-5">
-                        <div class="col-lg-7 text-center text-lg-start">
-                            <h1 class="display-3 fw-bolder lh-sm mb-4">
-                                Modern Voting, <br />
-                                <span class="text-primary-gradient">Perfectly Simplified.</span>
-                            </h1>
-                            <p class="lead text-muted mb-5 mx-auto mx-lg-0 max-width-600">
-                                Create, manage, and scale your elections with Ballotify. Secure, transparent, and
-                                user-friendly voting
-                                for organizations of all sizes.
-                            </p>
-                            <div class="d-flex flex-wrap justify-content-center justify-content-lg-start gap-3">
-                                <button class="btn btn-primary btn-lg px-5 fw-bold shadow">Create Your first
-                                    Event</button>
-                                <NuxtLink to="/demo/vote" class="btn btn-outline-dark btn-lg px-4">View Demo</NuxtLink>
-                            </div>
-                            <div
-                                class="mt-5 d-flex align-items-center justify-content-center justify-content-lg-start gap-3">
-                                <div class="avatar-group d-flex">
-                                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"
-                                        class="avatar border border-white border-2 rounded-circle" alt="User">
-                                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Anita"
-                                        class="avatar border border-white border-2 rounded-circle ms-n3" alt="User">
-                                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Brian"
-                                        class="avatar border border-white border-2 rounded-circle ms-n3" alt="User">
-                                </div>
-                                <p class="small mb-0 font-weight-bold">
-                                    <span class="text-primary fw-bold">2,000+</span> organizations trust Ballotify
-                                </p>
-                            </div>
+            <section class="hero-section mb-5 animate-fade-in">
+                <div class="row align-items-center gy-5">
+                    <div class="col-lg-7 text-center text-lg-start">
+                        <div
+                            class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3 py-2 small d-inline-block mb-4 fw-bold tracking-widest uppercase border border-primary border-opacity-10">
+                            <i class="bi bi-stars me-1"></i> The Future of Voting
                         </div>
-                        <div class="col-lg-5">
-                            <div class="hero-img-container position-relative">
-                                <div class="hero-blob bg-primary opacity-10 rounded-circle blur-3xl position-absolute">
-                                </div>
-                                <img src="/hero_illustration.png" alt="Ballotify Hero"
-                                    class="img-fluid position-relative z-1 animate-float drop-shadow">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Features Section -->
-            <section class="features-section bg-light py-5">
-                <div class="container py-5">
-                    <div class="text-center mb-5">
-                        <h2 class="display-5 fw-bold mb-3">Everything you need to <br class="d-none d-md-block"> run a
-                            successful
-                            election</h2>
-                        <p class="lead text-muted mx-auto max-width-700">
-                            From small community polls to large-scale organizational elections, we've got you covered
-                            with premium
-                            features.
+                        <h1 class="display-3 fw-black text-dark lh-sm mb-4">
+                            Modern Voting, <br />
+                            <span class="text-primary-gradient">Perfectly Simplified.</span>
+                        </h1>
+                        <p class="lead text-muted mb-5 mx-auto mx-lg-0 fw-medium opacity-75" style="max-width: 600px;">
+                            Create, manage, and scale your elections with Ballotify. Secure, transparent, and
+                            vibrant voting experience for organizations that value democracy.
                         </p>
+                        <div class="d-flex flex-wrap justify-content-center justify-content-lg-start gap-4">
+                            <button
+                                class="btn btn-primary btn-lg px-5 py-3 fw-black rounded-pill shadow-lg transition-hover">
+                                Create Your Event <i class="bi bi-plus-lg ms-2"></i>
+                            </button>
+                            <NuxtLink to="/demo/vote"
+                                class="btn btn-outline-dark btn-lg px-5 py-3 fw-bold rounded-pill transition-hover">
+                                View Demo <i class="bi bi-play-circle ms-2"></i>
+                            </NuxtLink>
+                        </div>
+                        <div
+                            class="mt-5 d-flex align-items-center justify-content-center justify-content-lg-start gap-3">
+                            <div class="avatar-group d-flex">
+                                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"
+                                    class="avatar border border-white border-2 rounded-circle" alt="User">
+                                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Anita"
+                                    class="avatar border border-white border-2 rounded-circle ms-n3" alt="User">
+                                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Brian"
+                                    class="avatar border border-white border-2 rounded-circle ms-n3" alt="User">
+                            </div>
+                            <p class="small mb-0 fw-bold opacity-75">
+                                <span class="text-primary fw-black">5,000+</span> trust Ballotify daily
+                            </p>
+                        </div>
                     </div>
-                    <div class="row g-4">
-                        <!-- Feature 1 -->
-                        <div class="col-md-6 col-lg-4">
-                            <div class="card h-100 border-0 shadow-sm transition-hover">
-                                <div class="card-body p-4">
-                                    <div
-                                        class="feature-icon bg-primary bg-opacity-10 text-primary rounded-3 mb-4 d-flex align-items-center justify-content-center">
-                                        <i class="bi bi-shield-lock-fill fs-3"></i>
-                                    </div>
-                                    <h4 class="fw-bold mb-3">Secure Voting</h4>
-                                    <p class="text-muted">End-to-end encryption and blockchain verification ensure every
-                                        vote is
-                                        tamper-proof and authentic.</p>
-                                </div>
+                    <div class="col-lg-5 animate-slide-up" style="animation-delay: 0.2s">
+                        <div class="hero-img-container position-relative">
+                            <div class="glass-card p-2 overflow-hidden position-relative z-1">
+                                <img src="/hero_illustration.png" alt="Ballotify Hero"
+                                    class="img-fluid rounded-4 animate-float">
                             </div>
-                        </div>
-                        <!-- Feature 2 -->
-                        <div class="col-md-6 col-lg-4">
-                            <div class="card h-100 border-0 shadow-sm transition-hover">
-                                <div class="card-body p-4">
-                                    <div
-                                        class="feature-icon bg-success bg-opacity-10 text-success rounded-3 mb-4 d-flex align-items-center justify-content-center">
-                                        <i class="bi bi-link-45deg fs-3"></i>
-                                    </div>
-                                    <h4 class="fw-bold mb-3">Unique Voting Links</h4>
-                                    <p class="text-muted">Generate secure, one-time use links for your voters, ensuring
-                                        each person votes
-                                        only once.</p>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- Feature 3 -->
-                        <div class="col-md-6 col-lg-4">
-                            <div class="card h-100 border-0 shadow-sm transition-hover">
-                                <div class="card-body p-4">
-                                    <div
-                                        class="feature-icon bg-info bg-opacity-10 text-info rounded-3 mb-4 d-flex align-items-center justify-content-center">
-                                        <i class="bi bi-bar-chart-fill fs-3"></i>
-                                    </div>
-                                    <h4 class="fw-bold mb-3">Real-time Analytics</h4>
-                                    <p class="text-muted">Monitor voter turnout and results in real-time with beautiful,
-                                        interactive
-                                        dashboards.</p>
-                                </div>
-                            </div>
+                            <div class="hero-blob bg-primary opacity-20 rounded-circle blur-3xl position-absolute"
+                                style="top: -10%; right: -10%; width: 300px; height: 300px;"></div>
+                            <div class="hero-blob bg-info opacity-20 rounded-circle blur-3xl position-absolute"
+                                style="bottom: -10%; left: -10%; width: 250px; height: 250px;"></div>
                         </div>
                     </div>
                 </div>
             </section>
 
-            <!-- How It Works -->
-            <section class="py-5">
-                <div class="container py-5">
-                    <div class="text-center mb-5">
-                        <h2 class="display-5 fw-bold">Simple 4-Step Process</h2>
+            <!-- Features Grid -->
+            <section class="features-section py-5">
+                <div class="text-center mb-5 animate-slide-up">
+                    <h2 class="display-5 fw-black text-dark mb-3">Enterprise Features</h2>
+                    <p class="text-muted mx-auto fw-medium opacity-75" style="max-width: 600px;">
+                        Premium tools designed for community polls and organizational elections.
+                    </p>
+                </div>
+                <div class="row g-4">
+                    <!-- Feature 1 -->
+                    <div class="col-md-6 col-lg-4 animate-slide-up" style="animation-delay: 0.1s">
+                        <div class="glass-card p-4 h-100 transition-hover border-0 shadow-sm">
+                            <div class="feature-icon bg-primary bg-opacity-10 text-primary rounded-4 mb-4 d-flex align-items-center justify-content-center"
+                                style="width: 64px; height: 64px;">
+                                <i class="bi bi-shield-lock-fill fs-3"></i>
+                            </div>
+                            <h4 class="fw-black text-dark mb-3">Secure Voting</h4>
+                            <p class="text-muted fw-medium small opacity-75">End-to-end encryption and blockchain
+                                verification ensure every vote is tamper-proof and authentic.</p>
+                        </div>
                     </div>
-                    <div class="row g-4 text-center">
-                        <div class="col-sm-6 col-lg-3">
-                            <div
-                                class="step-number bg-primary text-white rounded-circle mx-auto mb-4 d-flex align-items-center justify-content-center fs-2 fw-bold">
-                                1</div>
-                            <h5 class="fw-bold">Create Event</h5>
-                            <p class="text-muted small px-3">Set up your election with titles, dates, and instructions.
-                            </p>
+                    <!-- Feature 2 -->
+                    <div class="col-md-6 col-lg-4 animate-slide-up" style="animation-delay: 0.2s">
+                        <div class="glass-card p-4 h-100 transition-hover border-0 shadow-sm">
+                            <div class="feature-icon bg-success bg-opacity-10 text-success rounded-4 mb-4 d-flex align-items-center justify-content-center"
+                                style="width: 64px; height: 64px;">
+                                <i class="bi bi-link-45deg fs-3"></i>
+                            </div>
+                            <h4 class="fw-black text-dark mb-3">Unique Links</h4>
+                            <p class="text-muted fw-medium small opacity-75">Generate one-time use tokens for your
+                                voters, ensuring each person participates exactly once.</p>
                         </div>
-                        <div class="col-sm-6 col-lg-3">
-                            <div
-                                class="step-number bg-primary text-white rounded-circle mx-auto mb-4 d-flex align-items-center justify-content-center fs-2 fw-bold">
-                                2</div>
-                            <h5 class="fw-bold">Add Candidates</h5>
-                            <p class="text-muted small px-3">Define categories and add candidates with photos and
-                                profiles.</p>
-                        </div>
-                        <div class="col-sm-6 col-lg-3">
-                            <div
-                                class="step-number bg-primary text-white rounded-circle mx-auto mb-4 d-flex align-items-center justify-content-center fs-2 fw-bold">
-                                3</div>
-                            <h5 class="fw-bold">Import Voters</h5>
-                            <p class="text-muted small px-3">Upload your voter list. We'll generate unique codes for
-                                everyone.</p>
-                        </div>
-                        <div class="col-sm-6 col-lg-3">
-                            <div
-                                class="step-number bg-primary text-white rounded-circle mx-auto mb-4 d-flex align-items-center justify-content-center fs-2 fw-bold">
-                                4</div>
-                            <h5 class="fw-bold">Launch & Vote</h5>
-                            <p class="text-muted small px-3">Send unique links. Voters enter their code and cast their
-                                ballot.</p>
+                    </div>
+                    <!-- Feature 3 -->
+                    <div class="col-md-6 col-lg-4 animate-slide-up" style="animation-delay: 0.3s">
+                        <div class="glass-card p-4 h-100 transition-hover border-0 shadow-sm">
+                            <div class="feature-icon bg-info bg-opacity-10 text-info rounded-4 mb-4 d-flex align-items-center justify-content-center"
+                                style="width: 64px; height: 64px;">
+                                <i class="bi bi-bar-chart-fill fs-3"></i>
+                            </div>
+                            <h4 class="fw-black text-dark mb-3">Live Analytics</h4>
+                            <p class="text-muted fw-medium small opacity-75">Monitor voter turnout and results in
+                                real-time with beautiful, interactive dashboards.</p>
                         </div>
                     </div>
                 </div>
             </section>
 
             <!-- CTA Section -->
-            <section class="py-5 bg-primary text-white">
-                <div class="container py-5 text-center">
-                    <h2 class="display-4 fw-bold mb-4">Ready to host your next fair election?</h2>
-                    <p class="lead opacity-75 mb-5 mx-auto max-width-700">
-                        Join thousands of organizations using Ballotify to make democratic decisions with confidence.
-                    </p>
-                    <button class="btn btn-light btn-lg px-5 fw-bold">Create Your Event Now</button>
+            <section class="cta-section py-5 animate-slide-up" style="animation-delay: 0.4s">
+                <div class="glass-card p-5 text-center overflow-hidden position-relative">
+                    <div class="position-relative z-1">
+                        <h2 class="display-4 fw-black text-dark mb-4">Host Your Next Election</h2>
+                        <p class="lead text-muted mb-5 mx-auto fw-medium opacity-75" style="max-width: 600px;">
+                            Join thousands of organizations using Ballotify to make fair decisions with confidence.
+                        </p>
+                        <button class="btn btn-dark btn-lg rounded-pill px-5 py-3 fw-bold shadow-lg transition-hover">
+                            Get Started Now <i class="bi bi-arrow-right ms-2"></i>
+                        </button>
+                    </div>
+                    <div class="hero-blob bg-primary opacity-10 rounded-circle blur-3xl position-absolute"
+                        style="top: -20%; left: -10%; width: 400px; height: 400px;"></div>
                 </div>
             </section>
         </main>
-
     </div>
 </template>
 
@@ -175,53 +132,18 @@ definePageMeta({
 </script>
 
 <style scoped>
-.brand-icon {
-    width: 40px;
-    height: 40px;
-}
-
 .avatar {
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
+    object-fit: cover;
 }
 
 .ms-n3 {
-    margin-left: -0.75rem !important;
+    margin-left: -1rem !important;
 }
 
-.max-width-600 {
-    max-width: 600px;
-}
-
-.max-width-700 {
-    max-width: 700px;
-}
-
-.hero-blob {
-    width: 400px;
-    height: 400px;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    filter: blur(80px);
-}
-
-.feature-icon {
-    width: 64px;
-    height: 64px;
-}
-
-.step-number {
-    width: 70px;
-    height: 70px;
-}
-
-.transition-hover {
-    transition: all 0.3s ease;
-}
-
-.transition-hover:hover {
-    transform: translateY(-10px);
+.hero-img-container {
+    perspective: 1000px;
 }
 
 .animate-float {
@@ -229,24 +151,47 @@ definePageMeta({
 }
 
 @keyframes float {
-    0% {
-        transform: translateY(0px);
+
+    0%,
+    100% {
+        transform: translateY(0px) rotate(0deg);
     }
 
     50% {
-        transform: translateY(-20px);
-    }
-
-    100% {
-        transform: translateY(0px);
+        transform: translateY(-20px) rotate(2deg);
     }
 }
 
-.drop-shadow {
-    filter: drop-shadow(0 20px 30px rgba(0, 0, 0, 0.15));
+.blur-3xl {
+    filter: blur(64px);
 }
 
-.space-y-2>li:not(:last-child) {
-    margin-bottom: 0.5rem;
+.hero-blob {
+    z-index: 0;
+    pointer-events: none;
+}
+
+.uppercase {
+    text-transform: uppercase;
+}
+
+.tracking-widest {
+    letter-spacing: 0.2em;
+}
+
+.tracking-tight {
+    letter-spacing: -0.025em;
+}
+
+/* Responsive adjustments */
+@media (max-width: 991.98px) {
+    .display-3 {
+        font-size: 3rem;
+    }
+
+    .hero-section {
+        text-align: center;
+        margin-top: 2rem;
+    }
 }
 </style>

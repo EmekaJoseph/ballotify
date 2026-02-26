@@ -264,15 +264,6 @@ onMounted(async () => {
     background-attachment: fixed;
 }
 
-/* Glassmorphism Card */
-.glass-card {
-    background: rgba(255, 255, 255, 0.6);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.8);
-    border-radius: 24px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), inset 0 0 20px rgba(255, 255, 255, 0.5);
-}
 
 .status-line {
     position: absolute;
@@ -312,14 +303,6 @@ onMounted(async () => {
     color: rgba(26, 32, 44, 0.4);
 }
 
-.transition-hover {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.transition-hover:hover {
-    transform: translateY(-4px);
-    background: rgba(255, 255, 255, 0.7);
-}
 
 .rank-indicator {
     width: 24px;
@@ -329,38 +312,7 @@ onMounted(async () => {
     border-bottom: none !important;
 }
 
-.animate-fade-in {
-    animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
 
-.animate-slide-up {
-    opacity: 0;
-    animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(15px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@keyframes slideUp {
-    from {
-        opacity: 0;
-        transform: translateY(30px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
 
 .uppercase {
     text-transform: uppercase;
