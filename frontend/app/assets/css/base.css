@@ -1,0 +1,21 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
+
+:root {
+    --primary-gradient: linear-gradient(90deg, #0d6efd 0%, #6610f2 100%);
+}
+
+body {
+    font-family: 'Outfit', sans-serif;
+    color: #1a202c;
+}
+
+.fw-black {
+    font-weight: 900;
+}
+
+.text-primary-gradient {
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}

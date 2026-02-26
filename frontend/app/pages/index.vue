@@ -18,7 +18,7 @@
                             <div class="d-flex flex-wrap justify-content-center justify-content-lg-start gap-3">
                                 <button class="btn btn-primary btn-lg px-5 fw-bold shadow">Create Your first
                                     Event</button>
-                                <button class="btn btn-outline-dark btn-lg px-4">View Demo</button>
+                                <NuxtLink to="/demo/vote" class="btn btn-outline-dark btn-lg px-4">View Demo</NuxtLink>
                             </div>
                             <div
                                 class="mt-5 d-flex align-items-center justify-content-center justify-content-lg-start gap-3">
@@ -175,18 +175,6 @@ definePageMeta({
 </script>
 
 <style scoped>
-/* Custom modern styles for Bootstrap layout */
-:root {
-    --primary-gradient: linear-gradient(90deg, #0d6efd 0%, #6610f2 100%);
-}
-
-.text-primary-gradient {
-    background: var(--primary-gradient);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
-
 .brand-icon {
     width: 40px;
     height: 40px;

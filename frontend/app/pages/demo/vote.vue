@@ -4,7 +4,7 @@
             <div class="row justify-content-center pt-lg-5">
                 <div class="col-md-7 col-lg-6 col-xl-5">
 
-                    <!-- Loading State -->
+                    <!-- Loading State (Simulated) -->
                     <div v-if="loading" class="text-center py-5">
                         <div class="spinner-grow text-primary mb-4" role="status" style="width: 3rem; height: 3rem;">
                             <span class="visually-hidden">Loading...</span>
@@ -13,34 +13,17 @@
                         <p class="text-muted fw-medium">Securing connection to the election server...</p>
                     </div>
 
-                    <!-- Error State -->
-                    <div v-else-if="error" class="glass-card shadow-lg p-5 text-center animate-slide-up">
-                        <div class="error-wrapper mb-4">
-                            <div
-                                class="error-icon bg-danger bg-opacity-10 text-danger rounded-circle d-flex align-items-center justify-content-center mx-auto shadow-inner">
-                                <i class="bi bi-shield-x fs-1"></i>
-                            </div>
-                        </div>
-                        <h3 class="fw-black mb-3 text-dark">{{ errorTitle }}</h3>
-                        <p class="text-muted mb-5 text-balance lh-lg fw-medium">
-                            {{ errorMessage }}
-                        </p>
-                        <NuxtLink to="/" class="btn btn-dark rounded-pill px-5 py-3 fw-bold transition-hover shadow-sm">
-                            <i class="bi bi-house-door me-2"></i>Return Home
-                        </NuxtLink>
-                    </div>
-
-                    <!-- Success/Event State -->
-                    <div v-else-if="event && !ballotSubmitted">
+                    <!-- Event Flow -->
+                    <div v-else-if="!ballotSubmitted">
                         <div class="glass-card overflow-hidden animate-slide-up p-0">
                             <div class="p-4 p-lg-5">
                                 <div class="text-center mb-5">
                                     <div
                                         class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3 py-2 small d-inline-block mb-3 fw-bold tracking-widest uppercase border border-primary border-opacity-10">
-                                        <i class="bi bi-shield-check me-1"></i> Official Ballot
+                                        <i class="bi bi-shield-check me-1"></i> Demo Ballot
                                     </div>
                                     <h2 class="fw-black mb-2 text-dark">{{ event.name }}</h2>
-                                    <p class="text-muted small fw-medium">Secure Voting Portal</p>
+                                    <p class="text-muted small fw-medium">Interactive Demo Flow</p>
                                 </div>
 
                                 <div v-if="!showCodeInput && !ballotStage" class="text-center">
@@ -50,12 +33,13 @@
                                         class="btn btn-primary btn-lg w-100 py-3 fw-black rounded-pill shadow-sm transition-hover">
                                         Enter Voting Code <i class="bi bi-arrow-right ms-2"></i>
                                     </button>
+                                    <p class="text-muted mt-4 small">Use code: <strong>DEMO-1234</strong></p>
                                 </div>
 
                                 <!-- Code Entry -->
                                 <div v-else-if="showCodeInput && !ballotStage" class="animate-slide-up">
                                     <p class="text-muted mb-4 text-center fw-medium pb-2">
-                                        Your unique voting code ensures one-time, secure participation.
+                                        In a real election, your unique code ensures one-time, secure participation.
                                     </p>
                                     <form @submit.prevent="handleValidateCode">
                                         <div class="mb-4">
@@ -64,7 +48,7 @@
                                                     <i class="bi bi-key text-primary"></i>
                                                 </div>
                                                 <input v-model="votingCode" type="text"
-                                                    class="form-control modern-input" placeholder="e.g. E1-0021"
+                                                    class="form-control modern-input" placeholder="e.g. DEMO-1234"
                                                     required :disabled="validating" autocomplete="off">
                                             </div>
                                             <div v-if="validationError"
@@ -91,18 +75,17 @@
                                 </div>
                             </div>
 
-                            <!-- Ballot Stage Footer -->
                             <div v-if="!ballotStage"
                                 class="p-3 bg-white bg-opacity-25 border-top border-white border-opacity-40 text-center">
                                 <p
                                     class="small text-muted fw-bold mb-0 d-flex align-items-center justify-content-center opacity-75 uppercase tracking-tighter">
                                     <i class="bi bi-lock-fill text-success me-2"></i>
-                                    End-to-End Encrypted
+                                    Static Demo Environment
                                 </p>
                             </div>
                         </div>
 
-                        <!-- Full Ballot View (Stage 2) -->
+                        <!-- Full Ballot View -->
                         <div v-if="ballotStage" class="animate-slide-up vstack gap-4 mt-4">
                             <div class="glass-card p-4 border-primary border-opacity-10">
                                 <div class="d-flex align-items-start gap-3">
@@ -110,14 +93,15 @@
                                         <i class="bi bi-info-circle-fill fs-5"></i>
                                     </div>
                                     <div>
-                                        <h6 class="fw-black text-dark mb-1">Voting Instructions</h6>
-                                        <p class="text-muted small fw-medium mb-0">Select your preferred candidates.
-                                            Your selections are private and secure.</p>
+                                        <h6 class="fw-black text-dark mb-1">Demo Mode Instructions</h6>
+                                        <p class="text-muted small fw-medium mb-0">Experiments with the UI. In this
+                                            demo,
+                                            you can select candidates and see the full voting experience.</p>
                                     </div>
                                 </div>
                             </div>
 
-                            <div v-for="(cat, catIdx) in categories" :key="cat.id"
+                            <div v-for="(cat, catIdx) in event.categories" :key="cat.id"
                                 class="glass-card p-0 overflow-hidden animate-slide-up"
                                 :style="{ animationDelay: `${0.1 + (catIdx * 0.1)}s` }">
                                 <div
@@ -127,16 +111,13 @@
                                     </h5>
                                 </div>
                                 <div class="p-0">
-                                    <div v-for="cand in candidatesByCategory[cat.id] || []" :key="cand.id"
+                                    <div v-for="cand in getCandidatesForCat(cat.id)" :key="cand.id"
                                         class="candidate-item d-flex align-items-center justify-content-between p-3 px-4 transition-hover border-bottom border-white border-opacity-20"
-                                        @click="selectionMode === 'multiple' ? toggleSelection(cat.id, cand.id) : selectSingle(cat.id, cand.id)"
-                                        style="cursor: pointer;">
+                                        @click="selectSingle(cat.id, cand.id)" style="cursor: pointer;">
                                         <div class="d-flex align-items-center gap-3">
                                             <div
                                                 class="candidate-avatar-wrapper shadow-sm rounded-circle overflow-hidden border border-white p-0.5 bg-white">
-                                                <img v-if="cand.image_path" :src="imageUrl(cand.image_path)"
-                                                    class="candidate-avatar-img" />
-                                                <div v-else
+                                                <div
                                                     class="candidate-avatar-img bg-light d-flex align-items-center justify-content-center text-muted">
                                                     <i class="bi bi-person-fill"></i>
                                                 </div>
@@ -144,19 +125,11 @@
                                             <span class="fw-bold text-dark">{{ cand.name }}</span>
                                         </div>
                                         <div class="selection-control">
-                                            <template v-if="selectionMode === 'multiple'">
-                                                <div class="modern-checkbox"
-                                                    :class="{ 'checked': isSelected(cat.id, cand.id) }">
-                                                    <i v-if="isSelected(cat.id, cand.id)" class="bi bi-check-lg"></i>
+                                            <div class="modern-radio"
+                                                :class="{ 'checked': singleSelected[cat.id] === cand.id }">
+                                                <div v-if="singleSelected[cat.id] === cand.id" class="radio-inner">
                                                 </div>
-                                            </template>
-                                            <template v-else>
-                                                <div class="modern-radio"
-                                                    :class="{ 'checked': singleSelected[cat.id] === cand.id }">
-                                                    <div v-if="singleSelected[cat.id] === cand.id" class="radio-inner">
-                                                    </div>
-                                                </div>
-                                            </template>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -186,10 +159,9 @@
                             </div>
                         </div>
                         <h3 class="fw-black text-dark mb-3">Vote Recorded Successfully</h3>
-                        <p class="text-muted mb-5 fw-medium">Your voice has been heard. Thank you for participating in a
-                            fair and
-                            transparent election.</p>
-                        <NuxtLink :to="`/event/${token}/results`"
+                        <p class="text-muted mb-5 fw-medium">In the actual app, this vote would trigger real-time
+                            updates for all dashboard users.</p>
+                        <NuxtLink :to="`/demo/results`"
                             class="btn btn-dark btn-lg rounded-pill px-5 fw-bold transition-hover shadow-sm">
                             Go to Dashboard
                         </NuxtLink>
@@ -203,21 +175,12 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
-import { publicApi } from '~/api/endpoints/public';
 
 definePageMeta({
     layout: 'public'
 });
 
-const route = useRoute();
-const token = route.params.token as string;
-
 const loading = ref(true);
-const event = ref<any>(null);
-const error = ref(false);
-const errorTitle = ref('Access Denied');
-const errorMessage = ref('This voting link is invalid, expired, or not currently active. Please verify the link or contact your event administrator.');
 const showCodeInput = ref(false);
 const ballotStage = ref(false);
 const ballotSubmitted = ref(false);
@@ -226,129 +189,64 @@ const validating = ref(false);
 const validationError = ref('');
 const submitting = ref(false);
 const submitError = ref('');
-const categories = ref<any[]>([]);
-const candidatesByCategory = ref<Record<number, any[]>>({});
-const selections = ref<Record<number, Set<number>>>({});
-const singleSelected = ref<Record<number, number | null>>({});
-const selectionMode = ref<'single' | 'multiple'>('single');
 
-const fetchEvent = async () => {
-    try {
-        loading.value = true;
-        error.value = false;
-        const response = await publicApi.getEventByToken(token);
-        event.value = response.data;
-        categories.value = event.value?.categories || [];
-        const candidates = event.value?.candidates || [];
-        const map: Record<number, any[]> = {};
-        for (const cand of candidates) {
-            const catId = cand.category_id;
-            if (!map[catId]) map[catId] = [];
-            map[catId]!.push(cand);
-        }
-        candidatesByCategory.value = map;
-        selectionMode.value = (event.value?.selection_mode === 'multiple') ? 'multiple' : 'single';
-    } catch (err: any) {
-        console.error('Failed to fetch event:', err);
-        const status = err?.response?.status;
-        if (status === 404) {
-            errorTitle.value = 'Election Unavailable';
-            errorMessage.value = 'This election has not started yet or has already ended.';
-        }
-        error.value = true;
-    } finally {
-        loading.value = false;
-    }
+// Hardcoded Data
+const event = {
+    name: 'Election Demo 2026',
+    categories: [
+        { id: 1, name: 'Executive Council' },
+        { id: 2, name: 'Technical Committee' }
+    ],
+    candidates: [
+        { id: 101, name: 'Dr. Sarah Mitchell', category_id: 1 },
+        { id: 102, name: 'Eng. Marcus Chen', category_id: 1 },
+        { id: 201, name: 'Prof. David Okafor', category_id: 2 },
+        { id: 202, name: 'Linda Gustafsson', category_id: 2 }
+    ]
 };
+
+const getCandidatesForCat = (catId: number) => {
+    return event.candidates.filter(c => c.category_id === catId);
+};
+
+const singleSelected = ref<Record<number, number | null>>({});
 
 const handleValidateCode = async () => {
     if (!votingCode.value.trim()) return;
 
-    try {
-        validating.value = true;
-        validationError.value = '';
-        const response = await publicApi.validateCodeByToken(token, votingCode.value.trim());
-
-        if (response.data.valid) {
+    validating.value = true;
+    setTimeout(() => {
+        if (votingCode.value.trim().toUpperCase() === 'DEMO-1234') {
             ballotStage.value = true;
             showCodeInput.value = false;
         } else {
-            validationError.value = 'Invalid or used voting code.';
+            validationError.value = 'Invalid code. Use DEMO-1234 for the demo.';
         }
-    } catch (err: any) {
-        console.error('Validation failed:', err);
-        validationError.value = err.response?.data?.message || 'Failed to validate code. Please try again.';
-    } finally {
         validating.value = false;
-    }
-};
-
-const isSelected = (categoryId: number, candidateId: number) => {
-    return !!selections.value[categoryId]?.has(candidateId);
-};
-
-const toggleSelection = (categoryId: number, candidateId: number) => {
-    if (!selections.value[categoryId]) selections.value[categoryId] = new Set<number>();
-    const set = selections.value[categoryId];
-    if (set.has(candidateId)) set.delete(candidateId);
-    else set.add(candidateId);
-    // force reactivity for Set changes
-    selections.value = { ...selections.value };
+    }, 800);
 };
 
 const selectSingle = (categoryId: number, candidateId: number) => {
     singleSelected.value[categoryId] = candidateId;
-    singleSelected.value = { ...singleSelected.value };
 };
 
 const submitBallot = async () => {
-    submitError.value = '';
-    submitting.value = true;
-    try {
-        const choices: { category_id: number; candidate_id: number }[] = [];
-        if (selectionMode.value === 'multiple') {
-            for (const [catIdStr, set] of Object.entries(selections.value)) {
-                const catId = Number(catIdStr);
-                set?.forEach((candId) => {
-                    choices.push({ category_id: catId, candidate_id: candId });
-                });
-            }
-        } else {
-            for (const [catIdStr, candId] of Object.entries(singleSelected.value)) {
-                const catId = Number(catIdStr);
-                if (candId) {
-                    choices.push({ category_id: catId, candidate_id: candId });
-                }
-            }
-        }
-        if (choices.length === 0) {
-            submitError.value = 'Please select at least one candidate.';
-            submitting.value = false;
-            return;
-        }
-        await publicApi.castVote(token, { code: votingCode.value.trim(), choices });
-        ballotSubmitted.value = true;
-    } catch (err: any) {
-        console.error('Vote submit failed:', err);
-        submitError.value = err.response?.data?.message || 'Failed to submit your vote. Please try again.';
-    } finally {
-        submitting.value = false;
+    if (Object.keys(singleSelected.value).length === 0) {
+        submitError.value = 'Please make at least one selection.';
+        return;
     }
-};
 
-const imageUrl = (path: string) => {
-    if (!path) return '';
-    if (path.startsWith('http')) return path;
-    return `http://localhost:8883/storage/${path}`;
+    submitting.value = true;
+    setTimeout(() => {
+        ballotSubmitted.value = true;
+        submitting.value = false;
+    }, 1200);
 };
 
 onMounted(() => {
-    if (token) {
-        fetchEvent();
-    } else {
-        error.value = true;
+    setTimeout(() => {
         loading.value = false;
-    }
+    }, 600);
 });
 </script>
 
@@ -357,19 +255,6 @@ onMounted(() => {
     min-height: 100vh;
     background: linear-gradient(135deg, #f0f4f8 0%, #d9e2ec 50%, #bccad6 100%);
     background-attachment: fixed;
-}
-
-
-.uppercase {
-    text-transform: uppercase;
-}
-
-.tracking-widest {
-    letter-spacing: 0.15em;
-}
-
-.tracking-tighter {
-    letter-spacing: -0.01em;
 }
 
 /* Glassmorphism Card */
@@ -426,7 +311,6 @@ onMounted(() => {
     height: 28px;
 }
 
-.modern-checkbox,
 .modern-radio {
     width: 28px;
     height: 28px;
@@ -439,7 +323,6 @@ onMounted(() => {
     background: rgba(255, 255, 255, 0.5);
 }
 
-.modern-checkbox.checked,
 .modern-radio.checked {
     background-color: #0d6efd;
     border-color: #0d6efd;
@@ -451,10 +334,6 @@ onMounted(() => {
     height: 12px;
     background-color: white;
     border-radius: 50%;
-}
-
-.candidate-item {
-    background: transparent;
 }
 
 .candidate-item:hover {
@@ -473,7 +352,6 @@ onMounted(() => {
     border-radius: 50%;
 }
 
-/* Animations */
 .animate-fade-in {
     animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
@@ -562,7 +440,19 @@ onMounted(() => {
     transform: translateX(-4px);
 }
 
-.last-child-border-0:last-child {
-    border-bottom: none !important;
+.uppercase {
+    text-transform: uppercase;
+}
+
+.tracking-widest {
+    letter-spacing: 0.15em;
+}
+
+.tracking-tighter {
+    letter-spacing: -0.01em;
+}
+
+.tracking-tight {
+    letter-spacing: -0.025em;
 }
 </style>
