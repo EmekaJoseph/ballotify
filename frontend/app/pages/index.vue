@@ -105,8 +105,133 @@
                 </div>
             </section>
 
+            <!-- How It Works Section -->
+            <section class="how-it-works-section py-5 my-5 position-relative">
+                <div class="text-center mb-5 animate-slide-up">
+                    <div class="badge bg-success bg-opacity-10 text-success rounded-pill px-3 py-2 small d-inline-block mb-3 fw-bold tracking-widest uppercase border border-success border-opacity-10">
+                        <i class="bi bi-diagram-3-fill me-1"></i> Simple Process
+                    </div>
+                    <h2 class="display-5 fw-black text-dark mb-3">How Ballotify Works</h2>
+                    <p class="text-muted mx-auto fw-medium opacity-75" style="max-width: 600px;">
+                        We've streamlined the voting process so you can focus on the results, not the technicalities. Three simple steps to a successful election.
+                    </p>
+                </div>
+                
+                <div class="row g-4 position-relative z-1 pt-3">
+                    <!-- Step 1 -->
+                    <div class="col-md-4 animate-slide-up" style="animation-delay: 0.1s">
+                        <div class="glass-card p-4 h-100 text-center position-relative mt-4">
+                            <div class="step-number bg-primary text-white rounded-circle d-flex align-items-center justify-content-center mx-auto mb-4 fs-4 fw-black shadow" style="width: 60px; height: 60px; margin-top: -50px;">1</div>
+                            <h4 class="fw-bold text-dark mb-3">Create Event</h4>
+                            <p class="text-muted small mb-0">Set up your election, add categories, insert nominees, and define voting rules in just a few minutes.</p>
+                        </div>
+                    </div>
+                    <!-- Step 2 -->
+                    <div class="col-md-4 animate-slide-up" style="animation-delay: 0.2s">
+                        <div class="glass-card p-4 h-100 text-center position-relative mt-4">
+                            <div class="step-number bg-success text-white rounded-circle d-flex align-items-center justify-content-center mx-auto mb-4 fs-4 fw-black shadow" style="width: 60px; height: 60px; margin-top: -50px;">2</div>
+                            <h4 class="fw-bold text-dark mb-3">Share Tokens</h4>
+                            <p class="text-muted small mb-0">Generate and distribute unique, single-use voting links to your participants securely via email or direct link.</p>
+                        </div>
+                    </div>
+                    <!-- Step 3 -->
+                    <div class="col-md-4 animate-slide-up" style="animation-delay: 0.3s">
+                        <div class="glass-card p-4 h-100 text-center position-relative mt-4">
+                            <div class="step-number bg-info text-white rounded-circle d-flex align-items-center justify-content-center mx-auto mb-4 fs-4 fw-black shadow" style="width: 60px; height: 60px; margin-top: -50px;">3</div>
+                            <h4 class="fw-bold text-dark mb-3">Track Results</h4>
+                            <p class="text-muted small mb-0">Monitor turnout and watch the results roll in real-time through our interactive live dashboard.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Use Cases & Stats Section -->
+            <section class="use-cases-section py-5 mb-5">
+                <div class="row align-items-center gy-5">
+                    <div class="col-lg-6 animate-slide-up">
+                        <h2 class="display-5 fw-black text-dark mb-4">Built for Every Organization</h2>
+                        <p class="lead text-muted fw-medium opacity-75 mb-4">
+                            Whether you're running a university election, an award show, or corporate board voting, Ballotify scales to meet your exact needs.
+                        </p>
+                        <ul class="list-unstyled mb-0 d-flex flex-column gap-3">
+                            <li class="d-flex align-items-center gap-3">
+                                <div class="bg-primary bg-opacity-10 text-primary rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                    <i class="bi bi-check-lg fs-5"></i>
+                                </div>
+                                <span class="fw-bold text-dark fs-5">Student Council Elections</span>
+                            </li>
+                            <li class="d-flex align-items-center gap-3">
+                                <div class="bg-success bg-opacity-10 text-success rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                    <i class="bi bi-check-lg fs-5"></i>
+                                </div>
+                                <span class="fw-bold text-dark fs-5">Entertainment Awards</span>
+                            </li>
+                            <li class="d-flex align-items-center gap-3">
+                                <div class="bg-info bg-opacity-10 text-info rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                    <i class="bi bi-check-lg fs-5"></i>
+                                </div>
+                                <span class="fw-bold text-dark fs-5">Corporate Board Voting</span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-lg-6 animate-slide-up" style="animation-delay: 0.2s">
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <div class="glass-card p-4 text-center transition-hover border-0 shadow-sm h-100 d-flex flex-column justify-content-center">
+                                    <div class="display-4 fw-black text-primary mb-2">99.9%</div>
+                                    <div class="fw-bold text-muted uppercase tracking-widest small">Uptime</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="glass-card p-4 text-center transition-hover border-0 shadow-sm mt-lg-4 h-100 d-flex flex-column justify-content-center">
+                                    <div class="display-4 fw-black text-success mb-2">10k+</div>
+                                    <div class="fw-bold text-muted uppercase tracking-widest small">Events Hosted</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="glass-card p-4 text-center transition-hover border-0 shadow-sm mt-lg-n4 h-100 d-flex flex-column justify-content-center">
+                                    <div class="display-4 fw-black text-info mb-2">1M+</div>
+                                    <div class="fw-bold text-muted uppercase tracking-widest small">Votes Cast</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="glass-card p-4 text-center transition-hover border-0 shadow-sm h-100 d-flex flex-column justify-content-center">
+                                    <div class="display-4 fw-black text-dark mb-2">24/7</div>
+                                    <div class="fw-bold text-muted uppercase tracking-widest small">Support</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Testimonials Section -->
+            <section class="testimonials-section py-5 mb-5 animate-slide-up">
+                <div class="glass-card p-5 border-0 shadow-sm position-relative overflow-hidden">
+                    <div class="hero-blob bg-info opacity-10 rounded-circle blur-3xl position-absolute"
+                        style="top: -20%; right: -10%; width: 300px; height: 300px;"></div>
+                    <div class="position-relative z-1">
+                        <div class="row align-items-center justify-content-center text-center">
+                            <div class="col-lg-8">
+                                <i class="bi bi-quote display-1 text-primary opacity-20 position-absolute start-0 top-0 translate-middle-y ms-3"></i>
+                                <h3 class="fw-bold text-dark mb-4 fs-3 position-relative z-1 px-4 lh-base">
+                                    "Ballotify completely transformed how we run our annual awards. The live dashboard kept everyone engaged, and the token system ensured total integrity."
+                                </h3>
+                                <div class="d-flex align-items-center justify-content-center gap-3 mt-4">
+                                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah" class="avatar border border-white border-2 rounded-circle shadow-sm" alt="Sarah Jenkins">
+                                    <div class="text-start">
+                                        <h6 class="fw-black text-dark mb-0">Sarah Jenkins</h6>
+                                        <p class="text-muted small mb-0">Event Director, Tech Excellence Awards</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             <!-- CTA Section -->
-            <section class="cta-section py-5 animate-slide-up" style="animation-delay: 0.4s">
+            <section class="cta-section py-5 animate-slide-up" style="animation-delay: 0.1s">
                 <div class="glass-card p-5 text-center overflow-hidden position-relative">
                     <div class="position-relative z-1">
                         <h2 class="display-4 fw-black text-dark mb-4">Host Your Next Election</h2>
