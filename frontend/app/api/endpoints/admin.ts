@@ -16,8 +16,11 @@ export const adminApi = {
     getVotingLink: (eventId: number | string) => api.get(`/events/${eventId}/voting-link`),
 
     // Categories
+    getCategories: (eventId: number | string) => api.get(`/events/${eventId}/categories`),
     createCategory: (eventId: number | string, data: { name: string }) =>
         api.post(`/events/${eventId}/categories`, data),
+    deleteCategory: (eventId: number | string, categoryId: number | string) =>
+        api.delete(`/events/${eventId}/categories/${categoryId}`),
 
     // Candidates
     createCandidate: (eventId: number | string, formData: FormData) =>

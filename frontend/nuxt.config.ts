@@ -1,14 +1,19 @@
 export default defineNuxtConfig({
-  srcDir: 'app',
+  ssr: false,
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
+
+  future: {
+    compatibilityVersion: 4,
+  },
 
   css: [
     'bootstrap/dist/css/bootstrap.min.css',
     'bootstrap-icons/font/bootstrap-icons.css',
     '~/assets/css/base.css'
   ],
-  modules: [],
+  modules: ['@pinia/nuxt'],
+
 
   plugins: [],
 
