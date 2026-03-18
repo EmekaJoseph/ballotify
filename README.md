@@ -1,4 +1,4 @@
 # ballotify
 
 Online voting application,
-made with VueJS 3 (+ typescript) & CodeIgniter(v4)
+made with NUXT VueJS 3 (+ typescript) & LARAVEL 12
