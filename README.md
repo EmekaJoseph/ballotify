@@ -12,16 +12,17 @@
 
 ## What it does
 
-| For organisers | For voters |
-|---|---|
-| Create events with categories and candidates (with photos) | Open one link on any phone or laptop |
-| Choose **single choice** (one per category) or **multiple choice** | Enter a personal one-time code |
-| Schedule when voting opens and closes, or close it early | Pick candidates, review, submit |
-| Generate thousands of voter codes, or import a name list | Confirmation screen, then live results |
-| Export codes to CSV, or print voter slips with a QR code | |
-| Track turnout, re-enable a code, share a public results page | |
+| For organisers                                                     | For voters                             |
+| ------------------------------------------------------------------ | -------------------------------------- |
+| Create events with categories and candidates (with photos)         | Open one link on any phone or laptop   |
+| Choose **single choice** (one per category) or **multiple choice** | Enter a personal one-time code         |
+| Schedule when voting opens and closes, or close it early           | Pick candidates, review, submit        |
+| Generate thousands of voter codes, or import a name list           | Confirmation screen, then live results |
+| Export codes to CSV, or print voter slips with a QR code           |                                        |
+| Track turnout, re-enable a code, share a public results page       |                                        |
 
 **Integrity guarantees, all enforced on the server:**
+
 - Each code can vote **exactly once**. The voter row is locked inside a transaction, so two simultaneous submits can't both succeed.
 - Ballots outside the voting window are rejected.
 - Single-choice rules are checked server side, and candidates must belong to the category and event.
@@ -30,11 +31,11 @@
 
 ## Tech stack
 
-| Layer | Technology |
-|---|---|
-| API | Laravel 13 (PHP 8.3+), Sanctum token auth, Pest tests |
-| Database | MySQL / MariaDB (SQLite works for local dev and tests) |
-| Frontend | Nuxt 4 (Vue 3, TypeScript) SPA, Pinia, Bootstrap 5 grid + custom design system |
+| Layer        | Technology                                                                       |
+| ------------ | -------------------------------------------------------------------------------- |
+| API          | Laravel 13 (PHP 8.3+), Sanctum token auth, Pest tests                            |
+| Database     | MySQL / MariaDB (SQLite works for local dev and tests)                           |
+| Frontend     | Nuxt 4 (Vue 3, TypeScript) SPA, Pinia, Bootstrap 5 grid + custom design system   |
 | Live results | Pusher via Laravel broadcasting + Laravel Echo (optional; falls back to polling) |
 
 ## Project structure
@@ -89,6 +90,7 @@ npm run dev                       # http://localhost:3000
 ```
 
 ### 3. Try it
+
 1. Open http://localhost:3000 and sign in.
 2. Open **Campus Election**, go to the **Share** tab and open the voting link.
 3. Vote with a code from the **Voters** tab, then watch the results update.
@@ -97,21 +99,21 @@ npm run dev                       # http://localhost:3000
 
 ### Backend `.env`
 
-| Key | Purpose |
-|---|---|
-| `APP_URL` | Public URL of the API. Used for candidate photo URLs. |
-| `FRONTEND_URL` | Public URL of the Nuxt site. Used for voting links and CORS. |
-| `CORS_ALLOWED_ORIGINS` | Optional comma-separated extra origins. |
-| `BROADCAST_CONNECTION` | `pusher` for instant live results, `log` to disable. |
-| `PUSHER_APP_ID`, `PUSHER_APP_KEY`, `PUSHER_APP_SECRET`, `PUSHER_APP_CLUSTER` | Pusher credentials (free tier is fine). |
+| Key                                                                          | Purpose                                                      |
+| ---------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| `APP_URL`                                                                    | Public URL of the API. Used for candidate photo URLs.        |
+| `FRONTEND_URL`                                                               | Public URL of the Nuxt site. Used for voting links and CORS. |
+| `CORS_ALLOWED_ORIGINS`                                                       | Optional comma-separated extra origins.                      |
+| `BROADCAST_CONNECTION`                                                       | `pusher` for instant live results, `log` to disable.         |
+| `PUSHER_APP_ID`, `PUSHER_APP_KEY`, `PUSHER_APP_SECRET`, `PUSHER_APP_CLUSTER` | Pusher credentials (free tier is fine).                      |
 
 ### Frontend `.env`
 
-| Key | Purpose |
-|---|---|
-| `NUXT_PUBLIC_API_BASE` | API base URL, e.g. `https://api.example.com/api` |
-| `NUXT_PUBLIC_PUSHER_KEY` | Pusher key (same as `PUSHER_APP_KEY`). Leave empty to use 15-second polling. |
-| `NUXT_PUBLIC_PUSHER_CLUSTER` | Pusher cluster, e.g. `eu` |
+| Key                          | Purpose                                                                      |
+| ---------------------------- | ---------------------------------------------------------------------------- |
+| `NUXT_PUBLIC_API_BASE`       | API base URL, e.g. `https://api.example.com/api`                             |
+| `NUXT_PUBLIC_PUSHER_KEY`     | Pusher key (same as `PUSHER_APP_KEY`). Leave empty to use 15-second polling. |
+| `NUXT_PUBLIC_PUSHER_CLUSTER` | Pusher cluster, e.g. `eu`                                                    |
 
 ## Testing
 
@@ -124,11 +126,13 @@ cd frontend && npm run build                                       # production 
 ## Deploying
 
 **API.** Deploy it like any Laravel app:
+
 1. Set `APP_ENV=production`, `APP_DEBUG=false`, and the real `APP_URL` and `FRONTEND_URL`.
 2. Run `composer install --no-dev -o`, `php artisan migrate --force` and `php artisan config:cache route:cache`.
 3. Point the web root at `backend/public`, and make sure `public/candidates/` is writable for photos.
 
 **Frontend.** It's a static SPA:
+
 1. Build with `NUXT_PUBLIC_API_BASE=https://your-api/api npx nuxi generate`.
 2. Upload `.output/public` to any static host (Netlify, Vercel, S3, cPanel…).
 3. Serve `index.html` for unknown routes (SPA fallback) so links like `/vote/<token>` work.
