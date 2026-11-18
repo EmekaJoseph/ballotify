@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -58,6 +59,32 @@ class AuthController extends Controller
     public function me(Request $request)
     {
         return response()->json($request->user());
+    }
+
+    public function updateProfile(Request $request)
+    {
+        $user = $request->user();
+        $data = $request->validate([
+            'name' => ['sometimes', 'string', 'max:255'],
+            'email' => ['sometimes', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
+            'current_password' => ['required_with:password', 'nullable', 'string'],
+            'password' => ['nullable', 'string', 'min:8'],
+        ]);
+
+        if (! empty($data['password'])) {
+            if (! Hash::check($data['current_password'] ?? '', $user->password)) {
+                throw ValidationException::withMessages([
+                    'current_password' => ['Your current password is incorrect.'],
+                ]);
+            }
+            // The 'hashed' cast on User hashes this on save.
+            $user->password = $data['password'];
+        }
+        if (isset($data['name'])) $user->name = $data['name'];
+        if (isset($data['email'])) $user->email = $data['email'];
+        $user->save();
+
+        return response()->json($user);
     }
 }
 

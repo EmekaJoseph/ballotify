@@ -1,125 +1,87 @@
-<template> 
-    <div class="auth-wrapper page-bg min-vh-100 d-flex align-items-center justify-content-center py-5">
-        <div class="container">
-            <div class="row justify-content-center">
-                <div class="col-md-8 col-lg-5">
-                    <div class="text-center mb-4 animate-slide-up">
-                        <NuxtLink to="/" class="text-decoration-none">
-                            <h2 class="display-6 fw-black text-dark mb-0 d-flex align-items-center justify-content-center gap-2">
-                                <i class="bi bi-box-fill text-primary"></i>
-                                Ballotify
-                            </h2>
-                        </NuxtLink>
-                        <p class="text-muted mt-2 fw-medium">Welcome back! Please enter your details.</p>
-                    </div>
+<template>
+    <div class="fade-up">
+        <h1 class="h2 fw-800 mb-2">Welcome back</h1>
+        <p class="text-muted mb-4">Sign in to manage your events.</p>
 
-                    <div class="glass-card p-4 p-md-5 animate-slide-up" style="animation-delay: 0.1s">
-                        <div v-if="errorMsg" class="alert alert-danger border-0 bg-danger bg-opacity-10 text-danger rounded-3 d-flex align-items-center gap-2 mb-4" role="alert">
-                            <i class="bi bi-exclamation-triangle-fill"></i>
-                            <div>{{ errorMsg }}</div>
-                        </div>
+        <div v-if="route.query.expired" class="alert alert-warning border-0 rounded-4 small d-flex gap-2">
+            <i class="bi bi-clock-history"></i> Your session expired. Please sign in again.
+        </div>
+        <div v-if="error" class="alert alert-danger border-0 rounded-4 small d-flex gap-2" role="alert">
+            <i class="bi bi-exclamation-circle-fill"></i> {{ error }}
+        </div>
 
-                        <form @submit.prevent="handleLogin">
-                            <div class="mb-4">
-                                <label class="form-label fw-bold text-dark small tracking-widest uppercase">Email</label>
-                                <input type="email" v-model="form.email" class="form-control form-control-lg bg-white bg-opacity-50 border-white focus-ring-primary" placeholder="Enter your email" required :disabled="loading" />
-                            </div>
-
-                            <div class="mb-4">
-                                <div class="d-flex justify-content-between align-items-center mb-1">
-                                    <label class="form-label fw-bold text-dark small tracking-widest uppercase mb-0">Password</label>
-                                    <NuxtLink to="#" class="text-primary small text-decoration-none fw-bold">Forgot password?</NuxtLink>
-                                </div>
-                                <div class="position-relative">
-                                    <input :type="showPassword ? 'text' : 'password'" v-model="form.password" class="form-control form-control-lg bg-white bg-opacity-50 border-white focus-ring-primary pe-5" placeholder="••••••••" required :disabled="loading" />
-                                    <button type="button" class="btn btn-link text-muted position-absolute end-0 top-50 translate-middle-y text-decoration-none" @click="showPassword = !showPassword">
-                                        <i class="bi" :class="showPassword ? 'bi-eye-slash-fill' : 'bi-eye-fill'"></i>
-                                    </button>
-                                </div>
-                            </div>
-
-                            <button type="submit" class="btn btn-primary btn-lg w-100 fw-bold rounded-pill shadow-sm transition-hover mt-2" :disabled="loading">
-                                <span v-if="loading" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                {{ loading ? 'Signing in...' : 'Sign In' }}
-                            </button>
-                        </form>
-
-                        <div class="text-center mt-4">
-                            <p class="text-muted small mb-0 fw-medium">
-                                Don't have an account? 
-                                <NuxtLink to="/signup" class="text-primary fw-bold text-decoration-none ms-1 hover-underline">Sign up</NuxtLink>
-                            </p>
-                        </div>
-                    </div>
+        <form novalidate @submit.prevent="submit">
+            <div class="mb-3">
+                <label for="email" class="form-label">Email</label>
+                <div class="input-icon">
+                    <i class="bi bi-envelope"></i>
+                    <input id="email" v-model.trim="form.email" type="email" class="form-control form-control-lg"
+                        autocomplete="email" placeholder="you@organisation.com" required :disabled="loading" />
                 </div>
             </div>
-        </div>
-        
-        <!-- Background Blobs -->
-        <div class="hero-blob bg-primary opacity-20 rounded-circle blur-3xl position-absolute pointer-events-none" style="top: -10%; right: -5%; width: 400px; height: 400px;"></div>
-        <div class="hero-blob bg-info opacity-20 rounded-circle blur-3xl position-absolute pointer-events-none" style="bottom: -10%; left: -5%; width: 350px; height: 350px;"></div>
+            <div class="mb-4">
+                <label for="password" class="form-label">Password</label>
+                <div class="input-icon position-relative">
+                    <i class="bi bi-lock"></i>
+                    <input id="password" v-model="form.password" :type="show ? 'text' : 'password'"
+                        class="form-control form-control-lg pe-5" autocomplete="current-password" placeholder="Your password"
+                        required :disabled="loading" />
+                    <button type="button" class="reveal" :aria-label="show ? 'Hide password' : 'Show password'" @click="show = !show">
+                        <i class="bi" :class="show ? 'bi-eye-slash' : 'bi-eye'"></i>
+                    </button>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-lg w-100" :disabled="loading">
+                <span v-if="loading" class="spinner-border spinner-border-sm"></span>
+                {{ loading ? 'Signing in…' : 'Sign in' }}
+            </button>
+        </form>
+
+        <p class="text-center text-muted mt-4 mb-0">
+            New to Ballotify? <NuxtLink to="/signup" class="fw-bold">Create an account</NuxtLink>
+        </p>
+        <p class="text-center mt-2 mb-0"><NuxtLink to="/" class="small text-muted">← Back to home</NuxtLink></p>
     </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue';
-import { useAuthStore } from '../stores/auth';
-import { useRouter } from 'vue-router';
+import { useAuthStore } from '~/stores/auth';
 
-definePageMeta({
-    layout: 'public',
-    middleware: ['guest']
-});
+definePageMeta({ layout: 'auth', middleware: ['guest'] });
+useHead({ title: 'Sign in · Ballotify' });
 
-const authStore = useAuthStore();
-const router = useRouter();
-
-const form = reactive({
-    email: '',
-    password: ''
-});
-
+const auth = useAuthStore();
+const route = useRoute();
 const loading = ref(false);
-const showPassword = ref(false);
-const errorMsg = ref('');
+const show = ref(false);
+const error = ref('');
+const form = reactive({ email: '', password: '' });
 
-const handleLogin = async () => {
+/** Only follow same-site dashboard paths after login (no open redirects). */
+function redirectTarget(): string {
+    const r = route.query.redirect;
+    return typeof r === 'string' && r.startsWith('/dashboard') ? r : '/dashboard';
+}
+
+async function submit() {
+    error.value = '';
+    if (!form.email || !form.password) {
+        error.value = 'Enter your email and password.';
+        return;
+    }
     loading.value = true;
-    errorMsg.value = '';
-    
     try {
-        await authStore.login({
-            email: form.email,
-            password: form.password
-        });
-        
-        // redirect to dashboard
-        router.push('/dashboard');
-    } catch (error: any) {
-        if (error.response?.data?.errors?.email) {
-            errorMsg.value = error.response.data.errors.email[0];
-        } else if (error.response?.data?.message) {
-            errorMsg.value = error.response.data.message;
-        } else {
-            errorMsg.value = 'An unexpected error occurred. Please try again.';
-        }
+        await auth.login(form);
+        await navigateTo(redirectTarget());
+    } catch (e) {
+        error.value = apiErrorMessage(e, 'Could not sign in. Please try again.');
     } finally {
         loading.value = false;
     }
-};
+}
 </script>
 
 <style scoped>
-.focus-ring-primary:focus {
-    border-color: var(--bs-primary);
-    box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);
-    background-color: #fff !important;
-}
-
-.hover-underline:hover {
-    text-decoration: underline !important;
-}
-.pointer-events-none {
-    pointer-events: none;
-}
+.reveal { position: absolute; right: .6rem; top: 50%; transform: translateY(-50%); border: 0; background: none; color: var(--muted); padding: .25rem .4rem; }
+.reveal:hover { color: var(--ink); }
 </style>

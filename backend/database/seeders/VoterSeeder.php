@@ -30,6 +30,6 @@ class VoterSeeder extends Seeder
             $all[] = ['event_id' => $event->id, 'codes' => $plain];
         }
         Storage::disk('local')->put('seed_voter_codes.json', json_encode(['events' => $all], JSON_PRETTY_PRINT));
-        $this->command?->info('Seeded 200 voters per event. Codes in storage/app/seed_voter_codes.json');
+        $this->command?->info('Seeded 200 voters per event. Codes in storage/app/private/seed_voter_codes.json');
     }
 }

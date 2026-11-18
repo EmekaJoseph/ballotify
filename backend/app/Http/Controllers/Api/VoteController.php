@@ -9,6 +9,7 @@ use App\Models\Category;
 use App\Models\Event;
 use App\Models\Voter;
 use App\Models\Vote;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -17,81 +18,99 @@ class VoteController extends Controller
     public function store(Request $request, string $token)
     {
         $data = $request->validate([
-            'code' => ['required', 'string'],
-            'choices' => ['required', 'array', 'min:1'],
+            'code' => ['required', 'string', 'max:64'],
+            'choices' => ['required', 'array', 'min:1', 'max:500'],
             'choices.*.category_id' => ['required', 'integer'],
             'choices.*.candidate_id' => ['required', 'integer'],
         ]);
 
-        $event = Event::where('link_token', $token)->firstOrFail();
+        $event = Event::with('type')->where('link_token', $token)->firstOrFail();
 
-        $matched = Voter::where('event_id', $event->id)
-            ->whereNull('used_at')
-            ->where('code', $data['code'])
-            ->lockForUpdate()
-            ->first();
-        if (! $matched) {
-            return response()->json(['message' => 'Invalid or used code'], 422);
+        if (! $event->isOpen()) {
+            return response()->json([
+                'message' => $event->status === Event::STATUS_UPCOMING
+                    ? 'This election has not started yet.'
+                    : 'This election has ended.',
+            ], 403);
         }
 
-        $categoryIds = collect($data['choices'])->pluck('category_id')->all();
-        $candidateIds = collect($data['choices'])->pluck('candidate_id')->all();
+        // De-duplicate identical (category, candidate) pairs.
+        $cleanChoices = collect($data['choices'])
+            ->map(fn ($c) => ['category_id' => (int) $c['category_id'], 'candidate_id' => (int) $c['candidate_id']])
+            ->unique(fn ($c) => $c['category_id'] . ':' . $c['candidate_id'])
+            ->values()
+            ->all();
 
-        $categories = Category::whereIn('id', $categoryIds)->where('event_id', $event->id)->get()->keyBy('id');
-        $candidates = Candidate::whereIn('id', $candidateIds)->where('event_id', $event->id)->get()->keyBy('id');
+        $categories = Category::whereIn('id', array_column($cleanChoices, 'category_id'))
+            ->where('event_id', $event->id)->get()->keyBy('id');
+        $candidates = Candidate::whereIn('id', array_column($cleanChoices, 'candidate_id'))
+            ->where('event_id', $event->id)->get()->keyBy('id');
 
-        foreach ($data['choices'] as $choice) {
+        foreach ($cleanChoices as $choice) {
             if (! isset($categories[$choice['category_id']])) {
                 return response()->json(['message' => 'Invalid category'], 422);
             }
             if (! isset($candidates[$choice['candidate_id']])) {
                 return response()->json(['message' => 'Invalid candidate'], 422);
             }
-            if ($candidates[$choice['candidate_id']]->category_id !== (int) $choice['category_id']) {
+            if ($candidates[$choice['candidate_id']]->category_id !== $choice['category_id']) {
                 return response()->json(['message' => 'Candidate not in category'], 422);
             }
         }
 
-        $typeKey = DB::table('event_types')->where('id', $event->event_type_id)->value('key') ?? 'single';
-        if ($typeKey === 'single') {
-            $byCategory = [];
-            foreach ($data['choices'] as $choice) {
-                $byCategory[$choice['category_id']] = ($byCategory[$choice['category_id']] ?? 0) + 1;
+        if ($event->selection_mode === 'single') {
+            $perCategory = array_count_values(array_column($cleanChoices, 'category_id'));
+            if (max($perCategory) > 1) {
+                return response()->json(['message' => 'Only one candidate per category is allowed'], 422);
             }
-            foreach ($byCategory as $count) {
-                if ($count > 1) {
-                    return response()->json(['message' => 'Only one candidate per category is allowed'], 422);
+        }
+
+        try {
+            $accepted = DB::transaction(function () use ($event, $data, $cleanChoices, $request) {
+                // The row lock must be taken inside the transaction, otherwise two
+                // concurrent requests with the same code could both cast a ballot.
+                $voter = Voter::where('event_id', $event->id)
+                    ->where('code', VoterController::normalizeCode($data['code']))
+                    ->lockForUpdate()
+                    ->first();
+
+                if (! $voter || $voter->used_at !== null) {
+                    return false;
                 }
-            }
-        }
 
-        $cleanChoices = [];
-        $seen = [];
-        foreach ($data['choices'] as $choice) {
-            $key = $choice['category_id'] . ':' . $choice['candidate_id'];
-            if (isset($seen[$key])) {
-                continue;
-            }
-            $seen[$key] = true;
-            $cleanChoices[] = ['category_id' => (int)$choice['category_id'], 'candidate_id' => (int)$choice['candidate_id']];
-        }
+                // Clear any stale ballot rows (e.g. the admin re-enabled this code).
+                Vote::where('voter_id', $voter->id)->delete();
 
-        DB::transaction(function () use ($event, $matched, $cleanChoices, $request) {
-            foreach ($cleanChoices as $choice) {
-                Vote::create([
+                $now = now();
+                Vote::insert(array_map(fn ($choice) => [
                     'event_id' => $event->id,
-                    'voter_id' => $matched->id,
+                    'voter_id' => $voter->id,
                     'category_id' => $choice['category_id'],
                     'candidate_id' => $choice['candidate_id'],
                     'ip' => $request->ip(),
-                ]);
-            }
-            $matched->used_at = now();
-            $matched->save();
-        });
-        DB::afterCommit(function () use ($event, $cleanChoices) {
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ], $cleanChoices));
+
+                $voter->used_at = $now;
+                $voter->save();
+
+                return true;
+            });
+        } catch (UniqueConstraintViolationException) {
+            $accepted = false;
+        }
+
+        if (! $accepted) {
+            return response()->json(['message' => 'Invalid or used code'], 422);
+        }
+
+        try {
             event(new VoteCast($event->id, $cleanChoices));
-        });
+        } catch (\Throwable $e) {
+            // A broadcasting outage must never make a recorded vote look failed.
+            report($e);
+        }
 
         return response()->json(['message' => 'Vote recorded']);
     }

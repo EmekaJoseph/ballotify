@@ -1,52 +1,83 @@
 <template>
-    <div class="public-layout d-flex flex-column min-vh-100">
-        <!-- Main Navbar -->
-        <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm py-3 sticky-top">
-            <div class="container">
-                <NuxtLink to="/" class="navbar-brand d-flex align-items-center fw-bold text-primary">
-                    <div
-                        class="brand-icon me-2 d-flex align-items-center justify-content-center bg-primary text-white rounded">
-                        <i class="bi bi-check-circle-fill"></i>
-                    </div>
-                    Ballotify
-                </NuxtLink>
+    <div class="d-flex flex-column min-vh-100">
+        <header class="site-header" :class="{ scrolled }">
+            <div class="container d-flex align-items-center justify-content-between gap-3">
+                <AppLogo />
 
-                <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse"
-                    data-bs-target="#navbarContent">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
+                <nav class="d-none d-md-flex align-items-center gap-1" aria-label="Main">
+                    <NuxtLink v-for="l in links" :key="l.to" :to="l.to" class="nav-l">{{ l.label }}</NuxtLink>
+                </nav>
 
-                <div class="collapse navbar-collapse" id="navbarContent">
-                    <ul class="navbar-nav ms-auto align-items-center">
-                        <li class="nav-item">
-                            <NuxtLink to="/" class="nav-link px-3 fw-medium">Home</NuxtLink>
-                        </li>
-                        <li class="nav-item ms-lg-2">
-                            <NuxtLink to="/login" class="btn btn-outline-primary rounded-pill px-4 fw-bold">Sign In
-                            </NuxtLink>
-                        </li>
-                    </ul>
+                <div class="d-none d-md-flex align-items-center gap-2">
+                    <template v-if="auth.isAuthenticated">
+                        <NuxtLink to="/dashboard" class="btn btn-primary">Dashboard <i class="bi bi-arrow-right"></i></NuxtLink>
+                    </template>
+                    <template v-else>
+                        <NuxtLink to="/login" class="btn btn-ghost">Sign in</NuxtLink>
+                        <NuxtLink to="/signup" class="btn btn-primary">Get started</NuxtLink>
+                    </template>
                 </div>
-            </div>
-        </nav>
 
-        <!-- Main Content -->
+                <button class="btn btn-ghost btn-icon d-md-none" :aria-expanded="menuOpen" aria-label="Menu"
+                    @click="menuOpen = !menuOpen">
+                    <i class="bi" :class="menuOpen ? 'bi-x-lg' : 'bi-list'"></i>
+                </button>
+            </div>
+
+            <Transition name="drop">
+                <div v-if="menuOpen" class="mobile-menu d-md-none">
+                    <div class="container d-grid gap-1 py-3">
+                        <NuxtLink v-for="l in links" :key="l.to" :to="l.to" class="nav-l">{{ l.label }}</NuxtLink>
+                        <div class="divider my-2"></div>
+                        <NuxtLink v-if="auth.isAuthenticated" to="/dashboard" class="btn btn-primary">Dashboard</NuxtLink>
+                        <template v-else>
+                            <NuxtLink to="/login" class="btn btn-ghost">Sign in</NuxtLink>
+                            <NuxtLink to="/signup" class="btn btn-primary">Get started free</NuxtLink>
+                        </template>
+                    </div>
+                </div>
+            </Transition>
+        </header>
+
         <main class="flex-grow-1">
             <slot />
         </main>
 
-        <!-- Footer -->
         <TheFooter />
     </div>
 </template>
 
-<style scoped>
-.brand-icon {
-    width: 32px;
-    height: 32px;
-}
+<script setup lang="ts">
+import { useAuthStore } from '~/stores/auth';
 
-.navbar {
-    z-index: 1030;
+const auth = useAuthStore();
+const route = useRoute();
+const menuOpen = ref(false);
+const scrolled = ref(false);
+
+const links = [
+    { to: '/#features', label: 'Features' },
+    { to: '/#how', label: 'How it works' },
+    { to: '/demo/vote', label: 'Live demo' },
+];
+
+watch(() => route.fullPath, () => { menuOpen.value = false; });
+
+const onScroll = () => { scrolled.value = window.scrollY > 8; };
+onMounted(() => { onScroll(); window.addEventListener('scroll', onScroll, { passive: true }); });
+onBeforeUnmount(() => window.removeEventListener('scroll', onScroll));
+</script>
+
+<style scoped>
+.site-header {
+    position: sticky; top: 0; z-index: 100; padding: .85rem 0;
+    background: rgba(244, 247, 250, .8); backdrop-filter: saturate(180%) blur(14px);
+    border-bottom: 1px solid transparent; transition: border-color .2s, background-color .2s;
 }
+.site-header.scrolled { border-bottom-color: var(--line); background: rgba(255, 255, 255, .85); }
+.nav-l { padding: .5rem .85rem; border-radius: 10px; font-weight: 600; color: var(--ink-2); font-size: .95rem; }
+.nav-l:hover { color: var(--brand-700); background: var(--brand-50); }
+.mobile-menu { border-top: 1px solid var(--line); background: var(--surface); }
+.drop-enter-active, .drop-leave-active { transition: opacity .18s var(--ease), transform .18s var(--ease); }
+.drop-enter-from, .drop-leave-to { opacity: 0; transform: translateY(-6px); }
 </style>

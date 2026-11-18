@@ -1,153 +1,117 @@
 <template>
-    <div class="dashboard-wrapper min-vh-100 d-flex page-bg">
-        <!-- Overlay for mobile sidebar -->
-        <div v-if="sidebarOpen" class="sidebar-overlay position-fixed top-0 start-0 w-100 h-100 bg-dark opacity-50 z-2 d-lg-none" @click="sidebarOpen = false"></div>
-
+    <div class="dash">
         <!-- Sidebar -->
-        <aside class="sidebar glass-card border-start-0 border-top-0 border-bottom-0 rounded-0 z-3 transition-base d-flex flex-column" :class="{ 'sidebar-open': sidebarOpen }">
-            <div class="sidebar-header p-4 d-flex align-items-center justify-content-between">
-                <NuxtLink to="/dashboard" class="text-decoration-none transition-hover">
-                    <h4 class="fw-black text-dark mb-0 d-flex align-items-center gap-2 m-0 fs-5 pb-1">
-                        <i class="bi bi-box-fill text-primary"></i>
-                        Ballotify
-                    </h4>
+        <aside class="sidebar" :class="{ open: sidebarOpen }" aria-label="Dashboard navigation">
+            <div class="d-flex align-items-center justify-content-between px-3 pt-4 pb-3">
+                <AppLogo to="/dashboard" />
+                <button class="btn btn-ghost btn-icon btn-sm d-lg-none" aria-label="Close menu" @click="sidebarOpen = false">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+
+            <div class="px-3 mb-3">
+                <NuxtLink to="/dashboard/events/create" class="btn btn-primary w-100">
+                    <i class="bi bi-plus-lg"></i> New event
                 </NuxtLink>
-                <button class="btn btn-link text-dark p-0 d-lg-none" @click="sidebarOpen = false">
-                    <i class="bi bi-x-lg fs-5"></i>
-                </button>
-            </div>
-            
-            <div class="sidebar-menu px-3 py-2 flex-grow-1 overflow-y-auto">
-                <p class="small fw-bold text-muted tracking-widest uppercase mb-3 px-3">Menu</p>
-                <nav class="nav flex-column gap-2 mb-4">
-                    <NuxtLink to="/dashboard" class="nav-link text-dark fw-medium rounded-3 px-3 py-2 d-flex align-items-center gap-3 transition-hover" active-class="active-link bg-primary bg-opacity-10 text-primary fw-bold" exact>
-                        <i class="bi bi-grid-1x2-fill fs-5 opacity-75"></i> Overview
-                    </NuxtLink>
-                    <NuxtLink to="/dashboard/events" class="nav-link text-dark fw-medium rounded-3 px-3 py-2 d-flex align-items-center gap-3 transition-hover" active-class="active-link bg-primary bg-opacity-10 text-primary fw-bold">
-                        <i class="bi bi-calendar-event-fill fs-5 opacity-75"></i> Events
-                    </NuxtLink>
-                    <NuxtLink to="/dashboard/voters" class="nav-link text-dark fw-medium rounded-3 px-3 py-2 d-flex align-items-center gap-3 transition-hover" active-class="active-link bg-primary bg-opacity-10 text-primary fw-bold">
-                        <i class="bi bi-people-fill fs-5 opacity-75"></i> Voters
-                    </NuxtLink>
-                </nav>
-
-                <p class="small fw-bold text-muted tracking-widest uppercase mb-3 px-3">Settings</p>
-                <nav class="nav flex-column gap-2">
-                    <NuxtLink to="/dashboard/profile" class="nav-link text-dark fw-medium rounded-3 px-3 py-2 d-flex align-items-center gap-3 transition-hover" active-class="active-link bg-primary bg-opacity-10 text-primary fw-bold">
-                        <i class="bi bi-person-fill fs-5 opacity-75"></i> Profile
-                    </NuxtLink>
-                </nav>
             </div>
 
-            <div class="sidebar-footer p-4 border-top border-white border-opacity-25 mt-auto">
-                <button @click="logout" class="btn btn-link text-danger text-decoration-none fw-bold p-0 d-flex align-items-center gap-2 w-100 transition-hover">
-                    <i class="bi bi-box-arrow-right fs-5"></i> Log out
-                </button>
+            <nav class="px-2 d-grid gap-1">
+                <div class="small-caps px-3 pt-2 pb-1">Workspace</div>
+                <NuxtLink v-for="item in nav" :key="item.to" :to="item.to" class="side-link"
+                    :class="{ active: isActive(item) }">
+                    <i class="bi" :class="item.icon"></i>{{ item.label }}
+                </NuxtLink>
+            </nav>
+
+            <div class="mt-auto p-3">
+                <div class="user-card">
+                    <span class="avatar sm" :style="{ background: colorFor(auth.user?.email) }">{{ initials(auth.user?.name) }}</span>
+                    <div class="min-w-0 flex-grow-1">
+                        <div class="fw-bold small text-ink truncate">{{ auth.user?.name || '…' }}</div>
+                        <div class="small text-muted truncate">{{ auth.user?.email }}</div>
+                    </div>
+                    <button class="btn btn-ghost btn-icon btn-sm" title="Sign out" aria-label="Sign out" @click="logout">
+                        <i class="bi bi-box-arrow-right"></i>
+                    </button>
+                </div>
             </div>
         </aside>
+        <div v-if="sidebarOpen" class="scrim d-lg-none" @click="sidebarOpen = false"></div>
 
-        <!-- Main Content -->
-        <main class="main-content flex-grow-1 max-w-full d-flex flex-column h-100 min-vh-100">
-            <!-- Top Navbar -->
-            <header class="top-nav px-4 py-3 d-flex align-items-center justify-content-between position-sticky top-0 z-1 glass-card border-top-0 border-end-0 border-start-0 rounded-0 shadow-sm">
-                <div class="d-flex align-items-center gap-3">
-                    <button class="btn btn-link text-dark p-0 d-lg-none" @click="sidebarOpen = true">
-                        <i class="bi bi-list fs-3"></i>
-                    </button>
-                    <!-- Search could go here -->
-                </div>
-                
-                <div class="d-flex align-items-center gap-3">
-                    <span class="d-none d-sm-inline fw-bold text-dark small" v-if="authStore.user">
-                        Hello, {{ authStore.user.name.split(' ')[0] }}! 👋
-                    </span>
-                    <NuxtLink to="/dashboard/profile">
-                        <img :src="`https://api.dicebear.com/7.x/initials/svg?seed=${authStore.user?.name || 'User'}`" class="avatar rounded-circle border border-2 border-white shadow-sm transition-hover" alt="Profile">
-                    </NuxtLink>
-                </div>
+        <!-- Main -->
+        <div class="main">
+            <header class="topbar d-lg-none">
+                <button class="btn btn-ghost btn-icon" aria-label="Open menu" @click="sidebarOpen = true">
+                    <i class="bi bi-list"></i>
+                </button>
+                <AppLogo to="/dashboard" />
+                <NuxtLink to="/dashboard/profile" aria-label="Profile">
+                    <span class="avatar sm" :style="{ background: colorFor(auth.user?.email) }">{{ initials(auth.user?.name) }}</span>
+                </NuxtLink>
             </header>
-
-            <!-- Page Content -->
-            <div class="content-wrapper p-4 flex-grow-1 overflow-x-hidden">
+            <main class="content">
                 <slot />
-            </div>
-        </main>
+            </main>
+        </div>
     </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import { useAuthStore } from '../stores/auth';
-import { useRouter } from 'vue-router';
+import { useAuthStore } from '~/stores/auth';
 
-const authStore = useAuthStore();
-const router = useRouter();
+const auth = useAuthStore();
+const route = useRoute();
 const sidebarOpen = ref(false);
 
-// Ensure user is loaded
-onMounted(async () => {
-    if (!authStore.user && authStore.isAuthenticated) {
-        await authStore.fetchUser();
-    }
+const nav = [
+    { to: '/dashboard', label: 'Overview', icon: 'bi-grid-1x2', exact: true },
+    { to: '/dashboard/events', label: 'Events', icon: 'bi-calendar2-check', exact: false },
+    { to: '/dashboard/voters', label: 'Voters', icon: 'bi-people', exact: false },
+    { to: '/dashboard/profile', label: 'Account', icon: 'bi-person-gear', exact: false },
+];
+
+const isActive = (item: { to: string; exact: boolean }) =>
+    item.exact ? route.path === item.to : route.path.startsWith(item.to);
+
+watch(() => route.fullPath, () => { sidebarOpen.value = false; });
+
+onMounted(() => {
+    if (!auth.user && auth.isAuthenticated) auth.fetchUser();
 });
 
-const logout = () => {
-    authStore.logout();
-    router.push('/login');
-};
+async function logout() {
+    await auth.logout();
+    await navigateTo('/login');
+}
 </script>
 
 <style scoped>
-.dashboard-wrapper {
-    overflow-x: hidden;
-}
-
+.dash { min-height: 100vh; display: flex; background: var(--bg); }
 .sidebar {
-    width: 280px;
-    height: 100vh;
-    position: fixed;
-    left: -280px;
-    top: 0;
-    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    z-index: 1050; /* Above regular content and overlay */
+    width: 264px; flex-shrink: 0; background: var(--surface); border-right: 1px solid var(--line);
+    display: flex; flex-direction: column; position: fixed; inset: 0 auto 0 0; z-index: 1200;
+    transform: translateX(-100%); transition: transform .25s var(--ease);
 }
-
-.sidebar-open {
-    left: 0 !important;
+.sidebar.open { transform: none; box-shadow: var(--shadow-lg); }
+.scrim { position: fixed; inset: 0; background: rgba(10, 18, 34, .45); z-index: 1100; }
+.main { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; }
+.topbar {
+    position: sticky; top: 0; z-index: 50; display: flex; align-items: center; justify-content: space-between;
+    padding: .7rem 1rem; background: rgba(255, 255, 255, .9); backdrop-filter: blur(12px); border-bottom: 1px solid var(--line);
 }
-
-.sidebar-overlay {
-    z-index: 1040;
-    backdrop-filter: blur(4px);
-}
-
-.main-content {
-    transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    width: 100%;
-}
-
-.avatar {
-    width: 40px;
-    height: 40px;
-}
-
-.active-link {
-    pointer-events: none;
-}
-.active-link i {
-    opacity: 1 !important;
-}
-
+.content { padding: 1.5rem 1rem 3rem; width: 100%; max-width: 1240px; margin: 0 auto; }
+@media (min-width: 768px) { .content { padding: 2rem 2rem 4rem; } }
 @media (min-width: 992px) {
-    .sidebar {
-        left: 0;
-        z-index: 10;
-        position: sticky;
-        top: 0;
-    }
-    
-    .main-content {
-        width: calc(100% - 280px);
-    }
+    .sidebar { position: sticky; top: 0; height: 100vh; transform: none; }
+    .content { padding: 2.25rem 2.5rem 4rem; }
 }
+.side-link {
+    display: flex; align-items: center; gap: .75rem; padding: .65rem .9rem; border-radius: 12px;
+    color: var(--ink-2); font-weight: 600; font-size: .95rem; transition: background-color .15s, color .15s;
+}
+.side-link .bi { font-size: 1.05rem; color: var(--muted); }
+.side-link:hover { background: var(--surface-2); color: var(--ink); }
+.side-link.active { background: var(--brand-50); color: var(--brand-700); }
+.side-link.active .bi { color: var(--brand-600); }
+.user-card { display: flex; align-items: center; gap: .65rem; padding: .65rem; border: 1px solid var(--line); border-radius: 14px; background: var(--surface-2); }
 </style>

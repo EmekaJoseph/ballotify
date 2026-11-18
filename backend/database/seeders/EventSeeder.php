@@ -5,9 +5,9 @@ namespace Database\Seeders;
 use App\Models\Candidate;
 use App\Models\Category;
 use App\Models\Event;
+use App\Models\EventType;
 use App\Models\User;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class EventSeeder extends Seeder
@@ -20,14 +20,9 @@ class EventSeeder extends Seeder
             'password' => bcrypt('password'),
         ]);
 
-        if (! DB::table('event_types')->where('key', 'single')->exists()) {
-            DB::table('event_types')->insert([
-                ['key' => 'single', 'name' => 'Single Choice', 'created_at' => now(), 'updated_at' => now()],
-                ['key' => 'multiple', 'name' => 'Multiple Choice', 'created_at' => now(), 'updated_at' => now()],
-            ]);
-        }
-        $singleId = DB::table('event_types')->where('key', 'single')->value('id');
-        $multipleId = DB::table('event_types')->where('key', 'multiple')->value('id');
+        // Event types are inserted by the voting-tables migration.
+        $singleId = EventType::where('key', 'single')->value('id');
+        $multipleId = EventType::where('key', 'multiple')->value('id');
 
         $names = ['Campus Election', 'Faculty Awards', 'Tech Fest Poll'];
         foreach ($names as $idx => $ename) {

@@ -1,33 +1,15 @@
 import api from '../index';
+import type { Choice, EventResults, PublicEvent } from '~/types';
 
 export const publicApi = {
-    /**
-     * Get public event data by token
-     */
-    getEventByToken: (token: string) =>
-        api.get(`/public/events/${token}`),
+    /** Ballot for an open event. Responds 403 with {status, message} when not open, 404 when unknown. */
+    getEvent: (token: string) => api.get<PublicEvent>(`/public/events/${token}`),
 
-    /**
-     * Validate voter code for an event (by token)
-     */
-    validateCodeByToken: (token: string, code: string) =>
-        api.post(`/public/events/${token}/code/validate`, { code }),
+    validateCode: (token: string, code: string) =>
+        api.post<{ valid: boolean; message?: string }>(`/public/events/${token}/code/validate`, { code }),
 
-    /**
-     * Validate voter code for an event (by event ID)
-     */
-    validateCodeByEvent: (eventId: number | string, code: string) =>
-        api.post(`/public/events/${eventId}/code/validate`, { code }),
+    getResults: (token: string) => api.get<EventResults>(`/public/events/${token}/results`),
 
-    /**
-     * Get public event results by token
-     */
-    getResultsByToken: (token: string) =>
-        api.get(`/public/events/${token}/results`),
-
-    /**
-     * Cast a vote for an event
-     */
-    castVote: (token: string, payload: { code: string; choices: { category_id: number; candidate_id: number }[] }) =>
-        api.post(`/public/events/${token}/vote`, payload),
+    castVote: (token: string, payload: { code: string; choices: Choice[] }) =>
+        api.post<{ message: string }>(`/public/events/${token}/vote`, payload),
 };

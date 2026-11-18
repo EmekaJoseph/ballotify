@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Ballotify Flyer: Dark</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap">
+<style>
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 794px; height: 1123px; }
+  body {
+    font-family: 'Plus Jakarta Sans', 'Segoe UI', system-ui, sans-serif;
+    color: #fff; overflow: hidden; position: relative;
+    background:
+      radial-gradient(620px 520px at 92% 8%, rgba(124, 92, 255, .55), transparent 62%),
+      radial-gradient(620px 520px at 0% 72%, rgba(20, 145, 138, .55), transparent 62%),
+      #0a1222;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  .page { position: absolute; inset: 0; padding: 64px 64px 56px; display: flex; flex-direction: column; }
+  .brand { display: flex; align-items: center; gap: 14px; font-weight: 800; font-size: 30px; letter-spacing: -.03em; }
+  .brand img { width: 52px; height: 52px; border-radius: 50%; }
+  .tag { margin-top: 40px; display: inline-flex; align-self: flex-start; padding: 8px 16px; border-radius: 999px;
+         background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.14); color: #99f6e4; font-weight: 700; font-size: 16px; letter-spacing: .02em; }
+  h1 { margin-top: 18px; font-size: 74px; line-height: .98; font-weight: 800; letter-spacing: -.045em; }
+  h1 span { background: linear-gradient(100deg, #5eead4, #a78bfa); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .art { position: relative; margin: 30px auto 0; width: 430px; }
+  .art img { width: 100%; border-radius: 32px; display: block; box-shadow: 0 50px 90px -30px rgba(0,0,0,.8); border: 1px solid rgba(255,255,255,.1); }
+  .chip { position: absolute; background: #fff; color: #0f172a; border-radius: 18px; padding: 14px 18px; box-shadow: 0 24px 50px -16px rgba(0,0,0,.6);
+          display: flex; align-items: center; gap: 12px; font-weight: 700; font-size: 17px; }
+  .chip .dot { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; font-size: 18px; }
+  .c1 { left: -52px; bottom: 44px; } .c1 .dot { background: #ecfdf3; color: #16a34a; }
+  .c2 { right: -48px; top: 40px; }   .c2 .dot { background: #f1edff; color: #7c5cff; }
+  .points { margin-top: auto; display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .pt { padding: 18px; border-radius: 18px; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1); }
+  .pt b { display: block; font-size: 19px; margin-top: 10px; letter-spacing: -.01em; }
+  .pt .ic { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: rgba(94,234,212,.14); color: #5eead4; font-size: 20px; font-weight: 800; }
+  .cta { margin-top: 22px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+  .btn { background: #fff; color: #0a1222; padding: 18px 30px; border-radius: 16px; font-weight: 800; font-size: 22px; letter-spacing: -.01em; }
+  .url { color: rgba(255,255,255,.7); font-weight: 600; font-size: 20px; }
+</style>
+</head>
+<body>
+  <div class="page">
+    <div class="brand"><img src="../frontend/public/ballotify-logo.png" alt=""> Ballotify</div>
+
+    <div class="tag">Elections · Awards · Polls</div>
+    <h1>Run a fair vote<br><span>in minutes.</span></h1>
+
+    <div class="art">
+      <img src="../frontend/public/hero_illustration.png" alt="">
+      <div class="chip c1"><span class="dot">✓</span>Vote recorded</div>
+      <div class="chip c2"><span class="dot">●</span>Live results</div>
+    </div>
+
+    <div class="points">
+      <div class="pt"><span class="ic">#</span><b>One-time codes</b></div>
+      <div class="pt"><span class="ic">▢</span><b>Any phone or laptop</b></div>
+      <div class="pt"><span class="ic">↗</span><b>Results in real time</b></div>
+    </div>
+
+    <div class="cta">
+      <span class="btn">Start your event →</span>
+      <!-- Replace with your real website address before printing -->
+      <span class="url">your-website.com</span>
+    </div>
+  </div>
+</body>
+</html>

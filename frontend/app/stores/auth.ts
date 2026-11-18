@@ -1,63 +1,68 @@
 import { defineStore } from 'pinia';
-import { adminApi } from '../api/endpoints/admin';
-import { useRouter } from 'vue-router';
+import { adminApi } from '~/api/endpoints/admin';
+import { tokenStorage } from '~/api';
+import type { User } from '~/types';
 
 export const useAuthStore = defineStore('auth', {
     state: () => ({
-        user: null as any | null,
+        user: null as User | null,
         token: null as string | null,
+        initialised: false,
     }),
+
     getters: {
         isAuthenticated: (state) => !!state.token,
+        firstName: (state) => state.user?.name?.trim().split(/\s+/)[0] ?? '',
     },
-    actions: {
-        setToken(token: string) {
-            this.token = token;
-            if (typeof window !== 'undefined') {
-                localStorage.setItem('auth_token', token);
-            }
-        },
-        setUser(user: any) {
-            this.user = user;
-        },
-        async fetchUser() {
-            try {
-                if (!this.token && typeof window !== 'undefined') {
-                    this.token = localStorage.getItem('auth_token');
-                }
-                if (!this.token) return;
 
-                const response = await adminApi.getMe();
-                this.user = response.data;
-            } catch (error) {
-                this.logout();
+    actions: {
+        /** Load the token saved from a previous session (idempotent). */
+        initAuth() {
+            if (this.initialised) return;
+            this.token = tokenStorage.get();
+            this.initialised = true;
+        },
+
+        setSession(token: string, user: User) {
+            this.token = token;
+            this.user = user;
+            this.initialised = true;
+            tokenStorage.set(token);
+        },
+
+        async fetchUser() {
+            this.initAuth();
+            if (!this.token) return;
+            try {
+                const { data } = await adminApi.getMe();
+                this.user = data;
+            } catch {
+                // An invalid token is cleared by the API 401 interceptor.
             }
         },
-        async login(credentials: any) {
-            const response = await adminApi.login(credentials);
-            this.setToken(response.data.token);
-            this.setUser(response.data.user);
+
+        async login(credentials: { email: string; password: string }) {
+            const { data } = await adminApi.login(credentials);
+            this.setSession(data.token, data.user);
         },
-        async register(data: any) {
-            const response = await adminApi.register(data);
-            this.setToken(response.data.token);
-            this.setUser(response.data.user);
+
+        async register(payload: { name: string; email: string; password: string }) {
+            const { data } = await adminApi.register(payload);
+            this.setSession(data.token, data.user);
         },
-        logout() {
+
+        /** Revoke the token on the server first (it must still be attached), then clear locally. */
+        async logout() {
+            if (this.token) {
+                try { await adminApi.logout(); } catch { /* already invalid: fine */ }
+            }
+            this.clearSession();
+        },
+
+        clearSession() {
             this.user = null;
             this.token = null;
-            if (typeof window !== 'undefined') {
-                localStorage.removeItem('auth_token');
-            }
-            adminApi.logout().catch(() => {});
+            tokenStorage.clear();
         },
-        initAuth() {
-            if (typeof window !== 'undefined') {
-                const token = localStorage.getItem('auth_token');
-                if (token) {
-                    this.token = token;
-                }
-            }
-        }
     },
 });

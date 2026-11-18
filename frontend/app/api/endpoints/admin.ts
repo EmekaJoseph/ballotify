@@ -1,49 +1,61 @@
 import api from '../index';
+import type { BallotEvent, Candidate, Category, GeneratedCode, SelectionMode, User, Voter } from '~/types';
+
+type Id = number | string;
+
+export interface EventPayload {
+    name?: string;
+    description?: string | null;
+    selection_mode?: SelectionMode;
+    expected_voters?: number;
+    starts_at?: string | null;
+    ends_at?: string | null;
+}
 
 export const adminApi = {
     // Authentication
-    register: (data: any) => api.post('/auth/register', data),
-    login: (data: any) => api.post('/auth/login', data),
+    register: (data: { name: string; email: string; password: string }) =>
+        api.post<{ token: string; user: User }>('/auth/register', data),
+    login: (data: { email: string; password: string }) =>
+        api.post<{ token: string; user: User }>('/auth/login', data),
     logout: () => api.post('/auth/logout'),
-    getMe: () => api.get('/me'),
+    getMe: () => api.get<User>('/me'),
+    updateMe: (data: { name?: string; email?: string; current_password?: string; password?: string }) =>
+        api.patch<User>('/me', data),
 
     // Events
-    getEvents: () => api.get('/events'),
-    createEvent: (data: any) => api.post('/events', data),
-    getEventDetails: (eventId: number | string) => api.get(`/events/${eventId}`),
-    updateEvent: (eventId: number | string, data: any) => api.patch(`/events/${eventId}`, data),
-    deleteEvent: (eventId: number | string) => api.delete(`/events/${eventId}`),
-    getVotingLink: (eventId: number | string) => api.get(`/events/${eventId}/voting-link`),
+    getEvents: () => api.get<BallotEvent[]>('/events'),
+    createEvent: (data: EventPayload) => api.post<BallotEvent>('/events', data),
+    getEvent: (eventId: Id) => api.get<BallotEvent>(`/events/${eventId}`),
+    updateEvent: (eventId: Id, data: EventPayload) => api.patch<BallotEvent>(`/events/${eventId}`, data),
+    deleteEvent: (eventId: Id) => api.delete(`/events/${eventId}`),
+    getVotingLink: (eventId: Id) =>
+        api.get<{ token: string; public_url: string; results_url: string }>(`/events/${eventId}/voting-link`),
 
     // Categories
-    getCategories: (eventId: number | string) => api.get(`/events/${eventId}/categories`),
-    createCategory: (eventId: number | string, data: { name: string }) =>
-        api.post(`/events/${eventId}/categories`, data),
-    deleteCategory: (eventId: number | string, categoryId: number | string) =>
-        api.delete(`/events/${eventId}/categories/${categoryId}`),
+    getCategories: (eventId: Id) => api.get<Category[]>(`/events/${eventId}/categories`),
+    createCategory: (eventId: Id, data: { name: string }) => api.post<Category>(`/events/${eventId}/categories`, data),
+    updateCategory: (eventId: Id, categoryId: Id, data: { name: string }) =>
+        api.patch<Category>(`/events/${eventId}/categories/${categoryId}`, data),
+    deleteCategory: (eventId: Id, categoryId: Id) => api.delete(`/events/${eventId}/categories/${categoryId}`),
 
-    // Candidates
-    createCandidate: (eventId: number | string, formData: FormData) =>
-        api.post(`/events/${eventId}/candidates`, formData, {
-            headers: { 'Content-Type': 'multipart/form-data' }
-        }),
-    updateCandidate: (eventId: number | string, candidateId: number | string, formData: FormData) =>
-        api.patch(`/events/${eventId}/candidates/${candidateId}`, formData, {
-            headers: { 'Content-Type': 'multipart/form-data' }
-        }),
-    deleteCandidate: (eventId: number | string, candidateId: number | string) =>
-        api.delete(`/events/${eventId}/candidates/${candidateId}`),
+    // Candidates (multipart so a photo can be attached; update uses POST because
+    // PHP does not parse multipart bodies on PATCH requests)
+    getCandidates: (eventId: Id) => api.get<Candidate[]>(`/events/${eventId}/candidates`),
+    createCandidate: (eventId: Id, form: FormData) => api.post<Candidate>(`/events/${eventId}/candidates`, form),
+    updateCandidate: (eventId: Id, candidateId: Id, form: FormData) =>
+        api.post<Candidate>(`/events/${eventId}/candidates/${candidateId}`, form),
+    deleteCandidate: (eventId: Id, candidateId: Id) => api.delete(`/events/${eventId}/candidates/${candidateId}`),
 
     // Voters
-    getVoters: (eventId: number | string) => api.get(`/events/${eventId}/voters`),
-    createVoter: (eventId: number | string, data: { code: string; name?: string }) =>
-        api.post(`/events/${eventId}/voters`, data),
-    updateVoter: (eventId: number | string, voterId: number | string, data: any) =>
-        api.patch(`/events/${eventId}/voters/${voterId}`, data),
-    deleteVoter: (eventId: number | string, voterId: number | string) =>
-        api.delete(`/events/${eventId}/voters/${voterId}`),
-    generateVoters: (eventId: number | string, data: { count?: number; names?: string[] }) =>
-        api.post(`/events/${eventId}/voters/generate`, data),
-    importVoters: (eventId: number | string, data: { names: string[] }) =>
-        api.post(`/events/${eventId}/voters/import`, data),
+    getVoters: (eventId: Id) => api.get<Voter[]>(`/events/${eventId}/voters`),
+    createVoter: (eventId: Id, data: { code: string; name?: string | null }) =>
+        api.post<Voter>(`/events/${eventId}/voters`, data),
+    updateVoter: (eventId: Id, voterId: Id, data: { name?: string | null; code?: string; used_at?: string | null }) =>
+        api.patch<Voter>(`/events/${eventId}/voters/${voterId}`, data),
+    deleteVoter: (eventId: Id, voterId: Id) => api.delete(`/events/${eventId}/voters/${voterId}`),
+    generateVoters: (eventId: Id, data: { count: number }) =>
+        api.post<{ voters: GeneratedCode[] }>(`/events/${eventId}/voters/generate`, data),
+    importVoters: (eventId: Id, data: { names: string[] }) =>
+        api.post<{ voters: GeneratedCode[] }>(`/events/${eventId}/voters/import`, data),
 };

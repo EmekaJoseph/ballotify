@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Ballotify Flyer: Light</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@600&display=swap">
+<style>
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 794px; height: 1123px; }
+  body {
+    font-family: 'Plus Jakarta Sans', 'Segoe UI', system-ui, sans-serif; color: #0f172a; overflow: hidden; position: relative;
+    background: #f4f7fa; -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  .band { position: absolute; left: 0; right: 0; bottom: 0; height: 300px; background:
+      radial-gradient(500px 300px at 100% 0%, rgba(124, 92, 255, .5), transparent 60%),
+      radial-gradient(500px 300px at 0% 100%, rgba(20, 145, 138, .6), transparent 60%), #0a1222; }
+  .page { position: absolute; inset: 0; padding: 60px 64px 52px; display: flex; flex-direction: column; }
+  .brand { display: flex; align-items: center; gap: 14px; font-weight: 800; font-size: 28px; letter-spacing: -.03em; }
+  .brand img { width: 50px; height: 50px; border-radius: 50%; }
+  .row { display: grid; grid-template-columns: 1fr 300px; gap: 36px; margin-top: 44px; align-items: start; }
+  h1 { font-size: 60px; line-height: 1.02; font-weight: 800; letter-spacing: -.045em; }
+  h1 em { font-style: normal; color: #0e7c77; }
+  .sub { margin-top: 22px; font-size: 22px; color: #475569; font-weight: 600; }
+  .steps { margin-top: 40px; display: grid; gap: 16px; }
+  .step { display: flex; align-items: center; gap: 16px; font-weight: 700; font-size: 22px; }
+  .step i { font-style: normal; width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center; color: #fff; font-weight: 800;
+            background: linear-gradient(135deg, #14918a, #7c5cff); font-size: 20px; }
+
+  /* Phone mockup showing the real ballot */
+  .phone { width: 300px; height: 610px; border-radius: 46px; background: #0a1222; padding: 12px; box-shadow: 0 50px 80px -30px rgba(10,18,34,.55); position: relative; z-index: 2; }
+  .screen { width: 100%; height: 100%; border-radius: 36px; background: #f4f7fa; overflow: hidden; display: flex; flex-direction: column; }
+  .notch { width: 110px; height: 24px; border-radius: 0 0 16px 16px; background: #0a1222; margin: 0 auto; }
+  .s-head { padding: 12px 18px 6px; }
+  .s-cap { font-size: 10px; font-weight: 700; letter-spacing: .08em; color: #64748b; text-transform: uppercase; }
+  .s-title { font-size: 18px; font-weight: 800; letter-spacing: -.02em; }
+  .card { margin: 8px 12px; background: #fff; border: 1px solid #e5e9f0; border-radius: 18px; padding: 12px; }
+  .opt { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 12px; border: 1.5px solid #e5e9f0; margin-top: 8px; font-weight: 700; font-size: 13px; }
+  .opt.sel { border-color: #14918a; background: #ecf8f7; }
+  .av { width: 30px; height: 30px; border-radius: 50%; color: #fff; display: grid; place-items: center; font-size: 11px; font-weight: 800; }
+  .rd { margin-left: auto; width: 20px; height: 20px; border-radius: 50%; border: 2px solid #d5dbe5; }
+  .opt.sel .rd { background: #0e7c77; border-color: #0e7c77; box-shadow: inset 0 0 0 4px #0e7c77, inset 0 0 0 10px #fff; }
+  .s-btn { margin: auto 12px 16px; background: #0e7c77; color: #fff; text-align: center; padding: 13px; border-radius: 14px; font-weight: 800; font-size: 14px; }
+  .code { position: absolute; z-index: 3; right: 236px; top: 596px; background: #fff; border-radius: 18px; padding: 14px 20px; box-shadow: 0 24px 50px -16px rgba(10,18,34,.45); }
+  .code small { display: block; font-size: 11px; font-weight: 700; letter-spacing: .08em; color: #64748b; text-transform: uppercase; }
+  .code b { font-family: 'JetBrains Mono', monospace; font-size: 26px; letter-spacing: .14em; color: #0e7c77; }
+
+  .bottom { margin-top: auto; position: relative; z-index: 2; color: #fff; }
+  .uses { display: flex; gap: 12px; flex-wrap: wrap; }
+  .uses span { padding: 9px 16px; border-radius: 999px; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.16); font-weight: 700; font-size: 17px; }
+  .cta { margin-top: 26px; display: flex; align-items: center; justify-content: space-between; }
+  .cta .big { font-size: 34px; font-weight: 800; letter-spacing: -.03em; }
+  .cta .url { background: #fff; color: #0a1222; padding: 16px 26px; border-radius: 16px; font-weight: 800; font-size: 20px; }
+</style>
+</head>
+<body>
+  <div class="band"></div>
+  <div class="page">
+    <div class="brand"><img src="../frontend/public/ballotify-logo.png" alt=""> Ballotify</div>
+
+    <div class="row">
+      <div>
+        <h1>Every vote counts.<br><em>Once.</em></h1>
+        <p class="sub">Secure online voting with live results.</p>
+        <div class="steps">
+          <div class="step"><i>1</i>Build your ballot</div>
+          <div class="step"><i>2</i>Share voter codes</div>
+          <div class="step"><i>3</i>Watch results live</div>
+        </div>
+      </div>
+
+      <div class="phone">
+        <div class="screen">
+          <div class="notch"></div>
+          <div class="s-head">
+            <div class="s-cap">Official ballot</div>
+            <div class="s-title">Student Union</div>
+          </div>
+          <div class="card">
+            <div class="s-cap">President</div>
+            <div class="opt sel"><span class="av" style="background:#7c5cff">AO</span>Ada Obi<span class="rd"></span></div>
+            <div class="opt"><span class="av" style="background:#0ea5e9">BA</span>Bola Ade<span class="rd"></span></div>
+          </div>
+          <div class="card">
+            <div class="s-cap">Treasurer</div>
+            <div class="opt"><span class="av" style="background:#f59e0b">CE</span>Chidi Eze<span class="rd"></span></div>
+            <div class="opt sel"><span class="av" style="background:#ec4899">DM</span>Dayo Musa<span class="rd"></span></div>
+          </div>
+          <div class="s-btn">Review &amp; submit →</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="code"><small>Your code</small><b>K7M2QX9P</b></div>
+
+    <div class="bottom">
+      <div class="uses"><span>Student unions</span><span>Award nights</span><span>Staff votes</span><span>Clubs</span></div>
+      <div class="cta">
+        <span class="big">Start your vote today.</span>
+        <!-- Replace with your real website address before printing -->
+        <span class="url">your-website.com</span>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

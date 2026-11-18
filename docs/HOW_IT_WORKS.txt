@@ -1,0 +1,293 @@
+================================================================================
+                        B A L L O T I F Y
+                  How the app works: an illustrated guide
+================================================================================
+
+Ballotify lets an ORGANISER run an online vote (election, awards, poll) and lets
+VOTERS take part from any phone or laptop using a one-time code.
+
+  Contents
+    1. The big picture
+    2. The people involved
+    3. Lifecycle of an event
+    4. The organiser's journey (dashboard)
+    5. The voter's journey (ballot)
+    6. What happens when a vote is submitted
+    7. Live results
+    8. How the data fits together
+    9. Security & integrity summary
+
+
+--------------------------------------------------------------------------------
+1. THE BIG PICTURE
+--------------------------------------------------------------------------------
+
+   +----------------+         HTTPS / JSON          +---------------------+
+   |   ORGANISER    |  ---------------------------> |                     |
+   |  (dashboard)   |  <--------------------------- |                     |
+   +----------------+                               |     BALLOTIFY API   |
+                                                    |      (Laravel)      |
+   +----------------+         HTTPS / JSON          |                     |
+   |     VOTER      |  ---------------------------> |   checks every rule |
+   | (ballot page)  |  <--------------------------- |   stores the votes  |
+   +----------------+                               +----------+----------+
+                                                               |
+   +----------------+     "a vote was cast" signal             |
+   |  RESULTS PAGE  |  <---------- Pusher (optional) ----------+
+   |  (anyone with  |                                          |
+   |   the link)    |  <-------- or refresh every 15s ---------+
+   +----------------+                                          v
+                                                    +---------------------+
+                                                    |   DATABASE (MySQL)  |
+                                                    +---------------------+
+
+   * The website (Nuxt) is only the "screen". Every decision (is this code
+     valid? is voting open? is this choice allowed?) is made by the API.
+
+
+--------------------------------------------------------------------------------
+2. THE PEOPLE INVOLVED
+--------------------------------------------------------------------------------
+
+   ORGANISER   Creates an account, builds the ballot, issues codes, shares the
+               link, watches turnout, announces results.
+               -> needs to sign in.
+
+   VOTER       Receives a link + a personal code. Votes once.
+               -> no account, no app to install.
+
+   AUDIENCE    Anyone with the results link (e.g. a projector at the venue).
+               -> sees totals only, never who voted for whom.
+
+
+--------------------------------------------------------------------------------
+3. LIFECYCLE OF AN EVENT
+--------------------------------------------------------------------------------
+
+   The status is worked out automatically from the voting window you set:
+
+        starts_at                                   ends_at
+            |                                          |
+   ---------+==========================================+--------------> time
+   SCHEDULED|                 LIVE                     |    CLOSED
+   (upcoming)            (ballot accepts votes)        |  (completed)
+   ballot hidden,                                      |  ballot refused,
+   shows countdown                                     |  results remain
+
+   - No start time  -> live immediately.
+   - No end time    -> stays live until you close it.
+   - "Close voting now" button (Settings) ends it instantly.
+
+
+--------------------------------------------------------------------------------
+4. THE ORGANISER'S JOURNEY
+--------------------------------------------------------------------------------
+
+   [ Sign up ] --> [ Create event ] --> [ Build ballot ] --> [ Issue codes ]
+                                                                   |
+   [ Announce ] <-- [ Watch results ] <-- [ Share link ] <---------+
+
+   Step by step:
+
+   (1) CREATE EVENT
+       Name, description, voting style, opening/closing time.
+
+         Voting style
+         +-----------------------------+   +-----------------------------+
+         | (o) One per category        |   | [x] Multiple choice         |
+         |     pick 1 President,       |   |     pick any number of      |
+         |     1 Treasurer ...         |   |     nominees per category   |
+         +-----------------------------+   +-----------------------------+
+
+   (2) BUILD THE BALLOT  (Ballot tab)
+
+         Event: Student Union Elections
+           |
+           +-- Category: President
+           |      +-- Candidate: Ada Obi      [photo]
+           |      +-- Candidate: Bola Ade     [photo]
+           |
+           +-- Category: Treasurer
+                  +-- Candidate: Chidi Eze
+                  +-- Candidate: Dayo Musa
+
+   (3) ISSUE VOTER CODES  (Voters tab)
+
+         Option A: "Generate 500"  -> 500 anonymous codes
+         Option B: "Import names"  -> paste/upload a list, 1 code per person
+         Option C: "Add one"       -> single voter, own or generated code
+
+         Codes look like:  K7M2QX9P   (8 chars, no 0/O or 1/I/L look-alikes)
+
+         Then:  [Download CSV]  or  [Print slips]
+
+         +---------------------------------------------------+
+         |  [QR]   Student Union Elections                   |
+         |  [QR]   Ada Obi                                   |
+         |  [QR]   YOUR VOTING CODE:  K7M2QX9P               |
+         |         https://yoursite.com/vote/3f2c...          |
+         +------------------ cut here -----------------------+
+
+   (4) SHARE  (Share tab)
+         - Voting link .......... send to voters
+         - Live results link .... show on a screen / share later
+         - QR code .............. posters and slides
+         - Message template ..... ready for email / WhatsApp / SMS
+
+   (5) MONITOR
+         Overview tab: turnout bar, setup checklist.
+         Voters tab:   who has voted (Voted / Not voted).
+                       "Reset" lets a code vote again (old ballot discarded).
+
+
+--------------------------------------------------------------------------------
+5. THE VOTER'S JOURNEY
+--------------------------------------------------------------------------------
+
+   Opens link            Enters code            Picks candidates
+   +------------+        +------------+         +----------------+
+   | Student    |        | Enter your |         | PRESIDENT      |
+   | Union      |  --->  | code       |  --->   | (o) Ada Obi    |
+   | Elections  |        | [K7M2QX9P] |         | ( ) Bola Ade   |
+   | LIVE       |        | [Continue] |         | TREASURER      |
+   | closes in  |        +------------+         | ( ) Chidi Eze  |
+   | 3h 12m     |              |                | (o) Dayo Musa  |
+   +------------+              |                | [Review]       |
+                               |                +----------------+
+                     wrong / used code?                 |
+                     -> friendly error,                 v
+                        try again               +----------------+
+                                                | Review ballot  |
+                                                | President: Ada |
+        +---------------------------+           | Treasurer: Dayo|
+        |   (check) Your vote has   |  <------  | [Change][Cast] |
+        |   been recorded           |           +----------------+
+        |   [View live results]     |
+        +---------------------------+
+
+   - Blank categories are allowed (a voter may abstain).
+   - If the event isn't open yet: a countdown is shown instead of the ballot.
+   - If it has closed: "Voting has closed" + a button to see results.
+
+
+--------------------------------------------------------------------------------
+6. WHAT HAPPENS WHEN A VOTE IS SUBMITTED
+--------------------------------------------------------------------------------
+
+   Voter presses "Cast my vote"
+            |
+            v
+   +---------------------------------+     no
+   | Is the event inside its voting  |-----------> 403 "Voting has closed /
+   | window right now?               |              hasn't started"
+   +---------------------------------+
+            | yes
+            v
+   +---------------------------------+     no
+   | Does every chosen candidate     |-----------> 422 "Invalid candidate"
+   | belong to this event AND to the |
+   | category it was chosen under?   |
+   +---------------------------------+
+            | yes
+            v
+   +---------------------------------+     no
+   | Single-choice event: at most    |-----------> 422 "Only one candidate
+   | one pick per category?          |              per category"
+   +---------------------------------+
+            | yes
+            v
+   ==================== DATABASE TRANSACTION BEGINS =====================
+   +---------------------------------+
+   | LOCK this voter's code row      |   <- a second, simultaneous submit
+   +---------------------------------+      with the same code has to WAIT
+            |                               here, then sees "already used"
+            v
+   +---------------------------------+     no
+   | Code exists and is unused?      |-----------> 422 "Invalid or used code"
+   +---------------------------------+
+            | yes
+            v
+   +---------------------------------+
+   | Save one row per choice         |
+   | Mark code as used (time stamp)  |
+   +---------------------------------+
+   ==================== TRANSACTION COMMITS =============================
+            |
+            v
+   Broadcast "vote.cast" (no voter info) ---> results pages refresh
+            |
+            v
+   200 "Vote recorded" ---> voter sees the confirmation screen
+
+   Also: code checks and vote submissions are limited to 30 per minute
+   per network per event, so codes cannot be guessed by brute force.
+
+
+--------------------------------------------------------------------------------
+7. LIVE RESULTS
+--------------------------------------------------------------------------------
+
+   +---------------------------------------------------------------+
+   |  * LIVE RESULTS   Student Union Elections   [Refresh][Present]|
+   |  Voting closes in 3h 12m                                      |
+   +---------------------------------------------------------------+
+   | Votes cast 1,284 | Turnout 62% | Categories 2 | Candidates 4  |
+   +---------------------------------------------------------------+
+   | President                          Leading: Ada Obi           |
+   |    .-"""-.     1  Ada Obi    ################......  58.1%    |
+   |   /  642  \    2  Bola Ade   ##############........  41.9%    |
+   |   \ votes /                                                   |
+   |    '-...-'                                                    |
+   +---------------------------------------------------------------+
+
+   How it stays up to date:
+     - With Pusher configured: every accepted ballot sends a signal and
+       the page refreshes within about a second.
+     - Without Pusher: the page refreshes itself every 15 seconds.
+     - "Present" switches to full screen for projectors.
+     - After closing, the badge changes to "Final results" and the leader
+       is labelled "Winner". Ties are shown as "Tied: A & B".
+
+
+--------------------------------------------------------------------------------
+8. HOW THE DATA FITS TOGETHER
+--------------------------------------------------------------------------------
+
+   users (organisers)
+     |
+     | 1 organiser has many events
+     v
+   events --------------------- event_types ("single" / "multiple")
+     |  name, description, link_token (the secret part of the voting URL),
+     |  starts_at, ends_at
+     |
+     +--< categories           e.g. "President"
+     |       |
+     |       +--< candidates   e.g. "Ada Obi" (+ photo)
+     |
+     +--< voters               one row per code; used_at = when it voted
+     |
+     +--< votes                one row per choice:
+                               (voter, category, candidate)
+
+   - A voter can choose a given candidate at most once (database rule).
+   - Deleting an event deletes everything under it.
+   - Results = count of vote rows per candidate.
+
+
+--------------------------------------------------------------------------------
+9. SECURITY & INTEGRITY SUMMARY
+--------------------------------------------------------------------------------
+
+   [x] One vote per code, guaranteed under heavy concurrency (row lock).
+   [x] Voting window enforced by the server, not just hidden in the page.
+   [x] Choices validated against the event, the category and the voting style.
+   [x] Brute-force protection on code entry and vote submission.
+   [x] Organisers can only see and change their own events (others get 404).
+   [x] Nested items can't be edited through another event's URL.
+   [x] Public results show totals only; no names, no codes, no ballots.
+   [x] Passwords hashed; changing a password requires the current one.
+   [x] Uploaded photos are type-checked and size-limited (5 MB).
+   [x] CSV exports are protected against spreadsheet formula injection.
+
+================================================================================

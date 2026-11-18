@@ -12,6 +12,14 @@ class Candidate extends Model
 
     protected $fillable = ['event_id', 'category_id', 'name', 'image_path'];
 
+    protected $appends = ['image_url'];
+
+    /** Absolute URL of the candidate photo (served from public/), or null. */
+    public function getImageUrlAttribute(): ?string
+    {
+        return $this->image_path ? asset($this->image_path) : null;
+    }
+
     public function event(): BelongsTo
     {
         return $this->belongsTo(Event::class);

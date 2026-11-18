@@ -9,13 +9,16 @@ use App\Http\Controllers\Api\VoterController;
 use App\Http\Controllers\Api\VoteController;
 
 Route::prefix('auth')->group(function () {
-    Route::post('register', [AuthController::class, 'register']);
-    Route::post('login', [AuthController::class, 'login']);
+    Route::post('register', [AuthController::class, 'register'])->middleware('throttle:auth');
+    Route::post('login', [AuthController::class, 'login'])->middleware('throttle:auth');
     Route::post('logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
 });
 
-Route::middleware('auth:sanctum')->group(function () {
+// scopeBindings(): a {category}/{candidate}/{voter} in the URL must belong to the
+// {event} in the same URL, otherwise Laravel answers 404.
+Route::middleware('auth:sanctum')->scopeBindings()->group(function () {
     Route::get('me', [AuthController::class, 'me']);
+    Route::patch('me', [AuthController::class, 'updateProfile']);
 
     Route::get('events', [EventController::class, 'index']);
     Route::post('events', [EventController::class, 'store']);
@@ -27,8 +30,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('events/{event}/categories', [CategoryController::class, 'store']);
     Route::patch('events/{event}/categories/{category}', [CategoryController::class, 'update']);
     Route::delete('events/{event}/categories/{category}', [CategoryController::class, 'destroy']);
+    Route::get('events/{event}/candidates', [CandidateController::class, 'index']);
     Route::post('events/{event}/candidates', [CandidateController::class, 'store']);
-    Route::patch('events/{event}/candidates/{candidate}', [CandidateController::class, 'update']);
+    // POST alias: browsers cannot send multipart/form-data (image upload) with PATCH to PHP.
+    Route::match(['patch', 'post'], 'events/{event}/candidates/{candidate}', [CandidateController::class, 'update']);
     Route::delete('events/{event}/candidates/{candidate}', [CandidateController::class, 'destroy']);
     Route::get('events/{event}/voters', [VoterController::class, 'index']);
     Route::post('events/{event}/voters', [VoterController::class, 'store']);
@@ -40,9 +45,9 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 
 Route::prefix('public')->group(function () {
-    Route::get('events/{token}', [EventController::class, 'publicShow']);
-    Route::get('events/{token}/results', [EventController::class, 'results']);
-    Route::post('events/{token}/code/validate', [VoterController::class, 'validateCode']);
-    Route::post('events/{token}/vote', [VoteController::class, 'store']);
-    Route::post('events/{event}/code/validate', [VoterController::class, 'validateCodeByEvent']);
+    Route::get('events/{token}', [EventController::class, 'publicShow'])->middleware('throttle:public');
+    Route::get('events/{token}/results', [EventController::class, 'results'])->middleware('throttle:public');
+    // Code guessing endpoints are tightly limited per IP to stop brute forcing.
+    Route::post('events/{token}/code/validate', [VoterController::class, 'validateCode'])->middleware('throttle:voting');
+    Route::post('events/{token}/vote', [VoteController::class, 'store'])->middleware('throttle:voting');
 });

@@ -1,526 +1,210 @@
 <template>
-    <div class="vote-page py-5">
-        <div class="container animate-fade-in">
-            <div class="row justify-content-center pt-lg-5">
-                <div class="col-md-7 col-lg-6 col-xl-5">
+    <div>
+        <!-- Loading -->
+        <div v-if="stage === 'loading'" class="card-b pad">
+            <div class="skeleton mb-3" style="width: 30%"></div>
+            <div class="skeleton mb-2" style="height: 30px; width: 70%"></div>
+            <div class="skeleton mb-4" style="width: 50%"></div>
+            <div class="skeleton" style="height: 54px"></div>
+        </div>
 
-                    <!-- Loading State -->
-                    <div v-if="loading" class="text-center py-5">
-                        <div class="spinner-grow text-primary mb-4" role="status" style="width: 3rem; height: 3rem;">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
-                        <h4 class="fw-bold text-dark">Preparing your ballot</h4>
-                        <p class="text-muted fw-medium">Securing connection to the election server...</p>
-                    </div>
-
-                    <!-- Error State -->
-                    <div v-else-if="error" class="glass-card shadow-lg p-5 text-center animate-slide-up">
-                        <div class="error-wrapper mb-4">
-                            <div
-                                class="error-icon bg-danger bg-opacity-10 text-danger rounded-circle d-flex align-items-center justify-content-center mx-auto shadow-inner">
-                                <i class="bi bi-shield-x fs-1"></i>
-                            </div>
-                        </div>
-                        <h3 class="fw-black mb-3 text-dark">{{ errorTitle }}</h3>
-                        <p class="text-muted mb-5 text-balance lh-lg fw-medium">
-                            {{ errorMessage }}
-                        </p>
-                        <NuxtLink to="/" class="btn btn-dark rounded-pill px-5 py-3 fw-bold transition-hover shadow-sm">
-                            <i class="bi bi-house-door me-2"></i>Return Home
-                        </NuxtLink>
-                    </div>
-
-                    <!-- Success/Event State -->
-                    <div v-else-if="event && !ballotSubmitted">
-                        <div class="glass-card overflow-hidden animate-slide-up p-0">
-                            <div class="p-4 p-lg-5">
-                                <div class="text-center mb-5">
-                                    <div
-                                        class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3 py-2 small d-inline-block mb-3 fw-bold tracking-widest uppercase border border-primary border-opacity-10">
-                                        <i class="bi bi-shield-check me-1"></i> Official Ballot
-                                    </div>
-                                    <h2 class="fw-black mb-2 text-dark">{{ event.name }}</h2>
-                                    <p class="text-muted small fw-medium">Secure Voting Portal</p>
-                                </div>
-
-                                <div v-if="!showCodeInput && !ballotStage" class="text-center">
-                                    <p class="text-muted mb-5 uppercase tracking-widest fw-bold small opacity-75">Ready
-                                        to cast your vote?</p>
-                                    <button @click="showCodeInput = true"
-                                        class="btn btn-primary btn-lg w-100 py-3 fw-black rounded-pill shadow-sm transition-hover">
-                                        Enter Voting Code <i class="bi bi-arrow-right ms-2"></i>
-                                    </button>
-                                </div>
-
-                                <!-- Code Entry -->
-                                <div v-else-if="showCodeInput && !ballotStage" class="animate-slide-up">
-                                    <p class="text-muted mb-4 text-center fw-medium pb-2">
-                                        Your unique voting code ensures one-time, secure participation.
-                                    </p>
-                                    <form @submit.prevent="handleValidateCode">
-                                        <div class="mb-4">
-                                            <div class="modern-input-group">
-                                                <div class="input-icon">
-                                                    <i class="bi bi-key text-primary"></i>
-                                                </div>
-                                                <input v-model="votingCode" type="text"
-                                                    class="form-control modern-input" placeholder="e.g. E1-0021"
-                                                    required :disabled="validating" autocomplete="off">
-                                            </div>
-                                            <div v-if="validationError"
-                                                class="text-danger small mt-3 d-flex align-items-center fw-bold bg-danger bg-opacity-10 p-3 rounded-4">
-                                                <i class="bi bi-exclamation-circle-fill me-2"></i> {{ validationError }}
-                                            </div>
-                                        </div>
-
-                                        <button type="submit"
-                                            class="btn btn-primary btn-lg w-100 py-3 fw-black rounded-pill shadow-sm transition-hover d-flex align-items-center justify-content-center"
-                                            :disabled="validating">
-                                            <span v-if="validating" class="spinner-grow spinner-grow-sm me-2"
-                                                role="status" aria-hidden="true"></span>
-                                            {{ validating ? 'VERIFYING...' : 'CONTINUE TO BALLOT' }}
-                                        </button>
-                                    </form>
-
-                                    <div class="mt-4 text-center">
-                                        <button @click="showCodeInput = false"
-                                            class="btn btn-link text-decoration-none text-muted fw-bold back-link small uppercase tracking-wider">
-                                            <i class="bi bi-arrow-left me-1"></i> Cancel
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Ballot Stage Footer -->
-                            <div v-if="!ballotStage"
-                                class="p-3 bg-white bg-opacity-25 border-top border-white border-opacity-40 text-center">
-                                <p
-                                    class="small text-muted fw-bold mb-0 d-flex align-items-center justify-content-center opacity-75 uppercase tracking-tighter">
-                                    <i class="bi bi-lock-fill text-success me-2"></i>
-                                    End-to-End Encrypted
-                                </p>
-                            </div>
-                        </div>
-
-                        <!-- Full Ballot View (Stage 2) -->
-                        <div v-if="ballotStage" class="animate-slide-up vstack gap-4 mt-4">
-                            <div class="glass-card p-4 border-primary border-opacity-10">
-                                <div class="d-flex align-items-start gap-3">
-                                    <div class="bg-primary bg-opacity-10 p-2 rounded-3 text-primary">
-                                        <i class="bi bi-info-circle-fill fs-5"></i>
-                                    </div>
-                                    <div>
-                                        <h6 class="fw-black text-dark mb-1">Voting Instructions</h6>
-                                        <p class="text-muted small fw-medium mb-0">Select your preferred candidates.
-                                            Your selections are private and secure.</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div v-for="(cat, catIdx) in categories" :key="cat.id"
-                                class="glass-card p-0 overflow-hidden animate-slide-up"
-                                :style="{ animationDelay: `${0.1 + (catIdx * 0.1)}s` }">
-                                <div
-                                    class="p-3 px-4 bg-white bg-opacity-25 border-bottom border-white border-opacity-40">
-                                    <h5 class="mb-0 fw-black text-dark uppercase tracking-tight fs-6">
-                                        {{ cat.name }}
-                                    </h5>
-                                </div>
-                                <div class="p-0">
-                                    <div v-for="cand in candidatesByCategory[cat.id] || []" :key="cand.id"
-                                        class="candidate-item d-flex align-items-center justify-content-between p-3 px-4 transition-hover border-bottom border-white border-opacity-20"
-                                        @click="selectionMode === 'multiple' ? toggleSelection(cat.id, cand.id) : selectSingle(cat.id, cand.id)"
-                                        style="cursor: pointer;">
-                                        <div class="d-flex align-items-center gap-3">
-                                            <div
-                                                class="candidate-avatar-wrapper shadow-sm rounded-circle overflow-hidden border border-white p-0.5 bg-white">
-                                                <img v-if="cand.image_path" :src="imageUrl(cand.image_path)"
-                                                    class="candidate-avatar-img" />
-                                                <div v-else
-                                                    class="candidate-avatar-img bg-light d-flex align-items-center justify-content-center text-muted">
-                                                    <i class="bi bi-person-fill"></i>
-                                                </div>
-                                            </div>
-                                            <span class="fw-bold text-dark">{{ cand.name }}</span>
-                                        </div>
-                                        <div class="selection-control">
-                                            <template v-if="selectionMode === 'multiple'">
-                                                <div class="modern-checkbox"
-                                                    :class="{ 'checked': isSelected(cat.id, cand.id) }">
-                                                    <i v-if="isSelected(cat.id, cand.id)" class="bi bi-check-lg"></i>
-                                                </div>
-                                            </template>
-                                            <template v-else>
-                                                <div class="modern-radio"
-                                                    :class="{ 'checked': singleSelected[cat.id] === cand.id }">
-                                                    <div v-if="singleSelected[cat.id] === cand.id" class="radio-inner">
-                                                    </div>
-                                                </div>
-                                            </template>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="mt-2">
-                                <button @click="submitBallot"
-                                    class="btn btn-primary btn-lg w-100 py-3 fw-black rounded-pill shadow transition-hover animate-slide-up"
-                                    :disabled="submitting" style="animation-delay: 0.8s">
-                                    <span v-if="submitting" class="spinner-grow spinner-grow-sm me-2"></span>
-                                    {{ submitting ? 'SUBMITTING BALLOT...' : 'SUBMIT SECURE VOTE' }}
-                                </button>
-                                <div v-if="submitError"
-                                    class="text-danger small mt-3 d-flex align-items-center fw-bold bg-danger bg-opacity-10 p-3 rounded-4 animate-shake">
-                                    <i class="bi bi-exclamation-circle-fill me-2"></i> {{ submitError }}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Success State -->
-                    <div v-else-if="ballotSubmitted" class="glass-card shadow-lg p-5 text-center animate-slide-up">
-                        <div class="mb-4">
-                            <div class="bg-success bg-opacity-10 text-success rounded-circle d-inline-flex align-items-center justify-content-center shadow-inner"
-                                style="width:96px;height:96px">
-                                <i class="bi bi-check2-circle fs-1 pulse-animation"></i>
-                            </div>
-                        </div>
-                        <h3 class="fw-black text-dark mb-3">Vote Recorded Successfully</h3>
-                        <p class="text-muted mb-5 fw-medium">Your voice has been heard. Thank you for participating in a
-                            fair and
-                            transparent election.</p>
-                        <NuxtLink :to="`/event/${token}/results`"
-                            class="btn btn-dark btn-lg rounded-pill px-5 fw-bold transition-hover shadow-sm">
-                            Go to Dashboard
-                        </NuxtLink>
-                    </div>
-
-                </div>
+        <!-- Unavailable -->
+        <div v-else-if="stage === 'unavailable'" class="card-b text-center px-4 py-5 fade-up">
+            <div class="icon-tile lg mx-auto mb-3" :class="unavailable.tone"><i class="bi" :class="unavailable.icon"></i></div>
+            <h1 class="h4 fw-800 mb-2">{{ unavailable.title }}</h1>
+            <p class="text-muted mx-auto mb-3" style="max-width: 420px">{{ unavailable.text }}</p>
+            <div v-if="unavailable.status === 'upcoming' && opensIn.label" class="countdown mx-auto mb-4">
+                <div class="small-caps">Opens in</div>
+                <div class="fs-3 fw-800 text-ink mono">{{ opensIn.label }}</div>
+            </div>
+            <div class="d-flex flex-column flex-sm-row gap-2 justify-content-center">
+                <NuxtLink v-if="unavailable.status === 'completed'" :to="`/event/${token}/results`" class="btn btn-primary">
+                    <i class="bi bi-bar-chart-line"></i> See the results
+                </NuxtLink>
+                <button v-if="unavailable.retry" class="btn btn-ghost" @click="load"><i class="bi bi-arrow-clockwise"></i> Try again</button>
             </div>
         </div>
+
+        <!-- Enter code -->
+        <div v-else-if="stage === 'code' && event" class="fade-up">
+            <div class="intro card-b overflow-hidden mb-3">
+                <div class="intro-band">
+                    <span class="pill pill-active pill-live"><span class="dot"></span>Voting open</span>
+                    <h1 class="h2 fw-800 text-white mt-3 mb-2 text-break">{{ event.name }}</h1>
+                    <p v-if="event.description" class="intro-text mb-0" style="white-space: pre-line">{{ event.description }}</p>
+                </div>
+                <div class="d-flex flex-wrap gap-3 gap-sm-4 px-4 py-3 small">
+                    <span class="text-muted"><i class="bi bi-grid me-1"></i>{{ event.categories.length }} categor{{ event.categories.length === 1 ? 'y' : 'ies' }}</span>
+                    <span class="text-muted"><i class="bi me-1" :class="event.selection_mode === 'multiple' ? 'bi-ui-checks' : 'bi-record-circle'"></i>{{ event.selection_mode === 'multiple' ? 'Pick any number' : 'One choice per category' }}</span>
+                    <span v-if="closesIn.label" class="text-muted"><i class="bi bi-hourglass-split me-1"></i>Closes in <b class="text-ink">{{ closesIn.label }}</b></span>
+                </div>
+            </div>
+
+            <form class="card-b pad" novalidate @submit.prevent="checkCode">
+                <label for="code" class="h5 fw-800 d-block mb-1">Enter your voting code</label>
+                <p class="text-muted small mb-3">You'll find it on your invitation or voter slip. Each code works once.</p>
+                <input id="code" ref="codeInput" v-model="code" class="form-control code-input mono" :class="{ 'is-invalid': codeError }"
+                    placeholder="XXXXXXXX" maxlength="64" autocomplete="one-time-code" autocapitalize="characters" spellcheck="false"
+                    inputmode="text" :disabled="checking" @input="codeError = ''" />
+                <div v-if="codeError" class="field-error d-flex gap-1 align-items-start"><i class="bi bi-exclamation-circle"></i>{{ codeError }}</div>
+                <button type="submit" class="btn btn-primary btn-lg w-100 mt-3" :disabled="checking || code.trim().length < 4">
+                    <span v-if="checking" class="spinner-border spinner-border-sm"></span>
+                    {{ checking ? 'Checking…' : 'Continue to ballot' }} <i v-if="!checking" class="bi bi-arrow-right"></i>
+                </button>
+                <p class="small text-muted text-center mt-3 mb-0"><i class="bi bi-incognito"></i> Your choices are never shown with your name or code.</p>
+            </form>
+        </div>
+
+        <!-- Ballot -->
+        <div v-else-if="stage === 'ballot' && event" class="fade-up">
+            <div class="d-flex align-items-center justify-content-between gap-3 mb-3">
+                <div class="min-w-0">
+                    <div class="small-caps">Official ballot</div>
+                    <h1 class="h4 fw-800 mb-0 text-break">{{ event.name }}</h1>
+                </div>
+                <button class="btn btn-ghost btn-sm flex-shrink-0" title="Use a different code" @click="changeCode">
+                    <i class="bi bi-key"></i> <span class="mono">{{ maskedCode }}</span>
+                </button>
+            </div>
+            <BallotForm ref="ballot" :categories="event.categories" :candidates="event.candidates" :mode="event.selection_mode"
+                :submitting="submitting" :error="submitError" @submit="castVote" />
+        </div>
+
+        <!-- Done -->
+        <VoteSuccess v-else-if="stage === 'done'" :event-name="event?.name ?? 'this election'" :results-to="`/event/${token}/results`" />
     </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
 import { publicApi } from '~/api/endpoints/public';
+import type { Choice, EventStatus, PublicEvent } from '~/types';
 
-definePageMeta({
-    layout: 'public'
-});
+definePageMeta({ layout: 'ballot' });
+
+type Stage = 'loading' | 'unavailable' | 'code' | 'ballot' | 'done';
 
 const route = useRoute();
-const token = route.params.token as string;
+const token = String(route.params.token ?? '');
 
-const loading = ref(true);
-const event = ref<any>(null);
-const error = ref(false);
-const errorTitle = ref('Access Denied');
-const errorMessage = ref('This voting link is invalid, expired, or not currently active. Please verify the link or contact your event administrator.');
-const showCodeInput = ref(false);
-const ballotStage = ref(false);
-const ballotSubmitted = ref(false);
-const votingCode = ref('');
-const validating = ref(false);
-const validationError = ref('');
+const stage = ref<Stage>('loading');
+const event = ref<PublicEvent | null>(null);
+const code = ref('');
+const codeError = ref('');
+const checking = ref(false);
 const submitting = ref(false);
 const submitError = ref('');
-const categories = ref<any[]>([]);
-const candidatesByCategory = ref<Record<number, any[]>>({});
-const selections = ref<Record<number, Set<number>>>({});
-const singleSelected = ref<Record<number, number | null>>({});
-const selectionMode = ref<'single' | 'multiple'>('single');
+const codeInput = ref<HTMLInputElement | null>(null);
+const ballot = ref<{ closeReview: () => void } | null>(null);
 
-const fetchEvent = async () => {
+const unavailable = reactive({
+    status: '' as '' | EventStatus,
+    title: '',
+    text: '',
+    icon: 'bi-shield-x',
+    tone: '',
+    retry: false,
+    startsAt: null as string | null,
+});
+
+const opensIn = useCountdown(() => unavailable.startsAt);
+const closesIn = useCountdown(() => event.value?.ends_at);
+
+const normalized = computed(() => code.value.trim().toUpperCase());
+const maskedCode = computed(() => (normalized.value.length > 4 ? '••••' + normalized.value.slice(-4) : normalized.value));
+
+useHead({ title: computed(() => (event.value ? `Vote · ${event.value.name}` : 'Vote · Ballotify')) });
+
+function showUnavailable(opts: Partial<typeof unavailable>) {
+    Object.assign(unavailable, { status: '', icon: 'bi-shield-x', tone: '', retry: false, startsAt: null }, opts);
+    stage.value = 'unavailable';
+}
+
+async function load() {
+    stage.value = 'loading';
     try {
-        loading.value = true;
-        error.value = false;
-        const response = await publicApi.getEventByToken(token);
-        event.value = response.data;
-        categories.value = event.value?.categories || [];
-        const candidates = event.value?.candidates || [];
-        const map: Record<number, any[]> = {};
-        for (const cand of candidates) {
-            const catId = cand.category_id;
-            if (!map[catId]) map[catId] = [];
-            map[catId]!.push(cand);
-        }
-        candidatesByCategory.value = map;
-        selectionMode.value = (event.value?.selection_mode === 'multiple') ? 'multiple' : 'single';
-    } catch (err: any) {
-        console.error('Failed to fetch event:', err);
-        const status = err?.response?.status;
-        if (status === 404) {
-            errorTitle.value = 'Election Unavailable';
-            errorMessage.value = 'This election has not started yet or has already ended.';
-        }
-        error.value = true;
-    } finally {
-        loading.value = false;
-    }
-};
-
-const handleValidateCode = async () => {
-    if (!votingCode.value.trim()) return;
-
-    try {
-        validating.value = true;
-        validationError.value = '';
-        const response = await publicApi.validateCodeByToken(token, votingCode.value.trim());
-
-        if (response.data.valid) {
-            ballotStage.value = true;
-            showCodeInput.value = false;
+        event.value = (await publicApi.getEvent(token)).data;
+        stage.value = 'code';
+        await nextTick();
+        codeInput.value?.focus();
+    } catch (e) {
+        const status = apiStatus(e);
+        const body = (e as { response?: { data?: { status?: EventStatus; starts_at?: string | null } } }).response?.data;
+        if (status === 403 && body?.status === 'upcoming') {
+            showUnavailable({ status: 'upcoming', title: 'Voting hasn\'t started yet', text: `The ballot opens ${formatDate(body.starts_at ?? null, true)}. Come back then with your code.`, icon: 'bi-clock', tone: 'amber', startsAt: body.starts_at ?? null });
+        } else if (status === 403) {
+            showUnavailable({ status: 'completed', title: 'Voting has closed', text: 'This election is over. You can still see the results.', icon: 'bi-check2-circle', tone: 'green' });
+        } else if (status === 404) {
+            showUnavailable({ title: 'Ballot not found', text: 'This voting link is invalid. Check the link you were sent, or contact the organiser.' });
         } else {
-            validationError.value = 'Invalid or used voting code.';
+            showUnavailable({ title: 'Can\'t load the ballot', text: apiErrorMessage(e), icon: 'bi-wifi-off', retry: true });
         }
-    } catch (err: any) {
-        console.error('Validation failed:', err);
-        validationError.value = err.response?.data?.message || 'Failed to validate code. Please try again.';
-    } finally {
-        validating.value = false;
     }
-};
+}
 
-const isSelected = (categoryId: number, candidateId: number) => {
-    return !!selections.value[categoryId]?.has(candidateId);
-};
+async function checkCode() {
+    if (normalized.value.length < 4) return;
+    checking.value = true;
+    codeError.value = '';
+    try {
+        await publicApi.validateCode(token, normalized.value);
+        stage.value = 'ballot';
+        window.scrollTo({ top: 0 });
+    } catch (e) {
+        const status = apiStatus(e);
+        if (status === 422) codeError.value = 'That code isn\'t valid or has already been used. Check it and try again.';
+        else if (status === 403) await load();
+        else codeError.value = apiErrorMessage(e);
+    } finally {
+        checking.value = false;
+    }
+}
 
-const toggleSelection = (categoryId: number, candidateId: number) => {
-    if (!selections.value[categoryId]) selections.value[categoryId] = new Set<number>();
-    const set = selections.value[categoryId];
-    if (set.has(candidateId)) set.delete(candidateId);
-    else set.add(candidateId);
-    // force reactivity for Set changes
-    selections.value = { ...selections.value };
-};
-
-const selectSingle = (categoryId: number, candidateId: number) => {
-    singleSelected.value[categoryId] = candidateId;
-    singleSelected.value = { ...singleSelected.value };
-};
-
-const submitBallot = async () => {
+function changeCode() {
+    stage.value = 'code';
     submitError.value = '';
+    nextTick(() => codeInput.value?.select());
+}
+
+async function castVote(choices: Choice[]) {
     submitting.value = true;
+    submitError.value = '';
     try {
-        const choices: { category_id: number; candidate_id: number }[] = [];
-        if (selectionMode.value === 'multiple') {
-            for (const [catIdStr, set] of Object.entries(selections.value)) {
-                const catId = Number(catIdStr);
-                set?.forEach((candId) => {
-                    choices.push({ category_id: catId, candidate_id: candId });
-                });
-            }
+        await publicApi.castVote(token, { code: normalized.value, choices });
+        stage.value = 'done';
+        window.scrollTo({ top: 0 });
+    } catch (e) {
+        ballot.value?.closeReview();
+        const status = apiStatus(e);
+        if (status === 403) {
+            submitError.value = 'Voting closed before your ballot was submitted.';
         } else {
-            for (const [catIdStr, candId] of Object.entries(singleSelected.value)) {
-                const catId = Number(catIdStr);
-                if (candId) {
-                    choices.push({ category_id: catId, candidate_id: candId });
-                }
-            }
+            submitError.value = apiErrorMessage(e, 'Your vote could not be submitted. Please try again.');
         }
-        if (choices.length === 0) {
-            submitError.value = 'Please select at least one candidate.';
-            submitting.value = false;
-            return;
-        }
-        await publicApi.castVote(token, { code: votingCode.value.trim(), choices });
-        ballotSubmitted.value = true;
-    } catch (err: any) {
-        console.error('Vote submit failed:', err);
-        submitError.value = err.response?.data?.message || 'Failed to submit your vote. Please try again.';
     } finally {
         submitting.value = false;
     }
-};
-
-const imageUrl = (path: string) => {
-    if (!path) return '';
-    if (path.startsWith('http')) return path;
-    return `http://localhost:8883/storage/${path}`;
-};
+}
 
 onMounted(() => {
-    if (token) {
-        fetchEvent();
-    } else {
-        error.value = true;
-        loading.value = false;
-    }
+    if (token) load();
+    else showUnavailable({ title: 'Ballot not found', text: 'This voting link is incomplete.' });
 });
 </script>
 
 <style scoped>
-.vote-page {
-    min-height: 100vh;
-    background: linear-gradient(135deg, #f0f4f8 0%, #d9e2ec 50%, #bccad6 100%);
-    background-attachment: fixed;
+.intro-band {
+    padding: 1.75rem 1.5rem; position: relative;
+    background:
+        radial-gradient(420px 220px at 100% 0%, rgba(124, 92, 255, .45), transparent 60%),
+        radial-gradient(420px 220px at 0% 100%, rgba(20, 145, 138, .55), transparent 60%),
+        var(--night);
 }
-
-
-.uppercase {
-    text-transform: uppercase;
+.intro-band .pill-active { background: rgba(74, 222, 128, .15); color: #86efac; }
+.intro-text { color: rgba(255, 255, 255, .75); }
+.code-input {
+    font-size: clamp(1.4rem, 6vw, 1.9rem); font-weight: 700; text-align: center; letter-spacing: .25em;
+    text-transform: uppercase; padding: 1rem; border-radius: 16px; border-width: 2px;
 }
-
-.tracking-widest {
-    letter-spacing: 0.15em;
-}
-
-.tracking-tighter {
-    letter-spacing: -0.01em;
-}
-
-
-.shadow-inner {
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06);
-}
-
-/* Inputs */
-.modern-input-group {
-    position: relative;
-}
-
-.input-icon {
-    position: absolute;
-    left: 1.5rem;
-    top: 50%;
-    transform: translateY(-50%);
-    z-index: 4;
-    opacity: 0.6;
-}
-
-.modern-input {
-    padding: 1.25rem 1.5rem 1.25rem 3.5rem;
-    border-radius: 1.25rem;
-    border: 1.5px solid rgba(255, 255, 255, 0.8);
-    background-color: rgba(255, 255, 255, 0.4);
-    font-size: 1.1rem;
-    font-weight: 700;
-    transition: all 0.3s ease;
-}
-
-.modern-input:focus {
-    border-color: #0d6efd;
-    background-color: #ffffff;
-    box-shadow: 0 10px 15px -3px rgba(13, 110, 253, 0.1);
-    outline: none;
-}
-
-/* Custom Controls */
-.selection-control {
-    width: 28px;
-    height: 28px;
-}
-
-.modern-checkbox,
-.modern-radio {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    border: 2px solid rgba(0, 0, 0, 0.1);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    background: rgba(255, 255, 255, 0.5);
-}
-
-.modern-checkbox.checked,
-.modern-radio.checked {
-    background-color: #0d6efd;
-    border-color: #0d6efd;
-    color: white;
-}
-
-.radio-inner {
-    width: 12px;
-    height: 12px;
-    background-color: white;
-    border-radius: 50%;
-}
-
-.candidate-item {
-    background: transparent;
-}
-
-.candidate-item:hover {
-    background-color: rgba(255, 255, 255, 0.4);
-}
-
-.candidate-avatar-wrapper {
-    width: 44px;
-    height: 44px;
-}
-
-.candidate-avatar-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    border-radius: 50%;
-}
-
-
-
-.pulse-animation {
-    animation: iconPulse 2s infinite ease-in-out;
-}
-
-@keyframes iconPulse {
-    0% {
-        transform: scale(1);
-    }
-
-    50% {
-        transform: scale(1.1);
-        opacity: 0.8;
-    }
-
-    100% {
-        transform: scale(1);
-    }
-}
-
-.animate-shake {
-    animation: shake 0.5s cubic-bezier(.36, .07, .19, .97) both;
-}
-
-@keyframes shake {
-
-    10%,
-    90% {
-        transform: translate3d(-1px, 0, 0);
-    }
-
-    20%,
-    80% {
-        transform: translate3d(2px, 0, 0);
-    }
-
-    30%,
-    50%,
-    70% {
-        transform: translate3d(-4px, 0, 0);
-    }
-
-    40%,
-    60% {
-        transform: translate3d(4px, 0, 0);
-    }
-}
-
-.back-link {
-    transition: all 0.2s ease;
-    letter-spacing: 0.05em;
-}
-
-.back-link:hover {
-    color: #dc3545 !important;
-    transform: translateX(-4px);
-}
-
-.last-child-border-0:last-child {
-    border-bottom: none !important;
-}
+.code-input::placeholder { letter-spacing: .25em; color: #cbd5e1; }
+.countdown { display: inline-block; padding: .85rem 1.5rem; border-radius: 16px; background: var(--warning-50); }
 </style>

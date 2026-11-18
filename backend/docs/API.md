@@ -1,181 +1,112 @@
-# Ballotify API
+# Ballotify API reference
 
-Base URL
+- **Base URL:** `{APP_URL}/api` (local default `http://localhost:8883/api`)
+- **Format:** JSON. Send `Accept: application/json`.
+- **Auth:** admin routes need `Authorization: Bearer <token>` from login/register.
+- **Errors:**
+  - `422` validation: `{ message, errors: { field: [msg] } }`
+  - `401` not signed in
+  - `404` not found, or not your event
+  - `403` event not open
+  - `429` rate limited
 
-- Local development: http://localhost:8883/api
-- Public endpoints are under /api/public
-- Authenticated admin endpoints require Bearer token in Authorization header
+## Authentication
 
-Authentication
+| Method | Path | Body | Response |
+|---|---|---|---|
+| POST | `/auth/register` | `name, email, password (min 8)` | `201 { token, user }` |
+| POST | `/auth/login` | `email, password` | `{ token, user }` |
+| POST | `/auth/logout` | Bearer token | `{ message }` (revokes the token) |
+| GET | `/me` | | `user` |
+| PATCH | `/me` | `name?, email?, password?, current_password (required with password)` | `user` |
 
-- POST /auth/register
-    - Body: { name, email, password }
-    - Response: { token, user }
-- POST /auth/login
-    - Body: { email, password }
-    - Response: { token, user }
-- POST /auth/logout
-    - Auth required
-    - Response: { message }
-- GET /me
-    - Auth required
-    - Response: user object
+Login and register are limited to 10 requests per minute per IP.
 
-Events (Admin)
+## Events (admin)
 
-- GET /events
-    - Auth required
-    - Returns events owned by the user
-- POST /events
-    - Auth required
-    - Body: { name, expected_voters?: number, starts_at?: ISO, ends_at?: ISO, event_type_id?: number }
-    - Response: created event
-- GET /events/{event}
-    - Auth required
-    - Response: event with categories and candidates
-- PATCH /events/{event}
-    - Auth required
-    - Body: any of { name, expected_voters, starts_at, ends_at, event_type_id }
-    - Response: updated event
-- DELETE /events/{event}
-    - Auth required
-    - Response: 204 No Content
-- GET /events/{event}/voting-link
-    - Auth required
-    - Response: { public_url }
+| Method | Path | Notes |
+|---|---|---|
+| GET | `/events` | Your events, newest first, with counts |
+| POST | `/events` | Create (body below) |
+| GET | `/events/{id}` | Event with `categories` and `candidates` (voters are fetched separately) |
+| PATCH | `/events/{id}` | Partial update |
+| DELETE | `/events/{id}` | Deletes the event with its codes and votes |
+| GET | `/events/{id}/voting-link` | `{ token, public_url, results_url }` (frontend URLs) |
 
-Categories (Admin)
+**Event body:**
+- `name` (string, required on create)
+- `description` (string, nullable)
+- `selection_mode`: `single` or `multiple`
+- `expected_voters` (int)
+- `starts_at`, `ends_at` (ISO dates, nullable; `ends_at` must not be before `starts_at`)
 
-- POST /events/{event}/categories
-    - Auth required
-    - Body: { name }
-    - Response: created category
+**Event object adds:**
+- `status`: `upcoming`, `active` or `completed`, computed from the voting window
+- `selection_mode`
+- `categories_count`, `candidates_count`, `voters_count`, `voted_count`
 
-Candidates (Admin)
+## Categories (admin)
 
-- POST /events/{event}/candidates
-    - Auth required
-    - multipart/form-data:
-        - category_id (int, required)
-        - name (string, required)
-        - image (file, optional)
-    - Stores images to backend/public/candidates and returns relative path in image_path
-    - Response: created candidate
-- PATCH /events/{event}/candidates/{candidate}
-    - Auth required
-    - multipart/form-data: any of
-        - category_id (int)
-        - name (string)
-        - image (file)
-    - Replaces existing image on disk if a new one is provided
-    - Response: updated candidate
-- DELETE /events/{event}/candidates/{candidate}
-    - Auth required
-    - Deletes candidate and its image file (if present)
-    - Response: 204 No Content
+| Method | Path | Body |
+|---|---|---|
+| GET | `/events/{id}/categories` | |
+| POST | `/events/{id}/categories` | `name` (unique per event) |
+| PATCH | `/events/{id}/categories/{categoryId}` | `name` |
+| DELETE | `/events/{id}/categories/{categoryId}` | Also deletes its candidates and votes |
 
-Voters (Admin)
+## Candidates (admin)
 
-- GET /events/{event}/voters
-    - Auth required
-    - Response: list of voters for the event
-- POST /events/{event}/voters
-    - Auth required
-    - Body: { code: string, name?: string }
-    - Plaintext codes are unique per event; validation returns 422 on duplicates
-    - Response: created voter
-- PATCH /events/{event}/voters/{voter}
-    - Auth required
-    - Body: any of { name?: string|null, code?: string, used_at?: string|null }
-    - Set used_at to null/empty string to reset a used voter
-    - Response: updated voter
-- DELETE /events/{event}/voters/{voter}
-    - Auth required
-    - Response: 204 No Content
-- POST /events/{event}/voters/generate
-    - Auth required
-    - Body: { count?: number (1..10000), names?: string[] }
-    - Generates codes in plaintext; returns array of { name, code }
-- POST /events/{event}/voters/import
-    - Auth required
-    - Body: { names: string[] }
-    - Imports voters and generates codes; returns generated codes
+These endpoints take `multipart/form-data`, because they can include a photo.
 
-Public (Voters)
+| Method | Path | Body |
+|---|---|---|
+| GET | `/events/{id}/candidates` | |
+| POST | `/events/{id}/candidates` | `category_id, name, image?` (jpg/png/webp/gif, max 5 MB) |
+| POST or PATCH | `/events/{id}/candidates/{candidateId}` | `category_id?, name?, image?, remove_image?` |
+| DELETE | `/events/{id}/candidates/{candidateId}` | Also deletes the photo |
 
-- GET /public/events/{token}
-    - Returns public event data (categories and candidates) by link token
-    - Only returns when the event is “active”:
-        - starts_at is null or <= now, and
-        - ends_at is null or >= now
-    - Otherwise returns 404
-- POST /public/events/{token}/code/validate
-    - Body: { code: string }
-    - Returns 200 { valid: true } if code exists and is unused; otherwise 422 { valid: false }
-- POST /public/events/{event}/code/validate
-    - Body: { code: string }
-    - Same validation as above but by event_id instead of token
-- POST /public/events/{token}/vote
-    - Body: { code: string, choices: [{ category_id, candidate_id }, ...] }
-    - For single-choice events: only one candidate per category is accepted.
-    - For multiple-choice events: multiple candidates per category are accepted; duplicate pairs are ignored.
-    - Validates code (unused), categories and candidates belong to the event, and candidate-category pairs are correct
-    - Records votes accordingly and sets used_at on the voter
-    - Response: { message: "Vote recorded" }
+Names are unique within a category. Candidate objects include `image_url` (an absolute URL, or null). Use **POST** for updates that include a file, because PHP does not parse multipart bodies on PATCH.
 
-Data Notes
+## Voters / codes (admin)
 
-- Voter codes are stored in plaintext in voters.code and must be unique per event
-- Event type controls per-category selection:
-    - event_types: keys "single" or "multiple" referenced by events.event_type_id
-    - Single: one candidate per category
-    - Multiple: many candidates per category
-- Uniqueness enforced on (voter_id, category_id, candidate_id) to prevent duplicate identical votes
-- Once a vote is submitted, the voter is marked as used (used_at set)
+| Method | Path | Body | Response |
+|---|---|---|---|
+| GET | `/events/{id}/voters` | | `[ { id, name, code, used_at } ]` |
+| POST | `/events/{id}/voters` | `code (4–64 chars), name?` | voter |
+| POST | `/events/{id}/voters/generate` | `count (1–10000)` | `201 { voters: [ { name, code } ] }` |
+| POST | `/events/{id}/voters/import` | `names: string[]` (max 10000) | `201 { voters: [ { name, code } ] }` |
+| PATCH | `/events/{id}/voters/{voterId}` | `name?, code?, used_at?` | voter |
+| DELETE | `/events/{id}/voters/{voterId}` | | `204` |
 
-Errors
+How codes behave:
+- Codes are stored and matched **upper-case**, so voters can type them in any case.
+- Generated codes have 8 characters with no look-alikes (0/O, 1/I/L).
+- Setting `used_at: null` re-enables a code **and discards its previous ballot**.
 
-- Standard validation errors return 422 with error messages
-- Unauthorized requests return 401/403
-- Not found resources return 404
+## Public (voters)
 
-Images
+| Method | Path | Notes |
+|---|---|---|
+| GET | `/public/events/{token}` | Ballot of an **open** event: `{ id, name, description, status, selection_mode, starts_at, ends_at, categories, candidates }` |
+| POST | `/public/events/{token}/code/validate` | `{ code }` returns `{ valid: true }`, or `422` if invalid/used, or `403` if not open |
+| POST | `/public/events/{token}/vote` | `{ code, choices: [ { category_id, candidate_id } ] }` returns `{ message }` |
+| GET | `/public/events/{token}/results` | `{ event: { id, name, status, … }, stats: { total_votes, total_voters, voted, total_candidates }, categories: [ { id, name, candidates: [ { id, name, image_url, votes } ], leader } ] }` |
 
-- Candidate images are saved to backend/public/candidates
-- Clients should render using: http://<backend-host>/{image_path}
+**Not open.** For an event that hasn't started or has ended, `GET /public/events/{token}` returns `403 { message, status, starts_at, ends_at }`.
 
-Broadcasting
+**How a ballot is processed:** the server checks each of these before recording anything.
+- The event is inside its voting window.
+- Every candidate belongs to the event and to the stated category.
+- In `single` mode, there is at most one pick per category.
+- The code exists and is unused. The check runs under a row lock inside the same transaction that records the votes.
 
-- When a vote is recorded successfully, a broadcast event is emitted:
-    - Channel: event.{event_id} (public channel)
-    - Event name: vote.cast
-    - Payload:
-        - event_id: number
-        - choices: [{ category_id: number, candidate_id: number }, ...]
-        - time: ISO timestamp
-- Configure Pusher (example .env):
-    - BROADCAST_DRIVER=pusher
-    - PUSHER_APP_ID=your-app-id
-    - PUSHER_APP_KEY=your-key
-    - PUSHER_APP_SECRET=your-secret
-    - PUSHER_HOST=
-    - PUSHER_PORT=443
-    - PUSHER_SCHEME=https
-    - PUSHER_APP_CLUSTER=mt1
+**Rate limits:** code validation and voting allow 30 requests per minute per IP per event. Public reads allow 120 per minute per IP.
 
-Seeding
+## Live results (broadcast)
 
-- Three events seeded with 4 categories each and 3 candidates per category
-- 200 voters per event with codes of the form E{eventId}-0001..E{eventId}-0200
-- Sample votes are created for the first 20 voters in each event (used)
+When `BROADCAST_CONNECTION=pusher`, each accepted ballot broadcasts:
+- channel: `event.{eventId}` (public)
+- event: `vote.cast`
+- payload: `{ event_id, choices, time }` (no voter information)
 
-Examples
-
-- Create candidate (multipart):
-    - POST /api/events/1/candidates
-    - Form fields: category_id=2, name="John Doe", image=@/path/to.jpg
-    - Response: { id, event_id, category_id, name, image_path }
-- Validate code by event:
-    - POST /api/public/events/1/code/validate
-    - Body: { "code": "E1-0021" }
-    - Response: { "valid": true }
+The results page refetches when it receives one.

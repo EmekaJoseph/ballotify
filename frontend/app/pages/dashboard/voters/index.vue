@@ -1,55 +1,38 @@
 <template>
     <div>
-        <div class="d-flex align-items-center justify-content-between mb-4">
-            <div>
-                <h3 class="fw-black text-dark mb-1 d-flex align-items-center gap-2">
-                    Voters Directory
-                </h3>
-                <p class="text-muted small mb-0 fw-medium">Global list of all voters across your events</p>
-            </div>
+        <PageHeader title="Voters" subtitle="Turnout across all your events. Open an event to manage its codes." />
+
+        <div class="row g-3 mb-4">
+            <div class="col-4"><StatCard label="Codes issued" :value="loading ? '–' : formatNumber(totals.voters)" icon="bi-key" /></div>
+            <div class="col-4"><StatCard label="Voted" :value="loading ? '–' : formatNumber(totals.voted)" icon="bi-check2-square" tone="green" /></div>
+            <div class="col-4"><StatCard label="Turnout" :value="loading ? '–' : (totals.voters ? percent(totals.voted, totals.voters) + '%' : '—')" icon="bi-graph-up" tone="violet" /></div>
         </div>
 
-        <div class="glass-card p-4 border-0 shadow-sm min-vh-50">
-            <div v-if="loading" class="text-center py-5">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-            </div>
-            
-            <div v-else-if="voters.length === 0" class="text-center py-5">
-                <div class="bg-info bg-opacity-10 text-info rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 64px; height: 64px;">
-                    <i class="bi bi-people fs-3"></i>
-                </div>
-                <h5 class="fw-bold text-dark mb-2">No Voters Found</h5>
-                <p class="text-muted small mb-0">Voters will appear here once you add them to an event.</p>
-            </div>
-            
+        <div class="card-b overflow-hidden">
+            <div v-if="loading" class="p-4 d-grid gap-2"><div v-for="i in 4" :key="i" class="skeleton" style="height: 44px"></div></div>
+            <EmptyState v-else-if="loadError" icon="bi-wifi-off" title="Couldn't load voters" :text="loadError">
+                <button class="btn btn-soft" @click="load">Try again</button>
+            </EmptyState>
+            <EmptyState v-else-if="!events.length" icon="bi-people" title="No events yet" text="Create an event, then generate voter codes for it.">
+                <NuxtLink to="/dashboard/events/create" class="btn btn-primary"><i class="bi bi-plus-lg"></i> New event</NuxtLink>
+            </EmptyState>
             <div v-else class="table-responsive">
-                <table class="table table-hover align-middle mb-0 border-transparent">
-                    <thead class="bg-light bg-opacity-50">
-                        <tr>
-                            <th class="border-0 rounded-start-3 text-muted small tracking-widest uppercase py-3 ps-4">Voter Name</th>
-                            <th class="border-0 text-muted small tracking-widest uppercase py-3">Access Code</th>
-                            <th class="border-0 text-muted small tracking-widest uppercase py-3">Event</th>
-                            <th class="border-0 text-muted small tracking-widest uppercase py-3">Status</th>
-                        </tr>
+                <table class="table-b">
+                    <thead>
+                        <tr><th>Event</th><th>Status</th><th>Codes</th><th style="min-width: 200px">Turnout</th><th></th></tr>
                     </thead>
                     <tbody>
-                        <tr v-for="voter in voters" :key="voter.id">
-                            <td class="border-bottom border-dark border-opacity-10 py-3 ps-4">
-                                <div class="fw-bold text-dark">{{ voter.name || 'Anonymous Voter' }}</div>
+                        <tr v-for="ev in events" :key="ev.id">
+                            <td><NuxtLink :to="`/dashboard/events/${ev.id}?tab=voters`" class="fw-semibold text-ink">{{ ev.name }}</NuxtLink></td>
+                            <td><StatusBadge :status="ev.status" /></td>
+                            <td class="text-nowrap">{{ formatNumber(ev.voted_count) }} / {{ formatNumber(ev.voters_count) }}</td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="bar slim flex-grow-1"><span :style="{ width: percent(ev.voted_count ?? 0, ev.voters_count ?? 0) + '%' }"></span></div>
+                                    <span class="small fw-bold text-nowrap">{{ percent(ev.voted_count ?? 0, ev.voters_count ?? 0) }}%</span>
+                                </div>
                             </td>
-                            <td class="border-bottom border-dark border-opacity-10 py-3">
-                                <code class="bg-light px-2 py-1 rounded text-primary fw-bold">{{ voter.code }}</code>
-                            </td>
-                            <td class="border-bottom border-dark border-opacity-10 py-3 text-muted small">
-                                {{ voter.event?.title || 'Unknown Event' }}
-                            </td>
-                            <td class="border-bottom border-dark border-opacity-10 py-3">
-                                <span class="badge rounded-pill fw-bold" :class="voter.voted_at ? 'bg-success bg-opacity-10 text-success' : 'bg-warning bg-opacity-10 text-warning'">
-                                    {{ voter.voted_at ? 'Voted' : 'Not Voted' }}
-                                </span>
-                            </td>
+                            <td class="text-end"><NuxtLink :to="`/dashboard/events/${ev.id}?tab=voters`" class="btn btn-ghost btn-sm">Manage</NuxtLink></td>
                         </tr>
                     </tbody>
                 </table>
@@ -59,34 +42,28 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import { adminApi } from '../../../api/endpoints/admin';
+import { adminApi } from '~/api/endpoints/admin';
+import type { BallotEvent } from '~/types';
 
-definePageMeta({
-    layout: 'dashboard',
-    middleware: ['auth']
-});
+definePageMeta({ layout: 'dashboard', middleware: ['auth'] });
+useHead({ title: 'Voters · Ballotify' });
 
 const loading = ref(true);
-const voters = ref<any[]>([]);
+const loadError = ref('');
+const events = ref<BallotEvent[]>([]);
+const totals = computed(() => events.value.reduce(
+    (a, e) => ({ voters: a.voters + (e.voters_count ?? 0), voted: a.voted + (e.voted_count ?? 0) }), { voters: 0, voted: 0 }));
 
-onMounted(async () => {
+async function load() {
+    loading.value = true;
+    loadError.value = '';
     try {
-        // The backend doesn't have a global voters endpoint, so we aggregate from events
-        const eventsResponse = await adminApi.getEvents();
-        const events = eventsResponse.data || [];
-        
-        const allVoters = [];
-        for (const event of events) {
-            const votersRes = await adminApi.getVoters(event.id);
-            const eventVoters = votersRes.data.map((v: any) => ({ ...v, event }));
-            allVoters.push(...eventVoters);
-        }
-        voters.value = allVoters;
-    } catch (error) {
-        console.error('Failed to fetch voters', error);
+        events.value = (await adminApi.getEvents()).data;
+    } catch (e) {
+        loadError.value = apiErrorMessage(e);
     } finally {
         loading.value = false;
     }
-});
+}
+onMounted(load);
 </script>
