@@ -178,7 +178,8 @@ a { text-decoration: none; }
     box-shadow: 0 0 0 4px rgba(20, 145, 138, .14);
 }
 .form-text { color: var(--muted); }
-.form-check-input:checked { background-color: var(--brand-600); border-color: var(--brand-600); }
+.form-check-input:checked,
+.form-check-input[type=checkbox]:indeterminate { background-color: var(--brand-600); border-color: var(--brand-600); }
 .form-check-input:focus { box-shadow: 0 0 0 4px rgba(20, 145, 138, .14); border-color: var(--brand-500); }
 .input-icon { position: relative; }
 .input-icon > i { position: absolute; left: .95rem; top: 50%; transform: translateY(-50%); color: #94a3b8; pointer-events: none; }

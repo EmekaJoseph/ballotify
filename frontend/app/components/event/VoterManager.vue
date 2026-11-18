@@ -55,10 +55,22 @@
             </EmptyState>
             <EmptyState v-else-if="!filtered.length" icon="bi-search" title="No matching voters" />
             <template v-else>
+                <!-- Selection bar -->
+                <div v-if="selected.size" class="select-bar">
+                    <span class="fw-bold">{{ selected.size }} selected</span>
+                    <button class="btn btn-primary btn-sm" :disabled="event.status === 'completed'" @click="sendToSelected">
+                        <i class="bi bi-send"></i> Send codes to selected
+                    </button>
+                    <button class="btn btn-link btn-sm text-muted ms-auto" @click="clearSelection">Clear selection</button>
+                </div>
                 <div class="table-responsive">
                     <table class="table-b">
                         <thead>
                             <tr>
+                                <th class="pe-0" style="width: 36px">
+                                    <input class="form-check-input" type="checkbox" :checked="pageAllSelected" :indeterminate="pageSomeSelected"
+                                        aria-label="Select all on this page" @change="togglePage" />
+                                </th>
                                 <th>Voter</th>
                                 <th>
                                     <span class="d-inline-flex align-items-center gap-1">
@@ -74,7 +86,11 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="v in paged" :key="v.id">
+                            <tr v-for="v in paged" :key="v.id" :class="{ 'row-selected': selected.has(v.id) }">
+                                <td class="pe-0">
+                                    <input class="form-check-input" type="checkbox" :checked="selected.has(v.id)"
+                                        :aria-label="`Select ${v.name || 'voter'}`" @change="toggleSelect(v.id)" />
+                                </td>
                                 <td style="min-width: 200px">
                                     <div class="fw-semibold text-ink">{{ v.name || 'Anonymous' }}</div>
                                     <div v-if="v.email || v.phone" class="small text-muted d-flex flex-wrap column-gap-3">
@@ -97,9 +113,10 @@
                                     <span v-else class="pill pill-completed">Not invited</span>
                                 </td>
                                 <td class="text-end text-nowrap">
-                                    <button v-if="!v.used_at && (v.email || v.phone) && event.status !== 'completed'" class="btn btn-ghost btn-icon btn-sm"
-                                        :title="v.invited_at ? 'Resend code' : 'Send code'" :aria-label="v.invited_at ? 'Resend code' : 'Send code'" @click="openInvite(v)">
-                                        <i class="bi bi-send"></i>
+                                    <button v-if="!v.used_at && event.status !== 'completed'" class="btn btn-soft btn-sm"
+                                        :title="!(v.email || v.phone) ? 'Add an email or phone number first' : (v.invited_at ? 'Resend this voter\'s code' : 'Send this voter their code')"
+                                        @click="sendToOne(v)">
+                                        <i class="bi bi-send"></i> {{ v.invited_at ? 'Resend' : 'Send' }}
                                     </button>
                                     <button class="btn btn-ghost btn-icon btn-sm ms-1" title="Edit" aria-label="Edit voter" @click="openForm(v)"><i class="bi bi-pencil"></i></button>
                                     <button v-if="v.used_at" class="btn btn-ghost btn-icon btn-sm ms-1" title="Let this code vote again" aria-label="Reset code" @click="resetVoter(v)">
@@ -124,7 +141,7 @@
         <!-- Dialogs -->
         <EventVoterFormModal :open="dialog === 'form'" :event-id="event.id" :voter="editing" @close="dialog = null" @saved="onSaved" />
         <EventVoterImportModal :open="dialog === 'import'" :event-id="event.id" @close="dialog = null" @created="afterCreate" />
-        <EventInviteModal :open="dialog === 'invite'" :event-id="event.id" :voters="voters" :single="inviting"
+        <EventInviteModal :open="dialog === 'invite'" :event-id="event.id" :voters="voters" :targets="inviting"
             @close="dialog = null" @sent="afterInvite" />
 
         <BaseModal :open="dialog === 'generate'" title="Generate anonymous codes" subtitle="For handing out on paper. To email or text codes, use Import." size="sm" @close="dialog = null">
@@ -184,7 +201,25 @@ const page = ref(1);
 
 const dialog = ref<null | 'form' | 'import' | 'generate' | 'created' | 'invite'>(null);
 const editing = ref<Voter | null>(null);
-const inviting = ref<Voter | null>(null);
+/** null = whole list (pick an audience); array = exactly these voters. */
+const inviting = ref<Voter[] | null>(null);
+
+// --- Row selection ---------------------------------------------------------------
+const selected = ref(new Set<number>());
+const pageAllSelected = computed(() => paged.value.length > 0 && paged.value.every(v => selected.value.has(v.id)));
+const pageSomeSelected = computed(() => !pageAllSelected.value && paged.value.some(v => selected.value.has(v.id)));
+function toggleSelect(id: number) {
+    const next = new Set(selected.value);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    selected.value = next;
+}
+function togglePage() {
+    const next = new Set(selected.value);
+    const all = pageAllSelected.value;
+    for (const v of paged.value) { if (all) next.delete(v.id); else next.add(v.id); }
+    selected.value = next;
+}
+function clearSelection() { selected.value = new Set(); }
 const genCount = ref(50);
 const created = ref<GeneratedCode[]>([]);
 
@@ -251,7 +286,26 @@ function pollStatuses() {
 onBeforeUnmount(() => clearInterval(pollTimer));
 
 function openForm(v: Voter | null) { editing.value = v; dialog.value = 'form'; }
-function openInvite(v: Voter | null) { inviting.value = v; dialog.value = 'invite'; }
+function openInvite(targets: Voter[] | null) { inviting.value = targets; dialog.value = 'invite'; }
+
+/** Row "Send": if the voter can't be reached yet, take the organiser to add a contact. */
+function sendToOne(v: Voter) {
+    if (!v.email && !v.phone) {
+        toast.info(`Add an email or phone number for ${v.name || 'this voter'} to send their code.`);
+        openForm(v);
+        return;
+    }
+    openInvite([v]);
+}
+
+function sendToSelected() {
+    const list = voters.value.filter(v => selected.value.has(v.id));
+    if (!list.some(v => !v.used_at && (v.email || v.phone))) {
+        toast.info('None of the selected voters can be messaged: they have already voted or have no email or phone number.');
+        return;
+    }
+    openInvite(list);
+}
 
 /** Always clickable, so the organiser learns why sending isn't possible yet. */
 function onSendCodes() {
@@ -283,6 +337,7 @@ async function afterCreate(codes: GeneratedCode[]) {
 }
 
 async function afterInvite() {
+    if (inviting.value && inviting.value.length > 1) clearSelection();
     dialog.value = null;
     await load();
     pollStatuses();
@@ -363,5 +418,10 @@ function printSlips(list: (Voter | GeneratedCode)[]) {
     background: var(--brand-50); color: var(--brand-900); font-size: .9rem; border-bottom: 1px solid var(--line);
 }
 .hint > .bi { color: var(--brand-600); font-size: 1.1rem; }
+.select-bar {
+    display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; padding: .6rem 1.25rem;
+    background: var(--brand-50); color: var(--brand-900); border-bottom: 1px solid var(--brand-100); font-size: .9rem;
+}
+.row-selected td { background: rgba(20, 145, 138, .05); }
 .pill-failed { background: var(--danger-50); color: var(--danger); cursor: help; }
 </style>
