@@ -4,11 +4,11 @@
             <div class="container d-flex align-items-center justify-content-between gap-3">
                 <AppLogo />
 
-                <nav class="d-none d-md-flex align-items-center gap-1" aria-label="Main">
+                <nav class="d-none d-lg-flex align-items-center gap-1" aria-label="Main">
                     <NuxtLink v-for="l in links" :key="l.to" :to="l.to" class="nav-l">{{ l.label }}</NuxtLink>
                 </nav>
 
-                <div class="d-none d-md-flex align-items-center gap-2">
+                <div class="d-none d-lg-flex align-items-center gap-2">
                     <ThemeToggle class="me-1" />
                     <template v-if="auth.isAuthenticated">
                         <NuxtLink to="/dashboard" class="btn btn-primary">Dashboard <i class="bi bi-arrow-right"></i></NuxtLink>
@@ -19,14 +19,14 @@
                     </template>
                 </div>
 
-                <button class="btn btn-ghost btn-icon d-md-none" :aria-expanded="menuOpen" aria-label="Menu"
+                <button class="btn btn-ghost btn-icon d-lg-none" :aria-expanded="menuOpen" aria-label="Menu"
                     @click="menuOpen = !menuOpen">
                     <i class="bi" :class="menuOpen ? 'bi-x-lg' : 'bi-list'"></i>
                 </button>
             </div>
 
             <Transition name="drop">
-                <div v-if="menuOpen" class="mobile-menu d-md-none">
+                <div v-if="menuOpen" class="mobile-menu d-lg-none">
                     <div class="container d-grid gap-1 py-3">
                         <div class="d-flex justify-content-between align-items-center px-2 pb-2"><span class="small-caps">Theme</span><ThemeToggle /></div>
                         <NuxtLink v-for="l in links" :key="l.to" :to="l.to" class="nav-l">{{ l.label }}</NuxtLink>

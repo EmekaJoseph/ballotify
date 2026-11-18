@@ -9,9 +9,12 @@ use Illuminate\Support\Facades\Schema;
  * Ballotify voting schema.
  *
  *   users ─┬─< events >── event_types
- *          │     ├─< categories ─< candidates
- *          │     ├─< voters  (one-time access codes)
- *          │     └─< votes   (voter × category × candidate)
+ *          │     ├─< categories ─< candidates  (votes = running total)
+ *          │     ├─< voters      (one-time access codes; used_at = THAT they voted)
+ *          │     └─< audit_logs  (organiser changes)
+ *
+ * Secret ballot: there is deliberately no table of individual ballots, so no
+ * record exists of who voted for whom.
  */
 return new class extends Migration
 {
@@ -38,9 +41,10 @@ return new class extends Migration
             $table->string('name');
             $table->text('description')->nullable();
             $table->uuid('link_token')->unique();
-            $table->unsignedInteger('expected_voters')->default(0);
             $table->timestamp('starts_at')->nullable();
             $table->timestamp('ends_at')->nullable();
+            // live | after_close | private
+            $table->string('results_visibility', 20)->default('after_close');
             $table->timestamps();
         });
 
@@ -57,7 +61,10 @@ return new class extends Migration
             $table->foreignId('event_id')->constrained()->cascadeOnDelete();
             $table->foreignId('category_id')->constrained()->cascadeOnDelete();
             $table->string('name');
+            // Optional short blurb shown under the name.
+            $table->string('description', 280)->nullable();
             $table->string('image_path')->nullable();
+            $table->unsignedInteger('votes')->default(0);
             $table->timestamps();
             $table->unique(['category_id', 'name']);
         });
@@ -66,30 +73,35 @@ return new class extends Migration
             $table->id();
             $table->foreignId('event_id')->constrained()->cascadeOnDelete();
             $table->string('name')->nullable();
+            $table->string('email')->nullable();
+            $table->string('phone', 32)->nullable();
             $table->string('code', 64);
             $table->timestamp('used_at')->nullable()->index();
+            // Outcome of the most recent email / SMS invitation.
+            $table->timestamp('invited_at')->nullable();
+            $table->string('invite_error', 500)->nullable();
             $table->timestamps();
             $table->unique(['event_id', 'code']);
+            $table->index(['event_id', 'email']);
         });
 
-        Schema::create('votes', function (Blueprint $table) {
+        Schema::create('audit_logs', function (Blueprint $table) {
             $table->id();
             $table->foreignId('event_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('voter_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('category_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('candidate_id')->constrained()->cascadeOnDelete();
-            $table->string('ip', 45)->nullable();
-            $table->timestamps();
-            // A voter can pick a given candidate at most once. "One per category"
-            // for single-choice events is enforced in VoteController.
-            $table->unique(['voter_id', 'category_id', 'candidate_id']);
-            $table->index(['event_id', 'candidate_id']); // results tally
+            $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
+            $table->string('action', 64);
+            $table->string('description', 500);
+            // True when the change happened after the first vote was cast.
+            $table->boolean('during_voting')->default(false);
+            $table->json('meta')->nullable();
+            $table->timestamp('created_at')->useCurrent();
+            $table->index(['event_id', 'created_at']);
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('votes');
+        Schema::dropIfExists('audit_logs');
         Schema::dropIfExists('voters');
         Schema::dropIfExists('candidates');
         Schema::dropIfExists('categories');

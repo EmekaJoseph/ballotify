@@ -27,7 +27,10 @@
                             :aria-pressed="isSelected(cat.id, cand.id)" :disabled="disabled"
                             @click="toggle(cat.id, cand.id)">
                             <CandidateAvatar :name="cand.name" :src="cand.image_url" />
-                            <span class="flex-grow-1 text-start fw-semibold text-ink min-w-0 text-break">{{ cand.name }}</span>
+                            <span class="flex-grow-1 text-start min-w-0">
+                                <span class="d-block fw-semibold text-ink text-break">{{ cand.name }}</span>
+                                <span v-if="cand.description" class="d-block small text-muted text-break opt-desc">{{ cand.description }}</span>
+                            </span>
                             <span class="sel-mark" :class="mode === 'multiple' ? 'square' : 'round'">
                                 <i class="bi bi-check-lg"></i>
                             </span>
@@ -57,8 +60,12 @@
                 <li v-for="cat in categories" :key="cat.id" class="py-2 border-bottom">
                     <div class="small-caps mb-1">{{ cat.name }}</div>
                     <div v-if="selectedIn(cat.id).length" class="d-flex flex-wrap gap-2">
-                        <span v-for="c in selectedIn(cat.id)" :key="c.id" class="d-inline-flex align-items-center gap-2 fw-semibold">
-                            <CandidateAvatar :name="c.name" :src="c.image_url" size="sm" /> {{ c.name }}
+                        <span v-for="c in selectedIn(cat.id)" :key="c.id" class="d-inline-flex align-items-center gap-2 min-w-0">
+                            <CandidateAvatar :name="c.name" :src="c.image_url" size="sm" />
+                            <span class="min-w-0">
+                                <span class="d-block fw-semibold text-break">{{ c.name }}</span>
+                                <span v-if="c.description" class="d-block small text-muted text-break review-desc">{{ c.description }}</span>
+                            </span>
                         </span>
                     </div>
                     <div v-else class="text-muted small fst-italic">No selection</div>
@@ -79,7 +86,7 @@
 import type { Choice, SelectionMode } from '~/types';
 
 interface BallotCategory { id: number; name: string }
-interface BallotCandidate { id: number; category_id: number; name: string; image_url: string | null }
+interface BallotCandidate { id: number; category_id: number; name: string; description?: string | null; image_url: string | null }
 
 const props = withDefaults(defineProps<{
     categories: BallotCategory[];
@@ -136,13 +143,15 @@ defineExpose({ closeReview: () => { reviewOpen.value = false; } });
 
 <style scoped>
 .option {
-    width: 100%; display: flex; align-items: center; gap: .85rem; padding: .7rem .85rem;
+    width: 100%; height: 100%; display: flex; align-items: center; gap: .85rem; padding: .7rem .85rem;
     border-radius: 14px; border: 1.5px solid var(--line); background: var(--surface);
     transition: border-color .15s var(--ease), background-color .15s var(--ease), transform .1s var(--ease);
 }
 .option:hover:not(:disabled) { border-color: var(--brand-200); background: var(--surface-2); }
 .option:active:not(:disabled) { transform: scale(.99); }
 .option.selected { border-color: var(--brand-500); background: var(--brand-50); }
+.opt-desc { line-height: 1.4; margin-top: .15rem; font-weight: 400; }
+.review-desc { line-height: 1.35; }
 .sel-mark {
     width: 26px; height: 26px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center;
     border: 2px solid var(--line-strong); color: transparent; font-size: .95rem; transition: all .15s var(--ease);

@@ -73,8 +73,8 @@ These endpoints take `multipart/form-data`, because they can include a photo.
 | Method | Path | Body |
 |---|---|---|
 | GET | `/events/{id}/candidates` | |
-| POST | `/events/{id}/candidates` | `category_id, name, image?` (jpg/png/webp/gif, max 5 MB). Returns `409` when locked. |
-| POST or PATCH | `/events/{id}/candidates/{candidateId}` | `category_id?, name?, image?, remove_image?`. Name and photo changes are allowed while locked (and logged). Changing `category_id` returns `409` when locked. |
+| POST | `/events/{id}/candidates` | `category_id, name, description?` (max 280 chars), `image?` (jpg/png/webp/gif, max 5 MB). Returns `409` when locked. |
+| POST or PATCH | `/events/{id}/candidates/{candidateId}` | `category_id?, name?, description?, image?, remove_image?`. Name, description and photo changes are allowed while locked (and logged). Send an empty `description` to clear it. Changing `category_id` returns `409` when locked. |
 | DELETE | `/events/{id}/candidates/{candidateId}` | Also deletes the photo. Returns `409` when locked. |
 
 Names are unique within a category. Candidate objects include `image_url` (an absolute URL, or null). They never include vote totals; only the results endpoints return those. Use **POST** for updates that include a file, because PHP does not parse multipart bodies on PATCH.
@@ -117,7 +117,7 @@ How codes behave:
 | GET | `/public/events/{token}` | Ballot of an **open** event: `{ id, name, description, status, selection_mode, results_visibility, starts_at, ends_at, categories, candidates }` |
 | POST | `/public/events/{token}/code/validate` | `{ code }` returns `{ valid: true, name }`, or `422` if invalid/used, or `403` if not open |
 | POST | `/public/events/{token}/vote` | `{ code, choices: [ { category_id, candidate_id } ] }` returns `{ message }` |
-| GET | `/public/events/{token}/results` | `{ event, stats, integrity: { changes_during_voting }, categories: [ { id, name, candidates: [ { id, name, image_url, votes } ], leader } ] }`, or `403 { message, visibility, event }` while results aren't published |
+| GET | `/public/events/{token}/results` | `{ event, stats, integrity: { changes_during_voting }, categories: [ { id, name, candidates: [ { id, name, description, image_url, votes } ], leader } ] }`, or `403 { message, visibility, event }` while results aren't published |
 
 **Not open.** For an event that hasn't started or has ended, `GET /public/events/{token}` returns `403 { message, status, starts_at, ends_at, results_public }`.
 

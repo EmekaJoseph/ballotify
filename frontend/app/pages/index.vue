@@ -4,7 +4,7 @@
         <section class="hero">
             <div class="hero-glow"></div>
             <div class="container position-relative">
-                <div class="row align-items-center g-5">
+                <div class="row align-items-center g-4 g-lg-5">
                     <div class="col-lg-6 text-center text-lg-start fade-up">
                         <span class="eyebrow dark mb-4"><i class="bi bi-stars"></i> Elections · Awards · Polls</span>
                         <h1 class="display-title text-white mb-4">
@@ -92,7 +92,7 @@
         <!-- Integrity -->
         <section class="py-6">
             <div class="container">
-                <div class="row g-5 align-items-center">
+                <div class="row g-4 g-lg-5 align-items-center">
                     <div class="col-lg-5">
                         <span class="eyebrow mb-3">Integrity built in</span>
                         <h2 class="section-title mb-3">Every code counts once</h2>

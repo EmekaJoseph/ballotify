@@ -146,8 +146,10 @@ a { text-decoration: none; }
     --bs-btn-active-bg: var(--danger-active); --bs-btn-active-color: var(--danger-strong);
 }
 .btn-light-on-dark {
-    --bs-btn-color: var(--ink); --bs-btn-bg: #fff; --bs-btn-border-color: #fff;
-    --bs-btn-hover-bg: var(--brand-50); --bs-btn-hover-border-color: var(--brand-50); --bs-btn-hover-color: var(--ink);
+    /* Always a white button on a dark band, so the text stays dark in both themes. */
+    --bs-btn-color: #0f172a; --bs-btn-bg: #fff; --bs-btn-border-color: #fff;
+    --bs-btn-hover-bg: #ecf8f7; --bs-btn-hover-border-color: #ecf8f7; --bs-btn-hover-color: #0f172a;
+    --bs-btn-active-bg: #d2efed; --bs-btn-active-border-color: #d2efed; --bs-btn-active-color: #0f172a;
 }
 .btn-outline-light-on-dark {
     --bs-btn-color: #fff; --bs-btn-border-color: rgba(255, 255, 255, .28);

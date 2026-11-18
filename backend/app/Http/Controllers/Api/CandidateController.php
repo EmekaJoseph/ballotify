@@ -33,6 +33,7 @@ class CandidateController extends Controller
         $data = $request->validate([
             'category_id' => ['required', 'integer'],
             'name' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string', 'max:280'],
             'image' => ['nullable', File::image()->max('5mb')],
         ]);
 
@@ -43,6 +44,7 @@ class CandidateController extends Controller
             'event_id' => $event->id,
             'category_id' => $category->id,
             'name' => $data['name'],
+            'description' => self::cleanDescription($data['description'] ?? null),
             'image_path' => $request->hasFile('image') ? $this->storeImage($request->file('image')) : null,
         ]);
         Audit::log($event, 'candidate.created', "Candidate “{$candidate->name}” added to “{$category->name}”");
@@ -56,6 +58,7 @@ class CandidateController extends Controller
         $data = $request->validate([
             'category_id' => ['sometimes', 'integer'],
             'name' => ['sometimes', 'string', 'max:255'],
+            'description' => ['sometimes', 'nullable', 'string', 'max:280'],
             'image' => ['nullable', File::image()->max('5mb')],
             'remove_image' => ['sometimes', 'boolean'],
         ]);
@@ -69,6 +72,9 @@ class CandidateController extends Controller
         if (isset($data['name'])) {
             $candidate->name = $data['name'];
         }
+        if ($request->exists('description')) {
+            $candidate->description = self::cleanDescription($data['description'] ?? null);
+        }
         if ($candidate->isDirty(['name', 'category_id'])) {
             $this->ensureUniqueName($candidate->category_id, $candidate->name, $candidate->id);
         }
@@ -79,6 +85,7 @@ class CandidateController extends Controller
         }
 
         $movedCategory = $candidate->isDirty('category_id');
+        $descriptionChanged = $candidate->isDirty('description');
         $candidate->save();
 
         if ($oldName !== $candidate->name) {
@@ -86,6 +93,9 @@ class CandidateController extends Controller
         }
         if ($movedCategory) {
             Audit::log($event, 'candidate.moved', "Candidate “{$candidate->name}” moved to another category");
+        }
+        if ($descriptionChanged) {
+            Audit::log($event, 'candidate.description', "Description of “{$candidate->name}” " . ($candidate->description ? 'updated' : 'removed'));
         }
         if ($photoChanged) {
             Audit::log($event, 'candidate.photo', "Photo of “{$candidate->name}” " . ($candidate->image_path ? 'changed' : 'removed'));
@@ -103,6 +113,13 @@ class CandidateController extends Controller
         Audit::log($event, 'candidate.deleted', "Candidate “{$candidate->name}” removed");
 
         return response()->json([], 204);
+    }
+
+    /** Trim and collapse whitespace; an empty description is stored as null. */
+    private static function cleanDescription(?string $text): ?string
+    {
+        $text = trim(preg_replace('/\s+/u', ' ', (string) $text) ?? '');
+        return $text === '' ? null : $text;
     }
 
     private function categoryOf(Event $event, int $categoryId): Category

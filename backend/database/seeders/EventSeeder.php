@@ -46,12 +46,19 @@ class EventSeeder extends Seeder
             $categories = collect(['President', 'Vice President', 'Secretary', 'Treasurer'])->map(function ($name) use ($event) {
                 return Category::create(['event_id' => $event->id, 'name' => $name]);
             })->values();
+            // Some candidates get a short description, some don't (it's optional).
+            $blurbs = [
+                'A' => 'Final-year Law · campaigning for longer library hours',
+                'B' => 'Second-year Engineering · wants a stronger student voice',
+                'C' => null,
+            ];
             foreach ($categories as $category) {
-                foreach (['A', 'B', 'C'] as $suffix) {
+                foreach ($blurbs as $suffix => $blurb) {
                     Candidate::create([
                         'event_id' => $event->id,
                         'category_id' => $category->id,
                         'name' => $category->name . ' ' . $suffix,
+                        'description' => $blurb,
                         'image_path' => null,
                     ]);
                 }

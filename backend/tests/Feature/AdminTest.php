@@ -141,6 +141,36 @@ it('rejects a duplicate candidate name in the same category with a validation er
         ->assertStatus(422)->assertJsonValidationErrors('name');
 });
 
+it('stores an optional candidate description and shows it on the ballot and results', function () {
+    $user = User::factory()->create();
+    $event = Event::create(['user_id' => $user->id, 'name' => 'Blurbs', 'link_token' => 'tok-blurb', 'results_visibility' => 'live']);
+    $category = Category::create(['event_id' => $event->id, 'name' => 'Captain']);
+
+    $id = $this->actingAs($user)->postJson("/api/events/{$event->id}/candidates", [
+        'category_id' => $category->id, 'name' => 'Tobi', 'description' => "  Final-year   Law\n student  ",
+    ])->assertCreated()->assertJsonPath('description', 'Final-year Law student')->json('id');
+
+    // Optional: a candidate without one stores null.
+    $this->actingAs($user)->postJson("/api/events/{$event->id}/candidates", ['category_id' => $category->id, 'name' => 'Ada'])
+        ->assertCreated()->assertJsonPath('description', null);
+
+    // Too long is rejected.
+    $this->actingAs($user)->postJson("/api/events/{$event->id}/candidates", [
+        'category_id' => $category->id, 'name' => 'Long', 'description' => str_repeat('x', 281),
+    ])->assertStatus(422)->assertJsonValidationErrors('description');
+
+    $this->getJson('/api/public/events/tok-blurb')->assertOk()
+        ->assertJsonFragment(['name' => 'Tobi', 'description' => 'Final-year Law student']);
+    $this->getJson('/api/public/events/tok-blurb/results')->assertOk()
+        ->assertJsonFragment(['name' => 'Tobi', 'description' => 'Final-year Law student']);
+
+    // Editable after the ballot locks (it's not a structural change), and logged.
+    Voter::create(['event_id' => $event->id, 'code' => 'USED2222', 'used_at' => now()]);
+    $this->actingAs($user)->patchJson("/api/events/{$event->id}/candidates/{$id}", ['description' => ''])
+        ->assertOk()->assertJsonPath('description', null);
+    expect(\App\Models\AuditLog::where('event_id', $event->id)->where('action', 'candidate.description')->exists())->toBeTrue();
+});
+
 it('does not include the full voter list in the event detail response', function () {
     $user = User::factory()->create();
     $event = Event::create(['user_id' => $user->id, 'name' => 'Lean', 'link_token' => 'tok-lean']);

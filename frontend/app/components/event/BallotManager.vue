@@ -5,7 +5,7 @@
             <span>
                 <b>{{ event.status === 'completed' ? 'Voting has closed.' : 'Voting has started.' }}</b>
                 The ballot is locked, so categories and candidates can’t be added, removed or moved.
-                You can still fix names and photos; every change is recorded in the Activity tab.
+                You can still fix names, descriptions and photos; every change is recorded in the Activity tab.
             </span>
         </div>
 
@@ -51,7 +51,10 @@
                 <ul v-else class="list-unstyled mb-0">
                     <li v-for="cand in candidatesOf(cat.id)" :key="cand.id" class="cand-row">
                         <CandidateAvatar :name="cand.name" :src="cand.image_url" />
-                        <span class="fw-semibold text-ink flex-grow-1 min-w-0 text-break">{{ cand.name }}</span>
+                        <span class="flex-grow-1 min-w-0">
+                            <span class="d-block fw-semibold text-ink text-break">{{ cand.name }}</span>
+                            <span v-if="cand.description" class="small text-muted text-break cand-desc">{{ cand.description }}</span>
+                        </span>
                         <button class="btn btn-ghost btn-icon btn-sm" title="Edit" aria-label="Edit candidate" @click="openCandidate(cand)"><i class="bi bi-pencil"></i></button>
                         <button v-if="!locked" class="btn btn-ghost btn-icon btn-sm text-danger" title="Delete" aria-label="Delete candidate" @click="removeCandidate(cand)"><i class="bi bi-trash"></i></button>
                     </li>
@@ -76,6 +79,15 @@
                 <div class="mb-3">
                     <label for="cand-name" class="form-label">Name</label>
                     <input id="cand-name" v-model.trim="modal.name" class="form-control" maxlength="255" placeholder="Full name" />
+                </div>
+                <div class="mb-3">
+                    <label for="cand-desc" class="form-label">Short description <span class="text-muted fw-normal">(optional)</span></label>
+                    <textarea id="cand-desc" v-model="modal.description" class="form-control" rows="2" :maxlength="DESC_MAX"
+                        placeholder="e.g. Final-year Law student · campaigning for longer library hours"></textarea>
+                    <div class="form-text d-flex justify-content-between gap-2">
+                        <span>Shown under the name on the ballot and the results.</span>
+                        <span :class="{ 'text-warning-emphasis': modal.description.length > DESC_MAX - 20 }">{{ modal.description.length }}/{{ DESC_MAX }}</span>
+                    </div>
                 </div>
                 <div>
                     <label for="cand-cat" class="form-label">Category</label>
@@ -110,6 +122,7 @@ const newCategory = ref('');
 const editingCat = ref<number | null>(null);
 const catDraft = ref('');
 
+const DESC_MAX = 280;
 const categories = computed<Category[]>(() => props.event.categories ?? []);
 const locked = computed(() => props.event.ballot_locked);
 const candidatesOf = (catId: number): Candidate[] => (props.event.candidates ?? []).filter(c => c.category_id === catId);
@@ -156,6 +169,7 @@ const modal = reactive({
     open: false,
     id: null as number | null,
     name: '',
+    description: '',
     categoryId: 0,
     file: null as File | null,
     preview: null as string | null,
@@ -173,6 +187,7 @@ function openCandidate(cand: Candidate | null, categoryId?: number) {
         open: true,
         id: cand?.id ?? null,
         name: cand?.name ?? '',
+        description: cand?.description ?? '',
         categoryId: cand?.category_id ?? categoryId ?? categories.value[0]?.id ?? 0,
         file: null,
         preview: cand?.image_url ?? null,
@@ -206,6 +221,7 @@ async function saveCandidate() {
     if (!modal.name || !modal.categoryId) return;
     const fd = new FormData();
     fd.append('name', modal.name);
+    fd.append('description', modal.description.trim());
     fd.append('category_id', String(modal.categoryId));
     if (modal.file) fd.append('image', modal.file);
     if (modal.id && modal.removePhoto && !modal.file) fd.append('remove_image', '1');
@@ -240,4 +256,5 @@ onBeforeUnmount(revokePreview);
 .cand-row { display: flex; align-items: center; gap: .85rem; padding: .75rem 1.25rem; border-bottom: 1px solid var(--line); }
 .cand-row:last-child { border-bottom: 0; }
 .cand-row:hover { background: var(--surface-2); }
+.cand-desc { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.4; }
 </style>

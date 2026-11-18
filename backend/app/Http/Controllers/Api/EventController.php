@@ -190,7 +190,7 @@ class EventController extends Controller
 
         $event->load([
             'categories:id,event_id,name',
-            'candidates:id,event_id,category_id,name,image_path',
+            'candidates:id,event_id,category_id,name,description,image_path',
         ]);
 
         return response()->json([
@@ -235,7 +235,7 @@ class EventController extends Controller
     private function buildResults(Event $event): array
     {
         $categories = $event->categories()
-            ->with(['candidates' => fn ($q) => $q->select(['id', 'category_id', 'name', 'image_path', 'votes'])])
+            ->with(['candidates' => fn ($q) => $q->select(['id', 'category_id', 'name', 'description', 'image_path', 'votes'])])
             ->orderBy('id')
             ->get();
 
@@ -245,6 +245,7 @@ class EventController extends Controller
                 ->map(fn ($c) => [
                     'id' => $c->id,
                     'name' => $c->name,
+                    'description' => $c->description,
                     'image_url' => $c->image_url,
                     'votes' => (int) $c->votes,
                 ])

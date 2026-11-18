@@ -53,7 +53,7 @@ ballotify/
 │   ├── app/Policies/EventPolicy.php  organisers can only touch their own events
 │   ├── app/Events/VoteCast.php       live-results broadcast
 │   ├── database/migrations/          schema (users, events, categories, candidates + vote totals, voters, audit_logs)
-│   ├── database/seeders/             demo data (admin@example.com / password)
+│   ├── database/seeders/             demo data (admin@demo.com / password)
 │   ├── docs/API.md                   endpoint reference
 │   └── tests/Feature/                voting-integrity and admin tests
 ├── frontend/                Nuxt app
@@ -88,9 +88,10 @@ Or run all three at once with `composer dev`.
 
 No queue worker is needed. With the default `QUEUE_CONNECTION=sync`, invitations are sent right after you click **Send**. For very large lists you can switch to `QUEUE_CONNECTION=database` and run `composer dev`, which starts the API plus a background worker.
 
-The demo login is `admin@example.com` / `password`. The demo voter codes are written to `storage/app/private/seed_voter_codes.json` (the first event's codes look like `E1-0150`).
+The demo login is `admin@demo.com` / `password`. The demo voter codes are written to `storage/app/private/seed_voter_codes.json` (the first event's codes look like `E1-0150`).
 
-> **Upgrading from an older copy?** Run `php artisan migrate`. The secret-ballot migration converts existing votes into per-candidate totals and then **permanently deletes the individual ballot records**. Back up the database first if you need them.
+> **Upgrading from an older copy?** The schema was consolidated, so rebuild the database with `php artisan migrate:fresh --seed`. This **deletes all existing data**.
+
 
 ### 2. Frontend
 
@@ -154,7 +155,7 @@ A provider that fails never breaks the app:
 ## Testing
 
 ```bash
-cd backend  && php artisan test                                    # 52 feature tests
+cd backend  && php artisan test                                    # 53 feature tests
 cd frontend && npx nuxi prepare && npx vue-tsc --noEmit -p .nuxt/tsconfig.app.json   # type check
 cd frontend && npm run build                                       # production build
 ```

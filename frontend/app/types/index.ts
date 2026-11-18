@@ -32,6 +32,7 @@ export interface Candidate {
     event_id?: number;
     category_id: number;
     name: string;
+    description?: string | null;
     image_path: string | null;
     image_url: string | null;
 }
@@ -95,6 +96,7 @@ export interface Choice {
 export interface ResultCandidate {
     id: number;
     name: string;
+    description?: string | null;
     image_url: string | null;
     votes: number;
 }

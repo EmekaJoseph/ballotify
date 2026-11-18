@@ -11,14 +11,19 @@ export const DEMO_EVENT = {
     ],
 };
 
-const people: [number, number, string][] = [
-    [1, 1, 'Amara Okafor'], [2, 1, 'Daniel Mensah'], [3, 1, 'Sofia Lindqvist'],
-    [4, 2, 'Kwame Asante'], [5, 2, 'Priya Raman'],
-    [6, 3, 'Lucas Moreau'], [7, 3, 'Zainab Bello'], [8, 3, 'Ethan Park'],
+const people: [number, number, string, string | null][] = [
+    [1, 1, 'Amara Okafor', 'Final-year Law · longer library hours and fairer exam timetables'],
+    [2, 1, 'Daniel Mensah', 'Third-year Economics · cheaper campus food'],
+    [3, 1, 'Sofia Lindqvist', null],
+    [4, 2, 'Kwame Asante', 'Sports Club captain · better facilities for every society'],
+    [5, 2, 'Priya Raman', 'Second-year Medicine · mental-health first'],
+    [6, 3, 'Lucas Moreau', null],
+    [7, 3, 'Zainab Bello', 'Peer mentor · a 24/7 welfare line'],
+    [8, 3, 'Ethan Park', 'First-year rep · more support for new students'],
 ];
 
-export const DEMO_CANDIDATES: Candidate[] = people.map(([id, category_id, name]) => ({
-    id, category_id, name, image_path: null, image_url: null,
+export const DEMO_CANDIDATES: Candidate[] = people.map(([id, category_id, name, description]) => ({
+    id, category_id, name, description, image_path: null, image_url: null,
 }));
 
 const startVotes: Record<number, number> = { 1: 412, 2: 368, 3: 205, 4: 501, 5: 489, 6: 290, 7: 344, 8: 178 };
@@ -28,7 +33,7 @@ export function demoResults(extra: Record<number, number> = {}): EventResults {
     const categories = DEMO_EVENT.categories.map((cat) => {
         const candidates = DEMO_CANDIDATES
             .filter(c => c.category_id === cat.id)
-            .map(c => ({ id: c.id, name: c.name, image_url: null, votes: votes(c.id) }))
+            .map(c => ({ id: c.id, name: c.name, description: c.description ?? null, image_url: null, votes: votes(c.id) }))
             .sort((a, b) => b.votes - a.votes);
         return { id: cat.id, name: cat.name, candidates, leader: candidates[0] ?? null };
     });

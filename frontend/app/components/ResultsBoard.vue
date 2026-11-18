@@ -43,7 +43,10 @@
                                 <CandidateAvatar :name="cand.name" :src="cand.image_url" size="sm" />
                                 <div class="flex-grow-1 min-w-0">
                                     <div class="d-flex justify-content-between gap-2 mb-1">
-                                        <span class="fw-semibold text-ink truncate">{{ cand.name }}</span>
+                                        <span class="min-w-0">
+                                            <span class="d-block fw-semibold text-ink truncate">{{ cand.name }}</span>
+                                            <span v-if="cand.description" class="d-block small text-muted truncate" :title="cand.description">{{ cand.description }}</span>
+                                        </span>
                                         <span class="text-nowrap small">
                                             <b class="text-ink">{{ formatNumber(cand.votes) }}</b>
                                             <span class="text-muted"> · {{ percent(cand.votes, catTotal(cat)) }}%</span>
