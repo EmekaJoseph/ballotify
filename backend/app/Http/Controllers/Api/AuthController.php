@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -66,7 +65,8 @@ class AuthController extends Controller
         $user = $request->user();
         $data = $request->validate([
             'name' => ['sometimes', 'string', 'max:255'],
-            'email' => ['sometimes', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
+            // The sign-in email is fixed once the account is created.
+            'email' => ['prohibited'],
             'current_password' => ['required_with:password', 'nullable', 'string'],
             'password' => ['nullable', 'string', 'min:8'],
         ]);
@@ -81,7 +81,6 @@ class AuthController extends Controller
             $user->password = $data['password'];
         }
         if (isset($data['name'])) $user->name = $data['name'];
-        if (isset($data['email'])) $user->email = $data['email'];
         $user->save();
 
         return response()->json($user);

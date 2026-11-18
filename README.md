@@ -76,6 +76,8 @@ php artisan migrate --seed        # creates tables + demo events
 php artisan serve --port=8883
 ```
 
+No queue worker is needed. With the default `QUEUE_CONNECTION=sync`, invitations are sent right after you click **Send**. For very large lists you can switch to `QUEUE_CONNECTION=database` and run `composer dev`, which starts the API plus a background worker.
+
 The demo login is `admin@example.com` / `password`. The demo voter codes are written to `storage/app/private/seed_voter_codes.json` (the first event's codes look like `E1-0150`).
 
 > **Upgrading from an older copy?** The voting tables were consolidated into one migration. Run `php artisan migrate:fresh --seed` on a development database. This **wipes its data**.
@@ -106,6 +108,27 @@ npm run dev                       # http://localhost:3000
 | `CORS_ALLOWED_ORIGINS`                                                       | Optional comma-separated extra origins.                      |
 | `BROADCAST_CONNECTION`                                                       | `pusher` for instant live results, `log` to disable.         |
 | `PUSHER_APP_ID`, `PUSHER_APP_KEY`, `PUSHER_APP_SECRET`, `PUSHER_APP_CLUSTER` | Pusher credentials (free tier is fine).                      |
+
+### Email & SMS invitations
+
+Organisers can store each voter's **email** and **phone**. **Voters → Send codes** then delivers the voting link and personal code by email, SMS or both. Delivery runs in the background, and the result is shown per voter: *Invited* or *Not delivered*, with the reason.
+
+The app works with no credentials. In that **test mode**, messages are written to `storage/logs/laravel.log` instead of being sent, and the Send dialog says so. To go live, fill in one of these in `backend/.env`:
+
+| Channel | Settings |
+|---|---|
+| Email | `MAIL_MAILER=smtp` (or `mailgun`, `postmark`, `ses`, `resend`) plus that mailer's credentials. Set `MAIL_FROM_ADDRESS` to an address on your domain. |
+| SMS: Termii | `SMS_DRIVER=termii`, `TERMII_API_KEY`, `TERMII_SENDER_ID` (approved sender ID). Optionally `TERMII_CHANNEL=dnd` to reach DND numbers in Nigeria. |
+| SMS: Africa's Talking | `SMS_DRIVER=africastalking`, `AFRICASTALKING_USERNAME`, `AFRICASTALKING_API_KEY`, optional `AFRICASTALKING_FROM` |
+| SMS: Twilio | `SMS_DRIVER=twilio`, `TWILIO_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM` |
+| Phone format | `SMS_DEFAULT_COUNTRY_CODE=234` turns local numbers like `0801 234 5678` into `+2348012345678`. |
+
+After editing `.env`, run `php artisan config:clear`. If your network blocks port 465 (common on home connections), use `MAIL_PORT=587` with `MAIL_SCHEME=smtp`.
+
+A provider that fails never breaks the app:
+- The error is saved on that voter and shown in the Voters tab.
+- Everything else keeps working.
+- People who have already voted are never messaged.
 
 ### Frontend `.env`
 

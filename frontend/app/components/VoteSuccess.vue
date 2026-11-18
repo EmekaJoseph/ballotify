@@ -3,9 +3,10 @@
         <div class="check-wrap mx-auto mb-4" aria-hidden="true">
             <svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="24" /><path d="M15 27l7 7 15-15" /></svg>
         </div>
-        <h1 class="h3 fw-800 mb-2">Your vote has been recorded</h1>
+        <h1 class="h3 fw-800 mb-2">{{ voterName ? `Thank you, ${firstName}!` : 'Your vote has been recorded' }}</h1>
         <p class="text-muted mx-auto mb-4" style="max-width: 420px">
-            Thank you for voting in <b class="text-ink">{{ eventName }}</b>. Your code has now been used and can't vote again.
+            <template v-if="voterName">Your vote has been recorded</template><template v-else>Thank you for voting</template>
+            in <b class="text-ink">{{ eventName }}</b>. Your code has now been used and can't vote again.
         </p>
         <div class="d-flex flex-column flex-sm-row gap-2 justify-content-center">
             <NuxtLink v-if="resultsTo" :to="resultsTo" class="btn btn-primary"><i class="bi bi-bar-chart-line"></i> View live results</NuxtLink>
@@ -15,7 +16,11 @@
 </template>
 
 <script setup lang="ts">
-defineProps<{ eventName: string; resultsTo?: string }>();
+const props = withDefaults(defineProps<{ eventName: string; resultsTo?: string; voterName?: string | null }>(), {
+    resultsTo: '',
+    voterName: null,
+});
+const firstName = computed(() => props.voterName?.trim().split(/\s+/)[0] ?? '');
 </script>
 
 <style scoped>

@@ -28,6 +28,35 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    /*
+    | Voter SMS invitations. SMS_DRIVER: log (test mode) | twilio | termii | africastalking.
+    | A driver without credentials falls back to test mode (messages are logged).
+    */
+    'sms' => [
+        'driver' => env('SMS_DRIVER', 'log'),
+        // Used to convert local numbers ("0801…") to international format, e.g. 234 for Nigeria.
+        'default_country_code' => env('SMS_DEFAULT_COUNTRY_CODE'),
+    ],
+
+    'twilio' => [
+        'sid' => env('TWILIO_SID'),
+        'token' => env('TWILIO_AUTH_TOKEN'),
+        'from' => env('TWILIO_FROM'),
+    ],
+
+    'termii' => [
+        'api_key' => env('TERMII_API_KEY'),
+        'sender_id' => env('TERMII_SENDER_ID'),
+        'base_url' => env('TERMII_BASE_URL', 'https://api.ng.termii.com'),
+        'channel' => env('TERMII_CHANNEL', 'generic'),
+    ],
+
+    'africastalking' => [
+        'username' => env('AFRICASTALKING_USERNAME'),
+        'api_key' => env('AFRICASTALKING_API_KEY'),
+        'from' => env('AFRICASTALKING_FROM'),
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),

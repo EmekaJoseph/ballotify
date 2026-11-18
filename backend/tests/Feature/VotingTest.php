@@ -138,3 +138,12 @@ it('re-enabling a used code discards the old ballot', function () {
     $this->postJson("/api/public/events/{$e['event']->link_token}/vote", ballot($e, [$e['b']]))->assertOk();
     expect(Vote::count())->toBe(1);
 });
+
+it('returns the voter name when a code is validated, and nothing for an invalid code', function () {
+    $e = makeElection();
+    $e['voter']->update(['name' => 'Ada Obi']);
+    $url = "/api/public/events/{$e['event']->link_token}/code/validate";
+
+    $this->postJson($url, ['code' => 'abcd2345'])->assertOk()->assertJson(['valid' => true, 'name' => 'Ada Obi']);
+    $this->postJson($url, ['code' => 'WRONG999'])->assertStatus(422)->assertJsonMissingPath('name');
+});

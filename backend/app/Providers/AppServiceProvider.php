@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Services\Sms\SmsManager;
+use App\Services\Sms\SmsSender;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -14,7 +16,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Resolved per use so a config change (or a test override) takes effect.
+        $this->app->bind(SmsSender::class, fn () => SmsManager::make());
     }
 
     /**

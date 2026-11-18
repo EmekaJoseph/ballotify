@@ -3,29 +3,24 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\SendVoterInvitation;
 use App\Models\Event;
 use App\Models\Vote;
 use App\Models\Voter;
+use App\Support\PhoneNumber;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class VoterController extends Controller
 {
     /** Unambiguous characters (no 0/O, 1/I/L) so printed codes are easy to type. */
     private const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
     private const CODE_LENGTH = 8;
-
-    private function randomCode(): string
-    {
-        $code = '';
-        $max = strlen(self::CODE_ALPHABET) - 1;
-        for ($i = 0; $i < self::CODE_LENGTH; $i++) {
-            $code .= self::CODE_ALPHABET[random_int(0, $max)];
-        }
-        return $code;
-    }
+    private const MAX_BATCH = 10000;
 
     /** Codes are case-insensitive for voters: store and compare them upper-cased and trimmed. */
     public static function normalizeCode(string $code): string
@@ -33,46 +28,53 @@ class VoterController extends Controller
         return strtoupper(trim($code));
     }
 
-    public function index(Request $request, Event $event)
+    public function index(Event $event)
     {
         Gate::authorize('manage', $event);
-        $voters = Voter::where('event_id', $event->id)
-            ->orderBy('id')
-            ->get();
-        return response()->json($voters);
+        return response()->json(Voter::where('event_id', $event->id)->orderBy('id')->get());
     }
 
+    /** Add one voter. The code is generated when not supplied. */
     public function store(Request $request, Event $event)
     {
         Gate::authorize('manage', $event);
-        $request->merge(['code' => self::normalizeCode((string) $request->input('code', ''))]);
+        $this->normalizeInput($request);
         $data = $request->validate([
             'name' => ['nullable', 'string', 'max:255'],
-            'code' => ['required', 'string', 'min:4', 'max:64', Rule::unique('voters', 'code')->where('event_id', $event->id)],
+            'email' => ['nullable', 'string', 'email:rfc', 'max:255'],
+            'phone' => ['nullable', 'string', 'max:32', $this->phoneRule()],
+            'code' => ['nullable', 'string', 'min:4', 'max:64', Rule::unique('voters', 'code')->where('event_id', $event->id)],
         ]);
+
         $voter = Voter::create([
             'event_id' => $event->id,
             'name' => $data['name'] ?? null,
-            'code' => $data['code'],
+            'email' => $data['email'] ?? null,
+            'phone' => $data['phone'] ?? null,
+            'code' => $data['code'] ?? $this->uniqueCodes($event, 1)[0],
         ]);
+
         return response()->json($voter, 201);
     }
 
     public function update(Request $request, Event $event, Voter $voter)
     {
         Gate::authorize('manage', $event);
-        if ($request->has('code')) {
-            $request->merge(['code' => self::normalizeCode((string) $request->input('code'))]);
-        }
+        $this->normalizeInput($request);
         $data = $request->validate([
             'name' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'email' => ['sometimes', 'nullable', 'string', 'email:rfc', 'max:255'],
+            'phone' => ['sometimes', 'nullable', 'string', 'max:32', $this->phoneRule()],
             'code' => ['sometimes', 'string', 'min:4', 'max:64', Rule::unique('voters', 'code')->where('event_id', $event->id)->ignore($voter->id)],
             'used_at' => ['sometimes', 'nullable', 'date'],
         ]);
 
         DB::transaction(function () use ($data, $voter) {
-            if (array_key_exists('name', $data)) $voter->name = $data['name'];
-            if (array_key_exists('code', $data)) $voter->code = $data['code'];
+            foreach (['name', 'email', 'phone', 'code'] as $field) {
+                if (array_key_exists($field, $data)) {
+                    $voter->{$field} = $data[$field];
+                }
+            }
             if (array_key_exists('used_at', $data)) {
                 // Re-enabling a code discards that voter's previous ballot so the
                 // tally never counts them twice.
@@ -87,70 +89,129 @@ class VoterController extends Controller
         return response()->json($voter);
     }
 
-    public function destroy(Request $request, Event $event, Voter $voter)
+    public function destroy(Event $event, Voter $voter)
     {
         Gate::authorize('manage', $event);
         $voter->delete();
         return response()->json([], 204);
     }
 
+    /** Create N anonymous codes. */
     public function generate(Request $request, Event $event)
     {
         Gate::authorize('manage', $event);
         $data = $request->validate([
-            'names' => ['nullable', 'array', 'max:10000'],
-            'names.*' => ['nullable', 'string', 'max:255'],
-            'count' => ['nullable', 'integer', 'min:1', 'max:10000'],
+            'count' => ['required', 'integer', 'min:1', 'max:' . self::MAX_BATCH],
         ]);
 
-        $names = array_values($data['names'] ?? []);
-        $count = $data['count'] ?? 0;
-        if ($count > 0 && empty($names)) {
-            $names = array_fill(0, $count, null);
-        }
-        if (empty($names)) {
-            return response()->json(['message' => 'Provide a count or a list of names.'], 422);
-        }
-
-        $plainCodes = DB::transaction(function () use ($event, $names) {
-            $taken = array_flip(Voter::where('event_id', $event->id)->pluck('code')->all());
-            $rows = [];
-            $out = [];
-            $now = now();
-            foreach ($names as $name) {
-                do {
-                    $code = $this->randomCode();
-                } while (isset($taken[$code]));
-                $taken[$code] = true;
-
-                $name = is_string($name) && trim($name) !== '' ? trim($name) : null;
-                $out[] = ['name' => $name, 'code' => $code];
-                $rows[] = [
-                    'event_id' => $event->id,
-                    'name' => $name,
-                    'code' => $code,
-                    'created_at' => $now,
-                    'updated_at' => $now,
-                ];
-            }
-            foreach (array_chunk($rows, 500) as $chunk) {
-                Voter::insert($chunk);
-            }
-            return $out;
-        });
-
-        return response()->json(['voters' => $plainCodes], 201);
+        return response()->json(['voters' => $this->createMany($event, array_fill(0, $data['count'], []))], 201);
     }
 
+    /**
+     * Create one code per person. Accepts either
+     *   { voters: [ { name?, email?, phone? }, … ] }  (preferred)
+     *   { names: [ "Ada", "Bola" ] }                    (legacy)
+     */
     public function import(Request $request, Event $event)
     {
         Gate::authorize('manage', $event);
+
+        if (! $request->has('voters') && $request->has('names')) {
+            $request->merge(['voters' => array_map(fn ($n) => ['name' => $n], (array) $request->input('names'))]);
+        }
+
         $request->validate([
-            'names' => ['required', 'array', 'min:1', 'max:10000'],
-            'names.*' => ['nullable', 'string', 'max:255'],
+            'voters' => ['required', 'array', 'min:1', 'max:' . self::MAX_BATCH],
+            'voters.*' => ['array'],
+            'voters.*.name' => ['nullable', 'string', 'max:255'],
+            'voters.*.email' => ['nullable', 'string', 'max:255'],
+            'voters.*.phone' => ['nullable', 'string', 'max:32'],
         ]);
-        $request->merge(['count' => null]);
-        return $this->generate($request, $event);
+
+        // Validate contacts row by row so the organiser gets the exact line to fix.
+        $rows = [];
+        $errors = [];
+        foreach (array_values($request->input('voters')) as $i => $row) {
+            $email = isset($row['email']) ? strtolower(trim((string) $row['email'])) : '';
+            $rawPhone = trim((string) ($row['phone'] ?? ''));
+            $phone = PhoneNumber::normalize($rawPhone);
+            if ($email !== '' && ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                $errors["voters.{$i}.email"] = ['Row ' . ($i + 1) . ': "' . $row['email'] . '" is not a valid email address.'];
+            }
+            if ($rawPhone !== '' && ! PhoneNumber::isValid($phone)) {
+                $errors["voters.{$i}.phone"] = ['Row ' . ($i + 1) . ': "' . $row['phone'] . '" ' . PhoneNumber::problem($phone)];
+            }
+            $rows[] = ['name' => $row['name'] ?? null, 'email' => $email ?: null, 'phone' => $phone];
+        }
+        if ($errors) {
+            throw ValidationException::withMessages(array_slice($errors, 0, 20, true));
+        }
+
+        return response()->json(['voters' => $this->createMany($event, $rows)], 201);
+    }
+
+    /**
+     * Send voting codes by email and/or SMS (queued; delivered by the queue worker).
+     * Voters who have already voted are never messaged.
+     */
+    public function invite(Request $request, Event $event)
+    {
+        Gate::authorize('manage', $event);
+        $data = $request->validate([
+            'channel' => ['required', Rule::in(['email', 'sms', 'both'])],
+            'audience' => ['required', Rule::in(['not_invited', 'pending', 'selected'])],
+            'voter_ids' => ['required_if:audience,selected', 'array', 'max:' . self::MAX_BATCH],
+            'voter_ids.*' => ['integer'],
+        ]);
+
+        if ($event->status === Event::STATUS_COMPLETED) {
+            throw ValidationException::withMessages(['channel' => ['Voting has closed for this event, so invitations can no longer be sent.']]);
+        }
+
+        $channels = $data['channel'] === 'both' ? ['email', 'sms'] : [$data['channel']];
+
+        $query = Voter::where('event_id', $event->id)->whereNull('used_at');
+        if ($data['audience'] === 'not_invited') {
+            $query->whereNull('invited_at');
+        } elseif ($data['audience'] === 'selected') {
+            $query->whereIn('id', $data['voter_ids'] ?? []);
+        }
+        // Only voters reachable on at least one requested channel.
+        $query->where(function ($q) use ($channels) {
+            if (in_array('email', $channels, true)) $q->orWhereNotNull('email');
+            if (in_array('sms', $channels, true)) $q->orWhereNotNull('phone');
+        });
+
+        // Without a queue worker (QUEUE_CONNECTION=sync) messages are sent right
+        // after the HTTP response, so the organiser never waits on the mail server.
+        $noWorker = config('queue.default') === 'sync';
+        if ($noWorker) {
+            @set_time_limit(0);       // large lists keep sending after the response
+            ignore_user_abort(true);  // …even if the browser tab is closed
+        }
+
+        $counts = ['queued' => 0, 'email' => 0, 'sms' => 0, 'failed' => 0];
+        $query->select(['id', 'email', 'phone'])->chunkById(500, function ($voters) use ($channels, &$counts, $noWorker) {
+            foreach ($voters as $voter) {
+                try {
+                    // Delivery errors are handled inside the job; this only guards
+                    // against the queue itself being unavailable.
+                    $noWorker
+                        ? SendVoterInvitation::dispatchAfterResponse($voter->id, $channels)
+                        : SendVoterInvitation::dispatch($voter->id, $channels);
+                } catch (\Throwable $e) {
+                    report($e);
+                    $counts['failed']++;
+                    Voter::whereKey($voter->id)->update(['invite_error' => 'Could not be queued: ' . Str::limit($e->getMessage(), 200)]);
+                    continue;
+                }
+                $counts['queued']++;
+                if (in_array('email', $channels, true) && $voter->email) $counts['email']++;
+                if (in_array('sms', $channels, true) && $voter->phone) $counts['sms']++;
+            }
+        });
+
+        return response()->json($counts + ['queue' => config('queue.default')]);
     }
 
     public function validateCode(Request $request, string $token)
@@ -162,12 +223,84 @@ class VoterController extends Controller
         if (! $event->isOpen()) {
             return response()->json(['valid' => false, 'message' => 'This election is not open.'], 403);
         }
-        $exists = Voter::where('event_id', $event->id)
+        $voter = Voter::where('event_id', $event->id)
             ->whereNull('used_at')
             ->where('code', self::normalizeCode($data['code']))
-            ->exists();
-        return $exists
-            ? response()->json(['valid' => true])
+            ->first(['id', 'name']);
+
+        // The voter's own name (from the organiser's import) lets them confirm the
+        // code is theirs. Only returned for a valid, unused code (rate-limited).
+        return $voter
+            ? response()->json(['valid' => true, 'name' => $voter->name])
             : response()->json(['valid' => false, 'message' => 'Invalid or used voting code.'], 422);
+    }
+
+    // ------------------------------------------------------------------ helpers
+
+    /** Trim/normalise code, email and phone before validation. */
+    private function normalizeInput(Request $request): void
+    {
+        $merge = [];
+        if ($request->filled('code')) $merge['code'] = self::normalizeCode((string) $request->input('code'));
+        elseif ($request->has('code')) $merge['code'] = null;
+        if ($request->has('email')) $merge['email'] = $request->filled('email') ? strtolower(trim((string) $request->input('email'))) : null;
+        if ($request->has('phone')) {
+            $raw = $request->input('phone');
+            // Keep unparseable input (e.g. "abc") so validation rejects it instead of dropping it.
+            $merge['phone'] = PhoneNumber::normalize($raw) ?? ($request->filled('phone') ? (string) $raw : null);
+        }
+        $request->merge($merge);
+    }
+
+    private function phoneRule(): \Closure
+    {
+        return function (string $attribute, mixed $value, \Closure $fail) {
+            if ($value !== null && ! PhoneNumber::isValid($value)) {
+                $fail('This phone number ' . PhoneNumber::problem($value));
+            }
+        };
+    }
+
+    /**
+     * @param  array<int, array{name?: ?string, email?: ?string, phone?: ?string}>  $rows
+     * @return array<int, array{name: ?string, email: ?string, phone: ?string, code: string}>
+     */
+    private function createMany(Event $event, array $rows): array
+    {
+        return DB::transaction(function () use ($event, $rows) {
+            $codes = $this->uniqueCodes($event, count($rows));
+            $now = now();
+            $out = [];
+            $insert = [];
+            foreach (array_values($rows) as $i => $row) {
+                $name = isset($row['name']) && trim((string) $row['name']) !== '' ? trim((string) $row['name']) : null;
+                $voter = ['name' => $name, 'email' => $row['email'] ?? null, 'phone' => $row['phone'] ?? null, 'code' => $codes[$i]];
+                $out[] = $voter;
+                $insert[] = $voter + ['event_id' => $event->id, 'created_at' => $now, 'updated_at' => $now];
+            }
+            foreach (array_chunk($insert, 500) as $chunk) {
+                Voter::insert($chunk);
+            }
+            return $out;
+        });
+    }
+
+    /** @return string[] codes not yet used in this event */
+    private function uniqueCodes(Event $event, int $count): array
+    {
+        $taken = array_flip(Voter::where('event_id', $event->id)->pluck('code')->all());
+        $codes = [];
+        $max = strlen(self::CODE_ALPHABET) - 1;
+        while (count($codes) < $count) {
+            $code = '';
+            for ($i = 0; $i < self::CODE_LENGTH; $i++) {
+                $code .= self::CODE_ALPHABET[random_int(0, $max)];
+            }
+            if (! isset($taken[$code])) {
+                $taken[$code] = true;
+                $codes[] = $code;
+            }
+        }
+        return $codes;
     }
 }

@@ -114,12 +114,18 @@ VOTERS take part from any phone or laptop using a one-time code.
    (3) ISSUE VOTER CODES  (Voters tab)
 
          Option A: "Generate 500"  -> 500 anonymous codes
-         Option B: "Import names"  -> paste/upload a list, 1 code per person
-         Option C: "Add one"       -> single voter, own or generated code
+         Option B: "Import"        -> paste/upload a list (name, email, phone),
+                                    1 code per person
+         Option C: "Add"           -> one voter: name, email, phone, code
 
          Codes look like:  K7M2QX9P   (8 chars, no 0/O or 1/I/L look-alikes)
 
-         Then:  [Download CSV]  or  [Print slips]
+         Then:  [Send codes]  -> by Email / SMS / Both (link + personal code)
+                [Download CSV]  or  [Print slips]
+
+         Each voter row shows:  Not invited -> Invited -> Voted
+         (or "Not delivered" with the reason, e.g. wrong number).
+         Codes are hidden as ******** in the list; click the eye to reveal.
 
          +---------------------------------------------------+
          |  [QR]   Student Union Elections                   |

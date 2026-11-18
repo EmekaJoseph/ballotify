@@ -25,8 +25,12 @@
                         </div>
                         <div class="col-md-6">
                             <label for="p-email" class="form-label">Email</label>
-                            <input id="p-email" v-model.trim="profile.email" type="email" class="form-control" :class="{ 'is-invalid': profileErrors.email }" maxlength="255" />
-                            <div v-if="profileErrors.email" class="field-error">{{ profileErrors.email }}</div>
+                            <div class="input-icon">
+                                <i class="bi bi-lock"></i>
+                                <input id="p-email" :value="auth.user?.email ?? ''" type="email" class="form-control locked" readonly
+                                    aria-describedby="p-email-help" />
+                            </div>
+                            <div id="p-email-help" class="form-text">Your sign-in email can't be changed.</div>
                         </div>
                     </div>
                     <div class="d-flex justify-content-end mt-4">
@@ -79,10 +83,10 @@ useHead({ title: 'Account · Ballotify' });
 const auth = useAuthStore();
 const toast = useToast();
 
-const profile = reactive({ name: '', email: '' });
+const profile = reactive({ name: '' });
 const profileErrors = ref<Record<string, string>>({});
 const savingProfile = ref(false);
-const profileDirty = computed(() => profile.name !== (auth.user?.name ?? '') || profile.email !== (auth.user?.email ?? ''));
+const profileDirty = computed(() => profile.name !== (auth.user?.name ?? ''));
 
 const pw = reactive({ current: '', next: '', confirm: '' });
 const pwErrors = ref<Record<string, string>>({});
@@ -90,7 +94,7 @@ const savingPw = ref(false);
 
 // The user may load after this page mounts (fresh reload), so sync when it arrives.
 watch(() => auth.user, (u) => {
-    if (u) { profile.name = u.name; profile.email = u.email; }
+    if (u) profile.name = u.name;
 }, { immediate: true });
 
 onMounted(() => { if (!auth.user) auth.fetchUser(); });
@@ -98,10 +102,9 @@ onMounted(() => { if (!auth.user) auth.fetchUser(); });
 async function saveProfile() {
     profileErrors.value = {};
     if (!profile.name) { profileErrors.value.name = 'Enter your name.'; return; }
-    if (!/^\S+@\S+\.\S+$/.test(profile.email)) { profileErrors.value.email = 'Enter a valid email address.'; return; }
     savingProfile.value = true;
     try {
-        const { data } = await adminApi.updateMe({ name: profile.name, email: profile.email });
+        const { data } = await adminApi.updateMe({ name: profile.name });
         auth.user = data;
         toast.success('Profile saved');
     } catch (e) {
@@ -134,3 +137,7 @@ async function logout() {
     await navigateTo('/login');
 }
 </script>
+
+<style scoped>
+.locked { background: var(--surface-2); color: var(--muted); cursor: not-allowed; }
+</style>

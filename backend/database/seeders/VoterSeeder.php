@@ -23,6 +23,9 @@ class VoterSeeder extends Seeder
                 Voter::create([
                     'event_id' => $event->id,
                     'name' => 'Voter '.$i,
+                    // example.com is reserved for documentation: it never reaches a real inbox.
+                    // No demo phone numbers: made-up numbers could belong to real people.
+                    'email' => "voter{$i}.event{$event->id}@example.com",
                     'code' => $code,
                 ]);
                 $plain[] = ['name' => 'Voter '.$i, 'code' => $code];

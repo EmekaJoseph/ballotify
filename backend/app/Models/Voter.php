@@ -14,12 +14,17 @@ class Voter extends Model
     protected $fillable = [
         'event_id',
         'name',
+        'email',
+        'phone',
         'code',
         'used_at',
+        'invited_at',
+        'invite_error',
     ];
 
     protected $casts = [
         'used_at' => 'datetime',
+        'invited_at' => 'datetime',
     ];
 
     public function event(): BelongsTo

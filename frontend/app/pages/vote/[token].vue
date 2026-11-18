@@ -57,21 +57,28 @@
 
         <!-- Ballot -->
         <div v-else-if="stage === 'ballot' && event" class="fade-up">
-            <div class="d-flex align-items-center justify-content-between gap-3 mb-3">
-                <div class="min-w-0">
-                    <div class="small-caps">Official ballot</div>
-                    <h1 class="h4 fw-800 mb-0 text-break">{{ event.name }}</h1>
+            <div class="mb-3">
+                <div class="small-caps">Official ballot</div>
+                <h1 class="h4 fw-800 mb-0 text-break">{{ event.name }}</h1>
+            </div>
+
+            <div class="voter-bar card-b mb-3">
+                <span v-if="voterName" class="avatar sm" :style="{ background: colorFor(voterName) }" aria-hidden="true">{{ initials(voterName) }}</span>
+                <span v-else class="icon-tile" style="width: 34px; height: 34px; font-size: 1rem"><i class="bi bi-person"></i></span>
+                <div class="min-w-0 flex-grow-1">
+                    <div class="small text-muted lh-sm">Voting as</div>
+                    <div class="fw-bold text-ink truncate">{{ voterName || 'Anonymous voter' }}</div>
                 </div>
-                <button class="btn btn-ghost btn-sm flex-shrink-0" title="Use a different code" @click="changeCode">
-                    <i class="bi bi-key"></i> <span class="mono">{{ maskedCode }}</span>
-                </button>
+                <span class="code-chip d-none d-sm-inline">{{ maskedCode }}</span>
+                <button class="btn btn-link btn-sm text-muted p-0 flex-shrink-0" @click="changeCode">Not you?</button>
             </div>
             <BallotForm ref="ballot" :categories="event.categories" :candidates="event.candidates" :mode="event.selection_mode"
                 :submitting="submitting" :error="submitError" @submit="castVote" />
         </div>
 
         <!-- Done -->
-        <VoteSuccess v-else-if="stage === 'done'" :event-name="event?.name ?? 'this election'" :results-to="`/event/${token}/results`" />
+        <VoteSuccess v-else-if="stage === 'done'" :event-name="event?.name ?? 'this election'" :voter-name="voterName"
+            :results-to="`/event/${token}/results`" />
     </div>
 </template>
 
@@ -89,6 +96,8 @@ const token = String(route.params.token ?? '');
 const stage = ref<Stage>('loading');
 const event = ref<PublicEvent | null>(null);
 const code = ref('');
+/** Name the organiser attached to this code (null for anonymous codes). */
+const voterName = ref<string | null>(null);
 const codeError = ref('');
 const checking = ref(false);
 const submitting = ref(false);
@@ -146,7 +155,8 @@ async function checkCode() {
     checking.value = true;
     codeError.value = '';
     try {
-        await publicApi.validateCode(token, normalized.value);
+        const { data } = await publicApi.validateCode(token, normalized.value);
+        voterName.value = data.name?.trim() || null;
         stage.value = 'ballot';
         window.scrollTo({ top: 0 });
     } catch (e) {
@@ -161,6 +171,7 @@ async function checkCode() {
 
 function changeCode() {
     stage.value = 'code';
+    voterName.value = null;
     submitError.value = '';
     nextTick(() => codeInput.value?.select());
 }
@@ -192,6 +203,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.voter-bar { display: flex; align-items: center; gap: .75rem; padding: .7rem 1rem; }
 .intro-band {
     padding: 1.75rem 1.5rem; position: relative;
     background:

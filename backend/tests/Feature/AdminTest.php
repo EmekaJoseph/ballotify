@@ -149,3 +149,15 @@ it('does not include the full voter list in the event detail response', function
     $this->actingAs($user)->getJson("/api/events/{$event->id}")
         ->assertOk()->assertJsonMissingPath('voters')->assertJsonPath('voters_count', 1);
 });
+
+it('does not allow an organiser to change their sign-in email', function () {
+    $user = User::factory()->create(['email' => 'owner@example.com']);
+
+    $this->actingAs($user)->patchJson('/api/me', ['name' => 'Renamed', 'email' => 'other@example.com'])
+        ->assertStatus(422)->assertJsonValidationErrors('email');
+
+    expect($user->fresh()->email)->toBe('owner@example.com');
+
+    $this->actingAs($user)->patchJson('/api/me', ['name' => 'Renamed'])
+        ->assertOk()->assertJsonPath('name', 'Renamed')->assertJsonPath('email', 'owner@example.com');
+});

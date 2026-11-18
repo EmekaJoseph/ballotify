@@ -18,7 +18,7 @@
 | POST | `/auth/login` | `email, password` | `{ token, user }` |
 | POST | `/auth/logout` | Bearer token | `{ message }` (revokes the token) |
 | GET | `/me` | | `user` |
-| PATCH | `/me` | `name?, email?, password?, current_password (required with password)` | `user` |
+| PATCH | `/me` | `name?, password?, current_password (required with password)` | `user` (the email can't be changed; sending `email` returns `422`) |
 
 Login and register are limited to 10 requests per minute per IP.
 
@@ -71,12 +71,26 @@ Names are unique within a category. Candidate objects include `image_url` (an ab
 
 | Method | Path | Body | Response |
 |---|---|---|---|
-| GET | `/events/{id}/voters` | | `[ { id, name, code, used_at } ]` |
-| POST | `/events/{id}/voters` | `code (4–64 chars), name?` | voter |
-| POST | `/events/{id}/voters/generate` | `count (1–10000)` | `201 { voters: [ { name, code } ] }` |
-| POST | `/events/{id}/voters/import` | `names: string[]` (max 10000) | `201 { voters: [ { name, code } ] }` |
-| PATCH | `/events/{id}/voters/{voterId}` | `name?, code?, used_at?` | voter |
+| GET | `/events/{id}/voters` | | `[ { id, name, email, phone, code, used_at, invited_at, invite_error } ]` |
+| POST | `/events/{id}/voters` | `name?, email?, phone?, code?` (generated if omitted) | voter |
+| POST | `/events/{id}/voters/generate` | `count (1–10000)` | `201 { voters: [ { name, email, phone, code } ] }` |
+| POST | `/events/{id}/voters/import` | `voters: [ { name?, email?, phone? } ]` (max 10000; legacy `names: string[]` also accepted) | `201 { voters: [ { name, email, phone, code } ] }` |
+| PATCH | `/events/{id}/voters/{voterId}` | `name?, email?, phone?, code?, used_at?` | voter |
 | DELETE | `/events/{id}/voters/{voterId}` | | `204` |
+| POST | `/events/{id}/voters/invite` | `channel: email\|sms\|both, audience: not_invited\|pending\|selected, voter_ids?` | `{ queued, email, sms, failed, queue }` |
+| GET | `/messaging/status` | | `{ email: { live, provider }, sms: { live, provider }, queue }` |
+
+How contacts are handled:
+- **Emails** are lower-cased.
+- **Phones** are normalised to international format (`+234…`). Local numbers are converted using `SMS_DEFAULT_COUNTRY_CODE`.
+- **Import errors** name the exact row, e.g. `voters.3.email`.
+
+How invitations are sent:
+- Each one is a queued job, so it needs the worker (`composer dev` or `php artisan queue:work`). With `QUEUE_CONNECTION=sync`, messages are sent during the request.
+- Voters who have voted are skipped, and so are voters with no contact on the chosen channel.
+- Invitations can't be sent after voting has closed.
+- **Success** sets `invited_at`.
+- **Failure** saves the reason in `invite_error` and never raises an error to the caller.
 
 How codes behave:
 - Codes are stored and matched **upper-case**, so voters can type them in any case.

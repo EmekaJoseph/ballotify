@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\CandidateController;
 use App\Http\Controllers\Api\VoterController;
 use App\Http\Controllers\Api\VoteController;
+use App\Http\Controllers\Api\MessagingController;
 
 Route::prefix('auth')->group(function () {
     Route::post('register', [AuthController::class, 'register'])->middleware('throttle:auth');
@@ -41,6 +42,8 @@ Route::middleware('auth:sanctum')->scopeBindings()->group(function () {
     Route::delete('events/{event}/voters/{voter}', [VoterController::class, 'destroy']);
     Route::post('events/{event}/voters/import', [VoterController::class, 'import']);
     Route::post('events/{event}/voters/generate', [VoterController::class, 'generate']);
+    Route::post('events/{event}/voters/invite', [VoterController::class, 'invite'])->middleware('throttle:20,1');
+    Route::get('messaging/status', [MessagingController::class, 'status']);
     Route::get('events/{event}/voting-link', [EventController::class, 'link']);
 });
 

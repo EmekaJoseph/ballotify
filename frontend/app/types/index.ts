@@ -27,8 +27,14 @@ export interface Voter {
     id: number;
     event_id: number;
     name: string | null;
+    email: string | null;
+    phone: string | null;
     code: string;
     used_at: string | null;
+    /** When the code was last delivered by email/SMS. */
+    invited_at: string | null;
+    /** Last delivery error, if any. */
+    invite_error: string | null;
     created_at?: string;
 }
 
@@ -103,5 +109,21 @@ export interface EventResults {
 
 export interface GeneratedCode {
     name: string | null;
+    email?: string | null;
+    phone?: string | null;
     code: string;
+}
+
+export interface VoterContact {
+    name?: string | null;
+    email?: string | null;
+    phone?: string | null;
+}
+
+export type InviteChannel = "email" | "sms" | "both";
+
+export interface MessagingStatus {
+    email: { live: boolean; provider: string };
+    sms: { live: boolean; provider: string };
+    queue: string;
 }
