@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="frontend/public/ballotify-logo.png" width="96" alt="Ballotify logo" />
+  <img src="frontend/public/logo.svg" width="88" alt="Ballotify logo" />
 </p>
 
 <h1 align="center">Ballotify</h1>

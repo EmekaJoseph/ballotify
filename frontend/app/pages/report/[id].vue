@@ -11,7 +11,7 @@
 
         <article v-else-if="results && event" class="paper">
             <header class="r-head">
-                <div class="brand"><img src="/ballotify-logo.png" alt="" width="28" height="28" /> Ballotify</div>
+                <div class="brand"><BrandMark :size="28" tone="on-light" /> Ballotify</div>
                 <span class="badge" :class="final ? 'final' : 'prov'">{{ final ? 'Final results' : 'Provisional: voting still open' }}</span>
             </header>
 

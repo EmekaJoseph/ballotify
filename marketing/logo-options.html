@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Ballotify logo options</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+    :root { --ink: #0f172a; --muted: #64748b; --line: #e5e9f0; --night: #0a1222; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; color: var(--ink); background: #f4f7fa; }
+    .wrap { max-width: 1180px; margin: 0 auto; padding: 40px 24px 64px; }
+    h1 { font-size: 28px; font-weight: 800; margin: 0 0 6px; }
+    .lead { color: var(--muted); margin: 0 0 32px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 20px; }
+    .card { background: #fff; border: 1px solid var(--line); border-radius: 20px; overflow: hidden; }
+    .card.current { opacity: .9; }
+    .hero { display: flex; align-items: center; justify-content: center; height: 220px; background: #fff; border-bottom: 1px solid var(--line); }
+    .hero svg, .hero img { width: 132px; height: 132px; }
+    .body { padding: 18px 20px 20px; }
+    .tag { display: inline-block; font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #0e7c77; background: #ecf8f7; padding: 4px 9px; border-radius: 999px; }
+    .card.current .tag { color: var(--muted); background: #f1f5f9; }
+    h2 { font-size: 20px; font-weight: 800; margin: 10px 0 4px; }
+    p { color: var(--muted); margin: 0 0 16px; font-size: 14px; line-height: 1.55; }
+    .label { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 14px 0 8px; }
+    .sizes { display: flex; align-items: flex-end; gap: 18px; }
+    .sizes > div { text-align: center; font-size: 11px; color: var(--muted); }
+    .sizes svg, .sizes img { display: block; margin: 0 auto 4px; }
+    .lockups { display: grid; gap: 10px; }
+    .lockup { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line); }
+    .lockup.dark { background: var(--night); border-color: var(--night); color: #fff; }
+    .lockup.grad { background: linear-gradient(135deg, #0e7c77, #7c5cff); border-color: transparent; color: #fff; }
+    .lockup svg, .lockup img { width: 34px; height: 34px; flex-shrink: 0; }
+    .word { font-weight: 800; font-size: 21px; letter-spacing: -.02em; }
+    .tab { display: inline-flex; align-items: center; gap: 7px; background: #dfe5ec; border-radius: 9px 9px 0 0; padding: 7px 12px; font-size: 12px; color: #334155; }
+    .tab svg, .tab img { width: 16px; height: 16px; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+        <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#14918a" />
+            <stop offset="1" stop-color="#7c5cff" />
+        </linearGradient>
+        <linearGradient id="g2" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#2dd4bf" />
+            <stop offset="1" stop-color="#a78bfa" />
+        </linearGradient>
+
+        <!-- A: Tick-B. A solid B with a tick cut out of its lower bowl. -->
+        <mask id="tick-cut" maskUnits="userSpaceOnUse" x="0" y="0" width="64" height="64">
+            <path d="M17 12 H33 a9 9 0 0 1 6.5 15.3 A10.5 10.5 0 0 1 35 52 H17 Z" fill="#fff" />
+            <path d="M24.5 40 L30 45.5 L40 34.5" fill="none" stroke="#000" stroke-width="4.4" stroke-linecap="round" stroke-linejoin="round" />
+        </mask>
+        <symbol id="logo-a" viewBox="0 0 64 64">
+            <rect width="64" height="64" rx="16" fill="url(#g)" />
+            <rect width="64" height="64" fill="#fff" mask="url(#tick-cut)" />
+        </symbol>
+
+        <!-- B: Ballot box. A ticked ballot going into the slot. -->
+        <symbol id="logo-b" viewBox="0 0 64 64">
+            <rect width="64" height="64" rx="16" fill="url(#g)" />
+            <g transform="rotate(-8 32 24)">
+                <rect x="22" y="9" width="20" height="28" rx="3.5" fill="#fff" />
+                <path d="M26.5 22.5 L30.5 26.5 L37.5 18.5" fill="none" stroke="#0e7c77" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round" />
+            </g>
+            <rect x="12" y="35" width="40" height="18" rx="4" fill="#fff" />
+            <rect x="21" y="34" width="22" height="3.6" rx="1.8" fill="#0b4f6c" opacity=".55" />
+        </symbol>
+
+        <!-- C: Stacked ballots. Two cards form a B; the tick is cut out of the lower one. -->
+        <symbol id="logo-c" viewBox="0 0 64 64">
+            <rect x="11" y="8" width="33" height="21" rx="8" fill="url(#g)" />
+            <rect x="11" y="32" width="42" height="24" rx="9" fill="url(#g)" />
+            <path d="M19 18.5 H34" stroke="#fff" stroke-width="3.6" stroke-linecap="round" opacity=".9" />
+            <path d="M22.5 44 L28.5 50 L41 37.5" fill="none" stroke="#fff" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round" />
+        </symbol>
+        <!-- C on dark backgrounds: lighter gradient so it doesn't sink. -->
+        <symbol id="logo-c-dark" viewBox="0 0 64 64">
+            <rect x="11" y="8" width="33" height="21" rx="8" fill="url(#g2)" />
+            <rect x="11" y="32" width="42" height="24" rx="9" fill="url(#g2)" />
+            <path d="M19 18.5 H34" stroke="#0a1222" stroke-width="3.6" stroke-linecap="round" opacity=".85" />
+            <path d="M22.5 44 L28.5 50 L41 37.5" fill="none" stroke="#0a1222" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round" />
+        </symbol>
+    </defs>
+</svg>
+
+<div class="wrap">
+    <h1>Ballotify logo options</h1>
+    <p class="lead">Three directions, each shown large, at real app sizes, in a browser tab, and on light and dark backgrounds. The current logo is shown last for comparison.</p>
+
+    <div class="grid">
+        <!-- A -->
+        <div class="card">
+            <div class="hero"><svg><use href="#logo-a" /></svg></div>
+            <div class="body">
+                <span class="tag">Option A</span>
+                <h2>Tick-B</h2>
+                <p>A bold B with a tick cut out of its lower curve. Reads as "B" and "voted" at the same time. Closest to your current idea, done cleanly.</p>
+                <div class="label">Real sizes</div>
+                <div class="sizes">
+                    <div><svg width="48" height="48"><use href="#logo-a" /></svg>48</div>
+                    <div><svg width="32" height="32"><use href="#logo-a" /></svg>32</div>
+                    <div><svg width="24" height="24"><use href="#logo-a" /></svg>24</div>
+                    <div><svg width="16" height="16"><use href="#logo-a" /></svg>16</div>
+                    <div><span class="tab"><svg><use href="#logo-a" /></svg>Ballotify</span></div>
+                </div>
+                <div class="label">With the name</div>
+                <div class="lockups">
+                    <div class="lockup"><svg><use href="#logo-a" /></svg><span class="word">Ballotify</span></div>
+                    <div class="lockup dark"><svg><use href="#logo-a" /></svg><span class="word">Ballotify</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- B -->
+        <div class="card">
+            <div class="hero"><svg><use href="#logo-b" /></svg></div>
+            <div class="body">
+                <span class="tag">Option B</span>
+                <h2>Ballot box</h2>
+                <p>A ticked ballot going into a ballot box. The most literal: anyone understands "voting" in a split second, even without the name. Friendly, good for flyers and app icons.</p>
+                <div class="label">Real sizes</div>
+                <div class="sizes">
+                    <div><svg width="48" height="48"><use href="#logo-b" /></svg>48</div>
+                    <div><svg width="32" height="32"><use href="#logo-b" /></svg>32</div>
+                    <div><svg width="24" height="24"><use href="#logo-b" /></svg>24</div>
+                    <div><svg width="16" height="16"><use href="#logo-b" /></svg>16</div>
+                    <div><span class="tab"><svg><use href="#logo-b" /></svg>Ballotify</span></div>
+                </div>
+                <div class="label">With the name</div>
+                <div class="lockups">
+                    <div class="lockup"><svg><use href="#logo-b" /></svg><span class="word">Ballotify</span></div>
+                    <div class="lockup dark"><svg><use href="#logo-b" /></svg><span class="word">Ballotify</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- C -->
+        <div class="card">
+            <div class="hero"><svg><use href="#logo-c" /></svg></div>
+            <div class="body">
+                <span class="tag">Option C</span>
+                <h2>Stacked ballots</h2>
+                <p>Two ballot cards stacked into the shape of a B, with a tick cut out of the lower one. No tile behind it, so it feels lighter and more premium. The most distinctive of the three.</p>
+                <div class="label">Real sizes</div>
+                <div class="sizes">
+                    <div><svg width="48" height="48"><use href="#logo-c" /></svg>48</div>
+                    <div><svg width="32" height="32"><use href="#logo-c" /></svg>32</div>
+                    <div><svg width="24" height="24"><use href="#logo-c" /></svg>24</div>
+                    <div><svg width="16" height="16"><use href="#logo-c" /></svg>16</div>
+                    <div><span class="tab"><svg><use href="#logo-c" /></svg>Ballotify</span></div>
+                </div>
+                <div class="label">With the name</div>
+                <div class="lockups">
+                    <div class="lockup"><svg><use href="#logo-c" /></svg><span class="word">Ballotify</span></div>
+                    <div class="lockup dark"><svg><use href="#logo-c-dark" /></svg><span class="word">Ballotify</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Current -->
+        <div class="card current">
+            <div class="hero"><img src="../frontend/public/ballotify-logo.png" alt="Current logo" /></div>
+            <div class="body">
+                <span class="tag">Current</span>
+                <h2>Today’s logo</h2>
+                <p>For comparison.</p>
+                <div class="label">Real sizes</div>
+                <div class="sizes">
+                    <div><img src="../frontend/public/ballotify-logo.png" width="48" height="48" alt="" />48</div>
+                    <div><img src="../frontend/public/ballotify-logo.png" width="32" height="32" alt="" />32</div>
+                    <div><img src="../frontend/public/ballotify-logo.png" width="24" height="24" alt="" />24</div>
+                    <div><img src="../frontend/public/ballotify-logo.png" width="16" height="16" alt="" />16</div>
+                    <div><span class="tab"><img src="../frontend/public/ballotify-logo.png" alt="" />Ballotify</span></div>
+                </div>
+                <div class="label">With the name</div>
+                <div class="lockups">
+                    <div class="lockup"><img src="../frontend/public/ballotify-logo.png" alt="" /><span class="word">Ballotify</span></div>
+                    <div class="lockup dark"><img src="../frontend/public/ballotify-logo.png" alt="" /><span class="word">Ballotify</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

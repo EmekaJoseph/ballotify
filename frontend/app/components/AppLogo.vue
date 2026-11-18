@@ -1,6 +1,6 @@
 <template>
     <NuxtLink :to="to" class="app-logo" :class="{ light }" aria-label="Ballotify home">
-        <img src="/ballotify-logo.png" alt="" width="34" height="34" />
+        <BrandMark :size="32" :tone="light ? 'on-dark' : 'auto'" />
         <span>Ballotify</span>
     </NuxtLink>
 </template>
@@ -10,7 +10,6 @@ withDefaults(defineProps<{ to?: string; light?: boolean }>(), { to: '/', light: 
 </script>
 
 <style scoped>
-.app-logo { display: inline-flex; align-items: center; gap: .6rem; font-weight: 800; font-size: 1.2rem; letter-spacing: -.03em; color: var(--ink); }
-.app-logo img { width: 34px; height: 34px; border-radius: 50%; }
+.app-logo { display: inline-flex; align-items: center; gap: .45rem; font-weight: 800; font-size: 1.2rem; letter-spacing: -.03em; color: var(--ink); }
 .app-logo.light { color: #fff; }
 </style>

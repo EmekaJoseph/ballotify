@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Ballotify logo mix</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+    :root { --ink: #0f172a; --muted: #64748b; --line: #e5e9f0; --night: #0a1222; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; color: var(--ink); background: #f4f7fa; }
+    .wrap { max-width: 1180px; margin: 0 auto; padding: 40px 24px 64px; }
+    h1 { font-size: 28px; font-weight: 800; margin: 0 0 6px; }
+    .lead { color: var(--muted); margin: 0 0 32px; max-width: 760px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 20px; }
+    .card { background: #fff; border: 1px solid var(--line); border-radius: 20px; overflow: hidden; }
+    .hero { display: grid; grid-template-columns: 1fr 1fr; height: 220px; border-bottom: 1px solid var(--line); }
+    .hero > div { display: flex; align-items: center; justify-content: center; }
+    .hero .dk { background: var(--night); }
+    .hero svg { width: 120px; height: 120px; }
+    .body { padding: 18px 20px 20px; }
+    .tag { display: inline-block; font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #0e7c77; background: #ecf8f7; padding: 4px 9px; border-radius: 999px; }
+    .tag.ref { color: var(--muted); background: #f1f5f9; }
+    h2 { font-size: 20px; font-weight: 800; margin: 10px 0 4px; }
+    p { color: var(--muted); margin: 0 0 16px; font-size: 14px; line-height: 1.55; }
+    .label { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 14px 0 8px; }
+    .sizes { display: flex; align-items: flex-end; gap: 18px; flex-wrap: wrap; }
+    .sizes > div { text-align: center; font-size: 11px; color: var(--muted); }
+    .sizes svg { display: block; margin: 0 auto 4px; }
+    .lockups { display: grid; gap: 10px; }
+    .lockup { display: flex; align-items: center; gap: 8px; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line); }
+    .lockup.dark { background: var(--night); border-color: var(--night); color: #fff; }
+    .lockup svg { width: 36px; height: 36px; flex-shrink: 0; }
+    .word { font-weight: 800; font-size: 22px; letter-spacing: -.02em; }
+    .tab { display: inline-flex; align-items: center; gap: 7px; background: #dfe5ec; border-radius: 9px 9px 0 0; padding: 7px 12px; font-size: 12px; color: #334155; }
+    .tab svg { width: 16px; height: 16px; }
+    .refs { display: flex; gap: 16px; align-items: center; margin-top: 28px; color: var(--muted); font-size: 13px; }
+    .refs svg { width: 44px; height: 44px; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+        <!-- One continuous gradient across the whole mark (not per shape). -->
+        <linearGradient id="g" gradientUnits="userSpaceOnUse" x1="10" y1="6" x2="54" y2="58">
+            <stop offset="0" stop-color="#14918a" />
+            <stop offset="1" stop-color="#7c5cff" />
+        </linearGradient>
+        <linearGradient id="gl" gradientUnits="userSpaceOnUse" x1="10" y1="6" x2="54" y2="58">
+            <stop offset="0" stop-color="#2dd4bf" />
+            <stop offset="1" stop-color="#a78bfa" />
+        </linearGradient>
+        <linearGradient id="gt" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#14918a" />
+            <stop offset="1" stop-color="#7c5cff" />
+        </linearGradient>
+
+        <!-- Tick cut-out shared by the mixes. -->
+        <!-- Mix 1: A's solid B, C's style (no tile, rounded, gradient letter). -->
+        <mask id="m1" maskUnits="userSpaceOnUse" x="0" y="0" width="64" height="64">
+            <rect x="12" y="8" width="29" height="23" rx="10" fill="#fff" />
+            <rect x="12" y="29" width="36" height="27" rx="11" fill="#fff" />
+            <rect x="12" y="8" width="12" height="48" rx="5" fill="#fff" />
+            <path d="M22.5 43 L28.5 49 L39.5 37" fill="none" stroke="#000" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
+        </mask>
+        <symbol id="mix1" viewBox="0 0 64 64"><rect width="64" height="64" fill="url(#g)" mask="url(#m1)" /></symbol>
+        <symbol id="mix1-d" viewBox="0 0 64 64"><rect width="64" height="64" fill="url(#gl)" mask="url(#m1)" /></symbol>
+
+        <!-- Mix 2: same B, split into two stacked ballot cards (a gap between the bowls). -->
+        <mask id="m2" maskUnits="userSpaceOnUse" x="0" y="0" width="64" height="64">
+            <rect x="12" y="8" width="29" height="21" rx="9" fill="#fff" />
+            <rect x="12" y="8" width="12" height="21" rx="5" fill="#fff" />
+            <rect x="12" y="32" width="36" height="24" rx="10" fill="#fff" />
+            <rect x="12" y="32" width="12" height="24" rx="5" fill="#fff" />
+            <path d="M19.5 18.5 H31" stroke="#000" stroke-width="3.6" stroke-linecap="round" />
+            <path d="M22.5 44 L28.5 50 L39.5 38" fill="none" stroke="#000" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
+        </mask>
+        <symbol id="mix2" viewBox="0 0 64 64"><rect width="64" height="64" fill="url(#g)" mask="url(#m2)" /></symbol>
+        <symbol id="mix2-d" viewBox="0 0 64 64"><rect width="64" height="64" fill="url(#gl)" mask="url(#m2)" /></symbol>
+
+        <!-- Mix 3: Mix 1 with a slight forward slant (motion, "cast"). -->
+        <symbol id="mix3" viewBox="0 0 64 64"><g transform="translate(3 0) skewX(-8) translate(4.5 0)"><rect width="64" height="64" fill="url(#g)" mask="url(#m1)" /></g></symbol>
+        <symbol id="mix3-d" viewBox="0 0 64 64"><g transform="translate(3 0) skewX(-8) translate(4.5 0)"><rect width="64" height="64" fill="url(#gl)" mask="url(#m1)" /></g></symbol>
+
+        <!-- References -->
+        <mask id="ra" maskUnits="userSpaceOnUse" x="0" y="0" width="64" height="64">
+            <path d="M17 12 H33 a9 9 0 0 1 6.5 15.3 A10.5 10.5 0 0 1 35 52 H17 Z" fill="#fff" />
+            <path d="M24.5 40 L30 45.5 L40 34.5" fill="none" stroke="#000" stroke-width="4.4" stroke-linecap="round" stroke-linejoin="round" />
+        </mask>
+        <symbol id="ref-a" viewBox="0 0 64 64"><rect width="64" height="64" rx="16" fill="url(#gt)" /><rect width="64" height="64" fill="#fff" mask="url(#ra)" /></symbol>
+        <symbol id="ref-c" viewBox="0 0 64 64">
+            <rect x="11" y="8" width="33" height="21" rx="8" fill="url(#g)" />
+            <rect x="11" y="32" width="42" height="24" rx="9" fill="url(#g)" />
+            <path d="M19 18.5 H34" stroke="#fff" stroke-width="3.6" stroke-linecap="round" />
+            <path d="M22.5 44 L28.5 50 L41 37.5" fill="none" stroke="#fff" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round" />
+        </symbol>
+    </defs>
+</svg>
+
+<div class="wrap">
+    <h1>A’s shape, C’s style</h1>
+    <p class="lead">The solid “B with a tick” from Option A, drawn the way Option C is: no square behind it, soft rounded corners, and the gradient running through the letter itself. The tick is cut out, so the page shows through it. Each is shown on light and dark.</p>
+
+    <div class="grid">
+        <div class="card">
+            <div class="hero"><div><svg><use href="#mix1" /></svg></div><div class="dk"><svg><use href="#mix1-d" /></svg></div></div>
+            <div class="body">
+                <span class="tag">Mix 1</span>
+                <h2>Solid B</h2>
+                <p>One solid, rounded B. The cleanest and boldest: it reads as a letter first, then you notice the tick.</p>
+                <div class="label">Real sizes</div>
+                <div class="sizes">
+                    <div><svg width="48" height="48"><use href="#mix1" /></svg>48</div>
+                    <div><svg width="32" height="32"><use href="#mix1" /></svg>32</div>
+                    <div><svg width="24" height="24"><use href="#mix1" /></svg>24</div>
+                    <div><svg width="16" height="16"><use href="#mix1" /></svg>16</div>
+                    <div><span class="tab"><svg><use href="#mix1" /></svg>Ballotify</span></div>
+                </div>
+                <div class="label">With the name</div>
+                <div class="lockups">
+                    <div class="lockup"><svg><use href="#mix1" /></svg><span class="word">Ballotify</span></div>
+                    <div class="lockup dark"><svg><use href="#mix1-d" /></svg><span class="word">Ballotify</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="hero"><div><svg><use href="#mix2" /></svg></div><div class="dk"><svg><use href="#mix2-d" /></svg></div></div>
+            <div class="body">
+                <span class="tag">Mix 2</span>
+                <h2>Split B</h2>
+                <p>The same B split into two stacked ballot cards, with a “line of text” on the top one. Keeps C’s ballot-paper story while still clearly a B.</p>
+                <div class="label">Real sizes</div>
+                <div class="sizes">
+                    <div><svg width="48" height="48"><use href="#mix2" /></svg>48</div>
+                    <div><svg width="32" height="32"><use href="#mix2" /></svg>32</div>
+                    <div><svg width="24" height="24"><use href="#mix2" /></svg>24</div>
+                    <div><svg width="16" height="16"><use href="#mix2" /></svg>16</div>
+                    <div><span class="tab"><svg><use href="#mix2" /></svg>Ballotify</span></div>
+                </div>
+                <div class="label">With the name</div>
+                <div class="lockups">
+                    <div class="lockup"><svg><use href="#mix2" /></svg><span class="word">Ballotify</span></div>
+                    <div class="lockup dark"><svg><use href="#mix2-d" /></svg><span class="word">Ballotify</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="hero"><div><svg><use href="#mix3" /></svg></div><div class="dk"><svg><use href="#mix3-d" /></svg></div></div>
+            <div class="body">
+                <span class="tag">Mix 3</span>
+                <h2>Leaning B</h2>
+                <p>Mix 1 with a slight forward lean, like your current logo’s slant. Adds a sense of motion (“cast your vote”) while staying clean.</p>
+                <div class="label">Real sizes</div>
+                <div class="sizes">
+                    <div><svg width="48" height="48"><use href="#mix3" /></svg>48</div>
+                    <div><svg width="32" height="32"><use href="#mix3" /></svg>32</div>
+                    <div><svg width="24" height="24"><use href="#mix3" /></svg>24</div>
+                    <div><svg width="16" height="16"><use href="#mix3" /></svg>16</div>
+                    <div><span class="tab"><svg><use href="#mix3" /></svg>Ballotify</span></div>
+                </div>
+                <div class="label">With the name</div>
+                <div class="lockups">
+                    <div class="lockup"><svg><use href="#mix3" /></svg><span class="word">Ballotify</span></div>
+                    <div class="lockup dark"><svg><use href="#mix3-d" /></svg><span class="word">Ballotify</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="refs">For reference: <svg><use href="#ref-a" /></svg> Option A <svg><use href="#ref-c" /></svg> Option C</div>
+</div>
+</body>
+</html>

@@ -182,10 +182,17 @@ function replaceUser(updated: PlatformUser) {
     page.value = { ...page.value, data: page.value.data.map(u => (u.id === updated.id ? updated : u)) };
 }
 
+/** What suspending does to the organiser's events, worded for 0, 1 or many. */
+function suspendImpact(count: number): string {
+    if (count === 0) return 'They have no events yet.';
+    if (count === 1) return 'Their event will go offline: its voting link and results page will stop working.';
+    return `All ${count} of their events will go offline: voting links and results pages will stop working.`;
+}
+
 async function suspend(u: PlatformUser) {
     const ok = await confirm({
         title: `Suspend ${u.name}?`,
-        message: `They’ll be signed out everywhere and can’t sign in. Their ${u.events_count} event${u.events_count === 1 ? '' : 's'} go offline: voting links and results pages stop working. You can restore the account at any time.`,
+        message: `They’ll be signed out everywhere and won’t be able to sign in. ${suspendImpact(u.events_count)} You can restore the account at any time.`,
         confirmText: 'Suspend account',
         danger: true,
     });
