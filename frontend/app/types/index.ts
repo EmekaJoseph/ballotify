@@ -5,7 +5,20 @@ export interface User {
     id: number;
     name: string;
     email: string;
+    email_verified_at: string | null;
+    two_factor_enabled: boolean;
     created_at?: string;
+}
+
+export type ResultsVisibility = 'live' | 'after_close' | 'private';
+
+export interface AuditEntry {
+    id: number;
+    action: string;
+    description: string;
+    during_voting: boolean;
+    created_at: string;
+    user: { id: number; name: string } | null;
 }
 
 export interface Category {
@@ -43,11 +56,13 @@ export interface BallotEvent {
     name: string;
     description: string | null;
     link_token: string;
-    expected_voters: number;
     starts_at: string | null;
     ends_at: string | null;
     status: EventStatus;
     selection_mode: SelectionMode;
+    results_visibility: ResultsVisibility;
+    /** Structure frozen: first vote cast or voting closed. */
+    ballot_locked: boolean;
     created_at: string;
     categories_count?: number;
     candidates_count?: number;
@@ -67,6 +82,7 @@ export interface PublicEvent {
     ends_at: string | null;
     status: EventStatus;
     selection_mode: SelectionMode;
+    results_visibility: ResultsVisibility;
     categories: Pick<Category, 'id' | 'name'>[];
     candidates: Candidate[];
 }
@@ -97,6 +113,7 @@ export interface EventResults {
         status: EventStatus;
         starts_at: string | null;
         ends_at: string | null;
+        results_visibility?: ResultsVisibility;
     };
     stats: {
         total_votes: number;
@@ -104,6 +121,7 @@ export interface EventResults {
         voted: number;
         total_candidates: number;
     };
+    integrity?: { changes_during_voting: number };
     categories: ResultCategory[];
 }
 

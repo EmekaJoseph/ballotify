@@ -28,7 +28,7 @@
                         <span class="small text-muted"><i class="bi bi-calendar3"></i> {{ formatWindow(event.starts_at, event.ends_at) }}</span>
                     </div>
                 </template>
-                <a :href="resultsUrl" target="_blank" rel="noopener" class="btn btn-ghost"><i class="bi bi-bar-chart-line"></i> Results</a>
+                <button class="btn btn-ghost" @click="tab = 'results'"><i class="bi bi-bar-chart-line"></i> Results</button>
                 <button class="btn btn-primary" @click="copyText(voteUrl, 'Voting link copied')"><i class="bi bi-link-45deg"></i> Copy voting link</button>
             </PageHeader>
 
@@ -42,7 +42,9 @@
             <EventOverview v-if="tab === 'overview'" :event="event" @go="tab = $event as TabKey" />
             <EventBallotManager v-else-if="tab === 'ballot'" :event="event" @changed="load(true)" />
             <EventVoterManager v-else-if="tab === 'voters'" :event="event" @changed="load(true)" />
+            <EventAdminResults v-else-if="tab === 'results'" :event="event" />
             <EventSharePanel v-else-if="tab === 'share'" :event="event" />
+            <EventActivityLog v-else-if="tab === 'activity'" :event-id="event.id" />
 
             <div v-else-if="tab === 'settings'" class="row g-4">
                 <div class="col-lg-8">
@@ -60,9 +62,19 @@
                             <i class="bi bi-stop-circle"></i> Close voting
                         </button>
                     </div>
+                    <div class="card-b pad">
+                        <h3 class="h6 fw-800 mb-2">Erase voter contact details</h3>
+                        <p class="small text-muted mb-3">
+                            Removes every voter’s email and phone number. Codes, turnout and results are kept.
+                            They are also erased automatically some time after voting closes (30 days by default).
+                        </p>
+                        <button class="btn btn-ghost w-100" :disabled="erasing" @click="eraseContacts">
+                            <span v-if="erasing" class="spinner-border spinner-border-sm"></span><i v-else class="bi bi-eraser"></i> Erase contact details
+                        </button>
+                    </div>
                     <div class="card-b pad danger-zone">
                         <h3 class="h6 fw-800 mb-2 text-danger">Delete event</h3>
-                        <p class="small text-muted mb-3">Permanently removes the ballot, voter codes and all votes.</p>
+                        <p class="small text-muted mb-3">Permanently removes the ballot, voter list, results and activity log.</p>
                         <button class="btn btn-danger-soft w-100" @click="remove"><i class="bi bi-trash"></i> Delete event</button>
                     </div>
                 </div>
@@ -77,12 +89,14 @@ import type { BallotEvent } from '~/types';
 
 definePageMeta({ layout: 'dashboard', middleware: ['auth'] });
 
-type TabKey = 'overview' | 'ballot' | 'voters' | 'share' | 'settings';
+type TabKey = 'overview' | 'ballot' | 'voters' | 'results' | 'share' | 'activity' | 'settings';
 const tabs: { key: TabKey; label: string; icon: string }[] = [
     { key: 'overview', label: 'Overview', icon: 'bi-speedometer2' },
     { key: 'ballot', label: 'Ballot', icon: 'bi-ui-checks-grid' },
     { key: 'voters', label: 'Voters', icon: 'bi-people' },
+    { key: 'results', label: 'Results', icon: 'bi-bar-chart-line' },
     { key: 'share', label: 'Share', icon: 'bi-send' },
+    { key: 'activity', label: 'Activity', icon: 'bi-clock-history' },
     { key: 'settings', label: 'Settings', icon: 'bi-sliders' },
 ];
 
@@ -104,7 +118,27 @@ const initialTab = String(route.query.tab ?? 'overview');
 const tab = ref<TabKey>(tabs.some(t => t.key === initialTab) ? (initialTab as TabKey) : 'overview');
 watch(tab, (t) => router.replace({ query: { ...route.query, tab: t === 'overview' ? undefined : t } }));
 
-const { voteUrl, resultsUrl } = useEventLinks(() => event.value?.link_token);
+const { voteUrl } = useEventLinks(() => event.value?.link_token);
+
+const erasing = ref(false);
+async function eraseContacts() {
+    const ok = await confirm({
+        title: 'Erase all voter contact details?',
+        message: 'Every email address and phone number for this event will be permanently removed. You won’t be able to send codes or reminders afterwards.',
+        confirmText: 'Erase details',
+        danger: true,
+    });
+    if (!ok) return;
+    erasing.value = true;
+    try {
+        const { data } = await adminApi.eraseVoterContacts(eventId.value);
+        toast.success(`Contact details erased for ${data.erased} voter${data.erased === 1 ? '' : 's'}`);
+    } catch (e) {
+        toast.error(apiErrorMessage(e));
+    } finally {
+        erasing.value = false;
+    }
+}
 useHead({ title: computed(() => (event.value ? `${event.value.name} · Ballotify` : 'Event · Ballotify')) });
 
 /** silent = refresh in place without the loading skeleton. */
@@ -170,5 +204,5 @@ async function remove() {
 </script>
 
 <style scoped>
-.danger-zone { border-color: #fbd5d5; }
+.danger-zone { border-color: var(--danger-line); }
 </style>

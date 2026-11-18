@@ -11,8 +11,10 @@
     "require": {
         "php": "^8.3",
         "laravel/framework": "^13.0",
+        "laravel/reverb": "^1.14",
         "laravel/sanctum": "^4.5",
         "laravel/tinker": "^3.0",
+        "pragmarx/google2fa": "^9.1",
         "pusher/pusher-php-server": "^7.3"
     },
     "require-dev": {
@@ -48,7 +50,7 @@
         ],
         "dev": [
             "Composer\\Config::disableProcessTimeout",
-            "npx concurrently -c \"#93c5fd,#fdba74\" \"php artisan serve --port=8883\" \"php artisan queue:listen --tries=1\" --names=api,queue"
+            "npx --yes concurrently -c \"#93c5fd,#c4b5fd,#fdba74\" \"php artisan serve --port=8883\" \"php artisan reverb:start\" \"php artisan schedule:work\" --names=api,live,schedule"
         ],
         "test": [
             "@php artisan config:clear --ansi",

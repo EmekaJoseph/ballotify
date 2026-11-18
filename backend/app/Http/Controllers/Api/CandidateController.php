@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Candidate;
 use App\Models\Category;
 use App\Models\Event;
+use App\Support\Audit;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\File as Filesystem;
@@ -28,6 +29,7 @@ class CandidateController extends Controller
     public function store(Request $request, Event $event)
     {
         Gate::authorize('manage', $event);
+        $this->ensureBallotEditable($event);
         $data = $request->validate([
             'category_id' => ['required', 'integer'],
             'name' => ['required', 'string', 'max:255'],
@@ -43,6 +45,7 @@ class CandidateController extends Controller
             'name' => $data['name'],
             'image_path' => $request->hasFile('image') ? $this->storeImage($request->file('image')) : null,
         ]);
+        Audit::log($event, 'candidate.created', "Candidate “{$candidate->name}” added to “{$category->name}”");
 
         return response()->json($candidate, 201);
     }
@@ -57,7 +60,10 @@ class CandidateController extends Controller
             'remove_image' => ['sometimes', 'boolean'],
         ]);
 
-        if (isset($data['category_id'])) {
+        $oldName = $candidate->name;
+        if (isset($data['category_id']) && (int) $data['category_id'] !== $candidate->category_id) {
+            // Moving a candidate changes the ballot's structure.
+            $this->ensureBallotEditable($event);
             $candidate->category_id = $this->categoryOf($event, (int) $data['category_id'])->id;
         }
         if (isset($data['name'])) {
@@ -66,20 +72,36 @@ class CandidateController extends Controller
         if ($candidate->isDirty(['name', 'category_id'])) {
             $this->ensureUniqueName($candidate->category_id, $candidate->name, $candidate->id);
         }
-        if ($request->hasFile('image') || $request->boolean('remove_image')) {
+        $photoChanged = $request->hasFile('image') || $request->boolean('remove_image');
+        if ($photoChanged) {
             $this->deleteImage($candidate->image_path);
             $candidate->image_path = $request->hasFile('image') ? $this->storeImage($request->file('image')) : null;
         }
 
+        $movedCategory = $candidate->isDirty('category_id');
         $candidate->save();
+
+        if ($oldName !== $candidate->name) {
+            Audit::log($event, 'candidate.renamed', "Candidate renamed: “{$oldName}” → “{$candidate->name}”");
+        }
+        if ($movedCategory) {
+            Audit::log($event, 'candidate.moved', "Candidate “{$candidate->name}” moved to another category");
+        }
+        if ($photoChanged) {
+            Audit::log($event, 'candidate.photo', "Photo of “{$candidate->name}” " . ($candidate->image_path ? 'changed' : 'removed'));
+        }
+
         return response()->json($candidate);
     }
 
     public function destroy(Event $event, Candidate $candidate)
     {
         Gate::authorize('manage', $event);
+        $this->ensureBallotEditable($event);
         $this->deleteImage($candidate->image_path);
         $candidate->delete();
+        Audit::log($event, 'candidate.deleted', "Candidate “{$candidate->name}” removed");
+
         return response()->json([], 204);
     }
 

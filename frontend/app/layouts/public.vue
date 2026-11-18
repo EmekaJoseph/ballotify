@@ -9,6 +9,7 @@
                 </nav>
 
                 <div class="d-none d-md-flex align-items-center gap-2">
+                    <ThemeToggle class="me-1" />
                     <template v-if="auth.isAuthenticated">
                         <NuxtLink to="/dashboard" class="btn btn-primary">Dashboard <i class="bi bi-arrow-right"></i></NuxtLink>
                     </template>
@@ -27,6 +28,7 @@
             <Transition name="drop">
                 <div v-if="menuOpen" class="mobile-menu d-md-none">
                     <div class="container d-grid gap-1 py-3">
+                        <div class="d-flex justify-content-between align-items-center px-2 pb-2"><span class="small-caps">Theme</span><ThemeToggle /></div>
                         <NuxtLink v-for="l in links" :key="l.to" :to="l.to" class="nav-l">{{ l.label }}</NuxtLink>
                         <div class="divider my-2"></div>
                         <NuxtLink v-if="auth.isAuthenticated" to="/dashboard" class="btn btn-primary">Dashboard</NuxtLink>
@@ -71,10 +73,10 @@ onBeforeUnmount(() => window.removeEventListener('scroll', onScroll));
 <style scoped>
 .site-header {
     position: sticky; top: 0; z-index: 100; padding: .85rem 0;
-    background: rgba(244, 247, 250, .8); backdrop-filter: saturate(180%) blur(14px);
+    background: color-mix(in srgb, var(--bg) 80%, transparent); backdrop-filter: saturate(180%) blur(14px);
     border-bottom: 1px solid transparent; transition: border-color .2s, background-color .2s;
 }
-.site-header.scrolled { border-bottom-color: var(--line); background: rgba(255, 255, 255, .85); }
+.site-header.scrolled { border-bottom-color: var(--line); background: var(--header-bg); }
 .nav-l { padding: .5rem .85rem; border-radius: 10px; font-weight: 600; color: var(--ink-2); font-size: .95rem; }
 .nav-l:hover { color: var(--brand-700); background: var(--brand-50); }
 .mobile-menu { border-top: 1px solid var(--line); background: var(--surface); }

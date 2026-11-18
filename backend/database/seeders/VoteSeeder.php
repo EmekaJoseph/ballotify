@@ -2,14 +2,15 @@
 
 namespace Database\Seeders;
 
+use App\Models\Candidate;
 use App\Models\Event;
-use App\Models\Vote;
 use App\Models\Voter;
 use Illuminate\Database\Seeder;
 
 /**
  * Demo ballots: ~35% of each started event's voters vote, with a weighted
- * random spread so the results board looks realistic.
+ * random spread so the results board looks realistic. Secret ballot: only the
+ * candidate totals change; nothing links a vote to a voter.
  */
 class VoteSeeder extends Seeder
 {
@@ -25,8 +26,7 @@ class VoteSeeder extends Seeder
 
             $voters = Voter::where('event_id', $event->id)->orderBy('id')->get();
             $turnout = $voters->take((int) round($voters->count() * 0.35));
-            $now = now();
-            $rows = [];
+            $totals = [];
 
             foreach ($turnout as $voter) {
                 foreach ($event->categories as $category) {
@@ -39,23 +39,15 @@ class VoteSeeder extends Seeder
                         : collect([$this->weightedPick($candidates->all())]);
 
                     foreach ($picks as $candidate) {
-                        $rows[] = [
-                            'event_id' => $event->id,
-                            'voter_id' => $voter->id,
-                            'category_id' => $category->id,
-                            'candidate_id' => $candidate->id,
-                            'ip' => '127.0.0.1',
-                            'created_at' => $now,
-                            'updated_at' => $now,
-                        ];
+                        $totals[$candidate->id] = ($totals[$candidate->id] ?? 0) + 1;
                     }
                 }
             }
 
-            foreach (array_chunk($rows, 500) as $chunk) {
-                Vote::insert($chunk);
+            foreach ($totals as $candidateId => $votes) {
+                Candidate::whereKey($candidateId)->increment('votes', $votes);
             }
-            Voter::whereIn('id', $turnout->pluck('id'))->update(['used_at' => $now]);
+            Voter::whereIn('id', $turnout->pluck('id'))->update(['used_at' => now()]);
         }
 
         $this->command?->info('Seeded sample votes (35% turnout) for events that have started.');

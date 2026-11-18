@@ -12,7 +12,7 @@ uses(RefreshDatabase::class);
 
 it('registers, logs in and returns the current user', function () {
     $this->postJson('/api/auth/register', [
-        'name' => 'Jane Organiser', 'email' => 'jane@example.com', 'password' => 'secret123',
+        'name' => 'Jane Organiser', 'email' => 'jane@example.com', 'password' => 'secret123', 'terms' => true,
     ])->assertCreated()->assertJsonStructure(['token', 'user' => ['id', 'email']]);
 
     $token = $this->postJson('/api/auth/login', ['email' => 'jane@example.com', 'password' => 'secret123'])

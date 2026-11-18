@@ -15,10 +15,6 @@
                     <span class="small text-muted">{{ formatNumber(event.voted_count) }} of {{ formatNumber(event.voters_count) }} codes used</span>
                 </div>
                 <div class="bar mb-2"><span :style="{ width: percent(event.voted_count ?? 0, event.voters_count ?? 0) + '%' }"></span></div>
-                <div v-if="event.expected_voters" class="small text-muted">
-                    Expected turnout: {{ formatNumber(event.expected_voters) }} voters
-                    ({{ percent(event.voted_count ?? 0, event.expected_voters) }}% reached)
-                </div>
             </div>
 
             <div class="card-b pad">
@@ -28,6 +24,13 @@
                     <dd class="col-sm-8 mb-0 text-ink">{{ formatWindow(event.starts_at, event.ends_at) }}</dd>
                     <dt class="col-sm-4 text-muted fw-semibold">Voting style</dt>
                     <dd class="col-sm-8 mb-0 text-ink">{{ event.selection_mode === 'multiple' ? 'Multiple choice per category' : 'One candidate per category' }}</dd>
+                    <dt class="col-sm-4 text-muted fw-semibold">Results</dt>
+                    <dd class="col-sm-8 mb-0 text-ink">{{ visibilityLabel }}</dd>
+                    <dt class="col-sm-4 text-muted fw-semibold">Ballot</dt>
+                    <dd class="col-sm-8 mb-0 text-ink">
+                        <span v-if="event.ballot_locked"><i class="bi bi-lock-fill text-muted"></i> Locked (voting has started)</span>
+                        <span v-else><i class="bi bi-unlock text-muted"></i> Editable until the first vote</span>
+                    </dd>
                     <dt class="col-sm-4 text-muted fw-semibold">Created</dt>
                     <dd class="col-sm-8 mb-0 text-ink">{{ formatDate(event.created_at, true) }}</dd>
                     <template v-if="event.description">
@@ -77,6 +80,12 @@ const checklist = computed(() => {
         { label: 'Share the voting link', done: (props.event.voted_count ?? 0) > 0, tab: 'share' },
     ];
 });
+const visibilityLabel = computed(() => ({
+    live: 'Public, live as votes arrive',
+    after_close: 'Public after voting closes',
+    private: 'Only visible to you',
+}[props.event.results_visibility] ?? 'Public after voting closes'));
+
 const doneCount = computed(() => checklist.value.filter(i => i.done).length);
 </script>
 

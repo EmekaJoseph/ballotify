@@ -23,6 +23,13 @@ export default defineNuxtConfig({
         { name: 'description', content: 'Run secure elections, awards and polls online. One-time voter codes, a clean ballot on any device and live results.' },
         { name: 'theme-color', content: '#0e7c77' },
       ],
+      script: [
+        {
+          // Set the theme before first paint so dark mode never flashes white.
+          tagPosition: 'head',
+          innerHTML: "(function(){try{var t=localStorage.getItem('theme')||'system';var d=t==='dark'||(t==='system'&&window.matchMedia('(prefers-color-scheme: dark)').matches);var e=document.documentElement;e.setAttribute('data-theme',d?'dark':'light');e.setAttribute('data-bs-theme',d?'dark':'light')}catch(x){}})()",
+        },
+      ],
       link: [
         { rel: 'icon', type: 'image/png', href: '/ballotify-logo.png' },
         { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
@@ -35,12 +42,18 @@ export default defineNuxtConfig({
     },
   },
 
-  // Override at build time with NUXT_PUBLIC_API_BASE, NUXT_PUBLIC_PUSHER_KEY, NUXT_PUBLIC_PUSHER_CLUSTER.
+  // Every value can be overridden with NUXT_PUBLIC_<NAME> (e.g. NUXT_PUBLIC_API_BASE, NUXT_PUBLIC_REVERB_KEY).
   runtimeConfig: {
     public: {
       apiBase: 'http://localhost:8883/api',
-      pusherKey: '',
-      pusherCluster: 'mt1',
+      // Live results via Laravel Reverb. Leave reverbKey empty to refresh results every 15 s instead.
+      reverbKey: '',
+      reverbHost: 'localhost',
+      reverbPort: 8080,
+      reverbScheme: 'http',
+      // Shown on the Privacy / Terms pages.
+      companyName: 'Ballotify',
+      contactEmail: '',
     },
   },
 })

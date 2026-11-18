@@ -1,8 +1,8 @@
 <?php
 
-use Illuminate\Foundation\Inspiring;
-use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Schedule;
 
-Artisan::command('inspire', function () {
-    $this->comment(Inspiring::quote());
-})->purpose('Display an inspiring quote');
+// Housekeeping. Run `php artisan schedule:work` in development, or add one cron
+// entry in production: * * * * * cd /path/to/backend && php artisan schedule:run
+Schedule::command('sanctum:prune-expired --hours=24')->daily();
+Schedule::command('ballotify:purge-voter-contacts')->dailyAt('03:00');

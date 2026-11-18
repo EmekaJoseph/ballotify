@@ -2,22 +2,29 @@ import Echo from 'laravel-echo';
 import Pusher from 'pusher-js';
 
 /**
- * Real-time updates (live results). Disabled automatically when no Pusher key
- * is configured: pages then fall back to polling.
+ * Live results over Laravel Reverb (self-hosted websockets). Disabled when no
+ * Reverb key is configured or the server can't be reached: the results page
+ * then falls back to refreshing every 15 seconds.
  */
 export default defineNuxtPlugin(() => {
     const config = useRuntimeConfig();
-    const key = String(config.public.pusherKey || '');
+    const key = String(config.public.reverbKey || '');
 
-    let echo: Echo<'pusher'> | null = null;
+    let echo: Echo<'reverb'> | null = null;
     if (key) {
         try {
+            // Reverb speaks the Pusher protocol; pusher-js is the client transport.
             (window as unknown as { Pusher: typeof Pusher }).Pusher = Pusher;
+            const scheme = String(config.public.reverbScheme || 'http');
+            const port = Number(config.public.reverbPort) || (scheme === 'https' ? 443 : 80);
             echo = new Echo({
-                broadcaster: 'pusher',
+                broadcaster: 'reverb',
                 key,
-                cluster: String(config.public.pusherCluster || 'mt1'),
-                forceTLS: true,
+                wsHost: String(config.public.reverbHost || window.location.hostname),
+                wsPort: port,
+                wssPort: port,
+                forceTLS: scheme === 'https',
+                enabledTransports: ['ws', 'wss'],
             });
         } catch (e) {
             console.warn('Live updates unavailable:', e);

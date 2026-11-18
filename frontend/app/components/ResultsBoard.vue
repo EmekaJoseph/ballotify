@@ -86,5 +86,5 @@ const tiedNames = (cat: ResultCategory) => cat.candidates.filter(c => c.votes ==
     width: 28px; height: 28px; border-radius: 8px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center;
     font-weight: 800; font-size: .8rem; background: var(--surface-2); color: var(--muted); border: 1px solid var(--line);
 }
-.rank.first { background: #fff7e0; color: #b45309; border-color: #fde68a; }
+.rank.first { background: var(--gold-bg); color: var(--gold-text); border-color: var(--gold-line); }
 </style>

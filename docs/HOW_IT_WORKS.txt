@@ -33,7 +33,7 @@ VOTERS take part from any phone or laptop using a one-time code.
    +----------------+                               +----------+----------+
                                                                |
    +----------------+     "a vote was cast" signal             |
-   |  RESULTS PAGE  |  <---------- Pusher (optional) ----------+
+   |  RESULTS PAGE  |  <------- Reverb live (optional) --------+
    |  (anyone with  |                                          |
    |   the link)    |  <-------- or refresh every 15s ---------+
    +----------------+                                          v
@@ -142,8 +142,15 @@ VOTERS take part from any phone or laptop using a one-time code.
 
    (5) MONITOR
          Overview tab: turnout bar, setup checklist.
-         Voters tab:   who has voted (Voted / Not voted).
-                       "Reset" lets a code vote again (old ballot discarded).
+         Voters tab:   who has voted (Voted / Not voted), never for whom.
+                       A used code can't be reset: votes are secret, so a
+                       cast vote can't be found or undone.
+         Results tab:  the organiser's view, whatever the public setting.
+         Activity tab: every change made to the event, in order.
+
+   Once the FIRST vote is cast the ballot is LOCKED: no adding, removing
+   or moving categories/candidates. Name and photo fixes are still allowed
+   and are logged; the results page shows how many happened.
 
 
 --------------------------------------------------------------------------------
@@ -214,13 +221,15 @@ VOTERS take part from any phone or laptop using a one-time code.
             | yes
             v
    +---------------------------------+
-   | Save one row per choice         |
-   | Mark code as used (time stamp)  |
+   | Add 1 to each chosen candidate's|   <- SECRET BALLOT: only totals
+   |   running total                 |      change. No record of WHO chose
+   | Mark code as used               |      WHAT is ever written.
    +---------------------------------+
    ==================== TRANSACTION COMMITS =============================
             |
             v
-   Broadcast "vote.cast" (no voter info) ---> results pages refresh
+   Broadcast "the totals changed" (no ballot content) ---> live results
+   pages refresh (only when results are public)
             |
             v
    200 "Vote recorded" ---> voter sees the confirmation screen
@@ -246,10 +255,21 @@ VOTERS take part from any phone or laptop using a one-time code.
    |    '-...-'                                                    |
    +---------------------------------------------------------------+
 
+   Who can see it (chosen per event in Settings):
+     - Live ............... anyone with the link, while voting runs
+     - After voting closes  a countdown until the end, then the totals
+                            (this is the default)
+     - Only me ............ never published; the organiser sees it in the
+                            dashboard's Results tab and announces it
+
+   Trust line on the page:
+     "Secret ballot · no changes were made to this ballot after voting
+      began"  (or how many recorded changes there were)
+
    How it stays up to date:
-     - With Pusher configured: every accepted ballot sends a signal and
-       the page refreshes within about a second.
-     - Without Pusher: the page refreshes itself every 15 seconds.
+     - With Laravel Reverb running: every accepted ballot sends a signal
+       and the page refreshes within about a second.
+     - Without it: the page refreshes itself every 15 seconds.
      - "Present" switches to full screen for projectors.
      - After closing, the badge changes to "Final results" and the leader
        is labelled "Winner". Ties are shown as "Tied: A & B".
@@ -269,16 +289,19 @@ VOTERS take part from any phone or laptop using a one-time code.
      |
      +--< categories           e.g. "President"
      |       |
-     |       +--< candidates   e.g. "Ada Obi" (+ photo)
+     |       +--< candidates   e.g. "Ada Obi" (+ photo, + votes = running total)
      |
-     +--< voters               one row per code; used_at = when it voted
+     +--< voters               one row per code; used_at = THAT it voted
+     |                         (never for whom)
      |
-     +--< votes                one row per choice:
-                               (voter, category, candidate)
+     +--< audit_logs           every organiser change, with "during voting"
+                               flag; append-only
 
-   - A voter can choose a given candidate at most once (database rule).
+   - There is no table of individual ballots: that's what makes the
+     ballot secret. Results = each candidate's running total.
    - Deleting an event deletes everything under it.
-   - Results = count of vote rows per candidate.
+   - Voter emails / phones are erased automatically 30 days after voting
+     closes (configurable), or at any time from Settings.
 
 
 --------------------------------------------------------------------------------
@@ -291,8 +314,15 @@ VOTERS take part from any phone or laptop using a one-time code.
    [x] Brute-force protection on code entry and vote submission.
    [x] Organisers can only see and change their own events (others get 404).
    [x] Nested items can't be edited through another event's URL.
-   [x] Public results show totals only; no names, no codes, no ballots.
-   [x] Passwords hashed; changing a password requires the current one.
+   [x] Secret ballot: only totals are stored; nobody can see how anyone voted.
+   [x] Ballot locks at the first vote; later fixes are logged and disclosed.
+   [x] Results published live, after close, or never, as the organiser chooses.
+   [x] Passwords hashed; changing a password requires the current one and
+       signs out other devices. Password reset by email.
+   [x] Optional two-step login (authenticator app + recovery codes).
+   [x] Logins expire (7 days by default).
+   [x] Email must be confirmed before codes can be sent to voters.
+   [x] Voter contact details erased automatically after the event.
    [x] Uploaded photos are type-checked and size-limited (5 MB).
    [x] CSV exports are protected against spreadsheet formula injection.
 

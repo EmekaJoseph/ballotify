@@ -38,8 +38,8 @@ class EventSeeder extends Seeder
                 'user_id' => $user->id,
                 'name' => $ename,
                 'link_token' => Str::uuid()->toString(),
-                'expected_voters' => [100, 150, 200][$idx] ?? 100,
                 'event_type_id' => $idx === 0 ? $singleId : $multipleId,
+                'results_visibility' => ['live', 'after_close', 'after_close'][$idx] ?? 'after_close',
                 'starts_at' => $win['starts_at'],
                 'ends_at' => $win['ends_at'],
             ]);

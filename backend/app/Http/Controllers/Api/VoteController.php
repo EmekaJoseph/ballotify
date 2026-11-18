@@ -8,8 +8,6 @@ use App\Models\Candidate;
 use App\Models\Category;
 use App\Models\Event;
 use App\Models\Voter;
-use App\Models\Vote;
-use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -65,51 +63,43 @@ class VoteController extends Controller
             }
         }
 
-        try {
-            $accepted = DB::transaction(function () use ($event, $data, $cleanChoices, $request) {
-                // The row lock must be taken inside the transaction, otherwise two
-                // concurrent requests with the same code could both cast a ballot.
-                $voter = Voter::where('event_id', $event->id)
-                    ->where('code', VoterController::normalizeCode($data['code']))
-                    ->lockForUpdate()
-                    ->first();
+        $candidateIds = array_values(array_unique(array_column($cleanChoices, 'candidate_id')));
 
-                if (! $voter || $voter->used_at !== null) {
-                    return false;
-                }
+        $accepted = DB::transaction(function () use ($event, $data, $candidateIds) {
+            // The row lock must be taken inside the transaction, otherwise two
+            // concurrent requests with the same code could both cast a ballot.
+            $voter = Voter::where('event_id', $event->id)
+                ->where('code', VoterController::normalizeCode($data['code']))
+                ->lockForUpdate()
+                ->first();
 
-                // Clear any stale ballot rows (e.g. the admin re-enabled this code).
-                Vote::where('voter_id', $voter->id)->delete();
+            if (! $voter || $voter->used_at !== null) {
+                return false;
+            }
 
-                $now = now();
-                Vote::insert(array_map(fn ($choice) => [
-                    'event_id' => $event->id,
-                    'voter_id' => $voter->id,
-                    'category_id' => $choice['category_id'],
-                    'candidate_id' => $choice['candidate_id'],
-                    'ip' => $request->ip(),
-                    'created_at' => $now,
-                    'updated_at' => $now,
-                ], $cleanChoices));
+            // SECRET BALLOT: only the running totals change. No row records which
+            // voter chose what, when, or from where, so a ballot can never be
+            // traced back to a code, not even by the organiser or a DBA.
+            Candidate::whereIn('id', $candidateIds)->where('event_id', $event->id)->increment('votes');
 
-                $voter->used_at = $now;
-                $voter->save();
+            $voter->used_at = now();
+            $voter->save();
 
-                return true;
-            });
-        } catch (UniqueConstraintViolationException) {
-            $accepted = false;
-        }
+            return true;
+        });
 
         if (! $accepted) {
             return response()->json(['message' => 'Invalid or used code'], 422);
         }
 
-        try {
-            event(new VoteCast($event->id, $cleanChoices));
-        } catch (\Throwable $e) {
-            // A broadcasting outage must never make a recorded vote look failed.
-            report($e);
+        // Live results ping (carries no ballot content). Skipped when results aren't public.
+        if ($event->resultsArePublic()) {
+            try {
+                event(new VoteCast($event->id));
+            } catch (\Throwable $e) {
+                // A broadcasting outage must never make a recorded vote look failed.
+                report($e);
+            }
         }
 
         return response()->json(['message' => 'Vote recorded']);

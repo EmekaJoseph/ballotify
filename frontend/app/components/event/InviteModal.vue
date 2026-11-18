@@ -163,7 +163,7 @@ async function send() {
 </script>
 
 <style scoped>
-.notice { display: flex; gap: .65rem; padding: .8rem 1rem; border-radius: 14px; background: var(--warning-50); color: #92400e; font-size: .875rem; line-height: 1.5; }
+.notice { display: flex; gap: .65rem; padding: .8rem 1rem; border-radius: 14px; background: var(--warning-50); color: var(--warning-text); font-size: .875rem; line-height: 1.5; }
 .notice code { color: inherit; background: rgba(146, 64, 14, .08); padding: 0 .3rem; border-radius: 5px; }
 .choice.disabled { opacity: .5; cursor: not-allowed; }
 .who { display: flex; align-items: center; gap: .75rem; padding: .75rem 1rem; border: 1px solid var(--line); border-radius: 14px; background: var(--surface-2); }

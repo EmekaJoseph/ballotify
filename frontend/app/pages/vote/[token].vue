@@ -18,7 +18,7 @@
                 <div class="fs-3 fw-800 text-ink mono">{{ opensIn.label }}</div>
             </div>
             <div class="d-flex flex-column flex-sm-row gap-2 justify-content-center">
-                <NuxtLink v-if="unavailable.status === 'completed'" :to="`/event/${token}/results`" class="btn btn-primary">
+                <NuxtLink v-if="unavailable.status === 'completed' && resultsPublic" :to="`/event/${token}/results`" class="btn btn-primary">
                     <i class="bi bi-bar-chart-line"></i> See the results
                 </NuxtLink>
                 <button v-if="unavailable.retry" class="btn btn-ghost" @click="load"><i class="bi bi-arrow-clockwise"></i> Try again</button>
@@ -78,7 +78,8 @@
 
         <!-- Done -->
         <VoteSuccess v-else-if="stage === 'done'" :event-name="event?.name ?? 'this election'" :voter-name="voterName"
-            :results-to="`/event/${token}/results`" />
+            :results-to="event?.results_visibility === 'private' ? '' : `/event/${token}/results`"
+            :results-label="event?.results_visibility === 'live' ? 'View live results' : 'Results page (published when voting closes)'" />
     </div>
 </template>
 
@@ -98,6 +99,8 @@ const event = ref<PublicEvent | null>(null);
 const code = ref('');
 /** Name the organiser attached to this code (null for anonymous codes). */
 const voterName = ref<string | null>(null);
+/** Whether a closed event's results are public (from the API). */
+const resultsPublic = ref(false);
 const codeError = ref('');
 const checking = ref(false);
 const submitting = ref(false);
@@ -137,11 +140,15 @@ async function load() {
         codeInput.value?.focus();
     } catch (e) {
         const status = apiStatus(e);
-        const body = (e as { response?: { data?: { status?: EventStatus; starts_at?: string | null } } }).response?.data;
+        const body = (e as { response?: { data?: { status?: EventStatus; starts_at?: string | null; results_public?: boolean } } }).response?.data;
         if (status === 403 && body?.status === 'upcoming') {
             showUnavailable({ status: 'upcoming', title: 'Voting hasn\'t started yet', text: `The ballot opens ${formatDate(body.starts_at ?? null, true)}. Come back then with your code.`, icon: 'bi-clock', tone: 'amber', startsAt: body.starts_at ?? null });
         } else if (status === 403) {
-            showUnavailable({ status: 'completed', title: 'Voting has closed', text: 'This election is over. You can still see the results.', icon: 'bi-check2-circle', tone: 'green' });
+            resultsPublic.value = !!body?.results_public;
+            showUnavailable({
+                status: 'completed', title: 'Voting has closed', icon: 'bi-check2-circle', tone: 'green',
+                text: resultsPublic.value ? 'This election is over. You can still see the results.' : 'This election is over. The organiser will announce the results.',
+            });
         } else if (status === 404) {
             showUnavailable({ title: 'Ballot not found', text: 'This voting link is invalid. Check the link you were sent, or contact the organiser.' });
         } else {
@@ -217,6 +224,6 @@ onMounted(() => {
     font-size: clamp(1.4rem, 6vw, 1.9rem); font-weight: 700; text-align: center; letter-spacing: .25em;
     text-transform: uppercase; padding: 1rem; border-radius: 16px; border-width: 2px;
 }
-.code-input::placeholder { letter-spacing: .25em; color: #cbd5e1; }
+.code-input::placeholder { letter-spacing: .25em; color: var(--line-strong); }
 .countdown { display: inline-block; padding: .85rem 1.5rem; border-radius: 16px; background: var(--warning-50); }
 </style>

@@ -24,6 +24,10 @@
             </nav>
 
             <div class="mt-auto p-3">
+                <div class="d-flex align-items-center justify-content-between mb-3 px-1">
+                    <span class="small-caps">Theme</span>
+                    <ThemeToggle />
+                </div>
                 <div class="user-card">
                     <span class="avatar sm" :style="{ background: colorFor(auth.user?.email) }">{{ initials(auth.user?.name) }}</span>
                     <div class="min-w-0 flex-grow-1">
@@ -50,6 +54,13 @@
                 </NuxtLink>
             </header>
             <main class="content">
+                <div v-if="auth.user && !auth.isVerified" class="verify-banner">
+                    <i class="bi bi-envelope-exclamation"></i>
+                    <span class="flex-grow-1">Please confirm your email address <b>{{ auth.user.email }}</b> to send voting codes. Check your inbox for our link.</span>
+                    <button class="btn btn-soft btn-sm flex-shrink-0" :disabled="resending" @click="resendVerification">
+                        <span v-if="resending" class="spinner-border spinner-border-sm"></span> Resend email
+                    </button>
+                </div>
                 <slot />
             </main>
         </div>
@@ -58,6 +69,7 @@
 
 <script setup lang="ts">
 import { useAuthStore } from '~/stores/auth';
+import { adminApi } from '~/api/endpoints/admin';
 
 const auth = useAuthStore();
 const route = useRoute();
@@ -79,6 +91,19 @@ onMounted(() => {
     if (!auth.user && auth.isAuthenticated) auth.fetchUser();
 });
 
+const resending = ref(false);
+async function resendVerification() {
+    resending.value = true;
+    try {
+        const { data } = await adminApi.resendVerification();
+        useToast().success(data.message);
+    } catch (e) {
+        useToast().error(apiErrorMessage(e));
+    } finally {
+        resending.value = false;
+    }
+}
+
 async function logout() {
     await auth.logout();
     await navigateTo('/login');
@@ -97,7 +122,7 @@ async function logout() {
 .main { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; }
 .topbar {
     position: sticky; top: 0; z-index: 50; display: flex; align-items: center; justify-content: space-between;
-    padding: .7rem 1rem; background: rgba(255, 255, 255, .9); backdrop-filter: blur(12px); border-bottom: 1px solid var(--line);
+    padding: .7rem 1rem; background: var(--header-bg); backdrop-filter: blur(12px); border-bottom: 1px solid var(--line);
 }
 .content { padding: 1.5rem 1rem 3rem; width: 100%; max-width: 1240px; margin: 0 auto; }
 @media (min-width: 768px) { .content { padding: 2rem 2rem 4rem; } }
@@ -113,5 +138,10 @@ async function logout() {
 .side-link:hover { background: var(--surface-2); color: var(--ink); }
 .side-link.active { background: var(--brand-50); color: var(--brand-700); }
 .side-link.active .bi { color: var(--brand-600); }
+.verify-banner {
+    display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; padding: .85rem 1.1rem; margin-bottom: 1.5rem;
+    border-radius: var(--radius); background: var(--warning-50); color: var(--warning-text); font-size: .9rem;
+}
+.verify-banner > .bi { font-size: 1.2rem; }
 .user-card { display: flex; align-items: center; gap: .65rem; padding: .65rem; border: 1px solid var(--line); border-radius: 14px; background: var(--surface-2); }
 </style>

@@ -119,9 +119,6 @@
                                         <i class="bi bi-send"></i> {{ v.invited_at ? 'Resend' : 'Send' }}
                                     </button>
                                     <button class="btn btn-ghost btn-icon btn-sm ms-1" title="Edit" aria-label="Edit voter" @click="openForm(v)"><i class="bi bi-pencil"></i></button>
-                                    <button v-if="v.used_at" class="btn btn-ghost btn-icon btn-sm ms-1" title="Let this code vote again" aria-label="Reset code" @click="resetVoter(v)">
-                                        <i class="bi bi-arrow-counterclockwise"></i>
-                                    </button>
                                     <button class="btn btn-ghost btn-icon btn-sm text-danger ms-1" title="Delete" aria-label="Delete voter" @click="removeVoter(v)"><i class="bi bi-trash"></i></button>
                                 </td>
                             </tr>
@@ -355,28 +352,11 @@ async function generate() {
     }
 }
 
-async function resetVoter(v: Voter) {
-    const ok = await confirm({
-        title: 'Let this voter vote again?',
-        message: `The ballot already cast by ${v.name || 'this code'} will be discarded, and the code can be used once more.`,
-        confirmText: 'Reset code',
-        danger: true,
-    });
-    if (!ok) return;
-    try {
-        await adminApi.updateVoter(props.event.id, v.id, { used_at: null });
-        toast.success('Code reset. It can vote again.');
-        await load();
-        emit('changed');
-    } catch (e) {
-        toast.error(apiErrorMessage(e));
-    }
-}
 
 async function removeVoter(v: Voter) {
     const ok = await confirm({
         title: `Delete ${v.name || 'this voter'}?`,
-        message: v.used_at ? 'This voter has voted. Their ballot will be deleted too.' : 'Their code will stop working.',
+        message: v.used_at ? 'They have already voted. Votes are secret, so their vote stays counted.' : 'Their code will stop working.',
         confirmText: 'Delete',
         danger: true,
     });

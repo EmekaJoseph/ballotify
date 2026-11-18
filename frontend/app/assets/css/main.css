@@ -35,6 +35,25 @@
     --danger: #dc2626;
     --danger-50: #fef2f2;
 
+    /* Component tokens (redefined for dark mode below) */
+    --header-bg: rgba(255, 255, 255, .88);
+    --track: #edf1f6;
+    --neutral-50: #f1f5f9;
+    --placeholder: #9aa6b8;
+    --icon-muted: #94a3b8;
+    --warning-text: #92400e;
+    --danger-line: #fbd5d5;
+    --danger-hover: #fde2e2;
+    --danger-active: #fcd2d2;
+    --danger-strong: #b91c1c;
+    --accent-text: #5b3fd1;
+    --gold-bg: #fff7e0;
+    --gold-line: #fde68a;
+    --gold-text: #b45309;
+    --skeleton-a: #eef2f6;
+    --skeleton-b: #f7f9fb;
+    color-scheme: light;
+
     --radius-sm: 10px;
     --radius: 14px;
     --radius-lg: 20px;
@@ -123,8 +142,8 @@ a { text-decoration: none; }
 }
 .btn-danger-soft {
     --bs-btn-color: var(--danger); --bs-btn-bg: var(--danger-50); --bs-btn-border-color: transparent;
-    --bs-btn-hover-bg: #fde2e2; --bs-btn-hover-color: #b91c1c; --bs-btn-hover-border-color: transparent;
-    --bs-btn-active-bg: #fcd2d2; --bs-btn-active-color: #b91c1c;
+    --bs-btn-hover-bg: var(--danger-hover); --bs-btn-hover-color: var(--danger-strong); --bs-btn-hover-border-color: transparent;
+    --bs-btn-active-bg: var(--danger-active); --bs-btn-active-color: var(--danger-strong);
 }
 .btn-light-on-dark {
     --bs-btn-color: var(--ink); --bs-btn-bg: #fff; --bs-btn-border-color: #fff;
@@ -172,7 +191,7 @@ a { text-decoration: none; }
     transition: border-color .15s var(--ease), box-shadow .15s var(--ease);
 }
 .form-control-lg { padding: .85rem 1rem; border-radius: 14px; font-size: 1rem; }
-.form-control::placeholder { color: #9aa6b8; }
+.form-control::placeholder { color: var(--placeholder); }
 .form-control:focus, .form-select:focus {
     border-color: var(--brand-500);
     box-shadow: 0 0 0 4px rgba(20, 145, 138, .14);
@@ -182,7 +201,7 @@ a { text-decoration: none; }
 .form-check-input[type=checkbox]:indeterminate { background-color: var(--brand-600); border-color: var(--brand-600); }
 .form-check-input:focus { box-shadow: 0 0 0 4px rgba(20, 145, 138, .14); border-color: var(--brand-500); }
 .input-icon { position: relative; }
-.input-icon > i { position: absolute; left: .95rem; top: 50%; transform: translateY(-50%); color: #94a3b8; pointer-events: none; }
+.input-icon > i { position: absolute; left: .95rem; top: 50%; transform: translateY(-50%); color: var(--icon-muted); pointer-events: none; }
 .input-icon > .form-control { padding-left: 2.6rem; }
 .field-error { color: var(--danger); font-size: .82rem; margin-top: .35rem; }
 
@@ -218,7 +237,7 @@ a { text-decoration: none; }
 .pill .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 .pill-active { background: var(--success-50); color: var(--success); }
 .pill-upcoming { background: var(--warning-50); color: var(--warning); }
-.pill-completed { background: #f1f5f9; color: var(--muted); }
+.pill-completed { background: var(--neutral-50); color: var(--muted); }
 .pill-brand { background: var(--brand-50); color: var(--brand-700); }
 .pill-violet { background: var(--accent-50); color: var(--accent); }
 .pill-live .dot { animation: pulse-dot 1.6s infinite; }
@@ -245,7 +264,7 @@ a { text-decoration: none; }
 }
 
 /* ---------- Progress ---------- */
-.bar { height: 10px; border-radius: 999px; background: #edf1f6; overflow: hidden; }
+.bar { height: 10px; border-radius: 999px; background: var(--track); overflow: hidden; }
 .bar > span {
     display: block; height: 100%; border-radius: inherit;
     background: linear-gradient(90deg, var(--brand-500), var(--accent));
@@ -276,7 +295,7 @@ a { text-decoration: none; }
 /* ---------- Skeleton ---------- */
 .skeleton {
     border-radius: 10px; min-height: 14px;
-    background: linear-gradient(90deg, #eef2f6 25%, #f7f9fb 37%, #eef2f6 63%);
+    background: linear-gradient(90deg, var(--skeleton-a) 25%, var(--skeleton-b) 37%, var(--skeleton-a) 63%);
     background-size: 400% 100%; animation: shimmer 1.3s ease infinite;
 }
 @keyframes shimmer { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
@@ -294,3 +313,72 @@ a { text-decoration: none; }
     .no-print { display: none !important; }
     body { background: #fff; }
 }
+
+/* ==========================================================================
+   Dark mode: follows the system unless the user picks a theme
+   (html[data-theme="light"|"dark"], set by useTheme()).
+   ========================================================================== */
+:root[data-theme="dark"] {
+    --brand-50: rgba(45, 212, 191, .12);
+    --brand-100: rgba(45, 212, 191, .2);
+    --brand-200: rgba(45, 212, 191, .35);
+    --brand-500: #2bb5ad;
+    --brand-600: #1f9d95;
+    --brand-700: #5eead4;
+    --brand-900: #ccfbf1;
+    --accent: #a08bff;
+    --accent-50: rgba(160, 139, 255, .16);
+
+    --ink: #e7edf5;
+    --ink-2: #c2cddb;
+    --muted: #8d9cb1;
+    --line: #232e3f;
+    --line-strong: #314058;
+    --surface: #111927;
+    --surface-2: #172133;
+    --bg: #0a1019;
+    --night: #060b13;
+
+    --success: #4ade80;
+    --success-50: rgba(74, 222, 128, .12);
+    --warning: #fbbf24;
+    --warning-50: rgba(251, 191, 36, .12);
+    --danger: #f87171;
+    --danger-50: rgba(248, 113, 113, .12);
+
+    --header-bg: rgba(17, 25, 39, .88);
+    --track: #223047;
+    --neutral-50: #1b2638;
+    --placeholder: #5f6f86;
+    --icon-muted: #6b7b92;
+    --warning-text: #fcd34d;
+    --danger-line: rgba(248, 113, 113, .35);
+    --danger-hover: rgba(248, 113, 113, .2);
+    --danger-active: rgba(248, 113, 113, .28);
+    --danger-strong: #fca5a5;
+    --accent-text: #c4b5fd;
+    --gold-bg: rgba(251, 191, 36, .14);
+    --gold-line: rgba(251, 191, 36, .35);
+    --gold-text: #fcd34d;
+    --skeleton-a: #172133;
+    --skeleton-b: #1e2a3f;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, .4);
+    --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 24px -8px rgba(0, 0, 0, .6);
+    --shadow-lg: 0 24px 60px -20px rgba(0, 0, 0, .8);
+
+    --bs-primary-rgb: 31, 157, 149;
+    --bs-link-color-rgb: 94, 234, 212;
+    --bs-link-color: #5eead4;
+    --bs-link-hover-color: #99f6e4;
+    --bs-focus-ring-color: rgba(45, 212, 191, .3);
+    color-scheme: dark;
+}
+:root[data-theme="dark"] .btn-ghost { background: var(--surface); }
+:root[data-theme="dark"] .form-control, :root[data-theme="dark"] .form-select { border-color: var(--line-strong); }
+:root[data-theme="dark"] .btn-light-on-dark { --bs-btn-bg: #fff; }
+:root[data-theme="dark"] ::selection { background: rgba(45, 212, 191, .35); }
+
+/* Smooth theme switch without animating everything else. */
+html.theme-switching *, html.theme-switching *::before, html.theme-switching *::after { transition: none !important; }
+.bg-surface { background: var(--surface); }

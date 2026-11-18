@@ -18,8 +18,8 @@
             <span class="form-label d-block">Voting style</span>
             <div class="row g-2">
                 <div v-for="m in modes" :key="m.value" class="col-sm-6">
-                    <label class="choice" :class="{ selected: form.selection_mode === m.value }">
-                        <input v-model="form.selection_mode" type="radio" class="visually-hidden" :value="m.value" :disabled="busy" />
+                    <label class="choice" :class="{ selected: form.selection_mode === m.value, locked: modeLocked }">
+                        <input v-model="form.selection_mode" type="radio" class="visually-hidden" :value="m.value" :disabled="busy || modeLocked" />
                         <span class="icon-tile" :class="m.tone"><i class="bi" :class="m.icon"></i></span>
                         <span>
                             <span class="d-block fw-bold text-ink">{{ m.title }}</span>
@@ -28,9 +28,26 @@
                     </label>
                 </div>
             </div>
-            <div v-if="hasVotes && form.selection_mode !== initialMode" class="small text-warning mt-2">
-                <i class="bi bi-exclamation-triangle"></i> Votes have already been cast. Changing the style affects new ballots only.
+            <div v-if="modeLocked" class="small text-muted mt-2">
+                <i class="bi bi-lock"></i> Locked: the voting style can’t change once voting has started.
             </div>
+        </div>
+
+        <div class="mb-4">
+            <span class="form-label d-block">Who can see the results</span>
+            <div class="row g-2">
+                <div v-for="v in visibilityOptions" :key="v.value" class="col-12">
+                    <label class="choice" :class="{ selected: form.results_visibility === v.value }">
+                        <input v-model="form.results_visibility" type="radio" class="visually-hidden" :value="v.value" :disabled="busy" />
+                        <span class="icon-tile" :class="v.tone"><i class="bi" :class="v.icon"></i></span>
+                        <span>
+                            <span class="d-block fw-bold text-ink">{{ v.title }}</span>
+                            <span class="d-block small text-muted">{{ v.text }}</span>
+                        </span>
+                    </label>
+                </div>
+            </div>
+            <div class="form-text mt-2">You can always see the full results in your dashboard.</div>
         </div>
 
         <div class="row g-3 mb-2">
@@ -49,12 +66,6 @@
         </div>
         <div class="small text-muted mb-4"><i class="bi bi-globe2"></i> Times are in your timezone ({{ tz }}).</div>
 
-        <div class="mb-4" style="max-width: 260px">
-            <label for="ev-expected" class="form-label">Expected voters <span class="text-muted fw-normal">(optional)</span></label>
-            <input id="ev-expected" v-model.number="form.expected_voters" type="number" min="0" step="1" class="form-control"
-                :disabled="busy" />
-        </div>
-
         <div class="d-flex flex-wrap gap-2 justify-content-end">
             <slot name="actions" />
             <button type="submit" class="btn btn-primary" :disabled="busy">
@@ -67,7 +78,7 @@
 
 <script setup lang="ts">
 import type { EventPayload } from '~/api/endpoints/admin';
-import type { BallotEvent, SelectionMode } from '~/types';
+import type { BallotEvent, ResultsVisibility, SelectionMode } from '~/types';
 
 const props = withDefaults(defineProps<{
     event?: BallotEvent | null;
@@ -80,11 +91,17 @@ const emit = defineEmits<{ submit: [payload: EventPayload] }>();
 
 const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
 const initialMode: SelectionMode = props.event?.selection_mode ?? 'single';
-const hasVotes = computed(() => (props.event?.voted_count ?? 0) > 0);
+const modeLocked = computed(() => !!props.event?.ballot_locked);
 
 const modes = [
     { value: 'single' as const, title: 'One per category', text: 'Voters pick a single candidate in each category.', icon: 'bi-record-circle', tone: '' },
     { value: 'multiple' as const, title: 'Multiple choice', text: 'Voters may pick several candidates per category.', icon: 'bi-ui-checks', tone: 'violet' },
+];
+
+const visibilityOptions: { value: ResultsVisibility; title: string; text: string; icon: string; tone: string }[] = [
+    { value: 'after_close', title: 'After voting closes', text: 'Recommended. Running totals can’t sway later voters.', icon: 'bi-hourglass-bottom', tone: '' },
+    { value: 'live', title: 'Live', text: 'Anyone with the results link sees totals as votes come in.', icon: 'bi-broadcast', tone: 'green' },
+    { value: 'private', title: 'Only me', text: 'Never published. Announce the results yourself.', icon: 'bi-eye-slash', tone: 'violet' },
 ];
 
 const form = reactive({
@@ -93,7 +110,7 @@ const form = reactive({
     selection_mode: initialMode,
     starts_at: toLocalInput(props.event?.starts_at),
     ends_at: toLocalInput(props.event?.ends_at),
-    expected_voters: props.event?.expected_voters ?? 0,
+    results_visibility: (props.event?.results_visibility ?? 'after_close') as ResultsVisibility,
 });
 
 const localErrors = ref<Record<string, string>>({});
@@ -111,10 +128,15 @@ function submit() {
     emit('submit', {
         name: form.name,
         description: form.description.trim() || null,
-        selection_mode: form.selection_mode,
+        // Not sent once locked, so saving other settings never trips the lock.
+        ...(modeLocked.value ? {} : { selection_mode: form.selection_mode }),
         starts_at: fromLocalInput(form.starts_at),
         ends_at: fromLocalInput(form.ends_at),
-        expected_voters: Math.max(0, Math.floor(Number(form.expected_voters) || 0)),
+        results_visibility: form.results_visibility,
     });
 }
 </script>
+
+<style scoped>
+.choice.locked { cursor: not-allowed; opacity: .65; }
+</style>

@@ -48,9 +48,15 @@ const props = defineProps<{ event: BallotEvent }>();
 const { voteUrl, resultsUrl } = useEventLinks(() => props.event.link_token);
 const qr = ref('');
 
+const resultsText = computed(() => ({
+    live: 'Live tally (totals only). Show it on a screen while voting runs.',
+    after_close: 'Shows a countdown until voting closes, then the final totals.',
+    private: 'Results are set to “Only me”, so this page stays hidden. Change it in Settings.',
+}[props.event.results_visibility]));
+
 const links = computed(() => [
     { title: 'Voting link', text: 'Send this to voters. They need their personal code to vote.', url: voteUrl.value, icon: 'bi-box-arrow-in-right', tone: '' },
-    { title: 'Live results page', text: 'Public tally with no voter details. Show it on a screen or share it after voting closes.', url: resultsUrl.value, icon: 'bi-bar-chart-line', tone: 'violet' },
+    { title: 'Results page', text: resultsText.value, url: resultsUrl.value, icon: 'bi-bar-chart-line', tone: 'violet' },
 ]);
 
 const message = computed(() => [

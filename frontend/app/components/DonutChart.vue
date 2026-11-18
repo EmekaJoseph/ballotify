@@ -1,7 +1,7 @@
 <template>
     <div class="donut" :style="{ width: size + 'px', height: size + 'px' }">
         <svg :viewBox="`0 0 ${size} ${size}`" role="img" :aria-label="ariaLabel">
-            <circle :cx="c" :cy="c" :r="r" fill="none" stroke="#edf1f6" :stroke-width="stroke" />
+            <circle :cx="c" :cy="c" :r="r" fill="none" :style="{ stroke: 'var(--track)' }" :stroke-width="stroke" />
             <circle v-for="(seg, i) in segments" :key="i" :cx="c" :cy="c" :r="r" fill="none" :stroke="seg.color"
                 :stroke-width="stroke" :stroke-dasharray="`${seg.len} ${circ - seg.len}`" :stroke-dashoffset="-seg.offset"
                 stroke-linecap="butt" :transform="`rotate(-90 ${c} ${c})`" class="seg" />

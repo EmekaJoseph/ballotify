@@ -24,7 +24,10 @@
             </div>
             <div class="footer-bottom mt-5 pt-4 d-flex flex-column flex-sm-row justify-content-between gap-2">
                 <span>© {{ year }} Ballotify. All rights reserved.</span>
-                <span>Made for fair, simple voting.</span>
+                <span class="d-flex gap-3">
+                    <NuxtLink to="/privacy" class="legal-link">Privacy</NuxtLink>
+                    <NuxtLink to="/terms" class="legal-link">Terms</NuxtLink>
+                </span>
             </div>
         </div>
     </footer>
@@ -38,7 +41,8 @@ const year = new Date().getFullYear();
 .site-footer { background: var(--night); color: #fff; }
 .footer-muted { color: rgba(255, 255, 255, .6); }
 .footer-h { font-size: .75rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: rgba(255, 255, 255, .45); margin-bottom: .85rem; }
-.site-footer a:not(.app-logo) { display: block; color: rgba(255, 255, 255, .75); padding: .25rem 0; font-weight: 500; }
-.site-footer a:not(.app-logo):hover { color: #5eead4; }
+.site-footer .legal-link { display: inline; padding: 0; color: rgba(255, 255, 255, .55); }
+.site-footer a:not(.app-logo):not(.legal-link) { display: block; color: rgba(255, 255, 255, .75); padding: .25rem 0; font-weight: 500; }
+.site-footer a:not(.app-logo):hover, .site-footer .legal-link:hover { color: #5eead4; }
 .footer-bottom { border-top: 1px solid rgba(255, 255, 255, .1); color: rgba(255, 255, 255, .45); font-size: .875rem; }
 </style>

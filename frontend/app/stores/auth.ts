@@ -13,6 +13,7 @@ export const useAuthStore = defineStore('auth', {
     getters: {
         isAuthenticated: (state) => !!state.token,
         firstName: (state) => state.user?.name?.trim().split(/\s+/)[0] ?? '',
+        isVerified: (state) => !!state.user?.email_verified_at,
     },
 
     actions: {
@@ -37,16 +38,27 @@ export const useAuthStore = defineStore('auth', {
                 const { data } = await adminApi.getMe();
                 this.user = data;
             } catch {
-                // An invalid token is cleared by the API 401 interceptor.
+                // An invalid/expired token is cleared by the API 401 interceptor.
             }
         },
 
-        async login(credentials: { email: string; password: string }) {
+        /**
+         * Returns a challenge string when the account uses two-step login;
+         * call completeTwoFactor() with it and the authenticator code.
+         */
+        async login(credentials: { email: string; password: string }): Promise<string | null> {
             const { data } = await adminApi.login(credentials);
+            if ('two_factor' in data) return data.challenge;
+            this.setSession(data.token, data.user);
+            return null;
+        },
+
+        async completeTwoFactor(challenge: string, code: string) {
+            const { data } = await adminApi.twoFactorChallenge({ challenge, code });
             this.setSession(data.token, data.user);
         },
 
-        async register(payload: { name: string; email: string; password: string }) {
+        async register(payload: { name: string; email: string; password: string; terms: boolean }) {
             const { data } = await adminApi.register(payload);
             this.setSession(data.token, data.user);
         },

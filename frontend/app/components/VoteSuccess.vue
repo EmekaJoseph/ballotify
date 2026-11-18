@@ -9,15 +9,16 @@
             in <b class="text-ink">{{ eventName }}</b>. Your code has now been used and can't vote again.
         </p>
         <div class="d-flex flex-column flex-sm-row gap-2 justify-content-center">
-            <NuxtLink v-if="resultsTo" :to="resultsTo" class="btn btn-primary"><i class="bi bi-bar-chart-line"></i> View live results</NuxtLink>
+            <NuxtLink v-if="resultsTo" :to="resultsTo" class="btn btn-primary"><i class="bi bi-bar-chart-line"></i> {{ resultsLabel }}</NuxtLink>
             <NuxtLink to="/" class="btn btn-ghost">Done</NuxtLink>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
-const props = withDefaults(defineProps<{ eventName: string; resultsTo?: string; voterName?: string | null }>(), {
+const props = withDefaults(defineProps<{ eventName: string; resultsTo?: string; resultsLabel?: string; voterName?: string | null }>(), {
     resultsTo: '',
+    resultsLabel: 'View live results',
     voterName: null,
 });
 const firstName = computed(() => props.voterName?.trim().split(/\s+/)[0] ?? '');

@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Jobs\SendVoterInvitation;
 use App\Models\Event;
-use App\Models\Vote;
 use App\Models\Voter;
+use App\Support\Audit;
 use App\Support\PhoneNumber;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -53,6 +53,7 @@ class VoterController extends Controller
             'phone' => $data['phone'] ?? null,
             'code' => $data['code'] ?? $this->uniqueCodes($event, 1)[0],
         ]);
+        Audit::log($event, 'voters.added', 'Voter added: ' . ($voter->name ?: 'anonymous code'));
 
         return response()->json($voter, 201);
     }
@@ -60,40 +61,54 @@ class VoterController extends Controller
     public function update(Request $request, Event $event, Voter $voter)
     {
         Gate::authorize('manage', $event);
+        // Secret ballot: a cast vote can't be identified, so it can't be undone,
+        // and organisers can't mark codes as used either. (Checked explicitly:
+        // Laravel's "prohibited" rule lets an empty/null value through.)
+        if ($request->exists('used_at')) {
+            throw ValidationException::withMessages(['used_at' => ['Votes are secret, so a code that has voted can’t be reset.']]);
+        }
         $this->normalizeInput($request);
         $data = $request->validate([
             'name' => ['sometimes', 'nullable', 'string', 'max:255'],
             'email' => ['sometimes', 'nullable', 'string', 'email:rfc', 'max:255'],
             'phone' => ['sometimes', 'nullable', 'string', 'max:32', $this->phoneRule()],
             'code' => ['sometimes', 'string', 'min:4', 'max:64', Rule::unique('voters', 'code')->where('event_id', $event->id)->ignore($voter->id)],
-            'used_at' => ['sometimes', 'nullable', 'date'],
         ]);
 
-        DB::transaction(function () use ($data, $voter) {
-            foreach (['name', 'email', 'phone', 'code'] as $field) {
-                if (array_key_exists($field, $data)) {
-                    $voter->{$field} = $data[$field];
-                }
+        foreach (['name', 'email', 'phone', 'code'] as $field) {
+            if (array_key_exists($field, $data)) {
+                $voter->{$field} = $data[$field];
             }
-            if (array_key_exists('used_at', $data)) {
-                // Re-enabling a code discards that voter's previous ballot so the
-                // tally never counts them twice.
-                if ($data['used_at'] === null && $voter->used_at !== null) {
-                    Vote::where('voter_id', $voter->id)->delete();
-                }
-                $voter->used_at = $data['used_at'];
-            }
-            $voter->save();
-        });
+        }
+        $codeChanged = $voter->isDirty('code');
+        $voter->save();
+        if ($codeChanged) {
+            Audit::log($event, 'voters.code_changed', 'Voting code replaced for ' . ($voter->name ?: 'an anonymous voter'));
+        }
 
         return response()->json($voter);
     }
 
+    /** Deleting a voter who already voted leaves their (anonymous) vote counted. */
     public function destroy(Event $event, Voter $voter)
     {
         Gate::authorize('manage', $event);
         $voter->delete();
+        Audit::log($event, 'voters.deleted', 'Voter removed: ' . ($voter->name ?: 'anonymous code') . ($voter->used_at ? ' (had already voted; vote stays counted)' : ''));
+
         return response()->json([], 204);
+    }
+
+    /** Privacy: wipe every voter's email and phone for this event (codes and turnout are kept). */
+    public function eraseContacts(Event $event)
+    {
+        Gate::authorize('manage', $event);
+        $count = Voter::where('event_id', $event->id)
+            ->where(fn ($q) => $q->whereNotNull('email')->orWhereNotNull('phone'))
+            ->update(['email' => null, 'phone' => null, 'invite_error' => null]);
+        Audit::log($event, 'voters.contacts_erased', "Contact details erased for {$count} voter" . ($count === 1 ? '' : 's'));
+
+        return response()->json(['erased' => $count]);
     }
 
     /** Create N anonymous codes. */
@@ -104,7 +119,10 @@ class VoterController extends Controller
             'count' => ['required', 'integer', 'min:1', 'max:' . self::MAX_BATCH],
         ]);
 
-        return response()->json(['voters' => $this->createMany($event, array_fill(0, $data['count'], []))], 201);
+        $created = $this->createMany($event, array_fill(0, $data['count'], []));
+        Audit::log($event, 'voters.generated', "{$data['count']} anonymous code" . ($data['count'] === 1 ? '' : 's') . ' generated');
+
+        return response()->json(['voters' => $created], 201);
     }
 
     /**
@@ -147,7 +165,11 @@ class VoterController extends Controller
             throw ValidationException::withMessages(array_slice($errors, 0, 20, true));
         }
 
-        return response()->json(['voters' => $this->createMany($event, $rows)], 201);
+        $created = $this->createMany($event, $rows);
+        $n = count($created);
+        Audit::log($event, 'voters.imported', "{$n} voter" . ($n === 1 ? '' : 's') . ' imported');
+
+        return response()->json(['voters' => $created], 201);
     }
 
     /**
@@ -210,6 +232,11 @@ class VoterController extends Controller
                 if (in_array('sms', $channels, true) && $voter->phone) $counts['sms']++;
             }
         });
+
+        if ($counts['queued'] > 0) {
+            Audit::log($event, 'voters.invited', "Voting codes sent to {$counts['queued']} voter" . ($counts['queued'] === 1 ? '' : 's')
+                . ' by ' . implode(' and ', array_map(fn ($c) => $c === 'sms' ? 'SMS' : 'email', $channels)));
+        }
 
         return response()->json($counts + ['queue' => config('queue.default')]);
     }

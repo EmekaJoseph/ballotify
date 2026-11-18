@@ -47,7 +47,8 @@ return [
     |
     */
 
-    'expiration' => null,
+    // Minutes a login stays valid (default 7 days). Expired tokens are pruned daily.
+    'expiration' => (int) env('SANCTUM_EXPIRATION', 60 * 24 * 7) ?: null,
 
     /*
     |--------------------------------------------------------------------------

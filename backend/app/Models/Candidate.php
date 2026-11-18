@@ -12,6 +12,14 @@ class Candidate extends Model
 
     protected $fillable = ['event_id', 'category_id', 'name', 'image_path'];
 
+    /**
+     * The running vote total is never serialised by default: ballots and admin
+     * lists must not leak results. Results endpoints read it explicitly.
+     */
+    protected $hidden = ['votes'];
+
+    protected $casts = ['votes' => 'integer'];
+
     protected $appends = ['image_url'];
 
     /** Absolute URL of the candidate photo (served from public/), or null. */
@@ -30,4 +38,3 @@ class Candidate extends Model
         return $this->belongsTo(Category::class);
     }
 }
-

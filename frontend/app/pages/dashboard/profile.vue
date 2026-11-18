@@ -41,7 +41,8 @@
                 </form>
 
                 <form class="card-b pad" novalidate @submit.prevent="savePassword">
-                    <h3 class="h6 fw-800 mb-4">Change password</h3>
+                    <h3 class="h6 fw-800 mb-1">Change password</h3>
+                    <p class="small text-muted mb-4">You’ll stay signed in here; other devices are signed out.</p>
                     <div class="row g-3">
                         <div class="col-12">
                             <label for="p-current" class="form-label">Current password</label>
@@ -68,6 +69,8 @@
                         </button>
                     </div>
                 </form>
+
+                <TwoFactorCard />
             </div>
         </div>
     </div>

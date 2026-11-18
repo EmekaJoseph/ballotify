@@ -46,6 +46,14 @@
                 </div>
                 <div v-if="fieldErrors.confirm" class="field-error">{{ fieldErrors.confirm }}</div>
             </div>
+            <div class="form-check mb-4">
+                <input id="terms" v-model="form.terms" class="form-check-input" type="checkbox" :class="{ 'is-invalid': fieldErrors.terms }" :disabled="loading" />
+                <label class="form-check-label small text-muted" for="terms">
+                    I agree to the <NuxtLink to="/terms" target="_blank">Terms of Service</NuxtLink>
+                    and <NuxtLink to="/privacy" target="_blank">Privacy Policy</NuxtLink>.
+                </label>
+                <div v-if="fieldErrors.terms" class="field-error">{{ fieldErrors.terms }}</div>
+            </div>
             <button type="submit" class="btn btn-primary btn-lg w-100" :disabled="loading">
                 <span v-if="loading" class="spinner-border spinner-border-sm"></span>
                 {{ loading ? 'Creating account…' : 'Create account' }}
@@ -68,7 +76,7 @@ const auth = useAuthStore();
 const loading = ref(false);
 const error = ref('');
 const fieldErrors = ref<Record<string, string>>({});
-const form = reactive({ name: '', email: '', password: '', confirm: '' });
+const form = reactive({ name: '', email: '', password: '', confirm: '', terms: false });
 
 const strength = computed(() => {
     const p = form.password;
@@ -91,6 +99,7 @@ function validate(): boolean {
     if (!/^\S+@\S+\.\S+$/.test(form.email)) errs.email = 'Enter a valid email address.';
     if (form.password.length < 8) errs.password = 'Password must be at least 8 characters.';
     if (form.confirm !== form.password) errs.confirm = 'Passwords do not match.';
+    if (!form.terms) errs.terms = 'Please accept the Terms and Privacy Policy to continue.';
     fieldErrors.value = errs;
     return Object.keys(errs).length === 0;
 }
@@ -100,8 +109,8 @@ async function submit() {
     if (!validate()) return;
     loading.value = true;
     try {
-        await auth.register({ name: form.name, email: form.email, password: form.password });
-        useToast().success('Welcome to Ballotify! Create your first event.');
+        await auth.register({ name: form.name, email: form.email, password: form.password, terms: form.terms });
+        useToast().success('Welcome to Ballotify! We sent you an email to confirm your address.');
         await navigateTo('/dashboard/events/create');
     } catch (e) {
         fieldErrors.value = apiFieldErrors(e);

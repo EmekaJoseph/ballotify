@@ -8,20 +8,15 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
+/**
+ * "The tally changed" signal for live results pages. It deliberately carries no
+ * ballot content: the page refetches the totals.
+ */
 class VoteCast implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public int $eventId;
-    public array $choices;
-    public string $time;
-
-    public function __construct(int $eventId, array $choices)
-    {
-        $this->eventId = $eventId;
-        $this->choices = $choices;
-        $this->time = now()->toISOString();
-    }
+    public function __construct(public int $eventId) {}
 
     public function broadcastOn(): array
     {
@@ -35,11 +30,6 @@ class VoteCast implements ShouldBroadcastNow
 
     public function broadcastWith(): array
     {
-        return [
-            'event_id' => $this->eventId,
-            'choices' => $this->choices,
-            'time' => $this->time,
-        ];
+        return ['event_id' => $this->eventId];
     }
 }
-

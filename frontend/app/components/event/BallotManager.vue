@@ -1,12 +1,16 @@
 <template>
     <div>
-        <div v-if="(event.voted_count ?? 0) > 0" class="alert border-0 rounded-4 d-flex gap-2 small mb-4" style="background: var(--warning-50); color: #92400e">
-            <i class="bi bi-exclamation-triangle-fill mt-1"></i>
-            <span>Votes have already been cast. Deleting a category or candidate also deletes the votes it received.</span>
+        <div v-if="locked" class="lock-banner mb-4">
+            <i class="bi bi-lock-fill"></i>
+            <span>
+                <b>{{ event.status === 'completed' ? 'Voting has closed.' : 'Voting has started.' }}</b>
+                The ballot is locked, so categories and candidates can’t be added, removed or moved.
+                You can still fix names and photos; every change is recorded in the Activity tab.
+            </span>
         </div>
 
         <!-- Add category -->
-        <form class="card-b pad mb-4 d-flex flex-column flex-sm-row gap-2" @submit.prevent="addCategory">
+        <form v-if="!locked" class="card-b pad mb-4 d-flex flex-column flex-sm-row gap-2" @submit.prevent="addCategory">
             <div class="input-icon flex-grow-1">
                 <i class="bi bi-folder-plus"></i>
                 <input v-model.trim="newCategory" type="text" class="form-control" maxlength="255"
@@ -34,22 +38,22 @@
                             <div class="small text-muted">{{ candidatesOf(cat.id).length }} candidate{{ candidatesOf(cat.id).length === 1 ? '' : 's' }}</div>
                         </div>
                         <div class="d-flex gap-1">
-                            <button class="btn btn-soft btn-sm" @click="openCandidate(null, cat.id)"><i class="bi bi-person-plus"></i> <span class="d-none d-sm-inline">Candidate</span></button>
+                            <button v-if="!locked" class="btn btn-soft btn-sm" @click="openCandidate(null, cat.id)"><i class="bi bi-person-plus"></i> <span class="d-none d-sm-inline">Candidate</span></button>
                             <button class="btn btn-ghost btn-icon btn-sm" title="Rename" aria-label="Rename category" @click="editingCat = cat.id; catDraft = cat.name"><i class="bi bi-pencil"></i></button>
-                            <button class="btn btn-ghost btn-icon btn-sm text-danger" title="Delete" aria-label="Delete category" @click="removeCategory(cat)"><i class="bi bi-trash"></i></button>
+                            <button v-if="!locked" class="btn btn-ghost btn-icon btn-sm text-danger" title="Delete" aria-label="Delete category" @click="removeCategory(cat)"><i class="bi bi-trash"></i></button>
                         </div>
                     </template>
                 </header>
 
                 <div v-if="!candidatesOf(cat.id).length" class="p-4 text-center small text-muted">
-                    No candidates yet. <button class="btn btn-link btn-sm p-0 align-baseline" @click="openCandidate(null, cat.id)">Add the first one</button>
+                    No candidates<template v-if="!locked"> yet. <button class="btn btn-link btn-sm p-0 align-baseline" @click="openCandidate(null, cat.id)">Add the first one</button></template>.
                 </div>
                 <ul v-else class="list-unstyled mb-0">
                     <li v-for="cand in candidatesOf(cat.id)" :key="cand.id" class="cand-row">
                         <CandidateAvatar :name="cand.name" :src="cand.image_url" />
                         <span class="fw-semibold text-ink flex-grow-1 min-w-0 text-break">{{ cand.name }}</span>
                         <button class="btn btn-ghost btn-icon btn-sm" title="Edit" aria-label="Edit candidate" @click="openCandidate(cand)"><i class="bi bi-pencil"></i></button>
-                        <button class="btn btn-ghost btn-icon btn-sm text-danger" title="Delete" aria-label="Delete candidate" @click="removeCandidate(cand)"><i class="bi bi-trash"></i></button>
+                        <button v-if="!locked" class="btn btn-ghost btn-icon btn-sm text-danger" title="Delete" aria-label="Delete candidate" @click="removeCandidate(cand)"><i class="bi bi-trash"></i></button>
                     </li>
                 </ul>
             </section>
@@ -75,7 +79,7 @@
                 </div>
                 <div>
                     <label for="cand-cat" class="form-label">Category</label>
-                    <select id="cand-cat" v-model.number="modal.categoryId" class="form-select">
+                    <select id="cand-cat" v-model.number="modal.categoryId" class="form-select" :disabled="locked" :title="locked ? 'Locked while voting is under way' : ''">
                         <option v-for="c in categories" :key="c.id" :value="c.id">{{ c.name }}</option>
                     </select>
                 </div>
@@ -107,6 +111,7 @@ const editingCat = ref<number | null>(null);
 const catDraft = ref('');
 
 const categories = computed<Category[]>(() => props.event.categories ?? []);
+const locked = computed(() => props.event.ballot_locked);
 const candidatesOf = (catId: number): Candidate[] => (props.event.candidates ?? []).filter(c => c.category_id === catId);
 
 async function run(action: () => Promise<unknown>, success: string) {
@@ -139,7 +144,7 @@ async function removeCategory(cat: Category) {
     const n = candidatesOf(cat.id).length;
     const ok = await confirm({
         title: `Delete “${cat.name}”?`,
-        message: n ? `Its ${n} candidate${n === 1 ? '' : 's'} and any votes in this category will be deleted too.` : 'This category will be removed from the ballot.',
+        message: n ? `Its ${n} candidate${n === 1 ? '' : 's'} will be deleted too.` : 'This category will be removed from the ballot.',
         confirmText: 'Delete category',
         danger: true,
     });
@@ -219,7 +224,7 @@ async function saveCandidate() {
 async function removeCandidate(cand: Candidate) {
     const ok = await confirm({
         title: `Remove ${cand.name}?`,
-        message: 'The candidate and any votes they received will be deleted.',
+        message: 'They will be removed from the ballot.',
         confirmText: 'Remove',
         danger: true,
     });
@@ -230,6 +235,8 @@ onBeforeUnmount(revokePreview);
 </script>
 
 <style scoped>
+.lock-banner { display: flex; gap: .7rem; align-items: flex-start; padding: .9rem 1.1rem; border-radius: var(--radius); background: var(--surface-2); border: 1px solid var(--line); color: var(--ink-2); font-size: .9rem; }
+.lock-banner > .bi { color: var(--muted); margin-top: 2px; }
 .cand-row { display: flex; align-items: center; gap: .85rem; padding: .75rem 1.25rem; border-bottom: 1px solid var(--line); }
 .cand-row:last-child { border-bottom: 0; }
 .cand-row:hover { background: var(--surface-2); }

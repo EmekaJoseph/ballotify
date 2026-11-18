@@ -16,24 +16,32 @@ class Event extends Model
     public const STATUS_ACTIVE = 'active';
     public const STATUS_COMPLETED = 'completed';
 
+    public const RESULTS_LIVE = 'live';
+    public const RESULTS_AFTER_CLOSE = 'after_close';
+    public const RESULTS_PRIVATE = 'private';
+    public const RESULTS_OPTIONS = [self::RESULTS_LIVE, self::RESULTS_AFTER_CLOSE, self::RESULTS_PRIVATE];
+
     protected $fillable = [
         'user_id',
         'event_type_id',
         'name',
         'description',
         'link_token',
-        'expected_voters',
         'starts_at',
         'ends_at',
+        'results_visibility',
     ];
 
     protected $casts = [
         'starts_at' => 'datetime',
         'ends_at' => 'datetime',
-        'expected_voters' => 'integer',
     ];
 
-    protected $appends = ['status', 'selection_mode'];
+    protected $attributes = [
+        'results_visibility' => self::RESULTS_AFTER_CLOSE,
+    ];
+
+    protected $appends = ['status', 'selection_mode', 'ballot_locked'];
 
     protected $hidden = ['type'];
 
@@ -62,9 +70,9 @@ class Event extends Model
         return $this->hasMany(Voter::class);
     }
 
-    public function votes(): HasMany
+    public function auditLogs(): HasMany
     {
-        return $this->hasMany(Vote::class);
+        return $this->hasMany(AuditLog::class);
     }
 
     protected function status(): Attribute
@@ -87,8 +95,36 @@ class Event extends Model
         return Attribute::get(fn () => $this->type?->key ?? 'single');
     }
 
+    /**
+     * Once the first ballot is cast (or voting has closed) the ballot structure is
+     * frozen: no adding/removing/moving categories or candidates, no change of
+     * voting style. Cosmetic fixes (names, photos) stay possible and are audited.
+     */
+    protected function ballotLocked(): Attribute
+    {
+        return Attribute::get(fn () => $this->status === self::STATUS_COMPLETED || $this->hasVotes());
+    }
+
+    public function hasVotes(): bool
+    {
+        if (array_key_exists('voted_count', $this->attributes)) {
+            return (int) $this->attributes['voted_count'] > 0;
+        }
+        return $this->voters()->whereNotNull('used_at')->exists();
+    }
+
     public function isOpen(): bool
     {
         return $this->status === self::STATUS_ACTIVE;
+    }
+
+    /** Whether the public results page may show the tally right now. */
+    public function resultsArePublic(): bool
+    {
+        return match ($this->results_visibility) {
+            self::RESULTS_LIVE => true,
+            self::RESULTS_AFTER_CLOSE => $this->status === self::STATUS_COMPLETED,
+            default => false,
+        };
     }
 }

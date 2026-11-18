@@ -31,30 +31,14 @@
                         </div>
                     </div>
                     <div class="col-lg-6 fade-up" style="animation-delay: .12s">
-                        <div class="hero-art">
-                            <img src="/hero_illustration.png" alt="Voters casting ballots into a secure Ballotify ballot box" width="640" height="640" />
-                            <div class="float-card fc-1">
-                                <span class="icon-tile green"><i class="bi bi-check2-circle"></i></span>
-                                <div>
-                                    <div class="fw-bold small text-ink">Vote recorded</div>
-                                    <div class="small text-muted">Code K7M2·QX9P</div>
-                                </div>
-                            </div>
-                            <div class="float-card fc-2">
-                                <div class="small-caps mb-2">President</div>
-                                <div class="d-flex align-items-center gap-2 mb-1"><span class="small fw-semibold flex-grow-1">Ada</span><span class="small fw-bold">62%</span></div>
-                                <div class="bar slim mb-2"><span style="width: 62%"></span></div>
-                                <div class="d-flex align-items-center gap-2 mb-1"><span class="small fw-semibold flex-grow-1">Bola</span><span class="small fw-bold">38%</span></div>
-                                <div class="bar slim"><span style="width: 38%"></span></div>
-                            </div>
-                        </div>
+                        <HeroMockup />
                     </div>
                 </div>
             </div>
         </section>
 
         <!-- Use cases strip -->
-        <section class="border-bottom bg-white">
+        <section class="border-bottom bg-surface">
             <div class="container py-4">
                 <div class="d-flex flex-wrap justify-content-center gap-3 gap-md-5 use-cases">
                     <span><i class="bi bi-mortarboard"></i> Student unions</span>
@@ -87,7 +71,7 @@
         </section>
 
         <!-- How it works -->
-        <section id="how" class="py-6 bg-white border-top border-bottom">
+        <section id="how" class="py-6 bg-surface border-top border-bottom">
             <div class="container">
                 <div class="text-center mx-auto mb-5" style="max-width: 640px">
                     <span class="eyebrow mb-3">How it works</span>
@@ -114,7 +98,7 @@
                         <h2 class="section-title mb-3">Every code counts once</h2>
                         <p class="lead-muted mb-4">
                             The server checks every ballot, not the browser. Voting windows, one-vote-per-code and
-                            category rules can't be bypassed.
+                            category rules can't be bypassed, and code guessing is rate-limited.
                         </p>
                         <NuxtLink to="/demo/results" class="btn btn-soft">See demo results <i class="bi bi-arrow-right"></i></NuxtLink>
                     </div>
@@ -179,10 +163,10 @@ const steps = [
 ];
 
 const integrity = [
+    { icon: 'bi-incognito', title: 'Truly secret ballot', text: 'Only totals are stored. Nobody, not even the organiser, can see how anyone voted.' },
     { icon: 'bi-shield-lock', title: 'Single-use codes', text: 'A code is locked the instant it votes, even if two people submit at the same moment.' },
-    { icon: 'bi-clock-history', title: 'Enforced time window', text: 'Ballots outside the voting window are rejected by the server.' },
-    { icon: 'bi-speedometer2', title: 'Brute-force limits', text: 'Code guessing is rate-limited per network and event.' },
-    { icon: 'bi-incognito', title: 'Anonymous results', text: 'Public results show totals only, never who voted for whom.' },
+    { icon: 'bi-lock', title: 'Locked ballot + audit log', text: 'The ballot freezes at the first vote, and every organiser change is logged and disclosed.' },
+    { icon: 'bi-eye-slash', title: 'Results when you choose', text: 'Publish live, after voting closes, or keep results private.' },
 ];
 </script>
 
@@ -202,16 +186,6 @@ const integrity = [
 .eyebrow.dark { background: rgba(255, 255, 255, .08); color: #99f6e4; border-color: rgba(255, 255, 255, .12); }
 .hero-points span { color: rgba(255, 255, 255, .7); font-weight: 600; font-size: .92rem; display: inline-flex; gap: .45rem; align-items: center; }
 .hero-points .bi { color: #5eead4; }
-.hero-art { position: relative; max-width: 540px; margin: 0 auto; }
-.hero-art img { width: 100%; height: auto; border-radius: 28px; box-shadow: 0 40px 80px -30px rgba(0, 0, 0, .7); border: 1px solid rgba(255, 255, 255, .08); }
-.float-card {
-    position: absolute; background: rgba(255, 255, 255, .96); border-radius: 16px; padding: .85rem 1rem;
-    box-shadow: var(--shadow-lg); display: flex; gap: .7rem; align-items: center; animation: bob 6s ease-in-out infinite;
-}
-.fc-1 { left: -4%; bottom: 10%; }
-.fc-2 { right: -4%; top: 8%; width: 190px; display: block; animation-delay: -3s; }
-@media (max-width: 575.98px) { .fc-1 { left: 2%; bottom: 4%; } .fc-2 { right: 2%; top: 4%; width: 160px; } }
-@keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
 .use-cases span { color: var(--muted); font-weight: 600; display: inline-flex; align-items: center; gap: .5rem; }
 .use-cases .bi { color: var(--brand-600); }
 .step { padding: 1.75rem; border-radius: var(--radius-lg); background: var(--surface-2); border: 1px solid var(--line); }
