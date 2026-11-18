@@ -95,21 +95,28 @@ VOTERS take part from any phone or laptop using a one-time code.
          Voting style
          +-----------------------------+   +-----------------------------+
          | (o) One per category        |   | [x] Multiple choice         |
-         |     pick 1 President,       |   |     pick any number of      |
-         |     1 Treasurer ...         |   |     nominees per category   |
+         |     pick 1 President,       |   |     pick several nominees;  |
+         |     1 Treasurer ...         |   |     optional "up to N" per  |
+         |                             |   |     category                |
          +-----------------------------+   +-----------------------------+
+
+       Already ran this vote last year? Settings -> "Duplicate event" copies
+       the whole ballot (no voters, votes or dates).
 
    (2) BUILD THE BALLOT  (Ballot tab)
 
          Event: Student Union Elections
            |
            +-- Category: President
-           |      +-- Candidate: Ada Obi      [photo]
-           |      +-- Candidate: Bola Ade     [photo]
+           |      +-- Candidate: Ada Obi      [photo]  "Final-year Law student"
+           |      +-- Candidate: Bola Ade     [photo]   (description is optional)
            |
            +-- Category: Treasurer
                   +-- Candidate: Chidi Eze
                   +-- Candidate: Dayo Musa
+
+         Many candidates? "Import candidates" takes a spreadsheet with
+         Category, Name, Description columns and creates missing categories.
 
    (3) ISSUE VOTER CODES  (Voters tab)
 
@@ -147,6 +154,12 @@ VOTERS take part from any phone or laptop using a one-time code.
                        cast vote can't be found or undone.
          Results tab:  the organiser's view, whatever the public setting.
          Activity tab: every change made to the event, in order.
+
+   (6) ANNOUNCE
+         Results tab -> [CSV] spreadsheet of the full tally
+                     -> [Report / PDF] a printable results report with the
+                        integrity statement and signature lines for a
+                        returning officer and a witness.
 
    Once the FIRST vote is cast the ballot is LOCKED: no adding, removing
    or moving categories/candidates. Name and photo fixes are still allowed
@@ -310,7 +323,8 @@ VOTERS take part from any phone or laptop using a one-time code.
 
    [x] One vote per code, guaranteed under heavy concurrency (row lock).
    [x] Voting window enforced by the server, not just hidden in the page.
-   [x] Choices validated against the event, the category and the voting style.
+   [x] Choices validated against the event, the category, the voting style
+       and the category's pick limit.
    [x] Brute-force protection on code entry and vote submission.
    [x] Organisers can only see and change their own events (others get 404).
    [x] Nested items can't be edited through another event's URL.
@@ -325,5 +339,8 @@ VOTERS take part from any phone or laptop using a one-time code.
    [x] Voter contact details erased automatically after the event.
    [x] Uploaded photos are type-checked and size-limited (5 MB).
    [x] CSV exports are protected against spreadsheet formula injection.
+   [x] The platform owner can suspend an abusive organiser: they are signed
+       out, can't sign in, and their voting/results links stop working.
+       The admin area never shows ballots, voter lists or codes.
 
 ================================================================================

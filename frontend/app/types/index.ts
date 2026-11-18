@@ -7,6 +7,9 @@ export interface User {
     email: string;
     email_verified_at: string | null;
     two_factor_enabled: boolean;
+    /** Platform owner: can open the admin area. */
+    is_admin?: boolean;
+    suspended_at?: string | null;
     created_at?: string;
 }
 
@@ -25,6 +28,8 @@ export interface Category {
     id: number;
     event_id: number;
     name: string;
+    /** Multiple-choice events: most picks allowed (null = no limit). */
+    max_choices?: number | null;
 }
 
 export interface Candidate {
@@ -146,4 +151,55 @@ export interface MessagingStatus {
     email: { live: boolean; provider: string };
     sms: { live: boolean; provider: string };
     queue: string;
+}
+
+// ---------------------------------------------------------------- platform admin
+
+export interface Paginated<T> {
+    data: T[];
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+}
+
+export interface PlatformOverview {
+    users: number;
+    users_last_30_days: number;
+    suspended_users: number;
+    events: number;
+    events_live: number;
+    voters: number;
+    ballots_cast: number;
+    votes_counted: number;
+}
+
+export interface PlatformUser extends User {
+    events_count: number;
+}
+
+export interface PlatformEvent {
+    id: number;
+    name: string;
+    status: EventStatus;
+    selection_mode: SelectionMode;
+    results_visibility: ResultsVisibility;
+    starts_at: string | null;
+    ends_at: string | null;
+    created_at: string;
+    voters_count: number;
+    voted_count: number;
+    user: { id: number; name: string; email: string; suspended_at: string | null } | null;
+}
+
+export interface CandidateImportRow {
+    category: string;
+    name: string;
+    description?: string | null;
+}
+
+export interface CandidateImportResult {
+    created: number;
+    categories_created: number;
+    skipped: { row: number; reason: string }[];
 }

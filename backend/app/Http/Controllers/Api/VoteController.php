@@ -22,7 +22,7 @@ class VoteController extends Controller
             'choices.*.candidate_id' => ['required', 'integer'],
         ]);
 
-        $event = Event::with('type')->where('link_token', $token)->firstOrFail();
+        $event = Event::with('type')->publicToken($token)->firstOrFail();
 
         if (! $event->isOpen()) {
             return response()->json([
@@ -56,10 +56,19 @@ class VoteController extends Controller
             }
         }
 
+        $perCategory = array_count_values(array_column($cleanChoices, 'category_id'));
         if ($event->selection_mode === 'single') {
-            $perCategory = array_count_values(array_column($cleanChoices, 'category_id'));
             if (max($perCategory) > 1) {
                 return response()->json(['message' => 'Only one candidate per category is allowed'], 422);
+            }
+        } else {
+            foreach ($perCategory as $categoryId => $count) {
+                $limit = $categories[$categoryId]->max_choices;
+                if ($limit && $count > $limit) {
+                    return response()->json([
+                        'message' => "You can pick at most {$limit} in “{$categories[$categoryId]->name}”.",
+                    ], 422);
+                }
             }
         }
 

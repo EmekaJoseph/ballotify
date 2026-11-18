@@ -14,14 +14,17 @@
 
 | For organisers                                                     | For voters                             |
 | ------------------------------------------------------------------ | -------------------------------------- |
-| Create events with categories and candidates (with photos)         | Open one link on any phone or laptop   |
-| Choose **single choice** (one per category) or **multiple choice** | Enter a personal one-time code         |
+| Create events with categories and candidates (photos, short descriptions) | Open one link on any phone or laptop   |
+| Choose **single choice** or **multiple choice**, with an optional "pick up to N" per category | Enter a personal one-time code         |
 | Schedule when voting opens and closes, or close it early           | Pick candidates, review, submit        |
 | Generate thousands of voter codes, or import a name list           | Confirmation screen, then live results |
 | Export codes to CSV, or print voter slips with a QR code           |                                        |
 | Email or text codes to voters; track who has voted                 | Results page (when the organiser publishes it) |
 | Choose when results are public: live, after close, or never        |                                        |
+| Import candidates from a spreadsheet; duplicate an event            |                                        |
+| Results as CSV, or a printable signed report (save as PDF)         |                                        |
 | Activity log of every change; two-step login; dark mode            |                                        |
+| **Platform admin:** see every organiser and event, suspend abuse    |                                        |
 
 **Integrity guarantees, all enforced on the server:**
 
@@ -88,7 +91,7 @@ Or run all three at once with `composer dev`.
 
 No queue worker is needed. With the default `QUEUE_CONNECTION=sync`, invitations are sent right after you click **Send**. For very large lists you can switch to `QUEUE_CONNECTION=database` and run `composer dev`, which starts the API plus a background worker.
 
-The demo login is `admin@demo.com` / `password`. The demo voter codes are written to `storage/app/private/seed_voter_codes.json` (the first event's codes look like `E1-0150`).
+The demo login is `admin@demo.com` / `password`. It is also the platform admin (sidebar → **Admin**). To make another account an admin, run `php artisan ballotify:make-admin someone@example.com`. The demo voter codes are written to `storage/app/private/seed_voter_codes.json` (the first event's codes look like `E1-0150`).
 
 > **Upgrading from an older copy?** The schema was consolidated, so rebuild the database with `php artisan migrate:fresh --seed`. This **deletes all existing data**.
 
@@ -155,7 +158,7 @@ A provider that fails never breaks the app:
 ## Testing
 
 ```bash
-cd backend  && php artisan test                                    # 53 feature tests
+cd backend  && php artisan test                                    # 66 feature tests
 cd frontend && npx nuxi prepare && npx vue-tsc --noEmit -p .nuxt/tsconfig.app.json   # type check
 cd frontend && npm run build                                       # production build
 ```

@@ -67,7 +67,8 @@ definePageMeta({ layout: 'ballot', wide: true });
 const POLL_MS = 15000;
 const route = useRoute();
 const token = String(route.params.token ?? '');
-const { $echo } = useNuxtApp();
+const { $live } = useNuxtApp();
+let echo: ReturnType<typeof $live.acquire> = null;
 
 const results = ref<EventResults | null>(null);
 const loading = ref(true);
@@ -141,10 +142,13 @@ function scheduleRefresh() {
 
 function startLive() {
     if (!results.value || results.value.event.status !== 'active') return;
-    if ($echo && !channelName) {
-        channelName = `event.${results.value.event.id}`;
-        $echo.channel(channelName).listen('.vote.cast', scheduleRefresh);
-        live.value = true;
+    if (!channelName) {
+        echo = $live.acquire();
+        if (echo) {
+            channelName = `event.${results.value.event.id}`;
+            echo.channel(channelName).listen('.vote.cast', scheduleRefresh);
+            live.value = true;
+        }
     }
     // Polling also runs as a safety net (slower when sockets are connected).
     clearInterval(pollTimer);
@@ -190,7 +194,11 @@ onBeforeUnmount(() => {
     clearInterval(tickTimer);
     clearInterval(hiddenTimer);
     clearTimeout(debounce);
-    if ($echo && channelName) $echo.leave(channelName);
+    if (echo) {
+        if (channelName) echo.leave(channelName);
+        $live.release();
+        echo = null;
+    }
     document.removeEventListener('visibilitychange', onVisible);
     document.removeEventListener('fullscreenchange', onFullscreen);
 });

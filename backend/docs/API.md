@@ -6,7 +6,7 @@
 - **Errors:**
   - `422` validation: `{ message, errors: { field: [msg] } }`
   - `401` not signed in, or login expired
-  - `403` event not open / results not published / email not confirmed
+  - `403` event not open / results not published / email not confirmed / account suspended (`{ message, suspended: true }`)
   - `404` not found, or not your event
   - `409` the ballot is locked (voting has started): `{ message, locked: true }`
   - `429` rate limited
@@ -43,6 +43,7 @@ Sign-in, registration, two-factor and password-reset endpoints are limited to 10
 | GET | `/events/{id}/voting-link` | `{ token, public_url, results_url }` (frontend URLs) |
 | GET | `/events/{id}/results` | The organiser's view of the tally, whatever the public visibility setting |
 | GET | `/events/{id}/activity` | Activity log, newest first: `[ { action, description, during_voting, created_at, user } ]` |
+| POST | `/events/{id}/duplicate` | `201` new event. Copies settings, categories (with pick limits) and candidates (with descriptions and photos). Voters, votes, dates and the activity log are not copied. |
 
 **Event body:**
 - `name` (string, required on create)
@@ -62,8 +63,10 @@ Sign-in, registration, two-factor and password-reset endpoints are limited to 10
 | Method | Path | Body |
 |---|---|---|
 | GET | `/events/{id}/categories` | |
-| POST | `/events/{id}/categories` | `name` (unique per event). Returns `409` when the ballot is locked. |
-| PATCH | `/events/{id}/categories/{categoryId}` | `name`. Allowed while locked, and logged. |
+| POST | `/events/{id}/categories` | `name` (unique per event), `max_choices?` (1–1000, or null for no limit). Returns `409` when the ballot is locked. |
+| PATCH | `/events/{id}/categories/{categoryId}` | `name?`, `max_choices?`. Renaming is allowed while locked (and logged); changing `max_choices` returns `409` when locked. |
+
+`max_choices` only applies to `multiple` events: it's the most candidates a voter may pick in that category. Categories and candidates are always returned in the order they were added.
 | DELETE | `/events/{id}/categories/{categoryId}` | Also deletes its candidates. Returns `409` when locked. |
 
 ## Candidates (organiser)
@@ -76,6 +79,7 @@ These endpoints take `multipart/form-data`, because they can include a photo.
 | POST | `/events/{id}/candidates` | `category_id, name, description?` (max 280 chars), `image?` (jpg/png/webp/gif, max 5 MB). Returns `409` when locked. |
 | POST or PATCH | `/events/{id}/candidates/{candidateId}` | `category_id?, name?, description?, image?, remove_image?`. Name, description and photo changes are allowed while locked (and logged). Send an empty `description` to clear it. Changing `category_id` returns `409` when locked. |
 | DELETE | `/events/{id}/candidates/{candidateId}` | Also deletes the photo. Returns `409` when locked. |
+| POST | `/events/{id}/candidates/import` | JSON `candidates: [ { category, name, description? } ]` (max 2000). Missing categories are created (matched case-insensitively). Names already in a category are skipped. Returns `201 { created, categories_created, skipped: [ { row, reason } ] }`, or `409` when locked. |
 
 Names are unique within a category. Candidate objects include `image_url` (an absolute URL, or null). They never include vote totals; only the results endpoints return those. Use **POST** for updates that include a file, because PHP does not parse multipart bodies on PATCH.
 
@@ -124,12 +128,24 @@ How codes behave:
 **How a ballot is processed:** the server checks each of these before recording anything.
 - The event is inside its voting window.
 - Every candidate belongs to the event and to the stated category.
-- In `single` mode, there is at most one pick per category.
+- In `single` mode, there is at most one pick per category. In `multiple` mode, no more than the category's `max_choices`.
 - The code exists and is unused. The check runs under a row lock in the same transaction.
 
 **What gets stored (secret ballot):** each chosen candidate's total goes up by one, and the code is marked as used. No ballot row, choice, timestamp or IP is stored that could link the vote to the voter.
 
 **Rate limits:** code validation and voting allow 30 requests per minute per IP per event. Public reads allow 120 per minute per IP.
+
+## Platform admin
+
+For accounts with `is_admin` (grant it with `php artisan ballotify:make-admin you@example.com`, remove it with `--revoke`). Everyone else gets `404`. These endpoints never return ballot contents, voter lists or codes.
+
+| Method | Path | Notes |
+|---|---|---|
+| GET | `/admin/overview` | `{ users, users_last_30_days, suspended_users, events, events_live, voters, ballots_cast, votes_counted }` |
+| GET | `/admin/users?search&filter&page` | `filter`: `suspended`, `unverified` or `admins`. Paginated (25), with `events_count`. |
+| POST | `/admin/users/{id}/suspend` | Signs the user out everywhere and blocks sign-in. Their voting links and results pages return `404` until restored. You can't suspend yourself or another admin. |
+| POST | `/admin/users/{id}/unsuspend` | Restores the account. |
+| GET | `/admin/events?search&status&page` | Every event with its organiser and turnout. `status`: `upcoming`, `active` or `completed`. Paginated (25). |
 
 ## Live results (Laravel Reverb)
 

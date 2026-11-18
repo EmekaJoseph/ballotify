@@ -52,6 +52,7 @@ class AuthController extends Controller
         if (! $user || ! Hash::check($data['password'], $user->password)) {
             throw ValidationException::withMessages(['email' => ['The provided credentials are incorrect.']]);
         }
+        $this->ensureNotSuspended($user);
 
         if ($user->two_factor_enabled) {
             return response()->json(['two_factor' => true, 'challenge' => TwoFactor::makeChallenge($user)]);
@@ -75,6 +76,8 @@ class AuthController extends Controller
         if (! TwoFactor::verify($user, $data['code'])) {
             throw ValidationException::withMessages(['code' => ['That code is not valid. Try the latest code from your app, or a recovery code.']]);
         }
+
+        $this->ensureNotSuspended($user);
 
         return response()->json(['token' => $this->issueToken($user), 'user' => $user]);
     }
@@ -222,6 +225,13 @@ class AuthController extends Controller
     }
 
     // ------------------------------------------------------------------ helpers
+
+    private function ensureNotSuspended(User $user): void
+    {
+        if ($user->isSuspended()) {
+            throw ValidationException::withMessages(['email' => ['This account has been suspended. Contact support if you think this is a mistake.']]);
+        }
+    }
 
     private function issueToken(User $user): string
     {

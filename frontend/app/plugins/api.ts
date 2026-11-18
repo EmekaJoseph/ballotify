@@ -9,10 +9,12 @@ export default defineNuxtPlugin(() => {
     const auth = useAuthStore();
     auth.initAuth();
 
-    setUnauthorizedHandler(() => {
+    setUnauthorizedHandler((reason) => {
         auth.clearSession();
         const route = useRoute();
-        if (route.path.startsWith('/dashboard')) {
+        if (reason === 'suspended') {
+            navigateTo({ path: '/login', query: { suspended: '1' } });
+        } else if (route.path.startsWith('/dashboard')) {
             navigateTo({ path: '/login', query: { redirect: route.fullPath, expired: '1' } });
         }
     });

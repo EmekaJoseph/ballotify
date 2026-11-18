@@ -9,6 +9,7 @@ use App\Models\Event;
 use App\Support\Audit;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File as Filesystem;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
@@ -50,6 +51,80 @@ class CandidateController extends Controller
         Audit::log($event, 'candidate.created', "Candidate “{$candidate->name}” added to “{$category->name}”");
 
         return response()->json($candidate, 201);
+    }
+
+    /**
+     * Bulk import from a spreadsheet: rows of { category, name, description? }.
+     * Missing categories are created; names already in a category are skipped
+     * (and reported) rather than failing the whole import.
+     */
+    public function import(Request $request, Event $event)
+    {
+        Gate::authorize('manage', $event);
+        $this->ensureBallotEditable($event);
+        $data = $request->validate([
+            'candidates' => ['required', 'array', 'min:1', 'max:2000'],
+            'candidates.*.category' => ['required', 'string', 'max:255'],
+            'candidates.*.name' => ['required', 'string', 'max:255'],
+            'candidates.*.description' => ['nullable', 'string', 'max:280'],
+        ], [
+            'candidates.*.category.required' => 'Row :position has no category.',
+            'candidates.*.name.required' => 'Row :position has no candidate name.',
+            'candidates.*.description.max' => 'The description in row :position is longer than 280 characters.',
+        ]);
+
+        $result = DB::transaction(function () use ($event, $data) {
+            $byName = $event->categories()->get()->keyBy(fn ($c) => mb_strtolower(trim($c->name)));
+            $taken = Candidate::where('event_id', $event->id)->get(['category_id', 'name'])
+                ->mapWithKeys(fn ($c) => [$c->category_id . '|' . mb_strtolower($c->name) => true])
+                ->all();
+
+            $created = 0;
+            $newCategories = 0;
+            $skipped = [];
+            foreach ($data['candidates'] as $i => $row) {
+                $catName = self::squish($row['category']);
+                $name = self::squish($row['name']);
+                if ($catName === '' || $name === '') {
+                    $skipped[] = ['row' => $i + 1, 'reason' => 'Missing category or name'];
+                    continue;
+                }
+                $key = mb_strtolower($catName);
+                if (! isset($byName[$key])) {
+                    $byName[$key] = Category::create(['event_id' => $event->id, 'name' => $catName]);
+                    $newCategories++;
+                }
+                $category = $byName[$key];
+                $dupeKey = $category->id . '|' . mb_strtolower($name);
+                if (isset($taken[$dupeKey])) {
+                    $skipped[] = ['row' => $i + 1, 'reason' => "“{$name}” is already in “{$category->name}”"];
+                    continue;
+                }
+                Candidate::create([
+                    'event_id' => $event->id,
+                    'category_id' => $category->id,
+                    'name' => $name,
+                    'description' => self::cleanDescription($row['description'] ?? null),
+                ]);
+                $taken[$dupeKey] = true;
+                $created++;
+            }
+
+            return ['created' => $created, 'categories_created' => $newCategories, 'skipped' => $skipped];
+        });
+
+        if ($result['created'] > 0) {
+            $cats = $result['categories_created'];
+            Audit::log($event, 'candidate.imported', "{$result['created']} candidate(s) imported"
+                . ($cats ? " ({$cats} new categor" . ($cats === 1 ? 'y' : 'ies') . ')' : ''));
+        }
+
+        return response()->json($result, 201);
+    }
+
+    private static function squish(string $text): string
+    {
+        return trim(preg_replace('/\s+/u', ' ', $text) ?? '');
     }
 
     public function update(Request $request, Event $event, Candidate $candidate)
@@ -139,6 +214,22 @@ class CandidateController extends Controller
         if ($exists) {
             throw ValidationException::withMessages(['name' => ['A candidate with this name already exists in that category.']]);
         }
+    }
+
+    /** Copy a candidate photo for a duplicated event. Returns the new path, or null. */
+    public static function copyImage(?string $path): ?string
+    {
+        if (! $path || ! str_starts_with($path, self::IMAGE_DIR . '/') || ! Filesystem::exists(public_path($path))) {
+            return null;
+        }
+        $newPath = self::IMAGE_DIR . '/' . Str::lower(Str::random(12)) . '_' . Str::after(basename($path), '_');
+        try {
+            Filesystem::copy(public_path($path), public_path($newPath));
+        } catch (\Throwable $e) {
+            report($e);
+            return null;
+        }
+        return $newPath;
     }
 
     private function storeImage(UploadedFile $file): string

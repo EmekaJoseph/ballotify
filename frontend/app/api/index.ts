@@ -24,10 +24,11 @@ const api = axios.create({
     timeout: 30000,
 });
 
-let onUnauthorized: (() => void) | null = null;
+export type SignOutReason = 'expired' | 'suspended';
+let onUnauthorized: ((reason: SignOutReason) => void) | null = null;
 
-/** Registered by plugins/api.ts to send the user to /login when their session expires. */
-export function setUnauthorizedHandler(handler: () => void) {
+/** Registered by plugins/api.ts to send the user to /login when their session ends. */
+export function setUnauthorizedHandler(handler: (reason: SignOutReason) => void) {
     onUnauthorized = handler;
 }
 
@@ -42,9 +43,13 @@ api.interceptors.response.use(
     (error) => {
         const url: string = error?.config?.url ?? '';
         const isAuthCall = url.startsWith('/auth/');
-        if (error?.response?.status === 401 && !isAuthCall && tokenStorage.get()) {
+        const status = error?.response?.status;
+        if (status === 401 && !isAuthCall && tokenStorage.get()) {
             tokenStorage.clear();
-            onUnauthorized?.();
+            onUnauthorized?.('expired');
+        } else if (status === 403 && error?.response?.data?.suspended && tokenStorage.get()) {
+            tokenStorage.clear();
+            onUnauthorized?.('suspended');
         }
         return Promise.reject(error);
     },

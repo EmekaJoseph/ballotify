@@ -11,7 +11,9 @@ class Category extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['event_id', 'name'];
+    protected $fillable = ['event_id', 'name', 'max_choices'];
+
+    protected $casts = ['max_choices' => 'integer'];
 
     public function event(): BelongsTo
     {
@@ -20,7 +22,7 @@ class Category extends Model
 
     public function candidates(): HasMany
     {
-        return $this->hasMany(Candidate::class);
+        return $this->hasMany(Candidate::class)->orderBy('id');
     }
 }
 

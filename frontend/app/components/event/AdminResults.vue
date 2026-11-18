@@ -7,6 +7,10 @@
                 <i class="bi bi-box-arrow-up-right"></i> Public page
             </a>
             <button class="btn btn-ghost btn-sm flex-shrink-0" :disabled="loading" @click="load"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
+            <button class="btn btn-ghost btn-sm flex-shrink-0" :disabled="!results" @click="downloadCsv"><i class="bi bi-filetype-csv"></i> CSV</button>
+            <NuxtLink :to="`/report/${event.id}`" target="_blank" class="btn btn-soft btn-sm flex-shrink-0">
+                <i class="bi bi-file-earmark-pdf"></i> Report / PDF
+            </NuxtLink>
         </div>
         <div v-if="loading && !results" class="d-grid gap-3">
             <div class="row g-3"><div v-for="i in 4" :key="i" class="col-6 col-lg-3"><div class="skeleton" style="height: 92px"></div></div></div>
@@ -37,6 +41,12 @@ const note = computed(() => {
             : { icon: 'bi-lock', text: 'Only you can see these results until voting closes. Then they are published automatically.' };
     }
 });
+
+function downloadCsv() {
+    if (!results.value) return;
+    const stamp = new Date().toISOString().slice(0, 10);
+    downloadFile(`${slugify(props.event.name)}-results-${stamp}.csv`, resultsCsv(results.value, props.event));
+}
 
 async function load() {
     loading.value = true;

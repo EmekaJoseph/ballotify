@@ -3,11 +3,14 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Candidate;
+use App\Models\Category;
 use App\Models\Event;
 use App\Models\EventType;
 use App\Support\Audit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -145,6 +148,57 @@ class EventController extends Controller
         return response()->json(['message' => 'Deleted']);
     }
 
+    /**
+     * Copy an event's ballot (settings, categories, pick limits, candidates with
+     * descriptions and photos) into a new draft. Voters, codes, totals and the
+     * activity log are never copied; dates are cleared so it can be rescheduled.
+     */
+    public function duplicate(Request $request, Event $event)
+    {
+        Gate::authorize('manage', $event);
+        $event->load(['categories', 'candidates']);
+
+        $copy = DB::transaction(function () use ($request, $event) {
+            $copy = Event::create([
+                'user_id' => $request->user()->id,
+                'event_type_id' => $event->event_type_id,
+                'name' => Str::limit($event->name, 245, '') . ' (copy)',
+                'description' => $event->description,
+                'link_token' => Str::uuid()->toString(),
+                'results_visibility' => $event->results_visibility,
+                'starts_at' => null,
+                'ends_at' => null,
+            ]);
+
+            $categoryMap = [];
+            foreach ($event->categories as $category) {
+                $categoryMap[$category->id] = Category::create([
+                    'event_id' => $copy->id,
+                    'name' => $category->name,
+                    'max_choices' => $category->max_choices,
+                ])->id;
+            }
+            foreach ($event->candidates as $candidate) {
+                if (! isset($categoryMap[$candidate->category_id])) {
+                    continue;
+                }
+                Candidate::create([
+                    'event_id' => $copy->id,
+                    'category_id' => $categoryMap[$candidate->category_id],
+                    'name' => $candidate->name,
+                    'description' => $candidate->description,
+                    'image_path' => CandidateController::copyImage($candidate->image_path),
+                ]);
+            }
+
+            return $copy;
+        });
+
+        Audit::log($copy, 'event.created', "Event created as a copy of “{$event->name}”");
+
+        return response()->json($copy->load('type')->loadCount($this->counts()), 201);
+    }
+
     public function link(Event $event)
     {
         Gate::authorize('manage', $event);
@@ -173,7 +227,7 @@ class EventController extends Controller
 
     public function publicShow(string $token)
     {
-        $event = Event::with('type')->where('link_token', $token)->firstOrFail();
+        $event = Event::with('type')->publicToken($token)->firstOrFail();
 
         // Not open yet / already closed: tell the client why, without exposing the ballot.
         if (! $event->isOpen()) {
@@ -189,7 +243,7 @@ class EventController extends Controller
         }
 
         $event->load([
-            'categories:id,event_id,name',
+            'categories:id,event_id,name,max_choices',
             'candidates:id,event_id,category_id,name,description,image_path',
         ]);
 
@@ -210,7 +264,7 @@ class EventController extends Controller
     /** Public results page, subject to the event's results visibility. */
     public function results(string $token)
     {
-        $event = Event::where('link_token', $token)->firstOrFail();
+        $event = Event::publicToken($token)->firstOrFail();
 
         if (! $event->resultsArePublic()) {
             return response()->json([

@@ -1,7 +1,8 @@
 import api from '../index';
 import type {
-    AuditEntry, BallotEvent, Candidate, Category, EventResults, GeneratedCode, InviteChannel, MessagingStatus,
-    ResultsVisibility, SelectionMode, User, Voter, VoterContact,
+    AuditEntry, BallotEvent, Candidate, CandidateImportResult, CandidateImportRow, Category, EventResults, GeneratedCode,
+    InviteChannel, MessagingStatus, Paginated, PlatformEvent, PlatformOverview, PlatformUser, ResultsVisibility,
+    SelectionMode, User, Voter, VoterContact,
 } from '~/types';
 
 type Id = number | string;
@@ -47,6 +48,8 @@ export const adminApi = {
     getEvent: (eventId: Id) => api.get<BallotEvent>(`/events/${eventId}`),
     updateEvent: (eventId: Id, data: EventPayload) => api.patch<BallotEvent>(`/events/${eventId}`, data),
     deleteEvent: (eventId: Id) => api.delete(`/events/${eventId}`),
+    /** Copies the ballot (no voters, votes or dates) into a new event. */
+    duplicateEvent: (eventId: Id) => api.post<BallotEvent>(`/events/${eventId}/duplicate`),
     getVotingLink: (eventId: Id) =>
         api.get<{ token: string; public_url: string; results_url: string }>(`/events/${eventId}/voting-link`),
     /** Organiser view of the tally, whatever the public visibility setting. */
@@ -55,8 +58,9 @@ export const adminApi = {
 
     // Categories
     getCategories: (eventId: Id) => api.get<Category[]>(`/events/${eventId}/categories`),
-    createCategory: (eventId: Id, data: { name: string }) => api.post<Category>(`/events/${eventId}/categories`, data),
-    updateCategory: (eventId: Id, categoryId: Id, data: { name: string }) =>
+    createCategory: (eventId: Id, data: { name: string; max_choices?: number | null }) =>
+        api.post<Category>(`/events/${eventId}/categories`, data),
+    updateCategory: (eventId: Id, categoryId: Id, data: { name?: string; max_choices?: number | null }) =>
         api.patch<Category>(`/events/${eventId}/categories/${categoryId}`, data),
     deleteCategory: (eventId: Id, categoryId: Id) => api.delete(`/events/${eventId}/categories/${categoryId}`),
 
@@ -67,6 +71,8 @@ export const adminApi = {
     updateCandidate: (eventId: Id, candidateId: Id, form: FormData) =>
         api.post<Candidate>(`/events/${eventId}/candidates/${candidateId}`, form),
     deleteCandidate: (eventId: Id, candidateId: Id) => api.delete(`/events/${eventId}/candidates/${candidateId}`),
+    importCandidates: (eventId: Id, candidates: CandidateImportRow[]) =>
+        api.post<CandidateImportResult>(`/events/${eventId}/candidates/import`, { candidates }),
 
     // Voters
     getVoters: (eventId: Id) => api.get<Voter[]>(`/events/${eventId}/voters`),
@@ -86,4 +92,15 @@ export const adminApi = {
     inviteVoters: (eventId: Id, data: { channel: InviteChannel; audience: 'not_invited' | 'pending' | 'selected'; voter_ids?: number[] }) =>
         api.post<{ queued: number; email: number; sms: number; queue: string }>(`/events/${eventId}/voters/invite`, data),
     messagingStatus: () => api.get<MessagingStatus>('/messaging/status'),
+};
+
+/** Platform-owner area (only for accounts with is_admin). */
+export const platformApi = {
+    overview: () => api.get<PlatformOverview>('/admin/overview'),
+    users: (params: { search?: string; filter?: string; page?: number }) =>
+        api.get<Paginated<PlatformUser>>('/admin/users', { params }),
+    suspend: (userId: Id) => api.post<PlatformUser>(`/admin/users/${userId}/suspend`),
+    unsuspend: (userId: Id) => api.post<PlatformUser>(`/admin/users/${userId}/unsuspend`),
+    events: (params: { search?: string; status?: string; page?: number }) =>
+        api.get<Paginated<PlatformEvent>>('/admin/events', { params }),
 };

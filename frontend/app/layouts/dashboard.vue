@@ -21,6 +21,12 @@
                     :class="{ active: isActive(item) }">
                     <i class="bi" :class="item.icon"></i>{{ item.label }}
                 </NuxtLink>
+                <template v-if="auth.user?.is_admin">
+                    <div class="small-caps px-3 pt-3 pb-1">Platform</div>
+                    <NuxtLink to="/dashboard/admin" class="side-link" :class="{ active: route.path.startsWith('/dashboard/admin') }">
+                        <i class="bi bi-shield-lock"></i>Admin
+                    </NuxtLink>
+                </template>
             </nav>
 
             <div class="mt-auto p-3">

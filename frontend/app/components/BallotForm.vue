@@ -5,7 +5,7 @@
             <div class="small fw-bold text-ink text-nowrap">{{ answered }} / {{ categories.length }}</div>
             <div class="bar slim flex-grow-1"><span :style="{ width: progress + '%' }"></span></div>
             <span class="pill" :class="mode === 'multiple' ? 'pill-violet' : 'pill-brand'">
-                {{ mode === 'multiple' ? 'Pick any' : 'Pick one' }}
+                {{ mode === 'multiple' ? 'Multiple choice' : 'Pick one' }}
             </span>
         </div>
 
@@ -15,6 +15,10 @@
                 <div class="min-w-0">
                     <div class="small-caps">Category {{ idx + 1 }}</div>
                     <h3 class="h5 fw-800 mb-0 text-break">{{ cat.name }}</h3>
+                    <div v-if="mode === 'multiple'" class="small mt-1" :class="isFull(cat) ? 'text-brand fw-semibold' : 'text-muted'">
+                        <template v-if="limitFor(cat)">Pick up to {{ limitFor(cat) }} · {{ countFor(cat.id) }} picked</template>
+                        <template v-else>Pick as many as you like<template v-if="countFor(cat.id)"> · {{ countFor(cat.id) }} picked</template></template>
+                    </div>
                 </div>
                 <i v-if="countFor(cat.id) > 0" class="bi bi-check-circle-fill text-brand fs-5" aria-label="Answered"></i>
             </header>
@@ -24,7 +28,8 @@
                 <div class="row g-2" role="group" :aria-label="cat.name">
                     <div v-for="cand in byCategory[cat.id]" :key="cand.id" class="col-12 col-sm-6">
                         <button type="button" class="option" :class="{ selected: isSelected(cat.id, cand.id) }"
-                            :aria-pressed="isSelected(cat.id, cand.id)" :disabled="disabled"
+                            :aria-pressed="isSelected(cat.id, cand.id)" :disabled="disabled || (isFull(cat) && !isSelected(cat.id, cand.id))"
+                            :title="isFull(cat) && !isSelected(cat.id, cand.id) ? `You can pick up to ${limitFor(cat)}. Unselect one to change.` : undefined"
                             @click="toggle(cat.id, cand.id)">
                             <CandidateAvatar :name="cand.name" :src="cand.image_url" />
                             <span class="flex-grow-1 text-start min-w-0">
@@ -85,7 +90,7 @@
 <script setup lang="ts">
 import type { Choice, SelectionMode } from '~/types';
 
-interface BallotCategory { id: number; name: string }
+interface BallotCategory { id: number; name: string; max_choices?: number | null }
 interface BallotCandidate { id: number; category_id: number; name: string; description?: string | null; image_url: string | null }
 
 const props = withDefaults(defineProps<{
@@ -109,6 +114,12 @@ const byCategory = computed(() => {
 });
 
 const countFor = (catId: number) => picks.value[catId]?.length ?? 0;
+/** Most picks allowed in a multiple-choice category, or null for no limit. */
+const limitFor = (cat: BallotCategory) => (props.mode === 'multiple' && cat.max_choices ? cat.max_choices : null);
+const isFull = (cat: BallotCategory) => {
+    const limit = limitFor(cat);
+    return limit !== null && countFor(cat.id) >= limit;
+};
 const isSelected = (catId: number, candId: number) => !!picks.value[catId]?.includes(candId);
 const answered = computed(() => props.categories.filter(c => countFor(c.id) > 0).length);
 const progress = computed(() => (props.categories.length ? (answered.value / props.categories.length) * 100 : 0));
@@ -117,7 +128,14 @@ function toggle(catId: number, candId: number) {
     const current = picks.value[catId] ?? [];
     let next: number[];
     if (props.mode === 'multiple') {
-        next = current.includes(candId) ? current.filter(id => id !== candId) : [...current, candId];
+        if (current.includes(candId)) {
+            next = current.filter(id => id !== candId);
+        } else {
+            const cat = props.categories.find(c => c.id === catId);
+            const limit = cat ? limitFor(cat) : null;
+            if (limit !== null && current.length >= limit) return; // at the limit
+            next = [...current, candId];
+        }
     } else {
         next = current.includes(candId) ? [] : [candId];
     }
@@ -149,6 +167,7 @@ defineExpose({ closeReview: () => { reviewOpen.value = false; } });
 }
 .option:hover:not(:disabled) { border-color: var(--brand-200); background: var(--surface-2); }
 .option:active:not(:disabled) { transform: scale(.99); }
+.option:disabled:not(.selected) { opacity: .5; cursor: not-allowed; }
 .option.selected { border-color: var(--brand-500); background: var(--brand-50); }
 .opt-desc { line-height: 1.4; margin-top: .15rem; font-weight: 400; }
 .review-desc { line-height: 1.35; }

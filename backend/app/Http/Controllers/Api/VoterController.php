@@ -246,7 +246,7 @@ class VoterController extends Controller
         $data = $request->validate([
             'code' => ['required', 'string', 'max:64'],
         ]);
-        $event = Event::where('link_token', $token)->firstOrFail();
+        $event = Event::publicToken($token)->firstOrFail();
         if (! $event->isOpen()) {
             return response()->json(['valid' => false, 'message' => 'This election is not open.'], 403);
         }

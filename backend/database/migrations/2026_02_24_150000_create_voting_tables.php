@@ -52,6 +52,8 @@ return new class extends Migration
             $table->id();
             $table->foreignId('event_id')->constrained()->cascadeOnDelete();
             $table->string('name');
+            // Multiple-choice events: most picks allowed in this category (null = no limit).
+            $table->unsignedSmallInteger('max_choices')->nullable();
             $table->timestamps();
             $table->unique(['event_id', 'name']);
         });

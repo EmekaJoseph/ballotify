@@ -56,6 +56,16 @@
                 </div>
                 <div class="col-lg-4 d-grid gap-4 align-content-start">
                     <div class="card-b pad">
+                        <h3 class="h6 fw-800 mb-2">Duplicate event</h3>
+                        <p class="small text-muted mb-3">
+                            Copies the ballot (categories, pick limits, candidates, descriptions and photos) into a new event.
+                            Voters, votes and dates are not copied.
+                        </p>
+                        <button class="btn btn-ghost w-100" :disabled="duplicating" @click="duplicate">
+                            <span v-if="duplicating" class="spinner-border spinner-border-sm"></span><i v-else class="bi bi-copy"></i> Duplicate event
+                        </button>
+                    </div>
+                    <div class="card-b pad">
                         <h3 class="h6 fw-800 mb-2">Close voting now</h3>
                         <p class="small text-muted mb-3">Ends the voting window immediately. Results stay available.</p>
                         <button class="btn btn-ghost w-100" :disabled="event.status !== 'active' || saving" @click="closeNow">
@@ -119,6 +129,20 @@ const tab = ref<TabKey>(tabs.some(t => t.key === initialTab) ? (initialTab as Ta
 watch(tab, (t) => router.replace({ query: { ...route.query, tab: t === 'overview' ? undefined : t } }));
 
 const { voteUrl } = useEventLinks(() => event.value?.link_token);
+
+const duplicating = ref(false);
+async function duplicate() {
+    duplicating.value = true;
+    try {
+        const { data } = await adminApi.duplicateEvent(eventId.value);
+        toast.success(`Created “${data.name}”. Set its dates and add voters when you’re ready.`);
+        await navigateTo({ path: `/dashboard/events/${data.id}`, query: { tab: 'settings' } });
+    } catch (e) {
+        toast.error(apiErrorMessage(e));
+    } finally {
+        duplicating.value = false;
+    }
+}
 
 const erasing = ref(false);
 async function eraseContacts() {

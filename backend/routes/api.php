@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\CandidateController;
 use App\Http\Controllers\Api\VoterController;
 use App\Http\Controllers\Api\VoteController;
 use App\Http\Controllers\Api\MessagingController;
+use App\Http\Controllers\Api\PlatformAdminController;
 
 // ---------------------------------------------------------------- authentication
 Route::prefix('auth')->group(function () {
@@ -24,7 +25,7 @@ Route::prefix('auth')->group(function () {
         ->middleware(['signed:relative', 'throttle:12,1'])
         ->name('verification.verify');
 
-    Route::middleware('auth:sanctum')->group(function () {
+    Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::post('logout', [AuthController::class, 'logout']);
         Route::post('email/resend', [AuthController::class, 'resendVerification'])->middleware('throttle:6,1');
     });
@@ -33,7 +34,7 @@ Route::prefix('auth')->group(function () {
 // ---------------------------------------------------------------- organiser area
 // scopeBindings(): a {category}/{candidate}/{voter} in the URL must belong to the
 // {event} in the same URL, otherwise Laravel answers 404.
-Route::middleware('auth:sanctum')->scopeBindings()->group(function () {
+Route::middleware(['auth:sanctum', 'active'])->scopeBindings()->group(function () {
     Route::get('me', [AuthController::class, 'me']);
     Route::patch('me', [AuthController::class, 'updateProfile']);
     Route::post('me/two-factor', [AuthController::class, 'twoFactorSetup'])->middleware('throttle:6,1');
@@ -56,6 +57,7 @@ Route::middleware('auth:sanctum')->scopeBindings()->group(function () {
 
     Route::get('events/{event}/candidates', [CandidateController::class, 'index']);
     Route::post('events/{event}/candidates', [CandidateController::class, 'store']);
+    Route::post('events/{event}/candidates/import', [CandidateController::class, 'import']);
     // POST alias: browsers cannot send multipart/form-data (image upload) with PATCH to PHP.
     Route::match(['patch', 'post'], 'events/{event}/candidates/{candidate}', [CandidateController::class, 'update']);
     Route::delete('events/{event}/candidates/{candidate}', [CandidateController::class, 'destroy']);
@@ -68,9 +70,19 @@ Route::middleware('auth:sanctum')->scopeBindings()->group(function () {
     Route::post('events/{event}/voters/generate', [VoterController::class, 'generate']);
     Route::post('events/{event}/voters/erase-contacts', [VoterController::class, 'eraseContacts']);
     // Sending messages requires a confirmed email address (stops spam from throwaway accounts).
+    Route::post('events/{event}/duplicate', [EventController::class, 'duplicate'])->middleware('throttle:20,1');
     Route::post('events/{event}/voters/invite', [VoterController::class, 'invite'])->middleware(['verified', 'throttle:20,1']);
 
     Route::get('messaging/status', [MessagingController::class, 'status']);
+
+    // ------------------------------------------------------------ platform owner
+    Route::prefix('admin')->middleware('superadmin')->group(function () {
+        Route::get('overview', [PlatformAdminController::class, 'overview']);
+        Route::get('users', [PlatformAdminController::class, 'users']);
+        Route::post('users/{user}/suspend', [PlatformAdminController::class, 'suspend']);
+        Route::post('users/{user}/unsuspend', [PlatformAdminController::class, 'unsuspend']);
+        Route::get('events', [PlatformAdminController::class, 'events']);
+    });
 });
 
 // ---------------------------------------------------------------- public (voters)

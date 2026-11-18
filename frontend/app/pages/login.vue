@@ -32,7 +32,10 @@
             <h1 class="h2 fw-800 mb-2">Welcome back</h1>
             <p class="text-muted mb-4">Sign in to manage your events.</p>
 
-            <div v-if="route.query.expired" class="alert alert-warning border-0 rounded-4 small d-flex gap-2">
+            <div v-if="route.query.suspended" class="alert alert-danger border-0 rounded-4 small d-flex gap-2">
+                <i class="bi bi-slash-circle"></i> This account has been suspended. Contact support if you think this is a mistake.
+            </div>
+            <div v-else-if="route.query.expired" class="alert alert-warning border-0 rounded-4 small d-flex gap-2">
                 <i class="bi bi-clock-history"></i> Your session expired. Please sign in again.
             </div>
             <div v-if="route.query.reset" class="alert alert-success border-0 rounded-4 small d-flex gap-2">

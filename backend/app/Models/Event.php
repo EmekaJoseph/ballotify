@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -55,14 +56,16 @@ class Event extends Model
         return $this->belongsTo(EventType::class, 'event_type_id');
     }
 
+    /** In the order they were added, which is the order on the ballot. */
     public function categories(): HasMany
     {
-        return $this->hasMany(Category::class);
+        return $this->hasMany(Category::class)->orderBy('id');
     }
 
+    /** In the order they were added, which is the order on the ballot. */
     public function candidates(): HasMany
     {
-        return $this->hasMany(Candidate::class);
+        return $this->hasMany(Candidate::class)->orderBy('id');
     }
 
     public function voters(): HasMany
@@ -125,6 +128,30 @@ class Event extends Model
             self::RESULTS_LIVE => true,
             self::RESULTS_AFTER_CLOSE => $this->status === self::STATUS_COMPLETED,
             default => false,
+        };
+    }
+
+    /**
+     * Public lookup by voting-link token. Events of suspended organisers are
+     * treated as not found, so their ballots and results go dark at once.
+     */
+    public function scopePublicToken(Builder $query, string $token): Builder
+    {
+        return $query->where('link_token', $token)
+            ->whereHas('user', fn (Builder $q) => $q->whereNull('suspended_at'));
+    }
+
+    /** Filter by computed status (upcoming / active / completed) in SQL. */
+    public function scopeWithStatus(Builder $query, string $status): Builder
+    {
+        $now = now();
+        return match ($status) {
+            self::STATUS_UPCOMING => $query->whereNotNull('starts_at')->where('starts_at', '>', $now),
+            self::STATUS_COMPLETED => $query->whereNotNull('ends_at')->where('ends_at', '<', $now),
+            self::STATUS_ACTIVE => $query
+                ->where(fn ($q) => $q->whereNull('starts_at')->orWhere('starts_at', '<=', $now))
+                ->where(fn ($q) => $q->whereNull('ends_at')->orWhere('ends_at', '>=', $now)),
+            default => $query,
         };
     }
 }

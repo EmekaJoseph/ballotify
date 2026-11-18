@@ -242,6 +242,7 @@ a { text-decoration: none; }
 .pill-completed { background: var(--neutral-50); color: var(--muted); }
 .pill-brand { background: var(--brand-50); color: var(--brand-700); }
 .pill-violet { background: var(--accent-50); color: var(--accent); }
+.pill-danger { background: var(--danger-50); color: var(--danger); }
 .pill-live .dot { animation: pulse-dot 1.6s infinite; }
 @keyframes pulse-dot { 0% { box-shadow: 0 0 0 0 rgba(22, 163, 74, .5); } 70% { box-shadow: 0 0 0 7px rgba(22, 163, 74, 0); } 100% { box-shadow: 0 0 0 0 rgba(22, 163, 74, 0); } }
 

@@ -19,10 +19,13 @@
             <button type="submit" class="btn btn-primary" :disabled="busy || !newCategory">
                 <i class="bi bi-plus-lg"></i> Add category
             </button>
+            <button type="button" class="btn btn-ghost" :disabled="busy" @click="importOpen = true">
+                <i class="bi bi-upload"></i> Import candidates
+            </button>
         </form>
 
         <EmptyState v-if="!categories.length" class="card-b" icon="bi-ui-checks-grid" title="Your ballot is empty"
-            text="Start with a category such as “President” or “Best Actor”, then add candidates to it." />
+            text="Start with a category such as “President” or “Best Actor”, then add candidates to it. Or import them all from a spreadsheet." />
 
         <div class="d-grid gap-4">
             <section v-for="cat in categories" :key="cat.id" class="card-b overflow-hidden">
@@ -35,7 +38,21 @@
                     <template v-else>
                         <div class="min-w-0">
                             <h3 class="h6 fw-800 mb-0 text-break">{{ cat.name }}</h3>
-                            <div class="small text-muted">{{ candidatesOf(cat.id).length }} candidate{{ candidatesOf(cat.id).length === 1 ? '' : 's' }}</div>
+                            <div class="small text-muted d-flex flex-wrap align-items-center gap-1">
+                                <span>{{ candidatesOf(cat.id).length }} candidate{{ candidatesOf(cat.id).length === 1 ? '' : 's' }}</span>
+                                <template v-if="multiple">
+                                    <span aria-hidden="true">·</span>
+                                    <span v-if="locked">{{ cat.max_choices ? `Pick up to ${cat.max_choices}` : 'No pick limit' }}</span>
+                                    <label v-else class="d-inline-flex align-items-center gap-1 mb-0">
+                                        <span>Voters pick</span>
+                                        <select class="form-select form-select-sm limit-select" :value="cat.max_choices ?? ''"
+                                            :aria-label="`Pick limit for ${cat.name}`" :disabled="busy" @change="setLimit(cat, $event)">
+                                            <option value="">any number</option>
+                                            <option v-for="n in limitOptions(cat)" :key="n" :value="n">up to {{ n }}</option>
+                                        </select>
+                                    </label>
+                                </template>
+                            </div>
                         </div>
                         <div class="d-flex gap-1">
                             <button v-if="!locked" class="btn btn-soft btn-sm" @click="openCandidate(null, cat.id)"><i class="bi bi-person-plus"></i> <span class="d-none d-sm-inline">Candidate</span></button>
@@ -61,6 +78,8 @@
                 </ul>
             </section>
         </div>
+
+        <EventCandidateImportModal :open="importOpen" :event-id="event.id" @close="importOpen = false" @imported="onImported" />
 
         <!-- Candidate modal -->
         <BaseModal :open="modal.open" :title="modal.id ? 'Edit candidate' : 'Add candidate'" @close="modal.open = false">
@@ -110,7 +129,7 @@
 
 <script setup lang="ts">
 import { adminApi } from '~/api/endpoints/admin';
-import type { BallotEvent, Candidate, Category } from '~/types';
+import type { BallotEvent, Candidate, CandidateImportResult, Category } from '~/types';
 
 const props = defineProps<{ event: BallotEvent }>();
 const emit = defineEmits<{ changed: [] }>();
@@ -123,6 +142,8 @@ const editingCat = ref<number | null>(null);
 const catDraft = ref('');
 
 const DESC_MAX = 280;
+const importOpen = ref(false);
+const multiple = computed(() => props.event.selection_mode === 'multiple');
 const categories = computed<Category[]>(() => props.event.categories ?? []);
 const locked = computed(() => props.event.ballot_locked);
 const candidatesOf = (catId: number): Candidate[] => (props.event.candidates ?? []).filter(c => c.category_id === catId);
@@ -151,6 +172,32 @@ async function addCategory() {
 async function saveCategory(cat: Category) {
     if (catDraft.value === cat.name) { editingCat.value = null; return; }
     if (await run(() => adminApi.updateCategory(props.event.id, cat.id, { name: catDraft.value }), 'Category renamed')) editingCat.value = null;
+}
+
+/** Choices for the pick limit: 1 … number of candidates (at least the current limit). */
+function limitOptions(cat: Category): number[] {
+    const max = Math.max(candidatesOf(cat.id).length, cat.max_choices ?? 0, 1);
+    return Array.from({ length: max }, (_, i) => i + 1);
+}
+
+async function setLimit(cat: Category, e: Event) {
+    const raw = (e.target as HTMLSelectElement).value;
+    const max_choices = raw ? Number(raw) : null;
+    if (max_choices === (cat.max_choices ?? null)) return;
+    await run(() => adminApi.updateCategory(props.event.id, cat.id, { max_choices }),
+        max_choices ? `Voters can pick up to ${max_choices} in “${cat.name}”` : `No pick limit in “${cat.name}”`);
+}
+
+function onImported(result: CandidateImportResult) {
+    importOpen.value = false;
+    const cats = result.categories_created;
+    toast.success(`${result.created} candidate${result.created === 1 ? '' : 's'} imported`
+        + (cats ? ` into ${cats} new categor${cats === 1 ? 'y' : 'ies'}` : ''));
+    if (result.skipped.length) {
+        const first = result.skipped[0]!;
+        toast.info(`${result.skipped.length} row${result.skipped.length === 1 ? '' : 's'} skipped (e.g. row ${first.row}: ${first.reason}).`);
+    }
+    emit('changed');
 }
 
 async function removeCategory(cat: Category) {
@@ -256,5 +303,6 @@ onBeforeUnmount(revokePreview);
 .cand-row { display: flex; align-items: center; gap: .85rem; padding: .75rem 1.25rem; border-bottom: 1px solid var(--line); }
 .cand-row:last-child { border-bottom: 0; }
 .cand-row:hover { background: var(--surface-2); }
+.limit-select { width: auto; display: inline-block; padding: .1rem 1.8rem .1rem .5rem; font-size: .8rem; min-height: 0; }
 .cand-desc { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.4; }
 </style>
