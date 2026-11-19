@@ -243,6 +243,7 @@ a { text-decoration: none; }
 .pill-brand { background: var(--brand-50); color: var(--brand-700); }
 .pill-violet { background: var(--accent-50); color: var(--accent); }
 .pill-danger { background: var(--danger-50); color: var(--danger); }
+.pill-amber { background: var(--warning-50); color: var(--warning-text, var(--warning)); }
 .pill-live .dot { animation: pulse-dot 1.6s infinite; }
 @keyframes pulse-dot { 0% { box-shadow: 0 0 0 0 rgba(22, 163, 74, .5); } 70% { box-shadow: 0 0 0 7px rgba(22, 163, 74, 0); } 100% { box-shadow: 0 0 0 0 rgba(22, 163, 74, 0); } }
 
@@ -385,3 +386,5 @@ a { text-decoration: none; }
 /* Smooth theme switch without animating everything else. */
 html.theme-switching *, html.theme-switching *::before, html.theme-switching *::after { transition: none !important; }
 .bg-surface { background: var(--surface); }
+/* WhatsApp green (share buttons) */
+.btn-wa { --bs-btn-color: #fff; --bs-btn-bg: #1da851; --bs-btn-border-color: #1da851; --bs-btn-hover-color: #fff; --bs-btn-hover-bg: #178a43; --bs-btn-hover-border-color: #178a43; --bs-btn-active-bg: #146f37; --bs-btn-disabled-bg: #1da851; --bs-btn-disabled-border-color: #1da851; --bs-btn-disabled-color: #fff; font-weight: 700; }

@@ -4,7 +4,8 @@
             <div class="container d-flex align-items-center justify-content-between" :style="{ maxWidth: wide ? '1140px' : '760px' }">
                 <AppLogo />
                 <div class="d-flex align-items-center gap-3">
-                    <span class="small text-muted d-none d-sm-inline-flex align-items-center gap-1"><i class="bi bi-shield-lock"></i> Secret ballot</span>
+                    <span v-if="mode === 'paid'" class="small text-muted d-none d-sm-inline-flex align-items-center gap-1"><i class="bi bi-lock"></i> Secure payments by Paystack</span>
+                    <span v-else class="small text-muted d-none d-sm-inline-flex align-items-center gap-1"><i class="bi bi-shield-lock"></i> Secret ballot</span>
                     <ThemeToggle />
                 </div>
             </div>
@@ -23,6 +24,7 @@
 const route = useRoute();
 const wide = computed(() => Boolean(route.meta.wide));
 const branding = useBallotBranding();
+const mode = useBallotMode();
 </script>
 
 <style scoped>

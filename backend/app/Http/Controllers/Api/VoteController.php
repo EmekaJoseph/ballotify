@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Events\VoteCast;
+use App\Models\BallotReceipt;
 use App\Models\Candidate;
 use App\Models\Category;
 use App\Models\Event;
@@ -22,8 +23,11 @@ class VoteController extends Controller
             'choices.*.candidate_id' => ['required', 'integer'],
         ]);
 
-        $event = Event::with('type')->publicToken($token)->firstOrFail();
+        $event = Event::publicToken($token)->firstOrFail();
 
+        if ($event->isPaid()) {
+            return response()->json(['message' => 'This event uses paid voting. Choose a candidate and pay to vote.'], 422);
+        }
         if (! $event->isOpen()) {
             return response()->json([
                 'message' => $event->status === Event::STATUS_UPCOMING
@@ -56,19 +60,16 @@ class VoteController extends Controller
             }
         }
 
+        // Each category has its own pick limit: 1 = choose one, null = no limit.
         $perCategory = array_count_values(array_column($cleanChoices, 'category_id'));
-        if ($event->selection_mode === 'single') {
-            if (max($perCategory) > 1) {
-                return response()->json(['message' => 'Only one candidate per category is allowed'], 422);
-            }
-        } else {
-            foreach ($perCategory as $categoryId => $count) {
-                $limit = $categories[$categoryId]->max_choices;
-                if ($limit && $count > $limit) {
-                    return response()->json([
-                        'message' => "You can pick at most {$limit} in “{$categories[$categoryId]->name}”.",
-                    ], 422);
-                }
+        foreach ($perCategory as $categoryId => $count) {
+            $limit = $categories[$categoryId]->max_choices;
+            if ($limit && $count > $limit) {
+                return response()->json([
+                    'message' => $limit === 1
+                        ? "Choose only one candidate in “{$categories[$categoryId]->name}”."
+                        : "You can pick at most {$limit} in “{$categories[$categoryId]->name}”.",
+                ], 422);
             }
         }
 
@@ -94,10 +95,11 @@ class VoteController extends Controller
             $voter->used_at = now();
             $voter->save();
 
-            return true;
+            // Receipt: proves this ballot was counted, without saying who cast it or how.
+            return BallotReceipt::issue($event->id);
         });
 
-        if (! $accepted) {
+        if ($accepted === false) {
             return response()->json(['message' => 'Invalid or used code'], 422);
         }
 
@@ -111,6 +113,6 @@ class VoteController extends Controller
             }
         }
 
-        return response()->json(['message' => 'Vote recorded']);
+        return response()->json(['message' => 'Vote recorded', 'receipt' => $accepted]);
     }
 }

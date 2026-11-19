@@ -25,22 +25,40 @@
             </div>
         </div>
 
-        <!-- Enter code -->
-        <div v-else-if="stage === 'code' && event" class="fade-up">
+        <!-- Paid voting: confirming a payment after Paystack sent the voter back -->
+        <div v-else-if="stage === 'confirming'" class="card-b text-center px-4 py-5">
+            <span class="spinner-border text-brand mb-3"></span>
+            <h1 class="h5 fw-800 mb-1">Confirming your payment…</h1>
+            <p class="text-muted small mb-0">This takes a few seconds.</p>
+        </div>
+
+        <!-- Enter code (or, for paid voting, the nominee list) -->
+        <div v-else-if="(stage === 'code' || stage === 'paid') && event" class="fade-up">
+            <div v-if="paidNotice" class="alert border-0 rounded-4 small d-flex gap-2 mb-3" :class="paidNotice.ok ? 'alert-success' : 'alert-warning'">
+                <i class="bi" :class="paidNotice.ok ? 'bi-check-circle-fill' : 'bi-info-circle'"></i> {{ paidNotice.text }}
+            </div>
             <div class="intro card-b overflow-hidden mb-3">
                 <div class="intro-band">
+                    <img v-if="event.brand?.logo_url" :src="event.brand.logo_url" alt="" class="brand-logo mb-3" />
                     <span class="pill pill-active pill-live"><span class="dot"></span>Voting open</span>
                     <h1 class="h2 fw-800 text-white mt-3 mb-2 text-break">{{ event.name }}</h1>
                     <p v-if="event.description" class="intro-text mb-0" style="white-space: pre-line">{{ event.description }}</p>
                 </div>
                 <div class="d-flex flex-wrap gap-3 gap-sm-4 px-4 py-3 small">
                     <span class="text-muted"><i class="bi bi-grid me-1"></i>{{ event.categories.length }} categor{{ event.categories.length === 1 ? 'y' : 'ies' }}</span>
-                    <span class="text-muted"><i class="bi me-1" :class="event.selection_mode === 'multiple' ? 'bi-ui-checks' : 'bi-record-circle'"></i>{{ event.selection_mode === 'multiple' ? 'Pick any number' : 'One choice per category' }}</span>
+                    <span v-if="isPaid" class="text-muted"><i class="bi bi-cash-coin me-1"></i>₦{{ (event.vote_price_naira ?? 0).toLocaleString('en-NG') }} per vote</span>
+                    <span v-else class="text-muted"><i class="bi me-1" :class="allSingle ? 'bi-record-circle' : 'bi-ui-checks'"></i>{{ allSingle ? 'One choice per category' : 'Some categories allow several picks' }}</span>
                     <span v-if="closesIn.label" class="text-muted"><i class="bi bi-hourglass-split me-1"></i>Closes in <b class="text-ink">{{ closesIn.label }}</b></span>
                 </div>
             </div>
 
-            <form class="card-b pad" novalidate @submit.prevent="checkCode">
+            <PaidBallot v-if="isPaid" :token="token" :categories="event.categories" :candidates="event.candidates"
+                :price="event.vote_price_naira ?? 0" :min-payment="event.min_payment_naira ?? 50" :payments-ready="!!event.payments_enabled" />
+            <p v-if="isPaid && event.results_visibility === 'live'" class="text-center mt-2">
+                <NuxtLink :to="`/event/${token}/results`" class="btn btn-ghost btn-sm"><i class="bi bi-bar-chart-line"></i> Live leaderboard</NuxtLink>
+            </p>
+
+            <form v-if="!isPaid" class="card-b pad" novalidate @submit.prevent="checkCode">
                 <label for="code" class="h5 fw-800 d-block mb-1">Enter your voting code</label>
                 <p class="text-muted small mb-3">You'll find it on your invitation or voter slip. Each code works once.</p>
                 <input id="code" ref="codeInput" v-model="code" class="form-control code-input mono" :class="{ 'is-invalid': codeError }"
@@ -72,12 +90,19 @@
                 <span class="code-chip d-none d-sm-inline">{{ maskedCode }}</span>
                 <button class="btn btn-link btn-sm text-muted p-0 flex-shrink-0" @click="changeCode">Not you?</button>
             </div>
-            <BallotForm ref="ballot" :categories="event.categories" :candidates="event.candidates" :mode="event.selection_mode"
+            <BallotForm ref="ballot" :categories="event.categories" :candidates="event.candidates"
                 :submitting="submitting" :error="submitError" @submit="castVote" />
         </div>
 
         <!-- Done -->
-        <VoteSuccess v-else-if="stage === 'done'" :event-name="event?.name ?? 'this election'" :voter-name="voterName"
+        <VoteSuccess v-else-if="stage === 'done' && paidResult" :event-name="event?.name ?? ''" title="Thank you for voting!" :message="paidResult.message"
+            :receipt="paidResult.reference" receipt-label="Payment reference" receipt-hint="Also emailed to you. Use it on the results page to check your votes were counted."
+            :results-to="event?.results_visibility === 'private' ? '' : `/event/${token}/results`" results-label="See the leaderboard" hide-done>
+            <template #actions>
+                <button class="btn btn-ghost" @click="voteAgain"><i class="bi bi-heart"></i> Vote again</button>
+            </template>
+        </VoteSuccess>
+        <VoteSuccess v-else-if="stage === 'done'" :event-name="event?.name ?? 'this election'" :voter-name="voterName" :receipt="receipt"
             :results-to="event?.results_visibility === 'private' ? '' : `/event/${token}/results`"
             :results-label="event?.results_visibility === 'live' ? 'View live results' : 'Results page (published when voting closes)'" />
     </div>
@@ -89,11 +114,13 @@ import type { Choice, EventStatus, PublicEvent } from '~/types';
 
 definePageMeta({ layout: 'ballot' });
 const branding = useBallotBranding();
-onBeforeUnmount(() => { branding.value = true; }); // other pages default to showing it
+const ballotMode = useBallotMode();
+onBeforeUnmount(() => { branding.value = true; ballotMode.value = 'codes'; }); // other pages use the defaults
 
-type Stage = 'loading' | 'unavailable' | 'code' | 'ballot' | 'done';
+type Stage = 'loading' | 'unavailable' | 'code' | 'paid' | 'confirming' | 'ballot' | 'done';
 
 const route = useRoute();
+const router = useRouter();
 const token = String(route.params.token ?? '');
 
 const stage = ref<Stage>('loading');
@@ -107,8 +134,18 @@ const codeError = ref('');
 const checking = ref(false);
 const submitting = ref(false);
 const submitError = ref('');
+useErrorAlert(submitError, 'Your vote wasn’t submitted');
 const codeInput = ref<HTMLInputElement | null>(null);
 const ballot = ref<{ closeReview: () => void } | null>(null);
+/** Receipt for a counted ballot (code voting). */
+const receipt = ref<string | null>(null);
+/** Paid voting: outcome of the payment the voter just made. */
+const paidResult = ref<{ message: string; reference: string } | null>(null);
+const paidNotice = ref<{ ok: boolean; text: string } | null>(null);
+
+const isPaid = computed(() => event.value?.voting_mode === 'paid');
+const allSingle = computed(() => (event.value?.categories ?? []).every(c => c.max_choices === 1));
+useBrandTheme(() => event.value?.brand);
 
 const unavailable = reactive({
     status: '' as '' | EventStatus,
@@ -138,9 +175,12 @@ async function load() {
     try {
         event.value = (await publicApi.getEvent(token)).data;
         branding.value = event.value.branding !== false;
-        stage.value = 'code';
-        await nextTick();
-        codeInput.value?.focus();
+        ballotMode.value = event.value.voting_mode;
+        stage.value = isPaid.value ? 'paid' : 'code';
+        if (!isPaid.value) {
+            await nextTick();
+            codeInput.value?.focus();
+        }
     } catch (e) {
         const status = apiStatus(e);
         const body = (e as { response?: { data?: { status?: EventStatus; starts_at?: string | null; results_public?: boolean } } }).response?.data;
@@ -190,7 +230,8 @@ async function castVote(choices: Choice[]) {
     submitting.value = true;
     submitError.value = '';
     try {
-        await publicApi.castVote(token, { code: normalized.value, choices });
+        const { data } = await publicApi.castVote(token, { code: normalized.value, choices });
+        receipt.value = data.receipt ?? null;
         stage.value = 'done';
         window.scrollTo({ top: 0 });
     } catch (e) {
@@ -206,14 +247,42 @@ async function castVote(choices: Choice[]) {
     }
 }
 
+/** Back from Paystack with ?ref=…: confirm the payment, then show the outcome. */
+async function confirmPayment(reference: string) {
+    stage.value = 'confirming';
+    router.replace({ query: {} });
+    try {
+        const { data } = await publicApi.verifyPaidVotes(reference);
+        await load();
+        if (data.status === 'success') {
+            paidResult.value = { message: data.message, reference: data.reference };
+            stage.value = 'done';
+        } else {
+            paidNotice.value = { ok: false, text: data.message };
+        }
+    } catch (e) {
+        await load();
+        paidNotice.value = { ok: false, text: apiErrorMessage(e, 'We couldn’t confirm the payment yet. If you were charged, your votes will be added automatically.') };
+    }
+}
+
+function voteAgain() {
+    paidResult.value = null;
+    stage.value = 'paid';
+    window.scrollTo({ top: 0 });
+}
+
 onMounted(() => {
-    if (token) load();
+    const ref = String(route.query.ref ?? route.query.reference ?? '');
+    if (token && ref) confirmPayment(ref);
+    else if (token) load();
     else showUnavailable({ title: 'Ballot not found', text: 'This voting link is incomplete.' });
 });
 </script>
 
 <style scoped>
 .voter-bar { display: flex; align-items: center; gap: .75rem; padding: .7rem 1rem; }
+.brand-logo { display: block; max-height: 48px; max-width: 180px; object-fit: contain; border-radius: 8px; background: rgba(255, 255, 255, .92); padding: 4px 8px; }
 .intro-band {
     padding: 1.75rem 1.5rem; position: relative;
     background:

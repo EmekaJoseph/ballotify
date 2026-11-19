@@ -40,13 +40,16 @@ it('creates an event with status, mode and counts', function () {
     $this->actingAs($user)->postJson('/api/events', [
         'name' => 'Awards Night',
         'description' => 'Annual staff awards',
-        'selection_mode' => 'multiple',
+        'voting_mode' => 'paid',
+        'vote_price_naira' => 100,
         'starts_at' => now()->subMinute()->toISOString(),
         'ends_at' => now()->addDay()->toISOString(),
     ])->assertCreated()
         ->assertJsonPath('name', 'Awards Night')
         ->assertJsonPath('status', 'active')
-        ->assertJsonPath('selection_mode', 'multiple')
+        ->assertJsonPath('voting_mode', 'paid')
+        ->assertJsonPath('vote_price_naira', 100)
+        ->assertJsonPath('my_role', 'owner')
         ->assertJsonPath('voters_count', 0);
 });
 

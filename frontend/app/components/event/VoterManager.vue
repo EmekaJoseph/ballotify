@@ -26,6 +26,12 @@
                     <button class="btn btn-primary btn-sm" @click="onSendCodes">
                         <i class="bi bi-send"></i> Send codes
                     </button>
+                    <button class="btn btn-wa btn-sm" :disabled="!pendingVoters.length || event.status === 'completed'" title="Send each voter their code on WhatsApp (free)" @click="dialog = 'whatsapp'">
+                        <i class="bi bi-whatsapp"></i> WhatsApp
+                    </button>
+                    <button class="btn btn-soft btn-sm" :disabled="event.status !== 'active' && event.status !== 'upcoming'" title="Remind people who haven’t voted" @click="onRemind">
+                        <i class="bi bi-alarm"></i> Remind
+                    </button>
                     <button class="btn btn-soft btn-sm" @click="dialog = 'import'"><i class="bi bi-upload"></i> Import</button>
                     <button class="btn btn-ghost btn-sm" @click="openForm(null)"><i class="bi bi-person-plus"></i> Add</button>
                     <button class="btn btn-ghost btn-sm" @click="dialog = 'generate'"><i class="bi bi-magic"></i> Generate</button>
@@ -34,11 +40,17 @@
                 </div>
             </div>
 
+            <div v-if="event.reminder_at && !event.reminder_sent_at" class="hint">
+                <i class="bi bi-alarm"></i>
+                <span>Reminder scheduled for <b>{{ formatDate(event.reminder_at, true) }}</b> to everyone who hasn’t voted by then.</span>
+                <button class="btn btn-soft btn-sm flex-shrink-0" @click="dialog = 'remind'">Change</button>
+            </div>
+
             <div v-if="isFree" class="hint plan-hint">
                 <i class="bi bi-box"></i>
                 <span class="flex-grow-1">
                     <b>Free event:</b> {{ formatNumber(voters.length) }} of {{ formatNumber(event.limits!.max_voters ?? 0) }} voters used.
-                    Codes can be shared by CSV or printed slips. Upgrade to Pro for up to {{ plans ? formatNumber(plans.pro.max_voters) : 'more' }} voters and email/SMS invitations.
+                    Share codes free on WhatsApp, by CSV or printed slips. Upgrade to Pro for up to {{ plans ? formatNumber(plans.pro.max_voters) : 'more' }} voters, email/SMS invitations and reminders.
                 </span>
                 <button v-if="event.status !== 'completed'" class="btn btn-soft btn-sm flex-shrink-0" @click="askUpgrade('Upgrade to Pro')">
                     <i class="bi bi-lightning-charge"></i> Upgrade
@@ -120,6 +132,7 @@
                                 <td class="text-nowrap">
                                     <span v-if="v.used_at" class="pill pill-active" :title="'Voted ' + formatDate(v.used_at, true)"><i class="bi bi-check2"></i> Voted</span>
                                     <span v-else-if="v.invite_error" class="pill pill-failed" :title="v.invite_error"><i class="bi bi-exclamation-triangle"></i> Not delivered</span>
+                                    <span v-else-if="v.invited_at && v.invited_via === 'whatsapp'" class="pill pill-wa" :title="'Shared on WhatsApp ' + formatDate(v.invited_at, true)"><i class="bi bi-whatsapp"></i> Shared</span>
                                     <span v-else-if="v.invited_at" class="pill pill-violet" :title="'Sent ' + formatDate(v.invited_at, true)"><i class="bi bi-send-check"></i> Invited</span>
                                     <span v-else class="pill pill-completed">Not invited</span>
                                 </td>
@@ -129,6 +142,8 @@
                                         @click="sendToOne(v)">
                                         <i class="bi bi-send"></i> {{ v.invited_at ? 'Resend' : 'Send' }}
                                     </button>
+                                    <a v-if="!v.used_at && event.status !== 'completed'" :href="waLink(v)" target="_blank" rel="noopener" class="btn btn-ghost btn-icon btn-sm ms-1 wa-icon"
+                                        title="Send on WhatsApp" aria-label="Send code on WhatsApp" @click="markShared(v)"><i class="bi bi-whatsapp"></i></a>
                                     <button class="btn btn-ghost btn-icon btn-sm ms-1" title="Edit" aria-label="Edit voter" @click="openForm(v)"><i class="bi bi-pencil"></i></button>
                                     <button class="btn btn-ghost btn-icon btn-sm text-danger ms-1" title="Delete" aria-label="Delete voter" @click="removeVoter(v)"><i class="bi bi-trash"></i></button>
                                 </td>
@@ -147,8 +162,11 @@
         </div>
 
         <!-- Dialogs -->
-        <EventVoterFormModal :open="dialog === 'form'" :event-id="event.id" :voter="editing" @close="dialog = null" @saved="onSaved" />
-        <EventVoterImportModal :open="dialog === 'import'" :event-id="event.id" @close="dialog = null" @created="afterCreate" />
+        <EventVoterFormModal :open="dialog === 'form'" :event-id="event.id" :voter="editing" @close="dialog = null" @saved="onSaved" @limit="onLimit" />
+        <EventVoterImportModal :open="dialog === 'import'" :event-id="event.id" @close="dialog = null" @created="afterCreate" @limit="onLimit" />
+        <EventWhatsAppModal :open="dialog === 'whatsapp'" :event="event" :voters="voters" :vote-url="voteUrl" @close="dialog = null" @shared="onShared" />
+        <EventRemindModal :open="dialog === 'remind'" :event="event" :pending="pendingVoters.length" :reachable="reachableCount"
+            @close="dialog = null" @done="afterRemind" />
         <EventInviteModal :open="dialog === 'invite'" :event-id="event.id" :voters="voters" :targets="inviting"
             @close="dialog = null" @sent="afterInvite" />
 
@@ -207,7 +225,7 @@ const query = ref('');
 const statusFilter = ref<'all' | 'voted' | 'pending' | 'not_invited' | 'failed'>('all');
 const page = ref(1);
 
-const dialog = ref<null | 'form' | 'import' | 'generate' | 'created' | 'invite'>(null);
+const dialog = ref<null | 'form' | 'import' | 'generate' | 'created' | 'invite' | 'whatsapp' | 'remind'>(null);
 const editing = ref<Voter | null>(null);
 /** null = whole list (pick an audience); array = exactly these voters. */
 const inviting = ref<Voter[] | null>(null);
@@ -385,6 +403,7 @@ async function generate() {
         const { data } = await adminApi.generateVoters(props.event.id, { count: genCount.value });
         await afterCreate(data.voters);
     } catch (e) {
+        if (planLimitReason(e) === 'events') return onLimit();
         toast.error(apiErrorMessage(e));
     } finally {
         busy.value = false;
@@ -392,22 +411,57 @@ async function generate() {
 }
 
 
-async function removeVoter(v: Voter) {
-    const ok = await confirm({
-        title: `Delete ${v.name || 'this voter'}?`,
-        message: v.used_at ? 'They have already voted. Votes are secret, so their vote stays counted.' : 'Their code will stop working.',
-        confirmText: 'Delete',
-        danger: true,
+/** Removed straight away, with a few seconds to undo (no confirm dialog). */
+function removeVoter(v: Voter) {
+    const index = voters.value.findIndex(x => x.id === v.id);
+    const who = v.name ? `“${v.name}”` : 'voter';
+    toast.undoable(`Deleted ${who}` + (v.used_at ? ' (their secret vote stays counted)' : ''), {
+        hide: () => { voters.value = voters.value.filter(x => x.id !== v.id); },
+        restore: () => {
+            if (voters.value.some(x => x.id === v.id)) return;
+            const next = [...voters.value];
+            next.splice(Math.min(index, next.length), 0, v);
+            voters.value = next;
+        },
+        commit: async () => {
+            await adminApi.deleteVoter(props.event.id, v.id);
+            emit('changed');
+        },
     });
-    if (!ok) return;
-    try {
-        await adminApi.deleteVoter(props.event.id, v.id);
-        voters.value = voters.value.filter(x => x.id !== v.id);
-        toast.success('Voter deleted');
-        emit('changed');
-    } catch (e) {
-        toast.error(apiErrorMessage(e));
-    }
+}
+
+// ----- WhatsApp (free: opens the organiser's own WhatsApp with the message ready) -----
+function waLink(v: Voter) {
+    return whatsappLink(v.phone, voterCodeMessage({
+        eventName: props.event.name, voterName: v.name, code: v.code, voteUrl: voteUrl.value,
+        endsAt: props.event.ends_at, reminder: !!v.invited_at,
+    }));
+}
+async function markShared(v: Voter) {
+    try { onShared((await adminApi.markShared(props.event.id, v.id)).data); } catch { /* the message still opened */ }
+}
+function onShared(updated: Voter) {
+    voters.value = voters.value.map(x => (x.id === updated.id ? { ...x, ...updated } : x));
+}
+
+// ----- Reminders (Pro) -----
+function onRemind() {
+    if (isFree.value) return askUpgrade('Reminders are a Pro feature');
+    if (!pendingVoters.value.length) return toast.info('Everyone has voted. Nobody needs a reminder.');
+    dialog.value = 'remind';
+}
+async function afterRemind() {
+    dialog.value = null;
+    emit('changed');
+    await load();
+    pollStatuses();
+}
+
+// ----- Free plan: adding voters here would be a second live event -----
+const { showLimit } = useNewEvent();
+function onLimit() {
+    dialog.value = null;
+    showLimit({ id: props.event.id, name: props.event.name });
 }
 
 function exportCsv(list: (Voter | GeneratedCode)[]) {
@@ -445,4 +499,7 @@ function printSlips(list: (Voter | GeneratedCode)[]) {
 }
 .row-selected td { background: rgba(20, 145, 138, .05); }
 .pill-failed { background: var(--danger-50); color: var(--danger); cursor: help; }
+.pill-wa { background: rgba(29, 168, 81, .12); color: #178a43; }
+.wa-icon { color: #1da851; }
+.btn-wa { --bs-btn-color: #fff; --bs-btn-bg: #1da851; --bs-btn-border-color: #1da851; --bs-btn-hover-color: #fff; --bs-btn-hover-bg: #178a43; --bs-btn-hover-border-color: #178a43; --bs-btn-disabled-bg: #1da851; --bs-btn-disabled-border-color: #1da851; --bs-btn-disabled-color: #fff; }
 </style>

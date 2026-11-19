@@ -26,6 +26,12 @@ return new class extends Migration
             $table->timestamp('suspended_at')->nullable();
             // Set by the platform admin: every event of this account is Pro, free of charge.
             $table->timestamp('pro_account_at')->nullable();
+            // Where money from paid public voting is sent.
+            $table->string('payout_bank_name')->nullable();
+            $table->string('payout_account_number', 20)->nullable();
+            $table->string('payout_account_name')->nullable();
+            // First-run tour seen in the dashboard.
+            $table->timestamp('onboarded_at')->nullable();
             $table->rememberToken();
             $table->timestamps();
         });

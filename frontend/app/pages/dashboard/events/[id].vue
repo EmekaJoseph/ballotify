@@ -24,10 +24,12 @@
             <PageHeader :title="event.name" back="/dashboard/events" back-label="Events">
                 <template #meta>
                     <div class="d-flex flex-wrap align-items-center gap-2 mt-2">
-                        <StatusBadge :status="event.status" />
+                        <StatusBadge :status="event.status" :draft="isDraft(event)" />
                         <span v-if="event.limits && event.limits.max_voters !== null" class="pill" :class="event.limits.plan === 'pro' ? 'pill-violet' : 'pill-completed'">
                             <i class="bi" :class="event.limits.plan === 'pro' ? 'bi-gem' : 'bi-box'"></i> {{ event.limits.plan === 'pro' ? 'Pro' : 'Free' }}
                         </span>
+                        <span v-if="event.voting_mode === 'paid'" class="pill pill-amber"><i class="bi bi-cash-coin"></i> Paid voting</span>
+                        <span v-if="event.my_role && event.my_role !== 'owner'" class="pill pill-completed" :title="ROLE_INFO[event.my_role].text"><i class="bi bi-people"></i> Shared with you · {{ roleLabel(event.my_role) }}</span>
                         <span class="small text-muted"><i class="bi bi-calendar3"></i> {{ formatWindow(event.starts_at, event.ends_at) }}</span>
                     </div>
                 </template>
@@ -36,20 +38,22 @@
             </PageHeader>
 
             <div class="segmented mb-4" role="tablist">
-                <button v-for="t in tabs" :key="t.key" type="button" role="tab" :aria-selected="tab === t.key"
+                <button v-for="t in tabs" :key="t.key" type="button" role="tab" :aria-selected="tab === t.key" :data-tour="`tab-${t.key}`"
                     :class="{ active: tab === t.key }" @click="tab = t.key">
                     <i class="bi" :class="t.icon"></i>{{ t.label }}
                 </button>
             </div>
 
-            <EventOverview v-if="tab === 'overview'" :event="event" @go="tab = $event as TabKey" />
+            <EventOverview v-if="tab === 'overview'" :event="event" @go="goTab($event)" />
             <EventBallotManager v-else-if="tab === 'ballot'" :event="event" @changed="load(true)" />
             <EventVoterManager v-else-if="tab === 'voters'" :event="event" @changed="load(true)" />
             <EventAdminResults v-else-if="tab === 'results'" :event="event" />
             <EventSharePanel v-else-if="tab === 'share'" :event="event" />
             <EventActivityLog v-else-if="tab === 'activity'" :event-id="event.id" />
+            <EventTeamPanel v-else-if="tab === 'team'" :event="event" @upgrade="upgrade" @left="onLeft" />
+            <EventEarningsPanel v-else-if="tab === 'earnings'" :event="event" />
 
-            <div v-else-if="tab === 'settings'" class="row g-4">
+            <div v-else-if="tab === 'settings' && can('manage')" class="row g-4">
                 <div class="col-lg-8">
                     <div class="card-b pad">
                         <h3 class="h6 fw-800 mb-4">Event settings</h3>
@@ -58,6 +62,7 @@
                     </div>
                 </div>
                 <div class="col-lg-4 d-grid gap-4 align-content-start">
+                    <EventBrandingCard :event="event" @upgrade="upgrade" @saved="load(true)" />
                     <div class="card-b pad">
                         <h3 class="h6 fw-800 mb-2">Duplicate event</h3>
                         <p class="small text-muted mb-3">
@@ -85,32 +90,36 @@
                             <span v-if="erasing" class="spinner-border spinner-border-sm"></span><i v-else class="bi bi-eraser"></i> Erase contact details
                         </button>
                     </div>
-                    <div class="card-b pad danger-zone">
+                    <div v-if="can('own')" class="card-b pad danger-zone">
                         <h3 class="h6 fw-800 mb-2 text-danger">Delete event</h3>
                         <p class="small text-muted mb-3">Permanently removes the ballot, voter list, results and activity log.</p>
                         <button class="btn btn-danger-soft w-100" @click="remove"><i class="bi bi-trash"></i> Delete event</button>
                     </div>
                 </div>
             </div>
+            <EventTour v-if="showTour" @done="finishTour" />
         </template>
     </div>
 </template>
 
 <script setup lang="ts">
 import { adminApi, billingApi, type EventPayload } from '~/api/endpoints/admin';
-import type { BallotEvent } from '~/types';
+import { useAuthStore } from '~/stores/auth';
+import type { BallotEvent, EventAbility } from '~/types';
 
 definePageMeta({ layout: 'dashboard', middleware: ['auth'] });
 
-type TabKey = 'overview' | 'ballot' | 'voters' | 'results' | 'share' | 'activity' | 'settings';
-const tabs: { key: TabKey; label: string; icon: string }[] = [
+type TabKey = 'overview' | 'ballot' | 'voters' | 'earnings' | 'results' | 'share' | 'team' | 'activity' | 'settings';
+const ALL_TABS: { key: TabKey; label: string; icon: string; needs?: EventAbility; mode?: 'codes' | 'paid' }[] = [
     { key: 'overview', label: 'Overview', icon: 'bi-speedometer2' },
     { key: 'ballot', label: 'Ballot', icon: 'bi-ui-checks-grid' },
-    { key: 'voters', label: 'Voters', icon: 'bi-people' },
+    { key: 'voters', label: 'Voters', icon: 'bi-people', needs: 'voters', mode: 'codes' },
+    { key: 'earnings', label: 'Earnings', icon: 'bi-cash-coin', needs: 'manage', mode: 'paid' },
     { key: 'results', label: 'Results', icon: 'bi-bar-chart-line' },
     { key: 'share', label: 'Share', icon: 'bi-send' },
+    { key: 'team', label: 'Team', icon: 'bi-person-gear' },
     { key: 'activity', label: 'Activity', icon: 'bi-clock-history' },
-    { key: 'settings', label: 'Settings', icon: 'bi-sliders' },
+    { key: 'settings', label: 'Settings', icon: 'bi-sliders', needs: 'manage' },
 ];
 
 const route = useRoute();
@@ -120,6 +129,11 @@ const { confirm } = useConfirm();
 
 const eventId = computed(() => String(route.params.id));
 const event = ref<BallotEvent | null>(null);
+const auth = useAuthStore();
+
+/** What this user may do here (owners and old responses: everything). */
+const can = (a: EventAbility) => event.value?.abilities?.includes(a) ?? true;
+const tabs = computed(() => ALL_TABS.filter(t => (!t.needs || can(t.needs)) && (!t.mode || t.mode === (event.value?.voting_mode ?? 'codes'))));
 const loading = ref(true);
 const notFound = ref(false);
 const loadError = ref('');
@@ -128,7 +142,32 @@ const fieldErrors = ref<Record<string, string>>({});
 const formVersion = ref(0);
 
 const initialTab = String(route.query.tab ?? 'overview');
-const tab = ref<TabKey>(tabs.some(t => t.key === initialTab) ? (initialTab as TabKey) : 'overview');
+const tab = ref<TabKey>(ALL_TABS.some(t => t.key === initialTab) ? (initialTab as TabKey) : 'overview');
+// A tab this user can't see (or wrong for the voting mode) falls back to the overview.
+watch(tabs, (list) => { if (event.value && !list.some(t => t.key === tab.value)) tab.value = 'overview'; });
+function goTab(key: string) { if (tabs.value.some(t => t.key === key)) tab.value = key as TabKey; }
+// Links to another tab of the same event (e.g. ?tab=settings) reuse this page: follow the URL.
+watch(() => route.query.tab, (q) => {
+    const key = String(q ?? 'overview');
+    if (key !== tab.value) {
+        if (tabs.value.some(t => t.key === key)) tab.value = key as TabKey;
+        else router.replace({ query: { ...route.query, tab: tab.value === 'overview' ? undefined : tab.value } });
+    }
+});
+
+const { startUpgrade } = useBilling();
+function upgrade() { startUpgrade(eventId.value); }
+async function onLeft() {
+    toast.success('You left the event');
+    await navigateTo('/dashboard/events');
+}
+
+// ----- First-run tour: once per account, on the owner's first event page
+const showTour = computed(() => !!event.value && !loading.value && event.value.my_role === 'owner' && !!auth.user && !auth.user.onboarded_at);
+async function finishTour() {
+    if (auth.user) auth.user = { ...auth.user, onboarded_at: new Date().toISOString() };
+    try { auth.user = (await adminApi.markOnboarded()).data; } catch { /* shown again next time at worst */ }
+}
 watch(tab, (t) => router.replace({ query: { ...route.query, tab: t === 'overview' ? undefined : t } }));
 
 const { voteUrl } = useEventLinks(() => event.value?.link_token);

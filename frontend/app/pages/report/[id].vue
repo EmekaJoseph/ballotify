@@ -21,7 +21,7 @@
             <table class="details">
                 <tbody>
                     <tr><th>Voting window</th><td>{{ formatWindow(results.event.starts_at, results.event.ends_at) }}</td></tr>
-                    <tr><th>Voting style</th><td>{{ event.selection_mode === 'multiple' ? 'Multiple choice' : 'One choice per category' }}</td></tr>
+                    <tr><th>Voting</th><td>{{ event.voting_mode === 'paid' ? `Paid public voting (₦${formatNumber(event.vote_price_naira ?? 0)} per vote)` : 'Secret ballot with one-time codes' }}</td></tr>
                     <tr><th>Generated</th><td>{{ generatedAt }}</td></tr>
                     <tr><th>Reference</th><td class="mono">EV-{{ results.event.id }} · {{ event.link_token.slice(0, 8) }}</td></tr>
                 </tbody>

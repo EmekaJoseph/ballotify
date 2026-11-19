@@ -1,34 +1,31 @@
 /**
- * "New event" entry point used by every create button.
- * If the account has used its free open-event allowance, a friendly modal
- * (<EventLimitModal /> in the dashboard layout) explains why and what to do,
- * instead of letting the organiser fill a form that will be refused.
+ * Free-plan live-event allowance. Drafts are unlimited; an event goes "live"
+ * when it gets its first voter. When adding voters would exceed the allowance,
+ * a friendly modal (<EventLimitModal /> in the dashboard layout) explains the
+ * options instead of an error.
  */
 export function useNewEvent() {
     const { plans, loadPlans } = useBilling();
     const limitOpen = useState<boolean>('event-limit-open', () => false);
+    /** The event the organiser was trying to make live. */
+    const limitEvent = useState<{ id: number; name: string } | null>('event-limit-event', () => null);
 
     const quota = computed(() => plans.value?.event_quota ?? null);
-    /** Known to be blocked (used to show a lock on the buttons). Unknown = allowed. */
-    const blocked = computed(() => quota.value?.can_create === false);
 
     /** Fetch the latest allowance (events may have been created, closed or upgraded). */
     function refreshQuota() {
         return loadPlans(true);
     }
 
-    function showLimit() {
+    async function showLimit(event?: { id: number; name: string } | null) {
+        limitEvent.value = event ?? null;
         limitOpen.value = true;
+        await refreshQuota();
     }
 
     async function startNewEvent() {
-        if (blocked.value) {
-            showLimit();
-            refreshQuota(); // in case it changed; the modal updates itself
-            return;
-        }
         await navigateTo('/dashboard/events/create');
     }
 
-    return { quota, blocked, limitOpen, refreshQuota, showLimit, startNewEvent };
+    return { quota, limitOpen, limitEvent, refreshQuota, showLimit, startNewEvent };
 }

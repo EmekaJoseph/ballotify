@@ -15,16 +15,20 @@
 | For organisers                                                     | For voters                             |
 | ------------------------------------------------------------------ | -------------------------------------- |
 | Create events with categories and candidates (photos, short descriptions) | Open one link on any phone or laptop   |
-| Choose **single choice** or **multiple choice**, with an optional "pick up to N" per category | Enter a personal one-time code         |
+| Start from a template (student union, award night, AGM, board) or a blank ballot | Enter a personal one-time code         |
+| Per category: choose one, pick up to N, or any number; shuffle candidates | Progress bar, review screen, then submit |
 | Schedule when voting opens and closes, or close it early           | Pick candidates, review, submit        |
-| Generate thousands of voter codes, or import a name list           | Confirmation screen, then live results |
+| Generate thousands of voter codes, or import a name list           | A **receipt** to check the ballot was counted |
 | Export codes to CSV, or print voter slips with a QR code           |                                        |
-| Email or text codes to voters; track who has voted                 | Results page (when the organiser publishes it) |
+| Email, text or **WhatsApp** codes to voters; remind non-voters (now or scheduled) | Results page (when the organiser publishes it) |
 | Choose when results are public: live, after close, or never        |                                        |
 | Import candidates from a spreadsheet; duplicate an event            |                                        |
-| Results as CSV, or a printable signed report (save as PDF)         |                                        |
+| Results as CSV, a printable report, a turnout chart, and **Present / Reveal** on a projector | **Paid voting:** pick a nominee, pay per vote |
+| **Paid public voting** for award nights: fans pay per vote via Paystack | Payment reference doubles as a receipt |
+| **Co-organisers** with roles (editor, voter manager, viewer)       |                                        |
+| Pro: your own logo and colour on the ballot and results pages      |                                        |
 | Activity log of every change; two-step login; dark mode            |                                        |
-| **Platform admin:** see every organiser and event, suspend abuse    |                                        |
+| **Platform admin:** organisers, events, payments, payouts, system health; suspend abuse |                                        |
 | **Free and Pro plans:** pay per event with Paystack                 |                                        |
 
 **Integrity guarantees, all enforced on the server:**
@@ -33,7 +37,8 @@
 - Each code can vote **exactly once**. The voter row is locked inside a transaction, so two simultaneous submits can't both succeed. A code that has voted can't be reset.
 - **The ballot locks at the first vote.** Categories and candidates can't be added, removed or moved. Name and photo fixes are still allowed, but each is recorded in the event's activity log, and the public results page shows how many changes were made during voting.
 - Ballots outside the voting window are rejected.
-- Single-choice rules are checked server side, and candidates must belong to the category and event.
+- Pick limits are checked server side per category, and candidates must belong to the category and event.
+- **Ballot receipts.** Each counted ballot gets a receipt code. Only a keyed hash is stored, with no link to the voter or the choices, so a voter can prove their ballot was counted without revealing how they voted.
 - Code guessing is rate-limited per network and event.
 - **Results visibility** is per event: live, after voting closes (the default), or organiser only.
 
@@ -153,15 +158,20 @@ Billing is **pay per event**:
 
 | | Free | Pro (one-off, per event) |
 |---|---|---|
-| Open events | 1 at a time per account | Doesn't count towards the free limit |
+| Events | Unlimited drafts; **1 live** at a time (an event goes live when it gets its first voters) | Doesn't count towards the free limit |
 | Voters per event | 50 | 5,000 |
-| Email & SMS invitations | No (share codes by CSV or printed slips) | Yes |
-| Ballot branding | "Powered by Ballotify" | None |
+| Email & SMS invitations and reminders | No (share codes on WhatsApp, CSV or printed slips) | Yes |
+| Ballot branding | "Powered by Ballotify" | None, plus your own logo and colour |
+| Co-organisers | No | Up to 10 |
 | Price | ₦0 | ₦10,000 |
 
 These are the starting values. Change prices and limits any time in **Admin → Pricing**; changes apply straight away.
 
 Organisers upgrade from the event page. They pay on Paystack's checkout (card, bank transfer or USSD) and are sent back to the event, which is upgraded once Paystack confirms the payment. A webhook covers organisers who close the tab before returning.
+
+Every successful payment is emailed as a receipt, and organisers can print receipts from **Account → Payments & receipts**.
+
+**Paid public voting** (award nights, pageants) is separate from the plans: anyone with the link picks a nominee and pays per vote. Votes are added once Paystack confirms, exactly once, and only if the payment arrived before voting closed (late payments are marked for refund). The platform keeps a fee (10% by default, **Admin → Pricing**); the rest is the organiser's. Organisers add their bank details on the event's **Earnings** tab; you send their share by transfer and record it in **Admin → Payouts**. Paid-voting events never count towards the free live-event limit.
 
 The platform admin can also upgrade without payment:
 - **Admin → Events → Make Pro** upgrades one event.
@@ -191,7 +201,7 @@ Until a key is set, nothing breaks: organisers see "Contact us to upgrade" (usin
 ## Testing
 
 ```bash
-cd backend  && php artisan test                                    # 83 feature tests
+cd backend  && php artisan test                                    # 102 feature tests
 cd frontend && npx nuxi prepare && npx vue-tsc --noEmit -p .nuxt/tsconfig.app.json   # type check
 cd frontend && npm run build                                       # production build
 ```
@@ -202,8 +212,8 @@ cd frontend && npm run build                                       # production 
 
 1. Set `APP_ENV=production`, `APP_DEBUG=false`, and the real `APP_URL` and `FRONTEND_URL`.
 2. Run `composer install --no-dev -o`, `php artisan migrate --force` and `php artisan config:cache route:cache`.
-3. Point the web root at `backend/public`, and make sure `public/candidates/` is writable for photos.
-4. Add one cron entry for daily cleanup (expired logins, old voter contacts): `* * * * * cd /path/to/backend && php artisan schedule:run`.
+3. Point the web root at `backend/public`, and make sure `public/candidates/` and `public/branding/` are writable (photos and logos).
+4. Add one cron entry: `* * * * * cd /path/to/backend && php artisan schedule:run`. It sends scheduled reminders (every minute) and does daily cleanup (expired logins, old voter contacts). **Admin → Health** shows whether it is running.
 5. For payments, set `PAYSTACK_SECRET_KEY` (live key) and the Paystack webhook URL `https://your-api/api/paystack/webhook`.
 6. For instant live results, keep `php artisan reverb:start` running (e.g. with Supervisor) behind your web server's websocket proxy, and set the `REVERB_*` / `NUXT_PUBLIC_REVERB_*` values to the public host. Without it, results refresh every 15 seconds.
 

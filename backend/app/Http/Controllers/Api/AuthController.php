@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\EventMember;
 use App\Models\User;
 use App\Support\TwoFactor;
 use Illuminate\Auth\Events\PasswordReset;
@@ -93,6 +94,16 @@ class AuthController extends Controller
         return response()->json($request->user());
     }
 
+    /** The dashboard's first-run tour was seen (or skipped). */
+    public function onboarded(Request $request)
+    {
+        $user = $request->user();
+        if (! $user->onboarded_at) {
+            $user->forceFill(['onboarded_at' => now()])->save();
+        }
+        return response()->json($user);
+    }
+
     // ------------------------------------------------------------------ profile
 
     public function updateProfile(Request $request)
@@ -104,7 +115,11 @@ class AuthController extends Controller
             'email' => ['prohibited'],
             'current_password' => ['required_with:password', 'nullable', 'string'],
             'password' => ['nullable', 'string', 'min:8'],
-        ]);
+            // Where paid-voting money is sent.
+            'payout_bank_name' => ['sometimes', 'nullable', 'string', 'max:120'],
+            'payout_account_number' => ['sometimes', 'nullable', 'digits:10'],
+            'payout_account_name' => ['sometimes', 'nullable', 'string', 'max:120'],
+        ], ['payout_account_number.digits' => 'Enter the 10-digit account number (NUBAN).']);
 
         if (! empty($data['password'])) {
             if (! Hash::check($data['current_password'] ?? '', $user->password)) {
@@ -117,6 +132,9 @@ class AuthController extends Controller
             $user->tokens()->when($currentId, fn ($q) => $q->whereKeyNot($currentId))->delete();
         }
         if (isset($data['name'])) $user->name = $data['name'];
+        foreach (['payout_bank_name', 'payout_account_number', 'payout_account_name'] as $field) {
+            if (array_key_exists($field, $data)) $user->{$field} = $data[$field] ?: null;
+        }
         $user->save();
 
         return response()->json($user);
@@ -148,6 +166,7 @@ class AuthController extends Controller
                 $user->tokens()->delete(); // sign out everywhere
                 // Following the link proves ownership of the inbox.
                 if (! $user->hasVerifiedEmail()) $user->markEmailAsVerified();
+                EventMember::claimFor($user);
                 event(new PasswordReset($user));
             },
         );
@@ -171,6 +190,8 @@ class AuthController extends Controller
         if (! $user->hasVerifiedEmail()) {
             $user->markEmailAsVerified();
         }
+        // Co-organiser invitations sent to this address can now be linked.
+        EventMember::claimFor($user);
         return response()->json(['message' => 'Email confirmed.', 'verified' => true]);
     }
 
@@ -235,6 +256,7 @@ class AuthController extends Controller
 
     private function issueToken(User $user): string
     {
+        EventMember::claimFor($user);
         return $user->createToken('api')->plainTextToken; // expiry: config('sanctum.expiration')
     }
 

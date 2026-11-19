@@ -4,19 +4,21 @@
         <div class="ballot-progress card-b px-3 py-2 mb-3 d-flex align-items-center gap-3">
             <div class="small fw-bold text-ink text-nowrap">{{ answered }} / {{ categories.length }}</div>
             <div class="bar slim flex-grow-1"><span :style="{ width: progress + '%' }"></span></div>
-            <span class="pill" :class="mode === 'multiple' ? 'pill-violet' : 'pill-brand'">
-                {{ mode === 'multiple' ? 'Multiple choice' : 'Pick one' }}
-            </span>
+            <button v-if="nextUnanswered" type="button" class="btn btn-soft btn-sm text-nowrap" @click="jumpTo(nextUnanswered.id)">
+                Next <i class="bi bi-arrow-down"></i>
+            </button>
+            <span v-else class="pill pill-brand"><i class="bi bi-check2"></i> All done</span>
         </div>
 
-        <section v-for="(cat, idx) in categories" :key="cat.id" class="card-b mb-3 overflow-hidden fade-up"
+        <section v-for="(cat, idx) in categories" :id="`ballot-cat-${cat.id}`" :key="cat.id" class="card-b mb-3 overflow-hidden fade-up ballot-cat"
             :style="{ animationDelay: `${Math.min(idx, 6) * 60}ms` }">
             <header class="d-flex align-items-center justify-content-between gap-2 px-3 px-sm-4 pt-3 pb-2">
                 <div class="min-w-0">
                     <div class="small-caps">Category {{ idx + 1 }}</div>
                     <h3 class="h5 fw-800 mb-0 text-break">{{ cat.name }}</h3>
-                    <div v-if="mode === 'multiple'" class="small mt-1" :class="isFull(cat) ? 'text-brand fw-semibold' : 'text-muted'">
-                        <template v-if="limitFor(cat)">Pick up to {{ limitFor(cat) }} · {{ countFor(cat.id) }} picked</template>
+                    <div class="small mt-1" :class="isFull(cat) && !single(cat) ? 'text-brand fw-semibold' : 'text-muted'">
+                        <template v-if="single(cat)">Choose one</template>
+                        <template v-else-if="limitFor(cat)">Pick up to {{ limitFor(cat) }} · {{ countFor(cat.id) }} picked</template>
                         <template v-else>Pick as many as you like<template v-if="countFor(cat.id)"> · {{ countFor(cat.id) }} picked</template></template>
                     </div>
                 </div>
@@ -28,15 +30,15 @@
                 <div class="row g-2" role="group" :aria-label="cat.name">
                     <div v-for="cand in byCategory[cat.id]" :key="cand.id" class="col-12 col-sm-6">
                         <button type="button" class="option" :class="{ selected: isSelected(cat.id, cand.id) }"
-                            :aria-pressed="isSelected(cat.id, cand.id)" :disabled="disabled || (isFull(cat) && !isSelected(cat.id, cand.id))"
-                            :title="isFull(cat) && !isSelected(cat.id, cand.id) ? `You can pick up to ${limitFor(cat)}. Unselect one to change.` : undefined"
+                            :aria-pressed="isSelected(cat.id, cand.id)" :disabled="disabled || (!single(cat) && isFull(cat) && !isSelected(cat.id, cand.id))"
+                            :title="!single(cat) && isFull(cat) && !isSelected(cat.id, cand.id) ? `You can pick up to ${limitFor(cat)}. Unselect one to change.` : undefined"
                             @click="toggle(cat.id, cand.id)">
                             <CandidateAvatar :name="cand.name" :src="cand.image_url" />
                             <span class="flex-grow-1 text-start min-w-0">
                                 <span class="d-block fw-semibold text-ink text-break">{{ cand.name }}</span>
                                 <span v-if="cand.description" class="d-block small text-muted text-break opt-desc">{{ cand.description }}</span>
                             </span>
-                            <span class="sel-mark" :class="mode === 'multiple' ? 'square' : 'round'">
+                            <span class="sel-mark" :class="single(cat) ? 'round' : 'square'">
                                 <i class="bi bi-check-lg"></i>
                             </span>
                         </button>
@@ -45,9 +47,6 @@
             </div>
         </section>
 
-        <div v-if="error" class="alert alert-danger d-flex gap-2 align-items-start rounded-4 border-0" role="alert">
-            <i class="bi bi-exclamation-circle-fill mt-1"></i><span>{{ error }}</span>
-        </div>
 
         <div class="submit-bar">
             <button type="button" class="btn btn-primary btn-lg w-100" :disabled="disabled || answered === 0"
@@ -88,7 +87,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Choice, SelectionMode } from '~/types';
+import type { Choice } from '~/types';
 
 interface BallotCategory { id: number; name: string; max_choices?: number | null }
 interface BallotCandidate { id: number; category_id: number; name: string; description?: string | null; image_url: string | null }
@@ -96,7 +95,6 @@ interface BallotCandidate { id: number; category_id: number; name: string; descr
 const props = withDefaults(defineProps<{
     categories: BallotCategory[];
     candidates: BallotCandidate[];
-    mode: SelectionMode;
     submitting?: boolean;
     disabled?: boolean;
     error?: string;
@@ -114,8 +112,10 @@ const byCategory = computed(() => {
 });
 
 const countFor = (catId: number) => picks.value[catId]?.length ?? 0;
-/** Most picks allowed in a multiple-choice category, or null for no limit. */
-const limitFor = (cat: BallotCategory) => (props.mode === 'multiple' && cat.max_choices ? cat.max_choices : null);
+/** Choose-one category (the default). */
+const single = (cat: BallotCategory) => cat.max_choices === 1 || cat.max_choices === undefined;
+/** Most picks allowed, or null for no limit. */
+const limitFor = (cat: BallotCategory) => (cat.max_choices ?? null);
 const isFull = (cat: BallotCategory) => {
     const limit = limitFor(cat);
     return limit !== null && countFor(cat.id) >= limit;
@@ -123,16 +123,21 @@ const isFull = (cat: BallotCategory) => {
 const isSelected = (catId: number, candId: number) => !!picks.value[catId]?.includes(candId);
 const answered = computed(() => props.categories.filter(c => countFor(c.id) > 0).length);
 const progress = computed(() => (props.categories.length ? (answered.value / props.categories.length) * 100 : 0));
+const nextUnanswered = computed(() => props.categories.find(c => countFor(c.id) === 0 && (byCategory.value[c.id]?.length ?? 0) > 0) ?? null);
+
+function jumpTo(catId: number) {
+    document.getElementById(`ballot-cat-${catId}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
 
 function toggle(catId: number, candId: number) {
     const current = picks.value[catId] ?? [];
     let next: number[];
-    if (props.mode === 'multiple') {
+    const category = props.categories.find(c => c.id === catId);
+    if (category && !single(category)) {
         if (current.includes(candId)) {
             next = current.filter(id => id !== candId);
         } else {
-            const cat = props.categories.find(c => c.id === catId);
-            const limit = cat ? limitFor(cat) : null;
+            const limit = limitFor(category);
             if (limit !== null && current.length >= limit) return; // at the limit
             next = [...current, candId];
         }
@@ -179,5 +184,6 @@ defineExpose({ closeReview: () => { reviewOpen.value = false; } });
 .sel-mark.square { border-radius: 8px; }
 .option.selected .sel-mark { background: var(--brand-600); border-color: var(--brand-600); color: #fff; }
 .ballot-progress { position: sticky; top: 72px; z-index: 5; }
+.ballot-cat { scroll-margin-top: 140px; }
 .submit-bar { position: sticky; bottom: 0; padding: 1rem 0 calc(1rem + env(safe-area-inset-bottom)); background: linear-gradient(to top, var(--bg) 70%, transparent); }
 </style>

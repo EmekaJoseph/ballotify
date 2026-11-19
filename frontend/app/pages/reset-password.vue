@@ -10,10 +10,6 @@
         <template v-else>
             <h1 class="h2 fw-800 mb-2">Choose a new password</h1>
             <p class="text-muted mb-4">For <b class="text-ink">{{ email }}</b>. You’ll be signed out on all other devices.</p>
-            <div v-if="error" class="alert alert-danger border-0 rounded-4 small" role="alert">
-                {{ error }}
-                <NuxtLink v-if="expired" to="/forgot-password" class="alert-link d-block mt-1">Request a new link →</NuxtLink>
-            </div>
             <form novalidate @submit.prevent="submit">
                 <div class="mb-3">
                     <label for="pw" class="form-label">New password</label>
@@ -47,6 +43,19 @@ const confirm = ref('');
 const loading = ref(false);
 const error = ref('');
 const expired = ref(false);
+const { alert } = useAlert();
+
+// Errors pop up; an expired link offers to request a new one.
+watch(error, async (message) => {
+    if (!message) return;
+    const requestNew = await alert({
+        title: expired.value ? 'This link has expired' : 'Password not saved',
+        message,
+        actionText: expired.value ? 'Request a new link' : '',
+    });
+    error.value = '';
+    if (requestNew) await navigateTo({ path: '/forgot-password', query: { email } });
+});
 
 async function submit() {
     error.value = '';
@@ -58,8 +67,9 @@ async function submit() {
         await adminApi.resetPassword({ token, email, password: password.value, password_confirmation: confirm.value });
         await navigateTo({ path: '/login', query: { reset: '1', email } });
     } catch (e) {
-        error.value = apiErrorMessage(e);
-        expired.value = /expired|invalid/i.test(error.value);
+        const message = apiErrorMessage(e);
+        expired.value = /expired|invalid/i.test(message); // set first: the alert reads it
+        error.value = message;
     } finally {
         loading.value = false;
     }

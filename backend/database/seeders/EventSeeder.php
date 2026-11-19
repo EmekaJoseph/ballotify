@@ -5,7 +5,6 @@ namespace Database\Seeders;
 use App\Models\Candidate;
 use App\Models\Category;
 use App\Models\Event;
-use App\Models\EventType;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
@@ -20,32 +19,33 @@ class EventSeeder extends Seeder
             'password' => bcrypt('password'),
         ]);
 
-        // Event types are inserted by the voting-tables migration.
-        $singleId = EventType::where('key', 'single')->value('id');
-        $multipleId = EventType::where('key', 'multiple')->value('id');
+        $now = now();
+        // 0: open now (choose one per post) · 1: closed (board picks up to 2) · 2: opens tomorrow
+        $events = [
+            ['name' => 'Campus Election', 'visibility' => 'live', 'max' => 1,
+                'starts_at' => $now->copy()->subHours(1), 'ends_at' => $now->copy()->addDays(1)],
+            ['name' => 'Faculty Awards', 'visibility' => 'after_close', 'max' => 2,
+                'starts_at' => $now->copy()->subDays(3), 'ends_at' => $now->copy()->subDay()],
+            ['name' => 'Tech Fest Poll', 'visibility' => 'after_close', 'max' => 2,
+                'starts_at' => $now->copy()->addDay(), 'ends_at' => $now->copy()->addDays(3)],
+        ];
 
-        $names = ['Campus Election', 'Faculty Awards', 'Tech Fest Poll'];
-        foreach ($names as $idx => $ename) {
-            $now = now();
-            // Event windows: 0-active, 1-expired, 2-upcoming
-            $windows = [
-                ['starts_at' => $now->copy()->subHours(1), 'ends_at' => $now->copy()->addDays(1)],
-                ['starts_at' => $now->copy()->subDays(3), 'ends_at' => $now->copy()->subDay()],
-                ['starts_at' => $now->copy()->addDay(), 'ends_at' => $now->copy()->addDays(3)],
-            ];
-            $win = $windows[$idx] ?? ['starts_at' => null, 'ends_at' => null];
+        foreach ($events as $idx => $spec) {
             $event = Event::create([
                 'user_id' => $user->id,
-                'name' => $ename,
+                'name' => $spec['name'],
                 'link_token' => Str::uuid()->toString(),
-                'event_type_id' => $idx === 0 ? $singleId : $multipleId,
-                'results_visibility' => ['live', 'after_close', 'after_close'][$idx] ?? 'after_close',
-                'starts_at' => $win['starts_at'],
-                'ends_at' => $win['ends_at'],
+                'results_visibility' => $spec['visibility'],
+                'starts_at' => $spec['starts_at'],
+                'ends_at' => $spec['ends_at'],
             ]);
-            $categories = collect(['President', 'Vice President', 'Secretary', 'Treasurer'])->map(function ($name) use ($event) {
-                return Category::create(['event_id' => $event->id, 'name' => $name]);
-            })->values();
+            $categories = collect(['President', 'Vice President', 'Secretary', 'Treasurer'])
+                ->map(fn ($name) => Category::create([
+                    'event_id' => $event->id,
+                    'name' => $name,
+                    'max_choices' => $spec['max'],
+                    'shuffle_candidates' => $idx === 0 && $name === 'President',
+                ]))->values();
             // Some candidates get a short description, some don't (it's optional).
             $blurbs = [
                 'A' => 'Final-year Law · campaigning for longer library hours',
@@ -59,9 +59,32 @@ class EventSeeder extends Seeder
                         'category_id' => $category->id,
                         'name' => $category->name . ' ' . $suffix,
                         'description' => $blurb,
-                        'image_path' => null,
                     ]);
                 }
+            }
+        }
+
+        // Paid public voting demo (award night): fans pay ₦50 per vote.
+        $awards = Event::create([
+            'user_id' => $user->id,
+            'name' => 'Campus Awards Night',
+            'description' => 'Vote for your favourites. ₦50 per vote, as many votes as you like.',
+            'link_token' => Str::uuid()->toString(),
+            'results_visibility' => 'live',
+            'voting_mode' => Event::MODE_PAID,
+            'vote_price_naira' => 50,
+            'starts_at' => $now->copy()->subDays(2),
+            'ends_at' => $now->copy()->addDays(2),
+        ]);
+        $nominees = [
+            'Most Popular' => ['Amaka Obi', 'Tunde Bello', 'Zainab Musa'],
+            'Best Dressed' => ['Chioma Eze', 'David Okon', 'Fatima Sani'],
+            'Rising Star' => ['Ifeanyi Nwosu', 'Kemi Adeyemi', 'Musa Ibrahim'],
+        ];
+        foreach ($nominees as $categoryName => $names) {
+            $category = Category::create(['event_id' => $awards->id, 'name' => $categoryName]);
+            foreach ($names as $name) {
+                Candidate::create(['event_id' => $awards->id, 'category_id' => $category->id, 'name' => $name]);
             }
         }
     }

@@ -23,7 +23,7 @@ class CandidateController extends Controller
 
     public function index(Event $event)
     {
-        Gate::authorize('manage', $event);
+        Gate::authorize('view', $event);
         return response()->json($event->candidates()->orderBy('category_id')->orderBy('id')->get());
     }
 

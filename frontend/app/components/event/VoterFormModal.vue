@@ -52,7 +52,7 @@ import { adminApi } from '~/api/endpoints/admin';
 import type { Voter } from '~/types';
 
 const props = defineProps<{ open: boolean; eventId: number; voter: Voter | null }>();
-const emit = defineEmits<{ close: []; saved: [voter: Voter, created: boolean] }>();
+const emit = defineEmits<{ close: []; saved: [voter: Voter, created: boolean]; limit: [] }>();
 
 const form = reactive({ name: '', email: '', phone: '', code: '' });
 const errors = ref<Record<string, string>>({});
@@ -83,6 +83,7 @@ async function submit() {
             : await adminApi.createVoter(props.eventId, { ...payload, code: form.code || null });
         emit('saved', data, !props.voter);
     } catch (e) {
+        if (planLimitReason(e) === 'events') { emit('limit'); return; }
         errors.value = apiFieldErrors(e);
         if (!Object.keys(errors.value).length) generalError.value = apiErrorMessage(e);
     } finally {

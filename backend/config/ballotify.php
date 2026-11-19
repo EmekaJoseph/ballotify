@@ -23,6 +23,10 @@ return [
             'free_max_active_events' => 1,
             'free_max_voters' => 50,
             'pro_max_voters' => 5000,
+            // Paid public voting: the platform's share of each vote payment.
+            'paid_vote_fee_percent' => 10,
         ],
+        // Smallest single payment for paid voting (Paystack charges have a floor).
+        'min_vote_payment_naira' => 50,
     ],
 ];

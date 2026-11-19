@@ -14,7 +14,7 @@ class CategoryController extends Controller
 {
     public function index(Event $event)
     {
-        Gate::authorize('manage', $event);
+        Gate::authorize('view', $event);
         return response()->json(Category::where('event_id', $event->id)->orderBy('id')->get());
     }
 
@@ -24,21 +24,25 @@ class CategoryController extends Controller
         $this->ensureBallotEditable($event);
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255', Rule::unique('categories')->where('event_id', $event->id)],
+            // 1 = choose one (default), N = up to N, null = no limit.
             'max_choices' => ['nullable', 'integer', 'min:1', 'max:1000'],
+            'shuffle_candidates' => ['sometimes', 'boolean'],
         ]);
         $category = Category::create([
             'event_id' => $event->id,
             'name' => $data['name'],
-            'max_choices' => $data['max_choices'] ?? null,
+            'max_choices' => $request->exists('max_choices') ? $data['max_choices'] : 1,
+            'shuffle_candidates' => (bool) ($data['shuffle_candidates'] ?? false),
         ]);
         Audit::log($event, 'category.created', "Category “{$category->name}” added");
 
-        return response()->json($category, 201);
+        return response()->json($category->fresh(), 201);
     }
 
     /**
      * Renaming stays possible during voting (typo fixes) and is audited.
      * The pick limit is part of the ballot's rules, so it locks with the ballot.
+     * Shuffling only changes display order, so it can change any time.
      */
     public function update(Request $request, Event $event, Category $category)
     {
@@ -46,6 +50,7 @@ class CategoryController extends Controller
         $data = $request->validate([
             'name' => ['sometimes', 'required', 'string', 'max:255', Rule::unique('categories')->where('event_id', $event->id)->ignore($category->id)],
             'max_choices' => ['sometimes', 'nullable', 'integer', 'min:1', 'max:1000'],
+            'shuffle_candidates' => ['sometimes', 'boolean'],
         ]);
         $old = $category->name;
         if (array_key_exists('name', $data)) {
@@ -57,11 +62,22 @@ class CategoryController extends Controller
                 $this->ensureBallotEditable($event);
             }
         }
+        if (array_key_exists('shuffle_candidates', $data)) {
+            $category->shuffle_candidates = (bool) $data['shuffle_candidates'];
+        }
         $limitChanged = $category->isDirty('max_choices');
+        $shuffleChanged = $category->isDirty('shuffle_candidates');
         $category->save();
         if ($limitChanged) {
             Audit::log($event, 'category.limit', "Pick limit for “{$category->name}”: "
-                . ($category->max_choices ? "up to {$category->max_choices}" : 'no limit'));
+                . match (true) {
+                    $category->max_choices === null => 'no limit',
+                    $category->max_choices === 1 => 'choose one',
+                    default => "up to {$category->max_choices}",
+                });
+        }
+        if ($shuffleChanged) {
+            Audit::log($event, 'category.shuffle', "Candidates in “{$category->name}” " . ($category->shuffle_candidates ? 'are shown in random order' : 'are shown in a fixed order'));
         }
         if ($old !== $category->name) {
             Audit::log($event, 'category.renamed', "Category renamed: “{$old}” → “{$category->name}”");

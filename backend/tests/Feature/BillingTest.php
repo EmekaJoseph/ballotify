@@ -39,40 +39,56 @@ function paystackTx(Payment $p, array $over = []): array
 
 // ------------------------------------------------------------------ free limits
 
-it('lets a free account run only one open event at a time', function () {
+it('allows unlimited drafts but only one live free event at a time', function () {
     $user = User::factory()->create();
-    $this->actingAs($user)->postJson('/api/events', ['name' => 'First'])->assertCreated()
-        ->assertJsonPath('limits.plan', 'free')->assertJsonPath('limits.max_voters', 50);
+    $first = $this->actingAs($user)->postJson('/api/events', ['name' => 'First'])->assertCreated()
+        ->assertJsonPath('limits.plan', 'free')->assertJsonPath('limits.max_voters', 50)->json('id');
+    // Drafts (no voters yet) are always allowed.
+    $second = $this->actingAs($user)->postJson('/api/events', ['name' => 'Second'])->assertCreated()->json('id');
+    $this->actingAs($user)->postJson('/api/events', ['name' => 'Third'])->assertCreated();
 
-    $this->actingAs($user)->postJson('/api/events', ['name' => 'Second'])
+    // The first event goes live when it gets voters...
+    $this->actingAs($user)->postJson("/api/events/{$first}/voters/generate", ['count' => 3])->assertCreated();
+    // ...so a second one can't, until the first closes.
+    $this->actingAs($user)->postJson("/api/events/{$second}/voters/generate", ['count' => 3])
         ->assertStatus(402)->assertJsonPath('plan_limit', 'events');
+    // The live event itself can keep adding voters.
+    $this->actingAs($user)->postJson("/api/events/{$first}/voters", ['name' => 'Ada'])->assertCreated();
 
-    // A closed event no longer counts.
-    Event::first()->update(['ends_at' => now()->subMinute()]);
-    $this->actingAs($user)->postJson('/api/events', ['name' => 'Second'])->assertCreated();
+    Event::find($first)->update(['ends_at' => now()->subMinute()]);
+    $this->actingAs($user)->postJson("/api/events/{$second}/voters/generate", ['count' => 3])->assertCreated();
 });
 
-it('tells the dashboard up front whether another event can be created', function () {
+it('tells the dashboard which events use the live allowance', function () {
     $user = User::factory()->create();
     $this->actingAs($user)->getJson('/api/billing/plans')
-        ->assertJsonPath('event_quota.can_create', true)->assertJsonPath('event_quota.max', 1)
-        ->assertJsonCount(0, 'event_quota.open_events');
+        ->assertJsonPath('event_quota.can_create', true)->assertJsonPath('event_quota.can_go_live', true)
+        ->assertJsonPath('event_quota.max', 1)->assertJsonCount(0, 'event_quota.open_events');
 
-    $event = billingEvent($user, ['name' => 'Choir awards']);
+    billingEvent($user, ['name' => 'Draft only']);
+    $live = billingEvent($user, ['name' => 'Choir awards']);
+    Voter::create(['event_id' => $live->id, 'code' => 'LIVE0001']);
     $this->actingAs($user)->getJson('/api/billing/plans')
-        ->assertJsonPath('event_quota.can_create', false)
-        ->assertJsonPath('event_quota.open_events.0.id', $event->id)
+        ->assertJsonPath('event_quota.can_create', true)
+        ->assertJsonPath('event_quota.can_go_live', false)
+        ->assertJsonCount(1, 'event_quota.open_events')
         ->assertJsonPath('event_quota.open_events.0.name', 'Choir awards');
 
     $user->forceFill(['pro_account_at' => now()])->save();
     $this->actingAs($user->fresh())->getJson('/api/billing/plans')
-        ->assertJsonPath('event_quota.can_create', true)->assertJsonPath('event_quota.max', null);
+        ->assertJsonPath('event_quota.can_go_live', true)->assertJsonPath('event_quota.max', null);
 });
 
-it('does not count Pro events against the free limit', function () {
+it('does not count Pro or paid-voting events against the free limit', function () {
     $user = User::factory()->create();
-    billingEvent($user)->forceFill(['plan' => 'pro'])->save();
-    $this->actingAs($user)->postJson('/api/events', ['name' => 'Another'])->assertCreated();
+    $pro = billingEvent($user);
+    $pro->forceFill(['plan' => 'pro'])->save();
+    Voter::create(['event_id' => $pro->id, 'code' => 'PRO00001']);
+    $paid = billingEvent($user, ['voting_mode' => 'paid', 'vote_price_naira' => 50]);
+
+    $draft = billingEvent($user);
+    $this->actingAs($user)->postJson("/api/events/{$draft->id}/voters/generate", ['count' => 2])->assertCreated();
+    expect($paid->fresh()->voting_mode)->toBe('paid');
 });
 
 it('caps voters on free events and lifts the cap on Pro', function () {

@@ -71,6 +71,7 @@
                 </form>
 
                 <TwoFactorCard />
+                <PaymentsCard />
             </div>
         </div>
     </div>

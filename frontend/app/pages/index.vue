@@ -119,7 +119,62 @@
             </div>
         </section>
 
+        <!-- Award nights: paid public voting -->
+        <section id="awards" class="py-6 bg-surface border-top border-bottom">
+            <div class="container">
+                <div class="row g-4 g-lg-5 align-items-center">
+                    <div class="col-lg-6 order-lg-2">
+                        <span class="eyebrow mb-3"><i class="bi bi-trophy"></i> Award nights & pageants</span>
+                        <h2 class="section-title mb-3">Let fans vote, and raise money while they do</h2>
+                        <p class="lead-muted mb-4">
+                            Switch an event to <b>paid public voting</b>: anyone with the link picks a nominee and pays per vote with
+                            card, transfer or USSD. Votes count the moment Paystack confirms, and you watch a live leaderboard.
+                        </p>
+                        <ul class="list-unstyled d-grid gap-2 mb-4">
+                            <li v-for="p in awardPoints" :key="p" class="d-flex gap-2"><i class="bi bi-check2-circle text-brand"></i><span>{{ p }}</span></li>
+                        </ul>
+                        <NuxtLink :to="auth.isAuthenticated ? '/dashboard/events/create?template=award_night' : '/signup'" class="btn btn-primary">
+                            Start an award night <i class="bi bi-arrow-right"></i>
+                        </NuxtLink>
+                    </div>
+                    <div class="col-lg-6 order-lg-1">
+                        <div class="award-mock card-b">
+                            <div class="small-caps mb-3">Most Popular · live leaderboard</div>
+                            <div v-for="(n, i) in awardMock" :key="n.name" class="mock-row">
+                                <span class="rank" :class="{ gold: i === 0 }">{{ i + 1 }}</span>
+                                <span class="avatar sm" :style="{ background: n.color }">{{ initials(n.name) }}</span>
+                                <div class="flex-grow-1 min-w-0">
+                                    <div class="d-flex justify-content-between small"><b class="text-ink">{{ n.name }}</b><span class="text-muted">{{ formatNumber(n.votes) }} votes</span></div>
+                                    <div class="bar slim mt-1"><span :style="{ width: (n.votes / awardMock[0]!.votes) * 100 + '%' }"></span></div>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top small">
+                                <span class="text-muted">₦50 per vote</span>
+                                <span class="fw-800 text-ink">₦{{ formatNumber(awardMock.reduce((s, n) => s + n.votes, 0) * 50) }} raised</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <PricingPlans />
+
+        <!-- FAQ -->
+        <section id="faq" class="py-6">
+            <div class="container" style="max-width: 820px">
+                <div class="text-center mb-5">
+                    <span class="eyebrow mb-3">FAQ</span>
+                    <h2 class="section-title mb-2">Questions organisers ask</h2>
+                </div>
+                <div class="d-grid gap-2">
+                    <details v-for="(f, i) in faqs" :key="f.q" class="faq card-b" :open="i === 0">
+                        <summary>{{ f.q }}<i class="bi bi-chevron-down"></i></summary>
+                        <p class="text-muted mb-0">{{ f.a }}</p>
+                    </details>
+                </div>
+            </div>
+        </section>
 
         <!-- CTA -->
         <section class="pb-6">
@@ -150,12 +205,12 @@ const auth = useAuthStore();
 const ctaLink = computed(() => (auth.isAuthenticated ? '/dashboard' : '/signup'));
 
 const features = [
-    { icon: 'bi-ui-checks-grid', title: 'Flexible ballots', text: 'Add as many categories and candidates as you need, with photos. Choose one-per-category or multiple choice.', tone: '' },
-    { icon: 'bi-key', title: 'One-time voter codes', text: 'Generate thousands of codes at once or import a name list. Export them to CSV or print them as slips.', tone: 'violet' },
+    { icon: 'bi-ui-checks-grid', title: 'Flexible ballots', text: 'Categories, candidates with photos, and a pick limit per category. Shuffle the order so nobody gets the top spot.', tone: '' },
+    { icon: 'bi-key', title: 'One-time voter codes', text: 'Import your list or generate codes. Send them by email, SMS or WhatsApp, or print slips.', tone: 'violet' },
     { icon: 'bi-calendar-range', title: 'Scheduled voting', text: 'Set opening and closing times. The ballot opens and closes on its own.', tone: 'amber' },
     { icon: 'bi-bar-chart-line', title: 'Live results', text: 'Rankings, percentages and turnout update as votes arrive. Share a public results page.', tone: 'green' },
     { icon: 'bi-phone', title: 'Works on any device', text: 'A simple, accessible ballot that works on a cheap phone as well as on a laptop.', tone: '' },
-    { icon: 'bi-person-check', title: 'Turnout tracking', text: 'See who has voted and who hasn\'t, and re-issue a code when someone needs help.', tone: 'violet' },
+    { icon: 'bi-people', title: 'Your whole committee', text: 'Invite co-organisers as editors, voter managers or viewers. Remind non-voters with one click.', tone: 'violet' },
 ];
 
 const steps = [
@@ -168,7 +223,29 @@ const integrity = [
     { icon: 'bi-incognito', title: 'Truly secret ballot', text: 'Only totals are stored. Nobody, not even the organiser, can see how anyone voted.' },
     { icon: 'bi-shield-lock', title: 'Single-use codes', text: 'A code is locked the instant it votes, even if two people submit at the same moment.' },
     { icon: 'bi-lock', title: 'Locked ballot + audit log', text: 'The ballot freezes at the first vote, and every organiser change is logged and disclosed.' },
-    { icon: 'bi-eye-slash', title: 'Results when you choose', text: 'Publish live, after voting closes, or keep results private.' },
+    { icon: 'bi-patch-check', title: 'Voter receipts', text: 'Every voter gets a receipt to check their ballot was counted, without revealing their choices.' },
+];
+
+const awardPoints = [
+    'No codes to hand out: share one link on WhatsApp and social media',
+    'Fans buy as many votes as they like; receipts by email',
+    'Live leaderboard, then an on-stage reveal of each winner',
+    'Your share is paid out to your bank account',
+];
+const awardMock = [
+    { name: 'Amaka Obi', votes: 1840, color: '#0e7c77' },
+    { name: 'Tunde Bello', votes: 1525, color: '#7c5cff' },
+    { name: 'Zainab Musa', votes: 960, color: '#e08a1e' },
+];
+
+const faqs = [
+    { q: 'Can the organiser see how I voted?', a: 'No. With code voting Ballotify stores only the running totals. There is no record linking a code (or a person) to their choices, so nobody can look it up: not the organiser, not us.' },
+    { q: 'How do voters get their codes?', a: 'Import your list and send codes by email or SMS (Pro), share each code on WhatsApp from your own phone (free), or print slips to hand out. Every code works once.' },
+    { q: 'What stops someone voting twice?', a: 'Each code is locked the moment it is used, even if two people submit it at the same instant. Code guessing is rate-limited, and the ballot freezes at the first vote.' },
+    { q: 'How do voters know their vote counted?', a: 'After voting they get a receipt code. They can enter it on the results page to confirm their ballot was received and counted. The receipt says nothing about who they chose.' },
+    { q: 'How does paid voting work for award nights?', a: 'Fans pick a nominee and pay per vote through Paystack (card, transfer or USSD). Votes are added once the payment is confirmed. Ballotify keeps a small percentage and pays the rest to your bank account.' },
+    { q: 'Do I have to pay to try it?', a: 'No. Build as many draft events as you like for free and run one live event with up to 50 voters. Upgrade a single event to Pro only when you need more.' },
+    { q: 'Can my committee help run the election?', a: 'Yes. On Pro events, invite co-organisers as editors, voter managers or viewers. Every change anyone makes is recorded in the activity log.' },
 ];
 </script>
 
@@ -186,6 +263,16 @@ const integrity = [
 .hero-lead { color: rgba(255, 255, 255, .72); font-size: 1.125rem; line-height: 1.7; max-width: 540px; }
 .text-gradient-light { background: linear-gradient(100deg, #5eead4, #a78bfa); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .eyebrow.dark { background: rgba(255, 255, 255, .08); color: #99f6e4; border-color: rgba(255, 255, 255, .12); }
+.award-mock { padding: 1.5rem; box-shadow: var(--shadow-lg); }
+.mock-row { display: flex; align-items: center; gap: .75rem; padding: .55rem 0; }
+.rank { width: 24px; height: 24px; border-radius: 8px; display: grid; place-items: center; font-weight: 800; font-size: .8rem; background: var(--surface-2); color: var(--muted); }
+.rank.gold { background: #fef3c7; color: #b45309; }
+.faq { padding: 0; }
+.faq summary { list-style: none; cursor: pointer; padding: 1.1rem 1.25rem; font-weight: 700; color: var(--ink); display: flex; justify-content: space-between; gap: 1rem; align-items: center; }
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary .bi { transition: transform .2s var(--ease); color: var(--muted); }
+.faq[open] summary .bi { transform: rotate(180deg); }
+.faq p { padding: 0 1.25rem 1.1rem; }
 .hero-points span { color: rgba(255, 255, 255, .7); font-weight: 600; font-size: .92rem; display: inline-flex; gap: .45rem; align-items: center; }
 .hero-points .bi { color: #5eead4; }
 .use-cases span { color: var(--muted); font-weight: 600; display: inline-flex; align-items: center; gap: .5rem; }

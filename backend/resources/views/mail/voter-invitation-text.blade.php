@@ -1,4 +1,8 @@
+@if ($reminder)
+Reminder: you haven't voted in {{ $event->name }} yet.
+@else
 You're invited to vote in {{ $event->name }}.
+@endif
 
 Hello{{ $voter->name ? ' ' . $voter->name : '' }},
 

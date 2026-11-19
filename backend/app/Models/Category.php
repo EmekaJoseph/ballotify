@@ -11,9 +11,12 @@ class Category extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['event_id', 'name', 'max_choices'];
+    protected $fillable = ['event_id', 'name', 'max_choices', 'shuffle_candidates'];
 
-    protected $casts = ['max_choices' => 'integer'];
+    protected $casts = ['max_choices' => 'integer', 'shuffle_candidates' => 'boolean'];
+
+    /** New categories are "choose one" unless told otherwise. */
+    protected $attributes = ['max_choices' => 1, 'shuffle_candidates' => false];
 
     public function event(): BelongsTo
     {
@@ -25,4 +28,3 @@ class Category extends Model
         return $this->hasMany(Candidate::class)->orderBy('id');
     }
 }
-

@@ -3,9 +3,6 @@
         <h1 class="h2 fw-800 mb-2">Create your account</h1>
         <p class="text-muted mb-4">Set up your first election in minutes.</p>
 
-        <div v-if="error" class="alert alert-danger border-0 rounded-4 small d-flex gap-2" role="alert">
-            <i class="bi bi-exclamation-circle-fill"></i> {{ error }}
-        </div>
 
         <form novalidate @submit.prevent="submit">
             <div class="mb-3">
@@ -69,6 +66,7 @@ useHead({ title: 'Create account · Ballotify' });
 const auth = useAuthStore();
 const loading = ref(false);
 const error = ref('');
+useErrorAlert(error, 'Couldn’t create your account');
 const fieldErrors = ref<Record<string, string>>({});
 const form = reactive({ name: '', email: '', password: '', confirm: '', terms: false });
 

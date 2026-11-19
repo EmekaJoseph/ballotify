@@ -4,17 +4,25 @@
             <div class="row g-3">
                 <div class="col-6 col-md-3"><StatCard label="Categories" :value="event.categories?.length ?? 0" icon="bi-grid" /></div>
                 <div class="col-6 col-md-3"><StatCard label="Candidates" :value="event.candidates?.length ?? 0" icon="bi-person-badge" tone="violet" /></div>
-                <div class="col-6 col-md-3"><StatCard label="Voters" :value="formatNumber(event.voters_count)" icon="bi-people" tone="amber" /></div>
-                <div class="col-6 col-md-3"><StatCard label="Voted" :value="formatNumber(event.voted_count)" icon="bi-check2-square" tone="green"
-                    :hint="event.voters_count ? `${percent(event.voted_count ?? 0, event.voters_count)}% turnout` : ''" /></div>
+                <template v-if="paid">
+                    <div class="col-6 col-md-3"><StatCard label="Votes sold" :value="formatNumber(event.votes_sold ?? 0)" icon="bi-heart" tone="amber" /></div>
+                    <div class="col-6 col-md-3"><StatCard label="Raised" :value="formatNaira((event.votes_sold ?? 0) * (event.vote_price_naira ?? 0))" icon="bi-cash-coin" tone="green"
+                        :hint="`₦${formatNumber(event.vote_price_naira ?? 0)} per vote`" /></div>
+                </template>
+                <template v-else>
+                    <div class="col-6 col-md-3"><StatCard label="Voters" :value="formatNumber(event.voters_count)" icon="bi-people" tone="amber" /></div>
+                    <div class="col-6 col-md-3"><StatCard label="Voted" :value="formatNumber(event.voted_count)" icon="bi-check2-square" tone="green"
+                        :hint="event.voters_count ? `${percent(event.voted_count ?? 0, event.voters_count)}% turnout` : ''" /></div>
+                </template>
             </div>
 
             <div class="card-b pad">
-                <div class="d-flex flex-wrap justify-content-between align-items-center gap-1 mb-2">
-                    <h3 class="h6 fw-800 mb-0">Turnout</h3>
-                    <span class="small text-muted">{{ formatNumber(event.voted_count) }} of {{ formatNumber(event.voters_count) }} codes used</span>
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-1 mb-3">
+                    <h3 class="h6 fw-800 mb-0">{{ paid ? 'Votes over time' : 'Turnout over time' }}</h3>
+                    <span v-if="!paid" class="small text-muted">{{ formatNumber(event.voted_count) }} of {{ formatNumber(event.voters_count) }} codes used</span>
                 </div>
-                <div class="bar mb-2"><span :style="{ width: percent(event.voted_count ?? 0, event.voters_count ?? 0) + '%' }"></span></div>
+                <div v-if="!paid && event.voters_count" class="bar mb-3"><span :style="{ width: percent(event.voted_count ?? 0, event.voters_count ?? 0) + '%' }"></span></div>
+                <TurnoutChart :timeline="timeline" :loading="timelineLoading" :unit="paid ? 'votes' : 'ballots'" />
             </div>
 
             <div class="card-b pad">
@@ -22,8 +30,8 @@
                 <dl class="row mb-0 small gy-2">
                     <dt class="col-sm-4 text-muted fw-semibold">Voting window</dt>
                     <dd class="col-sm-8 mb-0 text-ink">{{ formatWindow(event.starts_at, event.ends_at) }}</dd>
-                    <dt class="col-sm-4 text-muted fw-semibold">Voting style</dt>
-                    <dd class="col-sm-8 mb-0 text-ink">{{ event.selection_mode === 'multiple' ? 'Multiple choice per category' : 'One candidate per category' }}</dd>
+                    <dt class="col-sm-4 text-muted fw-semibold">How people vote</dt>
+                    <dd class="col-sm-8 mb-0 text-ink">{{ paid ? `Paid public voting · ₦${formatNumber(event.vote_price_naira ?? 0)} per vote` : 'Secret ballot with one-time codes' }}</dd>
                     <dt class="col-sm-4 text-muted fw-semibold">Results</dt>
                     <dd class="col-sm-8 mb-0 text-ink">{{ visibilityLabel }}</dd>
                     <dt class="col-sm-4 text-muted fw-semibold">Ballot</dt>
@@ -31,6 +39,10 @@
                         <span v-if="event.ballot_locked"><i class="bi bi-lock-fill text-muted"></i> Locked (voting has started)</span>
                         <span v-else><i class="bi bi-unlock text-muted"></i> Editable until the first vote</span>
                     </dd>
+                    <template v-if="event.my_role && event.my_role !== 'owner'">
+                        <dt class="col-sm-4 text-muted fw-semibold">Your role</dt>
+                        <dd class="col-sm-8 mb-0 text-ink">{{ roleLabel(event.my_role) }}</dd>
+                    </template>
                     <dt class="col-sm-4 text-muted fw-semibold">Created</dt>
                     <dd class="col-sm-8 mb-0 text-ink">{{ formatDate(event.created_at, true) }}</dd>
                     <template v-if="event.description">
@@ -42,8 +54,8 @@
         </div>
 
         <div class="col-xl-4 d-grid gap-4 align-content-start">
-            <EventUpgradeCard :event="event" />
-            <div class="card-b pad">
+            <EventUpgradeCard v-if="canManage && !paid" :event="event" />
+            <div class="card-b pad" data-tour="checklist">
                 <div class="d-flex justify-content-between align-items-center mb-1">
                     <h3 class="h6 fw-800 mb-0">Setup checklist</h3>
                     <span class="small fw-bold text-brand">{{ doneCount }}/{{ checklist.length }}</span>
@@ -64,21 +76,40 @@
 </template>
 
 <script setup lang="ts">
-import type { BallotEvent } from '~/types';
+import { adminApi } from '~/api/endpoints/admin';
+import { useAuthStore } from '~/stores/auth';
+import type { BallotEvent, EventResults } from '~/types';
 
 const props = defineProps<{ event: BallotEvent }>();
 const emit = defineEmits<{ go: [tab: string] }>();
+
+const auth = useAuthStore();
+const paid = computed(() => props.event.voting_mode === 'paid');
+const canManage = computed(() => props.event.abilities?.includes('manage') ?? true);
+
+// Timeline for the chart comes with the organiser's results.
+const timeline = ref<EventResults['timeline'] | null>(null);
+const timelineLoading = ref(true);
+async function loadTimeline() {
+    try { timeline.value = (await adminApi.getResults(props.event.id)).data.timeline ?? null; } catch { /* chart stays empty */ }
+    finally { timelineLoading.value = false; }
+}
+onMounted(loadTimeline);
+watch(() => [props.event.voted_count, props.event.votes_sold], loadTimeline);
 
 const checklist = computed(() => {
     const cats = props.event.categories ?? [];
     const cands = props.event.candidates ?? [];
     const everyCatFilled = cats.length > 0 && cats.every(c => cands.some(x => x.category_id === c.id));
+    const sharedOrVoted = paid.value ? (props.event.votes_sold ?? 0) > 0 : (props.event.voted_count ?? 0) > 0;
     return [
         { label: 'Add at least one category', done: cats.length > 0, tab: 'ballot' },
-        { label: 'Give every category candidates', done: everyCatFilled, tab: 'ballot' },
-        { label: 'Create voter codes', done: (props.event.voters_count ?? 0) > 0, tab: 'voters' },
+        { label: paid.value ? 'Add nominees to every category' : 'Give every category candidates', done: everyCatFilled, tab: 'ballot' },
+        paid.value
+            ? { label: 'Set your payout bank account', done: !!auth.user?.payout_account_number, tab: 'earnings' }
+            : { label: 'Create voter codes', done: (props.event.voters_count ?? 0) > 0, tab: 'voters' },
         { label: 'Set the voting window', done: !!props.event.ends_at, tab: 'settings' },
-        { label: 'Share the voting link', done: (props.event.voted_count ?? 0) > 0, tab: 'share' },
+        { label: 'Share the voting link', done: sharedOrVoted, tab: 'share' },
     ];
 });
 const visibilityLabel = computed(() => ({

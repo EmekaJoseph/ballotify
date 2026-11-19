@@ -1,5 +1,8 @@
 export type EventStatus = 'upcoming' | 'active' | 'completed';
-export type SelectionMode = 'single' | 'multiple';
+export type VotingMode = 'codes' | 'paid';
+export type MemberRole = 'editor' | 'voters' | 'viewer';
+export type EventRole = 'owner' | MemberRole;
+export type EventAbility = 'view' | 'voters' | 'manage' | 'own';
 
 export interface User {
     id: number;
@@ -12,6 +15,12 @@ export interface User {
     suspended_at?: string | null;
     /** Granted by the platform admin: every event of this account is Pro. */
     pro_account_at?: string | null;
+    /** Where paid-voting money is sent. */
+    payout_bank_name?: string | null;
+    payout_account_number?: string | null;
+    payout_account_name?: string | null;
+    /** First-run tour seen. */
+    onboarded_at?: string | null;
     created_at?: string;
 }
 
@@ -30,8 +39,10 @@ export interface Category {
     id: number;
     event_id: number;
     name: string;
-    /** Multiple-choice events: most picks allowed (null = no limit). */
+    /** Most picks allowed: 1 = choose one (default), null = no limit. */
     max_choices?: number | null;
+    /** Candidates shown in random order on each ballot. */
+    shuffle_candidates?: boolean;
 }
 
 export interface Candidate {
@@ -52,8 +63,10 @@ export interface Voter {
     phone: string | null;
     code: string;
     used_at: string | null;
-    /** When the code was last delivered by email/SMS. */
+    /** When the code was last delivered (email, SMS or shared on WhatsApp). */
     invited_at: string | null;
+    invited_via?: 'email' | 'sms' | 'whatsapp' | null;
+    reminded_at?: string | null;
     /** Last delivery error, if any. */
     invite_error: string | null;
     created_at?: string;
@@ -67,8 +80,20 @@ export interface BallotEvent {
     starts_at: string | null;
     ends_at: string | null;
     status: EventStatus;
-    selection_mode: SelectionMode;
     results_visibility: ResultsVisibility;
+    voting_mode: VotingMode;
+    vote_price_naira: number | null;
+    brand_color?: string | null;
+    brand_logo_url?: string | null;
+    reminder_at?: string | null;
+    reminder_channel?: InviteChannel | null;
+    reminder_sent_at?: string | null;
+    /** This user's role and what it allows. */
+    my_role?: EventRole;
+    abilities?: EventAbility[];
+    members_count?: number;
+    /** Paid voting: votes bought so far. */
+    votes_sold?: number;
     /** Structure frozen: first vote cast or voting closed. */
     ballot_locked: boolean;
     created_at: string;
@@ -93,10 +118,16 @@ export interface PublicEvent {
     starts_at: string | null;
     ends_at: string | null;
     status: EventStatus;
-    selection_mode: SelectionMode;
     results_visibility: ResultsVisibility;
+    voting_mode: VotingMode;
+    vote_price_naira: number | null;
+    /** Paid voting: Paystack is set up. */
+    payments_enabled: boolean | null;
+    min_payment_naira: number | null;
     /** Free events show "Powered by Ballotify". */
     branding?: boolean;
+    /** Pro events: the organiser's own colour and logo. */
+    brand?: Brand | null;
     categories: Pick<Category, 'id' | 'name' | 'max_choices'>[];
     candidates: Candidate[];
 }
@@ -114,9 +145,15 @@ export interface ResultCandidate {
     votes: number;
 }
 
+export interface Brand {
+    color: string | null;
+    logo_url: string | null;
+}
+
 export interface ResultCategory {
     id: number;
     name: string;
+    max_choices?: number | null;
     candidates: ResultCandidate[];
     leader: ResultCandidate | null;
 }
@@ -129,7 +166,9 @@ export interface EventResults {
         starts_at: string | null;
         ends_at: string | null;
         results_visibility?: ResultsVisibility;
+        voting_mode?: VotingMode;
         branding?: boolean;
+        brand?: Brand | null;
     };
     stats: {
         total_votes: number;
@@ -138,6 +177,8 @@ export interface EventResults {
         total_candidates: number;
     };
     integrity?: { changes_during_voting: number };
+    /** Votes over time (turnout chart). */
+    timeline?: { bucket_minutes: number; points: { t: string; votes: number }[] };
     categories: ResultCategory[];
 }
 
@@ -184,6 +225,8 @@ export interface PlatformOverview {
     pro_events: number;
     revenue_naira: number;
     revenue_last_30_days_naira: number;
+    paid_votes_gross_naira: number;
+    paid_votes_fees_naira: number;
 }
 
 export interface PlatformUser extends User {
@@ -194,7 +237,7 @@ export interface PlatformEvent {
     id: number;
     name: string;
     status: EventStatus;
-    selection_mode: SelectionMode;
+    voting_mode: VotingMode;
     results_visibility: ResultsVisibility;
     starts_at: string | null;
     ends_at: string | null;
@@ -226,6 +269,11 @@ export interface EventLimits {
     max_voters: number | null;
     messaging: boolean;
     branding: boolean;
+    /** Own logo and colour on the ballot (Pro). */
+    custom_branding: boolean;
+    /** Co-organisers (Pro). */
+    team: boolean;
+    max_members: number;
     /** Pro because the whole account was upgraded by the admin. */
     via_account: boolean;
 }
@@ -236,18 +284,22 @@ export interface PlanInfo {
     currency: string;
     pro_price_naira: number;
     free: { max_active_events: number; max_voters: number; messaging: boolean; branding: boolean };
-    pro: { max_voters: number; messaging: boolean; branding: boolean };
+    pro: { max_voters: number; messaging: boolean; branding: boolean; custom_branding?: boolean; team?: boolean };
+    paid_votes?: { fee_percent: number; min_payment_naira: number };
     /** Dashboard only. */
     account_pro?: boolean;
-    /** Dashboard only: whether this account may create another event right now. */
+    /** Dashboard only: how many live events this account may run. */
     event_quota?: EventQuota;
 }
 
 export interface EventQuota {
+    /** Drafts are always allowed. */
     can_create: boolean;
+    /** Whether another free event may get voters (go live). */
+    can_go_live: boolean;
     /** null = no limit (Pro account or billing off). */
     max: number | null;
-    /** The open Free events using up the allowance. */
+    /** The live Free events using up the allowance. */
     open_events: { id: number; name: string; ends_at: string | null }[];
 }
 
@@ -256,6 +308,7 @@ export interface PlanSettings {
     free_max_active_events: number;
     free_max_voters: number;
     pro_max_voters: number;
+    paid_vote_fee_percent: number;
     billing_enabled: boolean;
     payments_enabled: boolean;
 }
@@ -273,4 +326,106 @@ export interface PlatformPayment {
     paid_at: string | null;
     created_at: string;
     user: { id: number; name: string; email: string } | null;
+}
+
+// ---------------------------------------------------------------- templates, team, paid voting
+
+export interface EventTemplate {
+    key: string;
+    name: string;
+    summary: string;
+    icon: string;
+    voting_mode: VotingMode;
+    results_visibility: ResultsVisibility;
+    vote_price_naira: number | null;
+    categories: string[];
+}
+
+export interface TeamMember {
+    id: number;
+    email: string;
+    name: string | null;
+    role: MemberRole;
+    /** Has a confirmed account linked. */
+    joined: boolean;
+    created_at?: string;
+}
+
+export interface TeamInfo {
+    owner: { name: string; email: string };
+    members: TeamMember[];
+}
+
+export interface Earnings {
+    currency: string;
+    fee_percent: number;
+    votes_sold: number;
+    payments: number;
+    gross_naira: number;
+    fee_naira: number;
+    net_naira: number;
+    paid_out_naira: number;
+    balance_naira: number;
+    late_payments: number;
+    payouts: { amount_naira: number; note: string | null; created_at: string }[];
+    recent: { candidate: string; quantity: number; amount_naira: number; buyer: string; status: string; paid_at: string | null }[];
+}
+
+export interface ReceiptCheck {
+    valid: boolean;
+    message: string;
+    counted_at?: string | null;
+    status?: string;
+    votes?: number;
+    candidate?: string;
+}
+
+export interface MyPayment {
+    reference: string;
+    event_id: number | null;
+    event_name: string | null;
+    amount_naira: number;
+    currency: string;
+    status: 'pending' | 'success' | 'failed';
+    channel: string | null;
+    paid_at: string | null;
+    created_at: string;
+}
+
+export interface PaymentReceiptInfo {
+    reference: string;
+    item: string;
+    event_name: string | null;
+    amount_naira: number;
+    currency: string;
+    channel: string | null;
+    paid_at: string | null;
+    billed_to: { name: string; email: string };
+    seller: { name: string; email: string | null };
+}
+
+export interface PlatformPayout {
+    id: number;
+    name: string;
+    status: EventStatus;
+    ends_at: string | null;
+    organiser: { id: number; name: string; email: string } | null;
+    bank: { bank_name: string | null; account_number: string; account_name: string | null } | null;
+    gross_naira: number;
+    fee_naira: number;
+    net_naira: number;
+    paid_out_naira: number;
+    balance_naira: number;
+    late_payments: number;
+}
+
+export interface SystemHealth {
+    queue: { driver: string; pending: number | null; failed: number; needs_worker: boolean };
+    scheduler: { last_run: string | null; running: boolean };
+    mail: { driver: string; from: string | null };
+    sms: { driver: string | null };
+    paystack: boolean;
+    broadcasting: string;
+    delivery_errors: { last_7_days: number; recent: { event: string | null; event_id: number; error: string; at: string }[] };
+    failed_jobs: { uuid: string; queue: string; job: string; error: string; failed_at: string }[];
 }

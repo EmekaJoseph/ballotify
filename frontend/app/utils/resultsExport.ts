@@ -21,7 +21,7 @@ export function resultsCsv(results: EventResults, event?: BallotEvent | null): s
         ['Event', results.event.name],
         ['Status', resultsStatusLabel(results)],
         ['Voting window', formatWindow(results.event.starts_at, results.event.ends_at)],
-        ['Voting style', event?.selection_mode === 'multiple' ? 'Multiple choice' : 'One per category'],
+        ['Voting', event?.voting_mode === 'paid' ? `Paid public voting (NGN ${event.vote_price_naira ?? 0} per vote)` : 'Secret ballot with one-time codes'],
         ['Ballots cast', stats.voted],
         ['Registered voters', stats.total_voters],
         ['Turnout', stats.total_voters ? `${percent(stats.voted, stats.total_voters)}%` : ''],

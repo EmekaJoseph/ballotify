@@ -1,24 +1,13 @@
 <template>
-    <BaseModal :open="state.open" :title="state.title" size="sm" @close="settle(false)">
-        <div class="d-flex gap-3 align-items-start">
-            <div class="icon-tile" :class="state.danger ? 'danger' : ''">
-                <i class="bi" :class="state.danger ? 'bi-exclamation-triangle' : 'bi-question-circle'"></i>
-            </div>
-            <p class="text-muted mb-0 pt-1">{{ state.message || 'Are you sure?' }}</p>
-        </div>
-        <template #footer>
-            <button type="button" class="btn btn-ghost" @click="settle(false)">{{ state.cancelText || 'Cancel' }}</button>
-            <button type="button" class="btn" :class="state.danger ? 'btn-danger' : 'btn-primary'" @click="settle(true)">
-                {{ state.confirmText || 'Confirm' }}
-            </button>
-        </template>
-    </BaseModal>
+    <!-- Confirmations use the same pop-up alert style as errors -->
+    <AlertDialog :open="state.open" :title="state.title" :message="state.message || 'Are you sure?'"
+        :tone="state.danger ? 'danger' : 'info'"
+        :icon-class="state.danger ? 'bi-exclamation-triangle-fill' : 'bi-question-circle-fill'"
+        :action-text="state.confirmText || 'Confirm'" :close-text="state.cancelText || 'Cancel'"
+        :action-variant="state.danger ? 'danger' : 'primary'"
+        @action="settle(true)" @close="settle(false)" />
 </template>
 
 <script setup lang="ts">
 const { state, settle } = useConfirm();
 </script>
-
-<style scoped>
-.icon-tile.danger { background: var(--danger-50); color: var(--danger); }
-</style>

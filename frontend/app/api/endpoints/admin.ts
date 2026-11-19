@@ -1,9 +1,9 @@
 import api from '../index';
 import type {
-    AuditEntry, BallotEvent, Candidate, CandidateImportResult, CandidateImportRow, Category, EventResults, GeneratedCode,
-    InviteChannel, MessagingStatus, Paginated, PlanInfo, PlanSettings, PlatformEvent, PlatformOverview, PlatformPayment,
-    PlatformUser, ResultsVisibility,
-    SelectionMode, User, Voter, VoterContact,
+    AuditEntry, BallotEvent, Candidate, CandidateImportResult, CandidateImportRow, Category, Earnings, EventResults, EventTemplate,
+    GeneratedCode, InviteChannel, MemberRole, MessagingStatus, MyPayment, Paginated, PaymentReceiptInfo, PlanInfo, PlanSettings,
+    PlatformEvent, PlatformOverview, PlatformPayment, PlatformPayout, PlatformUser, ResultsVisibility, SystemHealth, TeamInfo,
+    TeamMember, User, Voter, VoterContact, VotingMode,
 } from '~/types';
 
 type Id = number | string;
@@ -11,10 +11,15 @@ type Id = number | string;
 export interface EventPayload {
     name?: string;
     description?: string | null;
-    selection_mode?: SelectionMode;
     results_visibility?: ResultsVisibility;
+    voting_mode?: VotingMode;
+    vote_price_naira?: number | null;
     starts_at?: string | null;
     ends_at?: string | null;
+    reminder_at?: string | null;
+    reminder_channel?: InviteChannel | null;
+    /** Create only: start from a template. */
+    template?: string | null;
 }
 
 /** Sign-in either completes, or asks for the authenticator code. */
@@ -35,8 +40,12 @@ export const adminApi = {
     resendVerification: () => api.post<{ message: string }>('/auth/email/resend'),
     logout: () => api.post('/auth/logout'),
     getMe: () => api.get<User>('/me'),
-    updateMe: (data: { name?: string; current_password?: string; password?: string }) =>
-        api.patch<User>('/me', data),
+    updateMe: (data: {
+        name?: string; current_password?: string; password?: string;
+        payout_bank_name?: string | null; payout_account_number?: string | null; payout_account_name?: string | null;
+    }) => api.patch<User>('/me', data),
+    /** First-run tour seen or skipped. */
+    markOnboarded: () => api.post<User>('/me/onboarded'),
 
     // Two-step login
     twoFactorSetup: (password: string) => api.post<{ secret: string; otpauth_url: string }>('/me/two-factor', { password }),
@@ -44,6 +53,7 @@ export const adminApi = {
     twoFactorDisable: (password: string) => api.delete<{ user: User }>('/me/two-factor', { data: { password } }),
 
     // Events
+    getTemplates: () => api.get<EventTemplate[]>('/event-templates'),
     getEvents: () => api.get<BallotEvent[]>('/events'),
     createEvent: (data: EventPayload) => api.post<BallotEvent>('/events', data),
     getEvent: (eventId: Id) => api.get<BallotEvent>(`/events/${eventId}`),
@@ -56,12 +66,22 @@ export const adminApi = {
     /** Organiser view of the tally, whatever the public visibility setting. */
     getResults: (eventId: Id) => api.get<EventResults>(`/events/${eventId}/results`),
     getActivity: (eventId: Id) => api.get<AuditEntry[]>(`/events/${eventId}/activity`),
+    /** Paid voting: money raised, fee, payouts. */
+    getEarnings: (eventId: Id) => api.get<Earnings>(`/events/${eventId}/earnings`),
+    /** Pro: brand colour and logo (multipart: brand_color, logo, remove_logo). */
+    updateBranding: (eventId: Id, form: FormData) => api.post<BallotEvent>(`/events/${eventId}/branding`, form),
+
+    // Team (co-organisers)
+    getTeam: (eventId: Id) => api.get<TeamInfo>(`/events/${eventId}/members`),
+    addMember: (eventId: Id, data: { email: string; role: MemberRole }) => api.post<TeamMember>(`/events/${eventId}/members`, data),
+    updateMember: (eventId: Id, memberId: Id, role: MemberRole) => api.patch(`/events/${eventId}/members/${memberId}`, { role }),
+    removeMember: (eventId: Id, memberId: Id) => api.delete(`/events/${eventId}/members/${memberId}`),
 
     // Categories
     getCategories: (eventId: Id) => api.get<Category[]>(`/events/${eventId}/categories`),
-    createCategory: (eventId: Id, data: { name: string; max_choices?: number | null }) =>
+    createCategory: (eventId: Id, data: { name: string; max_choices?: number | null; shuffle_candidates?: boolean }) =>
         api.post<Category>(`/events/${eventId}/categories`, data),
-    updateCategory: (eventId: Id, categoryId: Id, data: { name?: string; max_choices?: number | null }) =>
+    updateCategory: (eventId: Id, categoryId: Id, data: { name?: string; max_choices?: number | null; shuffle_candidates?: boolean }) =>
         api.patch<Category>(`/events/${eventId}/categories/${categoryId}`, data),
     deleteCategory: (eventId: Id, categoryId: Id) => api.delete(`/events/${eventId}/categories/${categoryId}`),
 
@@ -92,6 +112,11 @@ export const adminApi = {
     // Invitations (email / SMS)
     inviteVoters: (eventId: Id, data: { channel: InviteChannel; audience: 'not_invited' | 'pending' | 'selected'; voter_ids?: number[] }) =>
         api.post<{ queued: number; email: number; sms: number; queue: string }>(`/events/${eventId}/voters/invite`, data),
+    /** Remind everyone who hasn't voted (Pro). */
+    remindVoters: (eventId: Id, channel: InviteChannel) =>
+        api.post<{ queued: number; email: number; sms: number; queue: string }>(`/events/${eventId}/voters/remind`, { channel }),
+    /** The organiser shared this code themselves (WhatsApp). */
+    markShared: (eventId: Id, voterId: Id) => api.post<Voter>(`/events/${eventId}/voters/${voterId}/shared`, { channel: 'whatsapp' }),
     messagingStatus: () => api.get<MessagingStatus>('/messaging/status'),
 };
 
@@ -111,6 +136,12 @@ export const platformApi = {
     updatePlans: (data: Partial<Omit<PlanSettings, 'billing_enabled' | 'payments_enabled'>>) => api.put<PlanSettings>('/admin/plans', data),
     payments: (params: { search?: string; status?: string; page?: number }) =>
         api.get<Paginated<PlatformPayment>>('/admin/payments', { params }),
+    payouts: () => api.get<PlatformPayout[]>('/admin/payouts'),
+    recordPayout: (eventId: Id, data: { amount_naira: number; note?: string }) => api.post(`/admin/events/${eventId}/payouts`, data),
+    health: () => api.get<SystemHealth>('/admin/health'),
+    /** uuid 'all' = every failed job. */
+    retryFailedJob: (uuid: string) => api.post(`/admin/health/failed-jobs/${uuid}/retry`),
+    forgetFailedJob: (uuid: string) => api.delete(`/admin/health/failed-jobs/${uuid}`),
 };
 
 /** Pay per event (Paystack). */
@@ -120,4 +151,6 @@ export const billingApi = {
     checkout: (eventId: Id) => api.post<{ authorization_url: string; reference: string }>(`/events/${eventId}/upgrade`),
     verify: (reference: string) =>
         api.post<{ status: 'pending' | 'success' | 'failed'; message: string; event_id: number | null }>('/billing/verify', { reference }),
+    myPayments: () => api.get<MyPayment[]>('/billing/payments'),
+    receipt: (reference: string) => api.get<PaymentReceiptInfo>(`/billing/payments/${encodeURIComponent(reference)}`),
 };

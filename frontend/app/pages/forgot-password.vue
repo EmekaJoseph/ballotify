@@ -16,7 +16,6 @@
         <template v-else>
             <h1 class="h2 fw-800 mb-2">Forgot your password?</h1>
             <p class="text-muted mb-4">Enter your account email and we’ll send you a link to reset it.</p>
-            <div v-if="error" class="alert alert-danger border-0 rounded-4 small" role="alert">{{ error }}</div>
             <form novalidate @submit.prevent="submit">
                 <label for="email" class="form-label">Email</label>
                 <div class="input-icon mb-4">
@@ -44,6 +43,7 @@ const email = ref(typeof route.query.email === 'string' ? route.query.email : ''
 const loading = ref(false);
 const sent = ref(false);
 const error = ref('');
+useErrorAlert(error, 'Couldn’t send the link');
 
 async function submit() {
     error.value = '';

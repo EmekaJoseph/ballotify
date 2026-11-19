@@ -5,4 +5,5 @@
   </NuxtLayout>
   <AppToasts />
   <ConfirmDialog />
+  <AppAlert />
 </template>

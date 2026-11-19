@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -22,39 +22,48 @@ class Event extends Model
     public const RESULTS_PRIVATE = 'private';
     public const RESULTS_OPTIONS = [self::RESULTS_LIVE, self::RESULTS_AFTER_CLOSE, self::RESULTS_PRIVATE];
 
+    /** Secret ballot with one-time voter codes. */
+    public const MODE_CODES = 'codes';
+    /** Public paid voting: anyone pays per vote (award nights, pageants). */
+    public const MODE_PAID = 'paid';
+    public const MODES = [self::MODE_CODES, self::MODE_PAID];
+
     protected $fillable = [
         'user_id',
-        'event_type_id',
         'name',
         'description',
         'link_token',
         'starts_at',
         'ends_at',
         'results_visibility',
+        'voting_mode',
+        'vote_price_naira',
+        'brand_color',
+        'reminder_at',
+        'reminder_channel',
     ];
 
     protected $casts = [
         'starts_at' => 'datetime',
         'ends_at' => 'datetime',
         'upgraded_at' => 'datetime',
+        'reminder_at' => 'datetime',
+        'reminder_sent_at' => 'datetime',
+        'vote_price_naira' => 'integer',
     ];
 
     protected $attributes = [
         'results_visibility' => self::RESULTS_AFTER_CLOSE,
+        'voting_mode' => self::MODE_CODES,
     ];
 
-    protected $appends = ['status', 'selection_mode', 'ballot_locked'];
+    protected $appends = ['status', 'ballot_locked', 'brand_logo_url'];
 
-    protected $hidden = ['type'];
+    protected $hidden = ['brand_logo_path'];
 
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
-    }
-
-    public function type(): BelongsTo
-    {
-        return $this->belongsTo(EventType::class, 'event_type_id');
     }
 
     /** In the order they were added, which is the order on the ballot. */
@@ -72,6 +81,21 @@ class Event extends Model
     public function voters(): HasMany
     {
         return $this->hasMany(Voter::class);
+    }
+
+    public function members(): HasMany
+    {
+        return $this->hasMany(EventMember::class);
+    }
+
+    public function purchases(): HasMany
+    {
+        return $this->hasMany(VotePurchase::class);
+    }
+
+    public function payouts(): HasMany
+    {
+        return $this->hasMany(Payout::class);
     }
 
     public function auditLogs(): HasMany
@@ -93,16 +117,21 @@ class Event extends Model
         });
     }
 
-    /** 'single' (one candidate per category) or 'multiple'. Defaults to 'single'. */
-    protected function selectionMode(): Attribute
+    protected function brandLogoUrl(): Attribute
     {
-        return Attribute::get(fn () => $this->type?->key ?? 'single');
+        return Attribute::get(fn () => $this->brand_logo_path ? asset($this->brand_logo_path) : null);
+    }
+
+    public function isPaid(): bool
+    {
+        return $this->voting_mode === self::MODE_PAID;
     }
 
     /**
-     * Once the first ballot is cast (or voting has closed) the ballot structure is
+     * Once the first vote is in (or voting has closed) the ballot structure is
      * frozen: no adding/removing/moving categories or candidates, no change of
-     * voting style. Cosmetic fixes (names, photos) stay possible and are audited.
+     * pick limits or voting mode. Cosmetic fixes (names, photos) stay possible
+     * and are audited.
      */
     protected function ballotLocked(): Attribute
     {
@@ -111,6 +140,9 @@ class Event extends Model
 
     public function hasVotes(): bool
     {
+        if ($this->isPaid()) {
+            return $this->purchases()->where('status', VotePurchase::SUCCESS)->exists();
+        }
         if (array_key_exists('voted_count', $this->attributes)) {
             return (int) $this->attributes['voted_count'] > 0;
         }
@@ -142,6 +174,14 @@ class Event extends Model
             ->whereHas('user', fn (Builder $q) => $q->whereNull('suspended_at'));
     }
 
+    /** Events this user owns or co-organises. */
+    public function scopeAccessibleBy(Builder $query, User $user): Builder
+    {
+        return $query->where(fn (Builder $q) => $q
+            ->where('user_id', $user->id)
+            ->orWhereHas('members', fn (Builder $m) => $m->where('user_id', $user->id)));
+    }
+
     /** Filter by computed status (upcoming / active / completed) in SQL. */
     public function scopeWithStatus(Builder $query, string $status): Builder
     {
@@ -154,5 +194,11 @@ class Event extends Model
                 ->where(fn ($q) => $q->whereNull('ends_at')->orWhere('ends_at', '>=', $now)),
             default => $query,
         };
+    }
+
+    /** Not closed yet (open now, or opening later). */
+    public function scopeNotClosed(Builder $query): Builder
+    {
+        return $query->where(fn ($q) => $q->whereNull('ends_at')->orWhere('ends_at', '>=', now()));
     }
 }

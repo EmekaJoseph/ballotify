@@ -24,7 +24,7 @@
                     <tbody>
                         <tr v-for="ev in events" :key="ev.id">
                             <td><NuxtLink :to="`/dashboard/events/${ev.id}?tab=voters`" class="fw-semibold text-ink">{{ ev.name }}</NuxtLink></td>
-                            <td><StatusBadge :status="ev.status" /></td>
+                            <td><StatusBadge :status="ev.status" :draft="isDraft(ev)" /></td>
                             <td class="text-nowrap">{{ formatNumber(ev.voted_count) }} / {{ formatNumber(ev.voters_count) }}</td>
                             <td>
                                 <div class="d-flex align-items-center gap-2">

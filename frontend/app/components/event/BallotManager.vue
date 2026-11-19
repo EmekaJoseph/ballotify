@@ -1,6 +1,6 @@
 <template>
     <div>
-        <div v-if="locked" class="lock-banner mb-4">
+        <div v-if="locked && canEdit" class="lock-banner mb-4">
             <i class="bi bi-lock-fill"></i>
             <span>
                 <b>{{ event.status === 'completed' ? 'Voting has closed.' : 'Voting has started.' }}</b>
@@ -9,8 +9,13 @@
             </span>
         </div>
 
+        <div v-if="!canEdit" class="lock-banner mb-4">
+            <i class="bi bi-eye"></i>
+            <span>You can view the ballot. Only the owner and editors can change it.</span>
+        </div>
+
         <!-- Add category -->
-        <form v-if="!locked" class="card-b pad mb-4 d-flex flex-column flex-sm-row gap-2" @submit.prevent="addCategory">
+        <form v-if="!locked && canEdit" class="card-b pad mb-4 d-flex flex-column flex-sm-row gap-2" @submit.prevent="addCategory">
             <div class="input-icon flex-grow-1">
                 <i class="bi bi-folder-plus"></i>
                 <input v-model.trim="newCategory" type="text" class="form-control" maxlength="255"
@@ -40,21 +45,26 @@
                             <h3 class="h6 fw-800 mb-0 text-break">{{ cat.name }}</h3>
                             <div class="small text-muted d-flex flex-wrap align-items-center gap-1">
                                 <span>{{ candidatesOf(cat.id).length }} candidate{{ candidatesOf(cat.id).length === 1 ? '' : 's' }}</span>
-                                <template v-if="multiple">
+                                <template v-if="!paid">
                                     <span aria-hidden="true">·</span>
-                                    <span v-if="locked">{{ cat.max_choices ? `Pick up to ${cat.max_choices}` : 'No pick limit' }}</span>
+                                    <span v-if="locked || !canEdit">{{ limitLabel(cat.max_choices) }}</span>
                                     <label v-else class="d-inline-flex align-items-center gap-1 mb-0">
-                                        <span>Voters pick</span>
+                                        <span class="visually-hidden">Pick limit</span>
                                         <select class="form-select form-select-sm limit-select" :value="cat.max_choices ?? ''"
                                             :aria-label="`Pick limit for ${cat.name}`" :disabled="busy" @change="setLimit(cat, $event)">
-                                            <option value="">any number</option>
-                                            <option v-for="n in limitOptions(cat)" :key="n" :value="n">up to {{ n }}</option>
+                                            <option :value="1">Choose one</option>
+                                            <option v-for="n in limitOptions(cat)" :key="n" :value="n">Pick up to {{ n }}</option>
+                                            <option value="">Pick any number</option>
                                         </select>
                                     </label>
                                 </template>
+                                <span v-if="cat.shuffle_candidates" class="pill pill-violet shuffle-pill"><i class="bi bi-shuffle"></i> Random order</span>
                             </div>
                         </div>
-                        <div class="d-flex gap-1">
+                        <div v-if="canEdit" class="d-flex gap-1">
+                            <button class="btn btn-ghost btn-icon btn-sm" :class="{ 'shuffle-on': cat.shuffle_candidates }" :disabled="busy"
+                                :title="cat.shuffle_candidates ? 'Candidates appear in random order. Click for a fixed order.' : 'Show candidates in random order on each ballot'"
+                                :aria-pressed="!!cat.shuffle_candidates" aria-label="Random candidate order" @click="toggleShuffle(cat)"><i class="bi bi-shuffle"></i></button>
                             <button v-if="!locked" class="btn btn-soft btn-sm" @click="openCandidate(null, cat.id)"><i class="bi bi-person-plus"></i> <span class="d-none d-sm-inline">Candidate</span></button>
                             <button class="btn btn-ghost btn-icon btn-sm" title="Rename" aria-label="Rename category" @click="editingCat = cat.id; catDraft = cat.name"><i class="bi bi-pencil"></i></button>
                             <button v-if="!locked" class="btn btn-ghost btn-icon btn-sm text-danger" title="Delete" aria-label="Delete category" @click="removeCategory(cat)"><i class="bi bi-trash"></i></button>
@@ -63,7 +73,7 @@
                 </header>
 
                 <div v-if="!candidatesOf(cat.id).length" class="p-4 text-center small text-muted">
-                    No candidates<template v-if="!locked"> yet. <button class="btn btn-link btn-sm p-0 align-baseline" @click="openCandidate(null, cat.id)">Add the first one</button></template>.
+                    No candidates<template v-if="!locked && canEdit"> yet. <button class="btn btn-link btn-sm p-0 align-baseline" @click="openCandidate(null, cat.id)">Add the first one</button></template>.
                 </div>
                 <ul v-else class="list-unstyled mb-0">
                     <li v-for="cand in candidatesOf(cat.id)" :key="cand.id" class="cand-row">
@@ -72,8 +82,8 @@
                             <span class="d-block fw-semibold text-ink text-break">{{ cand.name }}</span>
                             <span v-if="cand.description" class="small text-muted text-break cand-desc">{{ cand.description }}</span>
                         </span>
-                        <button class="btn btn-ghost btn-icon btn-sm" title="Edit" aria-label="Edit candidate" @click="openCandidate(cand)"><i class="bi bi-pencil"></i></button>
-                        <button v-if="!locked" class="btn btn-ghost btn-icon btn-sm text-danger" title="Delete" aria-label="Delete candidate" @click="removeCandidate(cand)"><i class="bi bi-trash"></i></button>
+                        <button v-if="canEdit" class="btn btn-ghost btn-icon btn-sm" title="Edit" aria-label="Edit candidate" @click="openCandidate(cand)"><i class="bi bi-pencil"></i></button>
+                        <button v-if="!locked && canEdit" class="btn btn-ghost btn-icon btn-sm text-danger" title="Delete" aria-label="Delete candidate" @click="removeCandidate(cand)"><i class="bi bi-trash"></i></button>
                     </li>
                 </ul>
             </section>
@@ -143,10 +153,16 @@ const catDraft = ref('');
 
 const DESC_MAX = 280;
 const importOpen = ref(false);
-const multiple = computed(() => props.event.selection_mode === 'multiple');
+const paid = computed(() => props.event.voting_mode === 'paid');
+const canEdit = computed(() => props.event.abilities?.includes('manage') ?? true);
+/** Candidates removed a moment ago (Undo still possible). */
+const hidden = ref(new Set<number>());
 const categories = computed<Category[]>(() => props.event.categories ?? []);
 const locked = computed(() => props.event.ballot_locked);
-const candidatesOf = (catId: number): Candidate[] => (props.event.candidates ?? []).filter(c => c.category_id === catId);
+const candidatesOf = (catId: number): Candidate[] =>
+    (props.event.candidates ?? []).filter(c => c.category_id === catId && !hidden.value.has(c.id));
+
+const limitLabel = (n?: number | null) => (n === 1 ? 'Choose one' : n ? `Pick up to ${n}` : 'Pick any number');
 
 async function run(action: () => Promise<unknown>, success: string) {
     busy.value = true;
@@ -174,18 +190,23 @@ async function saveCategory(cat: Category) {
     if (await run(() => adminApi.updateCategory(props.event.id, cat.id, { name: catDraft.value }), 'Category renamed')) editingCat.value = null;
 }
 
-/** Choices for the pick limit: 1 … number of candidates (at least the current limit). */
+/** "Pick up to" choices: 2 … number of candidates (at least the current limit). */
 function limitOptions(cat: Category): number[] {
-    const max = Math.max(candidatesOf(cat.id).length, cat.max_choices ?? 0, 1);
-    return Array.from({ length: max }, (_, i) => i + 1);
+    const max = Math.max(candidatesOf(cat.id).length, cat.max_choices ?? 0, 2);
+    return Array.from({ length: max - 1 }, (_, i) => i + 2);
+}
+
+async function toggleShuffle(cat: Category) {
+    const on = !cat.shuffle_candidates;
+    await run(() => adminApi.updateCategory(props.event.id, cat.id, { shuffle_candidates: on }),
+        on ? `Candidates in “${cat.name}” will appear in random order` : `Candidates in “${cat.name}” will appear in a fixed order`);
 }
 
 async function setLimit(cat: Category, e: Event) {
     const raw = (e.target as HTMLSelectElement).value;
     const max_choices = raw ? Number(raw) : null;
     if (max_choices === (cat.max_choices ?? null)) return;
-    await run(() => adminApi.updateCategory(props.event.id, cat.id, { max_choices }),
-        max_choices ? `Voters can pick up to ${max_choices} in “${cat.name}”` : `No pick limit in “${cat.name}”`);
+    await run(() => adminApi.updateCategory(props.event.id, cat.id, { max_choices }), `“${cat.name}”: ${limitLabel(max_choices).toLowerCase()}`);
 }
 
 function onImported(result: CandidateImportResult) {
@@ -284,14 +305,16 @@ async function saveCandidate() {
     }
 }
 
-async function removeCandidate(cand: Candidate) {
-    const ok = await confirm({
-        title: `Remove ${cand.name}?`,
-        message: 'They will be removed from the ballot.',
-        confirmText: 'Remove',
-        danger: true,
+/** Removed straight away, with a few seconds to undo (no confirm dialog). */
+function removeCandidate(cand: Candidate) {
+    toast.undoable(`${cand.name} removed`, {
+        hide: () => { hidden.value = new Set(hidden.value).add(cand.id); },
+        restore: () => { const next = new Set(hidden.value); next.delete(cand.id); hidden.value = next; },
+        commit: async () => {
+            await adminApi.deleteCandidate(props.event.id, cand.id);
+            emit('changed');
+        },
     });
-    if (ok) await run(() => adminApi.deleteCandidate(props.event.id, cand.id), 'Candidate removed');
 }
 
 onBeforeUnmount(revokePreview);
@@ -304,5 +327,7 @@ onBeforeUnmount(revokePreview);
 .cand-row:last-child { border-bottom: 0; }
 .cand-row:hover { background: var(--surface-2); }
 .limit-select { width: auto; display: inline-block; padding: .1rem 1.8rem .1rem .5rem; font-size: .8rem; min-height: 0; }
+.shuffle-on { color: var(--violet-600, #7c5cff); background: var(--violet-50, rgba(124, 92, 255, .1)); }
+.shuffle-pill { font-size: .7rem; padding: .1rem .45rem; }
 .cand-desc { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.4; }
 </style>

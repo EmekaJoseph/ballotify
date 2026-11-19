@@ -11,7 +11,8 @@ class VoterSeeder extends Seeder
 {
     public function run(): void
     {
-        $events = Event::all();
+        // Paid-voting events don't use codes.
+        $events = Event::where('voting_mode', Event::MODE_CODES)->get();
         if ($events->isEmpty()) {
             return;
         }

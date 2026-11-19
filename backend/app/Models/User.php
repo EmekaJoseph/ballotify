@@ -42,7 +42,14 @@ class User extends Authenticatable implements MustVerifyEmail
             'is_admin' => 'boolean',
             'suspended_at' => 'datetime',
             'pro_account_at' => 'datetime',
+            'onboarded_at' => 'datetime',
         ];
+    }
+
+    /** Co-organiser memberships (events shared with this user). */
+    public function memberships(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(EventMember::class);
     }
 
     public function events(): \Illuminate\Database\Eloquent\Relations\HasMany

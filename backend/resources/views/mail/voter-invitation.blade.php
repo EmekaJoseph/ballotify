@@ -11,7 +11,7 @@
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:520px;background:#ffffff;border-radius:20px;overflow:hidden;border:1px solid #e5e9f0;">
       <tr>
         <td style="background:#0a1222;padding:28px 32px;">
-          <div style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#5eead4;">You're invited to vote</div>
+          <div style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#5eead4;">{{ $reminder ? 'Reminder: you haven\'t voted yet' : 'You\'re invited to vote' }}</div>
           <div style="font-size:24px;font-weight:800;color:#ffffff;margin-top:6px;line-height:1.25;">{{ $event->name }}</div>
         </td>
       </tr>
@@ -22,7 +22,11 @@
             <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#475569;">{{ $event->description }}</p>
           @endif
           <p style="margin:0 0 20px;font-size:15px;line-height:1.6;color:#475569;">
-            Use the personal code below to cast your vote. It works <strong>once</strong>, so please don't share it.
+            @if ($reminder)
+              Voting is still open and your ballot hasn't been cast yet. Your personal code is below. It works <strong>once</strong>, so please don't share it.
+            @else
+              Use the personal code below to cast your vote. It works <strong>once</strong>, so please don't share it.
+            @endif
           </p>
           <div style="text-align:center;background:#ecf8f7;border:1px solid #d2efed;border-radius:16px;padding:18px;">
             <div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#64748b;">Your voting code</div>

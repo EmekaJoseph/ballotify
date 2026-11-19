@@ -14,7 +14,8 @@ use Illuminate\Support\Str;
 
 /**
  * Delivers one voter's code by email and/or SMS, then records the outcome
- * (invited_at on success, invite_error on failure) for the organiser to see.
+ * (invited_at / reminded_at on success, invite_error on failure) for the
+ * organiser to see. $kind is 'invite' or 'reminder'.
  */
 class SendVoterInvitation implements ShouldQueue
 {
@@ -25,7 +26,7 @@ class SendVoterInvitation implements ShouldQueue
     public int $timeout = 60;
 
     /** @param  string[]  $channels  'email' and/or 'sms' */
-    public function __construct(public int $voterId, public array $channels) {}
+    public function __construct(public int $voterId, public array $channels, public string $kind = 'invite') {}
 
     public function handle(SmsSender $sms): void
     {
@@ -35,14 +36,15 @@ class SendVoterInvitation implements ShouldQueue
         }
 
         $event = $voter->event;
+        $reminder = $this->kind === 'reminder';
         $voteUrl = rtrim((string) config('app.frontend_url'), '/') . '/vote/' . $event->link_token;
         $errors = [];
-        $sent = 0;
+        $sent = [];
 
         if (in_array('email', $this->channels, true) && $voter->email) {
             try {
-                Mail::to($voter->email, $voter->name)->send(new VoterInvitation($voter, $event, $voteUrl));
-                $sent++;
+                Mail::to($voter->email, $voter->name)->send(new VoterInvitation($voter, $event, $voteUrl, $reminder));
+                $sent[] = 'email';
             } catch (\Throwable $e) {
                 report($e);
                 $errors[] = 'Email: ' . $e->getMessage();
@@ -51,18 +53,24 @@ class SendVoterInvitation implements ShouldQueue
 
         if (in_array('sms', $this->channels, true) && $voter->phone) {
             try {
-                $sms->send($voter->phone, self::smsText($event->name, $voter->code, $voteUrl));
-                $sent++;
+                $sms->send($voter->phone, self::smsText($event->name, $voter->code, $voteUrl, $reminder, $event->ends_at));
+                $sent[] = 'sms';
             } catch (\Throwable $e) {
                 report($e);
                 $errors[] = 'SMS: ' . $e->getMessage();
             }
         }
 
-        $voter->forceFill([
-            'invited_at' => $sent > 0 ? now() : $voter->invited_at,
-            'invite_error' => $errors ? Str::limit(implode(' | ', $errors), 480) : null,
-        ])->save();
+        $update = ['invite_error' => $errors ? Str::limit(implode(' | ', $errors), 480) : null];
+        if ($sent) {
+            if ($reminder) {
+                $update['reminded_at'] = now();
+            } else {
+                $update['invited_at'] = now();
+                $update['invited_via'] = $sent[0];
+            }
+        }
+        $voter->forceFill($update)->save();
     }
 
     /**
@@ -81,8 +89,13 @@ class SendVoterInvitation implements ShouldQueue
     }
 
     /** Kept short so it fits in one or two SMS segments. */
-    public static function smsText(string $eventName, string $code, string $voteUrl): string
+    public static function smsText(string $eventName, string $code, string $voteUrl, bool $reminder = false, $endsAt = null): string
     {
-        return Str::limit($eventName, 40) . ": your voting code is {$code}. Vote at {$voteUrl} (code works once).";
+        $name = Str::limit($eventName, 40);
+        if ($reminder) {
+            $when = $endsAt ? ' Voting closes ' . $endsAt->format('j M, g:ia') . '.' : '';
+            return "Reminder: you haven't voted in {$name} yet.{$when} Code {$code}: {$voteUrl}";
+        }
+        return "{$name}: your voting code is {$code}. Vote at {$voteUrl} (code works once).";
     }
 }

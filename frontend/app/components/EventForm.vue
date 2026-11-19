@@ -15,11 +15,11 @@
         </div>
 
         <div class="mb-4">
-            <span class="form-label d-block">Voting style</span>
+            <span class="form-label d-block">How people vote</span>
             <div class="row g-2">
                 <div v-for="m in modes" :key="m.value" class="col-sm-6">
-                    <label class="choice" :class="{ selected: form.selection_mode === m.value, locked: modeLocked }">
-                        <input v-model="form.selection_mode" type="radio" class="visually-hidden" :value="m.value" :disabled="busy || modeLocked" />
+                    <label class="choice" :class="{ selected: form.voting_mode === m.value, locked: modeLocked }">
+                        <input v-model="form.voting_mode" type="radio" class="visually-hidden" :value="m.value" :disabled="busy || modeLocked" />
                         <span class="icon-tile" :class="m.tone"><i class="bi" :class="m.icon"></i></span>
                         <span>
                             <span class="d-block fw-bold text-ink">{{ m.title }}</span>
@@ -29,7 +29,24 @@
                 </div>
             </div>
             <div v-if="modeLocked" class="small text-muted mt-2">
-                <i class="bi bi-lock"></i> Locked: the voting style can’t change once voting has started.
+                <i class="bi bi-lock"></i> Locked: the voting mode can’t change once voting has started.
+            </div>
+            <div v-if="form.voting_mode === 'paid'" class="paid-box mt-3">
+                <div class="row g-3 align-items-end">
+                    <div class="col-sm-5">
+                        <label for="ev-price" class="form-label">Price per vote</label>
+                        <div class="input-group">
+                            <span class="input-group-text">₦</span>
+                            <input id="ev-price" v-model.number="form.vote_price_naira" type="number" min="10" max="100000" step="10" class="form-control"
+                                :class="{ 'is-invalid': errors.vote_price_naira }" :disabled="busy" />
+                        </div>
+                    </div>
+                    <div class="col-sm-7 small text-muted">
+                        Anyone with the link can vote as many times as they pay for. Payments go through Paystack;
+                        <template v-if="feePercent !== null">Ballotify keeps {{ feePercent }}% and</template> the rest is paid out to you.
+                    </div>
+                </div>
+                <div v-if="errors.vote_price_naira" class="field-error">{{ errors.vote_price_naira }}</div>
             </div>
         </div>
 
@@ -79,24 +96,29 @@
 
 <script setup lang="ts">
 import type { EventPayload } from '~/api/endpoints/admin';
-import type { BallotEvent, ResultsVisibility, SelectionMode } from '~/types';
+import type { BallotEvent, ResultsVisibility, VotingMode } from '~/types';
 
 const props = withDefaults(defineProps<{
     event?: BallotEvent | null;
     busy?: boolean;
     submitLabel?: string;
     serverErrors?: Record<string, string>;
-}>(), { event: null, busy: false, submitLabel: 'Save', serverErrors: () => ({}) });
+    /** Starting values for a new event (e.g. from a template). */
+    defaults?: { voting_mode?: VotingMode; vote_price_naira?: number | null; results_visibility?: ResultsVisibility } | null;
+}>(), { event: null, busy: false, submitLabel: 'Save', serverErrors: () => ({}), defaults: null });
 
 const emit = defineEmits<{ submit: [payload: EventPayload] }>();
 
 const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-const initialMode: SelectionMode = props.event?.selection_mode ?? 'single';
+const initialMode: VotingMode = props.event?.voting_mode ?? props.defaults?.voting_mode ?? 'codes';
+const { plans, loadPlans } = useBilling();
+onMounted(() => loadPlans());
+const feePercent = computed(() => plans.value?.paid_votes?.fee_percent ?? null);
 const modeLocked = computed(() => !!props.event?.ballot_locked);
 
 const modes = [
-    { value: 'single' as const, title: 'One per category', text: 'Voters pick a single candidate in each category.', icon: 'bi-record-circle', tone: '' },
-    { value: 'multiple' as const, title: 'Multiple choice', text: 'Voters may pick several candidates per category.', icon: 'bi-ui-checks', tone: 'violet' },
+    { value: 'codes' as const, title: 'Secret ballot', text: 'One-time codes. One person, one vote. For elections.', icon: 'bi-shield-lock', tone: '' },
+    { value: 'paid' as const, title: 'Paid public voting', text: 'Fans pay per vote. For award nights and pageants.', icon: 'bi-trophy', tone: 'violet' },
 ];
 
 const visibilityOptions: { value: ResultsVisibility; title: string; text: string; icon: string; tone: string }[] = [
@@ -108,10 +130,11 @@ const visibilityOptions: { value: ResultsVisibility; title: string; text: string
 const form = reactive({
     name: props.event?.name ?? '',
     description: props.event?.description ?? '',
-    selection_mode: initialMode,
+    voting_mode: initialMode,
+    vote_price_naira: props.event?.vote_price_naira ?? props.defaults?.vote_price_naira ?? 50,
     starts_at: toLocalInput(props.event?.starts_at),
     ends_at: toLocalInput(props.event?.ends_at),
-    results_visibility: (props.event?.results_visibility ?? 'after_close') as ResultsVisibility,
+    results_visibility: (props.event?.results_visibility ?? props.defaults?.results_visibility ?? 'after_close') as ResultsVisibility,
 });
 
 const localErrors = ref<Record<string, string>>({});
@@ -120,6 +143,7 @@ const errors = computed(() => ({ ...props.serverErrors, ...localErrors.value }))
 function submit() {
     const errs: Record<string, string> = {};
     if (!form.name) errs.name = 'Give your event a name.';
+    if (form.voting_mode === 'paid' && !(form.vote_price_naira >= 10)) errs.vote_price_naira = 'Set a price of at least ₦10 per vote.';
     if (form.starts_at && form.ends_at && new Date(form.ends_at) <= new Date(form.starts_at)) {
         errs.ends_at = 'Closing time must be after the opening time.';
     }
@@ -130,7 +154,8 @@ function submit() {
         name: form.name,
         description: form.description.trim() || null,
         // Not sent once locked, so saving other settings never trips the lock.
-        ...(modeLocked.value ? {} : { selection_mode: form.selection_mode }),
+        ...(modeLocked.value ? {} : { voting_mode: form.voting_mode }),
+        ...(form.voting_mode === 'paid' ? { vote_price_naira: form.vote_price_naira } : {}),
         starts_at: fromLocalInput(form.starts_at),
         ends_at: fromLocalInput(form.ends_at),
         results_visibility: form.results_visibility,
@@ -140,4 +165,5 @@ function submit() {
 
 <style scoped>
 .choice.locked { cursor: not-allowed; opacity: .65; }
+.paid-box { padding: 1rem; border-radius: 14px; background: var(--surface-2); border: 1px solid var(--line); }
 </style>

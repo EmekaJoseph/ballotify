@@ -2,3 +2,8 @@
 export function useBallotBranding() {
     return useState<boolean>('ballot-branding', () => true);
 }
+
+/** The ballot layout's header note: secret ballot (codes) or secure payments (paid voting). */
+export function useBallotMode() {
+    return useState<'codes' | 'paid'>('ballot-mode', () => 'codes');
+}

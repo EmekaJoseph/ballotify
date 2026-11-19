@@ -38,7 +38,6 @@
         </div>
 
         <div v-if="problems" class="alert alert-warning border-0 rounded-4 small mt-3 mb-0">{{ problems }}</div>
-        <div v-if="error" class="alert alert-danger border-0 rounded-4 small mt-3 mb-0">{{ error }}</div>
 
         <template #footer>
             <button class="btn btn-ghost" @click="emit('close')">Cancel</button>
@@ -61,6 +60,7 @@ const emit = defineEmits<{ close: []; imported: [result: CandidateImportResult] 
 const text = ref('');
 const busy = ref(false);
 const error = ref('');
+useErrorAlert(error, 'Import didn’t work');
 
 watch(() => props.open, (o) => { if (o) { text.value = ''; error.value = ''; } });
 

@@ -14,10 +14,10 @@
                         <div class="amount">₦0</div>
                         <p class="text-muted small mb-4">Try Ballotify properly on a small vote.</p>
                         <ul class="perks">
-                            <li><i class="bi bi-check2"></i> {{ info.free.max_active_events === 1 ? 'One open event at a time' : `${info.free.max_active_events} open events at a time` }}</li>
+                            <li><i class="bi bi-check2"></i> Unlimited drafts; {{ info.free.max_active_events === 1 ? 'one live event at a time' : `${info.free.max_active_events} live events at a time` }}</li>
                             <li><i class="bi bi-check2"></i> Up to {{ formatNumber(info.free.max_voters) }} voters per event</li>
-                            <li><i class="bi bi-check2"></i> Live results, secret ballot, activity log</li>
-                            <li><i class="bi bi-check2"></i> Share codes by CSV or printed slips</li>
+                            <li><i class="bi bi-check2"></i> Live results, secret ballot, voter receipts</li>
+                            <li><i class="bi bi-check2"></i> Share codes on WhatsApp, CSV or printed slips</li>
                             <li class="off"><i class="bi bi-x"></i> Email &amp; SMS invitations</li>
                             <li class="off"><i class="bi bi-x"></i> Ballot without Ballotify branding</li>
                         </ul>
@@ -34,9 +34,10 @@
                         <p class="text-muted small mb-4">For elections and award nights that matter.</p>
                         <ul class="perks">
                             <li><i class="bi bi-check2"></i> Up to {{ formatNumber(info.pro.max_voters) }} voters</li>
-                            <li><i class="bi bi-check2"></i> Send codes by email &amp; SMS</li>
-                            <li><i class="bi bi-check2"></i> Your ballot, without Ballotify branding</li>
-                            <li><i class="bi bi-check2"></i> Doesn’t count towards your free event</li>
+                            <li><i class="bi bi-check2"></i> Send codes and reminders by email &amp; SMS</li>
+                            <li><i class="bi bi-check2"></i> Your logo and colour, no Ballotify branding</li>
+                            <li><i class="bi bi-check2"></i> Up to 10 co-organisers with roles</li>
+                            <li><i class="bi bi-check2"></i> Doesn’t count towards your free live event</li>
                             <li><i class="bi bi-check2"></i> Everything in Free</li>
                         </ul>
                         <NuxtLink :to="ctaLink" class="btn btn-primary w-100 mt-auto">Create an event</NuxtLink>
@@ -44,7 +45,10 @@
                     </div>
                 </div>
             </div>
-            <p class="text-center small text-muted mt-4 mb-0">Running something bigger? <a v-if="contactEmail" :href="`mailto:${contactEmail}`">Talk to us</a><span v-else>Talk to us</span> about larger events.</p>
+            <p v-if="info.paid_votes" class="text-center small text-muted mt-4 mb-1">
+                <i class="bi bi-trophy"></i> <b class="text-ink">Award nights:</b> paid public voting is free to set up. We keep {{ info.paid_votes.fee_percent }}% of each vote payment; the rest is yours.
+            </p>
+            <p class="text-center small text-muted mt-2 mb-0">Running something bigger? <a v-if="contactEmail" :href="`mailto:${contactEmail}`">Talk to us</a><span v-else>Talk to us</span> about larger events.</p>
         </div>
     </section>
 </template>

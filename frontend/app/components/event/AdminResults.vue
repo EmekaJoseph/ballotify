@@ -18,7 +18,10 @@
                     title="Printable report / PDF" aria-label="Printable report / PDF">
                     <i class="bi bi-file-earmark-pdf"></i>
                 </NuxtLink>
-                <button class="btn btn-primary btn-sm" :disabled="!results" title="Show full screen, e.g. on a projector" @click="togglePresent">
+                <button class="btn btn-soft btn-sm" :disabled="!results || !results.categories.length" title="Award-night reveal: one category at a time, winner revealed on a click" @click="startPresent('reveal')">
+                    <i class="bi bi-stars"></i> Reveal
+                </button>
+                <button class="btn btn-primary btn-sm" :disabled="!results" title="Show full screen, e.g. on a projector" @click="startPresent('board')">
                     <i class="bi bi-fullscreen"></i> Present
                 </button>
             </div>
@@ -29,8 +32,15 @@
         </div>
 
         <!-- Presentation: this element goes full screen. Works for private results too (it's your dashboard data). -->
-        <div ref="stage" class="stage" :class="{ presenting }">
-            <template v-if="results">
+        <div ref="stage" class="stage" :class="{ presenting, reveal: presenting && presentMode === 'reveal' }">
+            <template v-if="results && presenting && presentMode === 'reveal'">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-white fw-800">{{ results.event.name }}</span>
+                    <button class="btn btn-outline-light-on-dark btn-sm" @click="togglePresent"><i class="bi bi-fullscreen-exit"></i> Exit</button>
+                </div>
+                <RevealStage :categories="results.categories" @finish="togglePresent" />
+            </template>
+            <template v-else-if="results">
                 <ResultsHeader v-if="presenting" :name="results.event.name" :status="results.event.status"
                     :ends-at="results.event.ends_at" :updated-at="updatedLabel">
                     <button class="btn btn-light-on-dark btn-sm" @click="togglePresent">
@@ -100,6 +110,11 @@ async function load(quiet = false) {
 // --- Presentation mode: full screen, refreshing while voting is open --------
 const stage = ref<HTMLElement | null>(null);
 const presenting = ref(false);
+const presentMode = ref<'board' | 'reveal'>('board');
+function startPresent(mode: 'board' | 'reveal') {
+    presentMode.value = mode;
+    togglePresent();
+}
 let pollTimer: ReturnType<typeof setInterval> | undefined;
 let tickTimer: ReturnType<typeof setInterval> | undefined;
 
@@ -155,4 +170,8 @@ onBeforeUnmount(() => {
     background: var(--bg); padding: 2rem; overflow-y: auto;
 }
 .stage.presenting > * { max-width: 1280px; margin-left: auto; margin-right: auto; }
+.stage.presenting.reveal {
+    background: radial-gradient(900px 500px at 85% 0%, rgba(124, 92, 255, .35), transparent 60%),
+        radial-gradient(900px 500px at 0% 100%, rgba(20, 145, 138, .45), transparent 60%), var(--night);
+}
 </style>

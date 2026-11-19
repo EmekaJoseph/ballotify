@@ -29,16 +29,25 @@ class VoterController extends Controller
         return strtoupper(trim($code));
     }
 
+    /** Paid public voting has no voter list or codes. */
+    private function ensureCodeVoting(Event $event): void
+    {
+        if ($event->isPaid()) {
+            throw ValidationException::withMessages(['voters' => ['This event uses paid public voting, so it doesn’t need voter codes.']]);
+        }
+    }
+
     public function index(Event $event)
     {
-        Gate::authorize('manage', $event);
+        Gate::authorize('voters', $event);
         return response()->json(Voter::where('event_id', $event->id)->orderBy('id')->get());
     }
 
     /** Add one voter. The code is generated when not supplied. */
     public function store(Request $request, Event $event)
     {
-        Gate::authorize('manage', $event);
+        Gate::authorize('voters', $event);
+        $this->ensureCodeVoting($event);
         $this->normalizeInput($request);
         $data = $request->validate([
             'name' => ['nullable', 'string', 'max:255'],
@@ -62,7 +71,7 @@ class VoterController extends Controller
 
     public function update(Request $request, Event $event, Voter $voter)
     {
-        Gate::authorize('manage', $event);
+        Gate::authorize('voters', $event);
         // Secret ballot: a cast vote can't be identified, so it can't be undone,
         // and organisers can't mark codes as used either. (Checked explicitly:
         // Laravel's "prohibited" rule lets an empty/null value through.)
@@ -94,7 +103,7 @@ class VoterController extends Controller
     /** Deleting a voter who already voted leaves their (anonymous) vote counted. */
     public function destroy(Event $event, Voter $voter)
     {
-        Gate::authorize('manage', $event);
+        Gate::authorize('voters', $event);
         $voter->delete();
         Audit::log($event, 'voters.deleted', 'Voter removed: ' . ($voter->name ?: 'anonymous code') . ($voter->used_at ? ' (had already voted; vote stays counted)' : ''));
 
@@ -116,7 +125,8 @@ class VoterController extends Controller
     /** Create N anonymous codes. */
     public function generate(Request $request, Event $event)
     {
-        Gate::authorize('manage', $event);
+        Gate::authorize('voters', $event);
+        $this->ensureCodeVoting($event);
         $data = $request->validate([
             'count' => ['required', 'integer', 'min:1', 'max:' . self::MAX_BATCH],
         ]);
@@ -135,7 +145,8 @@ class VoterController extends Controller
      */
     public function import(Request $request, Event $event)
     {
-        Gate::authorize('manage', $event);
+        Gate::authorize('voters', $event);
+        $this->ensureCodeVoting($event);
 
         if (! $request->has('voters') && $request->has('names')) {
             $request->merge(['voters' => array_map(fn ($n) => ['name' => $n], (array) $request->input('names'))]);
@@ -182,7 +193,7 @@ class VoterController extends Controller
      */
     public function invite(Request $request, Event $event)
     {
-        Gate::authorize('manage', $event);
+        Gate::authorize('voters', $event);
         $data = $request->validate([
             'channel' => ['required', Rule::in(['email', 'sms', 'both'])],
             'audience' => ['required', Rule::in(['not_invited', 'pending', 'selected'])],
@@ -195,14 +206,52 @@ class VoterController extends Controller
             throw ValidationException::withMessages(['channel' => ['Voting has closed for this event, so invitations can no longer be sent.']]);
         }
 
-        $channels = $data['channel'] === 'both' ? ['email', 'sms'] : [$data['channel']];
-
         $query = Voter::where('event_id', $event->id)->whereNull('used_at');
         if ($data['audience'] === 'not_invited') {
             $query->whereNull('invited_at');
         } elseif ($data['audience'] === 'selected') {
             $query->whereIn('id', $data['voter_ids'] ?? []);
         }
+
+        return response()->json(self::sendMessages($event, $query, $data['channel'], 'invite'));
+    }
+
+    /** Remind everyone who hasn't voted yet (Pro). */
+    public function remind(Request $request, Event $event)
+    {
+        Gate::authorize('voters', $event);
+        $data = $request->validate(['channel' => ['required', Rule::in(['email', 'sms', 'both'])]]);
+        Plans::ensureCanMessage($event);
+        if (! $event->isOpen()) {
+            throw ValidationException::withMessages(['channel' => ['Reminders can only be sent while voting is open.']]);
+        }
+
+        return response()->json(self::sendMessages($event, Voter::where('event_id', $event->id)->whereNull('used_at'), $data['channel'], 'reminder'));
+    }
+
+    /**
+     * The organiser shared this voter's code themselves (e.g. on WhatsApp from
+     * their phone). Recorded so the voter no longer shows as "not sent".
+     */
+    public function markShared(Request $request, Event $event, Voter $voter)
+    {
+        Gate::authorize('voters', $event);
+        $data = $request->validate(['channel' => ['required', Rule::in(['whatsapp'])]]);
+        $voter->forceFill(['invited_at' => now(), 'invited_via' => $data['channel'], 'invite_error' => null])->save();
+
+        return response()->json($voter);
+    }
+
+    /**
+     * Queue one message per reachable voter in $query. Shared by invitations,
+     * reminders and the scheduled reminder command.
+     *
+     * @return array{queued: int, email: int, sms: int, failed: int, queue: string}
+     */
+    public static function sendMessages(Event $event, $query, string $channel, string $kind): array
+    {
+        $channels = $channel === 'both' ? ['email', 'sms'] : [$channel];
+
         // Only voters reachable on at least one requested channel.
         $query->where(function ($q) use ($channels) {
             if (in_array('email', $channels, true)) $q->orWhereNotNull('email');
@@ -218,14 +267,14 @@ class VoterController extends Controller
         }
 
         $counts = ['queued' => 0, 'email' => 0, 'sms' => 0, 'failed' => 0];
-        $query->select(['id', 'email', 'phone'])->chunkById(500, function ($voters) use ($channels, &$counts, $noWorker) {
+        $query->select(['id', 'email', 'phone'])->chunkById(500, function ($voters) use ($channels, $kind, &$counts, $noWorker) {
             foreach ($voters as $voter) {
                 try {
                     // Delivery errors are handled inside the job; this only guards
                     // against the queue itself being unavailable.
                     $noWorker
-                        ? SendVoterInvitation::dispatchAfterResponse($voter->id, $channels)
-                        : SendVoterInvitation::dispatch($voter->id, $channels);
+                        ? SendVoterInvitation::dispatchAfterResponse($voter->id, $channels, $kind)
+                        : SendVoterInvitation::dispatch($voter->id, $channels, $kind);
                 } catch (\Throwable $e) {
                     report($e);
                     $counts['failed']++;
@@ -239,11 +288,13 @@ class VoterController extends Controller
         });
 
         if ($counts['queued'] > 0) {
-            Audit::log($event, 'voters.invited', "Voting codes sent to {$counts['queued']} voter" . ($counts['queued'] === 1 ? '' : 's')
-                . ' by ' . implode(' and ', array_map(fn ($c) => $c === 'sms' ? 'SMS' : 'email', $channels)));
+            $via = implode(' and ', array_map(fn ($c) => $c === 'sms' ? 'SMS' : 'email', $channels));
+            $n = $counts['queued'] . ' voter' . ($counts['queued'] === 1 ? '' : 's');
+            Audit::log($event, $kind === 'reminder' ? 'voters.reminded' : 'voters.invited',
+                $kind === 'reminder' ? "Reminder sent to {$n} who hadn’t voted, by {$via}" : "Voting codes sent to {$n} by {$via}");
         }
 
-        return response()->json($counts + ['queue' => config('queue.default')]);
+        return $counts + ['queue' => config('queue.default')];
     }
 
     public function validateCode(Request $request, string $token)
@@ -252,7 +303,7 @@ class VoterController extends Controller
             'code' => ['required', 'string', 'max:64'],
         ]);
         $event = Event::publicToken($token)->firstOrFail();
-        if (! $event->isOpen()) {
+        if ($event->isPaid() || ! $event->isOpen()) {
             return response()->json(['valid' => false, 'message' => 'This election is not open.'], 403);
         }
         $voter = Voter::where('event_id', $event->id)

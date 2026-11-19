@@ -4,7 +4,6 @@ use App\Models\AuditLog;
 use App\Models\Candidate;
 use App\Models\Category;
 use App\Models\Event;
-use App\Models\EventType;
 use App\Models\User;
 use App\Models\Voter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -18,7 +17,6 @@ function multiElection(?int $maxChoices = null): array
     $user = User::factory()->create();
     $event = Event::create([
         'user_id' => $user->id,
-        'event_type_id' => EventType::where('key', 'multiple')->value('id'),
         'name' => 'Board',
         'link_token' => (string) Str::uuid(),
         'starts_at' => now()->subHour(),
@@ -84,7 +82,7 @@ it('duplicates an event ballot without voters, votes or dates', function () {
         ->assertCreated()
         ->assertJsonPath('name', 'Board (copy)')
         ->assertJsonPath('starts_at', null)
-        ->assertJsonPath('selection_mode', 'multiple')
+        ->assertJsonPath('voting_mode', 'codes')
         ->assertJsonPath('categories_count', 2)
         ->assertJsonPath('candidates_count', 3)
         ->assertJsonPath('voters_count', 0);

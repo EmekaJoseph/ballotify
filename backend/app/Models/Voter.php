@@ -18,12 +18,15 @@ class Voter extends Model
         'code',
         'used_at',
         'invited_at',
+        'invited_via',
+        'reminded_at',
         'invite_error',
     ];
 
     protected $casts = [
         'used_at' => 'datetime',
         'invited_at' => 'datetime',
+        'reminded_at' => 'datetime',
     ];
 
     public function event(): BelongsTo

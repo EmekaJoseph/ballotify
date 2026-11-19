@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Event;
+use App\Mail\PaymentReceipt;
 use App\Models\Payment;
+use App\Models\VotePurchase;
 use App\Support\Audit;
 use App\Support\Paystack;
 use App\Support\Plans;
@@ -12,6 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 /**
@@ -128,6 +131,23 @@ class BillingController extends Controller
         }
 
         $reference = (string) ($payload['data']['reference'] ?? '');
+
+        // Paid public votes share the same Paystack account and webhook.
+        if (str_starts_with($reference, PaidVoteController::PREFIX)) {
+            $purchase = VotePurchase::where('reference', $reference)->first();
+            if (! $purchase) {
+                Log::warning('Paystack webhook for unknown vote purchase', ['reference' => $reference]);
+                return response()->json(['ok' => true]);
+            }
+            try {
+                PaidVoteController::settle($purchase, Paystack::verify($reference));
+            } catch (\Throwable $e) {
+                report($e);
+                return response()->json(['message' => 'Retry later'], 500);
+            }
+            return response()->json(['ok' => true]);
+        }
+
         $payment = Payment::where('reference', $reference)->first();
         if (! $payment) {
             Log::warning('Paystack webhook for unknown reference', ['reference' => $reference]);
@@ -151,7 +171,7 @@ class BillingController extends Controller
      */
     private function settle(Payment $payment, array $tx): void
     {
-        DB::transaction(function () use ($payment, $tx) {
+        $upgraded = DB::transaction(function () use ($payment, $tx) {
             $payment = Payment::whereKey($payment->id)->lockForUpdate()->first();
             if (! $payment || $payment->status !== Payment::PENDING) {
                 return; // already settled
@@ -178,12 +198,58 @@ class BillingController extends Controller
                     $event->forceFill(['plan' => 'pro', 'upgraded_at' => now(), 'upgraded_via' => 'payment'])->save();
                     Audit::log($event, 'event.upgraded', 'Upgraded to Pro (payment ' . $payment->reference . ')');
                 }
+                return $payment;
             } elseif (in_array($status, ['failed', 'reversed'], true)) {
                 $payment->update(['status' => Payment::FAILED, 'failure_reason' => $tx['gateway_response'] ?? ucfirst((string) $status)]);
             }
             // Anything else (abandoned, ongoing, processing...) stays pending: the
             // organiser can still finish paying in the same checkout.
+            return null;
         });
+
+        // Emailed receipt, after the response.
+        if ($upgraded instanceof Payment && $upgraded->user) {
+            dispatch(function () use ($upgraded) {
+                // One receipt per payment, whatever runs this twice.
+                if (! \Illuminate\Support\Facades\Cache::add("receipt-mail:{$upgraded->reference}", true, now()->addDay())) {
+                    return;
+                }
+                try {
+                    Mail::to($upgraded->user->email, $upgraded->user->name)->send(new PaymentReceipt($upgraded->fresh('user')));
+                } catch (\Throwable $e) {
+                    report($e);
+                }
+            })->afterResponse();
+        }
+    }
+
+    /** The organiser's own payments (account page). */
+    public function myPayments(Request $request)
+    {
+        return response()->json(
+            Payment::where('user_id', $request->user()->id)->latest()->limit(100)
+                ->get(['reference', 'event_id', 'event_name', 'amount_kobo', 'currency', 'status', 'channel', 'paid_at', 'created_at'])
+                ->map(fn ($p) => $p->toArray() + ['amount_naira' => $p->amount_kobo / 100])
+        );
+    }
+
+    /** One payment, for the printable receipt. */
+    public function receipt(Request $request, string $reference)
+    {
+        $payment = Payment::where('reference', $reference)->where('user_id', $request->user()->id)
+            ->where('status', Payment::SUCCESS)->firstOrFail();
+
+        return response()->json([
+            'reference' => $payment->reference,
+            'item' => 'Ballotify Pro upgrade',
+            'event_name' => $payment->event_name,
+            'amount_naira' => $payment->amount_kobo / 100,
+            'currency' => $payment->currency,
+            'channel' => $payment->channel,
+            'paid_at' => $payment->paid_at,
+            'billed_to' => ['name' => $request->user()->name, 'email' => $request->user()->email],
+            'seller' => ['name' => config('app.name', 'Ballotify'), 'email' => config('mail.from.address')],
+        ]);
     }
 
     private function planInfo(): array
@@ -205,6 +271,13 @@ class BillingController extends Controller
                 'max_voters' => $s['pro_max_voters'],
                 'messaging' => true,
                 'branding' => false,
+                'custom_branding' => true,
+                'team' => true,
+            ],
+            // Paid public voting: the platform keeps this share of each vote payment.
+            'paid_votes' => [
+                'fee_percent' => $s['paid_vote_fee_percent'],
+                'min_payment_naira' => (int) config('ballotify.billing.min_vote_payment_naira', 50),
             ],
         ];
     }

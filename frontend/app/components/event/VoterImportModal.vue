@@ -34,7 +34,6 @@
             <div v-if="rows.length > 5" class="small text-muted px-3 py-2 border-top">…and {{ rows.length - 5 }} more</div>
         </div>
 
-        <div v-if="error" class="alert alert-danger border-0 rounded-4 small mt-3 mb-0">{{ error }}</div>
 
         <template #footer>
             <button class="btn btn-ghost" @click="emit('close')">Cancel</button>
@@ -51,11 +50,12 @@ import { adminApi } from '~/api/endpoints/admin';
 import type { GeneratedCode, VoterContact } from '~/types';
 
 const props = defineProps<{ open: boolean; eventId: number }>();
-const emit = defineEmits<{ close: []; created: [codes: GeneratedCode[]] }>();
+const emit = defineEmits<{ close: []; created: [codes: GeneratedCode[]]; limit: [] }>();
 
 const text = ref('');
 const busy = ref(false);
 const error = ref('');
+useErrorAlert(error, 'Import didn’t work');
 
 watch(() => props.open, (o) => { if (o) { text.value = ''; error.value = ''; } });
 
@@ -114,6 +114,8 @@ async function submit() {
         const { data } = await adminApi.importVoters(props.eventId, { voters: rows.value });
         emit('created', data.voters);
     } catch (e) {
+        // Free plan: a second live event. The parent explains the options in a modal.
+        if (planLimitReason(e) === 'events') { emit('limit'); return; }
         error.value = apiErrorMessage(e);
     } finally {
         busy.value = false;

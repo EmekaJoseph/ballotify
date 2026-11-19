@@ -4,7 +4,10 @@ namespace Database\Seeders;
 
 use App\Models\Candidate;
 use App\Models\Event;
+use App\Models\VotePurchase;
 use App\Models\Voter;
+use App\Support\Plans;
+use Illuminate\Support\Str;
 use Illuminate\Database\Seeder;
 
 /**
@@ -16,7 +19,7 @@ class VoteSeeder extends Seeder
 {
     public function run(): void
     {
-        $events = Event::with(['type', 'categories.candidates'])->get();
+        $events = Event::with('categories.candidates')->where('voting_mode', Event::MODE_CODES)->get();
 
         foreach ($events as $event) {
             // Nobody can have voted in an event that has not opened yet.
@@ -34,8 +37,9 @@ class VoteSeeder extends Seeder
                     if ($candidates->isEmpty()) {
                         continue;
                     }
-                    $picks = $event->selection_mode === 'multiple'
-                        ? $candidates->random(min(2, $candidates->count()))
+                    $limit = $category->max_choices ?? $candidates->count();
+                    $picks = $limit > 1
+                        ? $candidates->random(min($limit, $candidates->count()))
                         : collect([$this->weightedPick($candidates->all())]);
 
                     foreach ($picks as $candidate) {
@@ -47,10 +51,52 @@ class VoteSeeder extends Seeder
             foreach ($totals as $candidateId => $votes) {
                 Candidate::whereKey($candidateId)->increment('votes', $votes);
             }
-            Voter::whereIn('id', $turnout->pluck('id'))->update(['used_at' => now()]);
+            $from = $event->starts_at ?? now()->subHours(6);
+            $to = min(now(), $event->ends_at ?? now());
+            $span = max(60, $to->getTimestamp() - $from->getTimestamp());
+            foreach ($turnout as $i => $voter) {
+                // Busier early on, tailing off: a realistic turnout curve.
+                $fraction = 1 - sqrt(1 - ($i + random_int(0, 100) / 100) / max(1, $turnout->count()));
+                $voter->forceFill(['used_at' => $from->copy()->addSeconds((int) ($span * min(1, max(0, $fraction))))])->save();
+            }
         }
 
+        $this->seedPaidVotes();
+
         $this->command?->info('Seeded sample votes (35% turnout) for events that have started.');
+    }
+
+    /** Demo purchases for paid-voting events (no real money: references start with DEMO). */
+    private function seedPaidVotes(): void
+    {
+        $events = Event::with('candidates')->where('voting_mode', Event::MODE_PAID)->get();
+        foreach ($events as $event) {
+            if ($event->status === Event::STATUS_UPCOMING || $event->candidates->isEmpty()) {
+                continue;
+            }
+            $from = $event->starts_at ?? now()->subDay();
+            $span = max(60, now()->getTimestamp() - $from->getTimestamp());
+            $candidates = $event->candidates->values();
+            for ($i = 0; $i < 60; $i++) {
+                $candidate = $this->weightedPick($candidates->all());
+                $qty = [1, 2, 2, 4, 5, 10, 20][random_int(0, 6)];
+                $amount = $qty * (int) $event->vote_price_naira * 100;
+                VotePurchase::create([
+                    'event_id' => $event->id,
+                    'candidate_id' => $candidate->id,
+                    'candidate_name' => $candidate->name,
+                    'quantity' => $qty,
+                    'amount_kobo' => $amount,
+                    'fee_kobo' => Plans::voteFeeKobo($amount),
+                    'reference' => 'DEMO-' . Str::upper(Str::random(12)),
+                    'email' => "fan{$i}@example.com",
+                    'status' => VotePurchase::SUCCESS,
+                    'channel' => ['card', 'bank_transfer', 'ussd'][random_int(0, 2)],
+                    'paid_at' => $from->copy()->addSeconds(random_int(0, $span)),
+                ]);
+                Candidate::whereKey($candidate->id)->increment('votes', $qty);
+            }
+        }
     }
 
     /** Earlier candidates get more weight so each category has a clear-ish leader. */

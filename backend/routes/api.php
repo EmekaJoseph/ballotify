@@ -10,6 +10,8 @@ use App\Http\Controllers\Api\VoteController;
 use App\Http\Controllers\Api\MessagingController;
 use App\Http\Controllers\Api\PlatformAdminController;
 use App\Http\Controllers\Api\BillingController;
+use App\Http\Controllers\Api\PaidVoteController;
+use App\Http\Controllers\Api\TeamController;
 
 // ---------------------------------------------------------------- authentication
 Route::prefix('auth')->group(function () {
@@ -41,6 +43,9 @@ Route::middleware(['auth:sanctum', 'active'])->scopeBindings()->group(function (
     Route::post('me/two-factor', [AuthController::class, 'twoFactorSetup'])->middleware('throttle:6,1');
     Route::post('me/two-factor/confirm', [AuthController::class, 'twoFactorConfirm'])->middleware('throttle:12,1');
     Route::delete('me/two-factor', [AuthController::class, 'twoFactorDisable'])->middleware('throttle:6,1');
+    Route::post('me/onboarded', [AuthController::class, 'onboarded']);
+
+    Route::get('event-templates', [EventController::class, 'templates']);
 
     Route::get('events', [EventController::class, 'index']);
     Route::post('events', [EventController::class, 'store']);
@@ -50,6 +55,15 @@ Route::middleware(['auth:sanctum', 'active'])->scopeBindings()->group(function (
     Route::get('events/{event}/voting-link', [EventController::class, 'link']);
     Route::get('events/{event}/results', [EventController::class, 'adminResults']);
     Route::get('events/{event}/activity', [EventController::class, 'activity']);
+    Route::get('events/{event}/earnings', [EventController::class, 'earnings']);
+    // POST: carries a logo upload (multipart).
+    Route::post('events/{event}/branding', [EventController::class, 'branding']);
+
+    // Co-organisers
+    Route::get('events/{event}/members', [TeamController::class, 'index']);
+    Route::post('events/{event}/members', [TeamController::class, 'store'])->middleware('throttle:30,1');
+    Route::patch('events/{event}/members/{member}', [TeamController::class, 'update']);
+    Route::delete('events/{event}/members/{member}', [TeamController::class, 'destroy']);
 
     Route::get('events/{event}/categories', [CategoryController::class, 'index']);
     Route::post('events/{event}/categories', [CategoryController::class, 'store']);
@@ -70,9 +84,11 @@ Route::middleware(['auth:sanctum', 'active'])->scopeBindings()->group(function (
     Route::post('events/{event}/voters/import', [VoterController::class, 'import']);
     Route::post('events/{event}/voters/generate', [VoterController::class, 'generate']);
     Route::post('events/{event}/voters/erase-contacts', [VoterController::class, 'eraseContacts']);
+    Route::post('events/{event}/voters/{voter}/shared', [VoterController::class, 'markShared']);
     // Sending messages requires a confirmed email address (stops spam from throwaway accounts).
     Route::post('events/{event}/duplicate', [EventController::class, 'duplicate'])->middleware('throttle:20,1');
     Route::post('events/{event}/voters/invite', [VoterController::class, 'invite'])->middleware(['verified', 'throttle:20,1']);
+    Route::post('events/{event}/voters/remind', [VoterController::class, 'remind'])->middleware(['verified', 'throttle:10,1']);
 
     Route::get('messaging/status', [MessagingController::class, 'status']);
 
@@ -80,6 +96,8 @@ Route::middleware(['auth:sanctum', 'active'])->scopeBindings()->group(function (
     Route::get('billing/plans', [BillingController::class, 'plans']);
     Route::post('events/{event}/upgrade', [BillingController::class, 'checkout'])->middleware('throttle:10,1');
     Route::post('billing/verify', [BillingController::class, 'verify'])->middleware('throttle:30,1');
+    Route::get('billing/payments', [BillingController::class, 'myPayments']);
+    Route::get('billing/payments/{reference}', [BillingController::class, 'receipt']);
 
     // ------------------------------------------------------------ platform owner
     Route::prefix('admin')->middleware('superadmin')->group(function () {
@@ -93,6 +111,11 @@ Route::middleware(['auth:sanctum', 'active'])->scopeBindings()->group(function (
         Route::get('plans', [PlatformAdminController::class, 'plans']);
         Route::put('plans', [PlatformAdminController::class, 'updatePlans']);
         Route::get('payments', [PlatformAdminController::class, 'payments']);
+        Route::get('payouts', [PlatformAdminController::class, 'payouts']);
+        Route::post('events/{event}/payouts', [PlatformAdminController::class, 'recordPayout']);
+        Route::get('health', [PlatformAdminController::class, 'health']);
+        Route::post('health/failed-jobs/{uuid}/retry', [PlatformAdminController::class, 'retryFailedJob']);
+        Route::delete('health/failed-jobs/{uuid}', [PlatformAdminController::class, 'forgetFailedJob']);
     });
 });
 
@@ -107,4 +130,8 @@ Route::prefix('public')->group(function () {
     // Code guessing endpoints are tightly limited per IP to stop brute forcing.
     Route::post('events/{token}/code/validate', [VoterController::class, 'validateCode'])->middleware('throttle:voting');
     Route::post('events/{token}/vote', [VoteController::class, 'store'])->middleware('throttle:voting');
+    Route::post('events/{token}/receipt', [EventController::class, 'checkReceipt'])->middleware('throttle:voting');
+    // Paid public voting
+    Route::post('events/{token}/paid-votes', [PaidVoteController::class, 'checkout'])->middleware('throttle:30,1');
+    Route::post('paid-votes/verify', [PaidVoteController::class, 'verify'])->middleware('throttle:60,1');
 });

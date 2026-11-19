@@ -3,7 +3,6 @@
 use App\Models\Candidate;
 use App\Models\Category;
 use App\Models\Event;
-use App\Models\EventType;
 use App\Models\User;
 use App\Models\Voter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -18,14 +17,14 @@ function makeElection(array $eventAttrs = [], string $mode = 'single'): array
     $user = User::factory()->create();
     $event = Event::create(array_merge([
         'user_id' => $user->id,
-        'event_type_id' => EventType::where('key', $mode)->value('id'),
         'name' => 'Student Union',
         'link_token' => (string) Str::uuid(),
         'starts_at' => now()->subHour(),
         'ends_at' => now()->addDay(),
         'results_visibility' => 'live',
     ], $eventAttrs));
-    $category = Category::create(['event_id' => $event->id, 'name' => 'President']);
+    // single = choose one (the default); multiple = no pick limit.
+    $category = Category::create(['event_id' => $event->id, 'name' => 'President', 'max_choices' => $mode === 'multiple' ? null : 1]);
     $a = Candidate::create(['event_id' => $event->id, 'category_id' => $category->id, 'name' => 'Ada']);
     $b = Candidate::create(['event_id' => $event->id, 'category_id' => $category->id, 'name' => 'Bola']);
     $voter = Voter::create(['event_id' => $event->id, 'code' => 'ABCD2345', 'name' => 'Voter One']);
@@ -201,7 +200,7 @@ it('locks the ballot structure once voting has started, but allows typo fixes', 
     $as->deleteJson("/api/events/{$id}/categories/{$e['category']->id}")->assertStatus(409);
     $as->postJson("/api/events/{$id}/candidates", ['category_id' => $e['category']->id, 'name' => 'Chidi'])->assertStatus(409);
     $as->deleteJson("/api/events/{$id}/candidates/{$e['a']->id}")->assertStatus(409);
-    $as->patchJson("/api/events/{$id}", ['selection_mode' => 'multiple'])->assertStatus(422);
+    $as->patchJson("/api/events/{$id}", ['voting_mode' => 'paid', 'vote_price_naira' => 50])->assertStatus(422);
 
     // Cosmetic fixes are allowed, and recorded.
     $as->patchJson("/api/events/{$id}/candidates/{$e['a']->id}", ['name' => 'Ada Obi'])->assertOk();

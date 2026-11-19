@@ -83,10 +83,19 @@ VOTERS take part from any phone or laptop using a one-time code.
 4. THE ORGANISER'S JOURNEY
 --------------------------------------------------------------------------------
 
-   Plans: every event starts FREE (1 open event per account, 50 voters,
-   codes shared by CSV/printed slips, "Powered by Ballotify" on the ballot).
+   Plans: every event starts FREE. Drafts are unlimited; 1 LIVE event at a
+   time (an event goes live when it gets its first voters), 50 voters,
+   codes shared on WhatsApp / CSV / printed slips, "Powered by Ballotify".
    Upgrading ONE event to PRO is a one-off Paystack payment: 5,000 voters,
-   email & SMS invitations, no branding. (Prices/limits: Admin -> Pricing.)
+   email & SMS invitations and reminders, own logo and colour, up to 10
+   co-organisers. (Prices/limits: Admin -> Pricing.)
+
+   Two ways to vote, chosen per event:
+     SECRET BALLOT (codes)  one-time code per voter, one vote each, receipt
+                            after voting to check it was counted.
+     PAID PUBLIC VOTING     award nights: anyone picks a nominee and pays per
+                            vote on Paystack; the platform keeps a fee and
+                            pays the rest to the organiser.
 
    [ Sign up ] --> [ Create event ] --> [ Build ballot ] --> [ Issue codes ]
                                                                    |
@@ -301,16 +310,25 @@ VOTERS take part from any phone or laptop using a one-time code.
      |
      | 1 organiser has many events
      v
-   events --------------------- event_types ("single" / "multiple")
+   events
      |  name, description, link_token (the secret part of the voting URL),
-     |  starts_at, ends_at
+     |  starts_at, ends_at, voting_mode (codes / paid), vote_price_naira,
+     |  brand colour + logo, scheduled reminder, plan (free / pro)
      |
-     +--< categories           e.g. "President"
+     +--< categories           e.g. "President"; max_choices (1 = choose one,
+     |       |                 N = up to N, empty = any) + shuffle flag
      |       |
      |       +--< candidates   e.g. "Ada Obi" (+ photo, + votes = running total)
      |
      +--< voters               one row per code; used_at = THAT it voted
      |                         (never for whom)
+     |
+     +--< ballot_receipts      hashed receipt codes; NOT linked to a voter
+     |                         or a choice
+     |
+     +--< vote_purchases       paid votes (Paystack reference, quantity, fee)
+     +--< payouts              money sent to the organiser for paid voting
+     +--< event_members        co-organisers: editor / voters / viewer
      |
      +--< audit_logs           every organiser change, with "during voting"
                                flag; append-only
@@ -328,10 +346,15 @@ VOTERS take part from any phone or laptop using a one-time code.
 
    [x] One vote per code, guaranteed under heavy concurrency (row lock).
    [x] Voting window enforced by the server, not just hidden in the page.
-   [x] Choices validated against the event, the category, the voting style
-       and the category's pick limit.
+   [x] Choices validated against the event, the category and the category's
+       pick limit.
+   [x] Voters get a receipt to check their ballot was counted, without it
+       revealing how they voted.
+   [x] Paid votes count once, only for the full amount, and only if paid
+       before voting closed.
    [x] Brute-force protection on code entry and vote submission.
-   [x] Organisers can only see and change their own events (others get 404).
+   [x] Organisers can only see and change their own events (others get 404);
+       co-organisers get only what their role allows.
    [x] Nested items can't be edited through another event's URL.
    [x] Secret ballot: only totals are stored; nobody can see how anyone voted.
    [x] Ballot locks at the first vote; later fixes are logged and disclosed.

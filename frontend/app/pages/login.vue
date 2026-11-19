@@ -7,9 +7,6 @@
             <p class="text-muted mb-4">
                 {{ useRecovery ? 'Enter one of your recovery codes.' : 'Enter the 6-digit code from your authenticator app.' }}
             </p>
-            <div v-if="error" class="alert alert-danger border-0 rounded-4 small d-flex gap-2" role="alert">
-                <i class="bi bi-exclamation-circle-fill"></i> {{ error }}
-            </div>
             <form novalidate @submit.prevent="submitCode">
                 <input id="otp" ref="otpInput" v-model.trim="code" class="form-control form-control-lg mono text-center otp mb-3"
                     :inputmode="useRecovery ? 'text' : 'numeric'" :autocomplete="useRecovery ? 'off' : 'one-time-code'"
@@ -40,9 +37,6 @@
             </div>
             <div v-if="route.query.reset" class="alert alert-success border-0 rounded-4 small d-flex gap-2">
                 <i class="bi bi-check-circle-fill"></i> Password updated. Sign in with your new password.
-            </div>
-            <div v-if="error" class="alert alert-danger border-0 rounded-4 small d-flex gap-2" role="alert">
-                <i class="bi bi-exclamation-circle-fill"></i> {{ error }}
             </div>
 
             <form novalidate @submit.prevent="submit">
@@ -89,6 +83,7 @@ const error = ref('');
 const form = reactive({ email: typeof route.query.email === 'string' ? route.query.email : '', password: '' });
 
 const challenge = ref<string | null>(null);
+useErrorAlert(error, () => (challenge.value ? 'Code not accepted' : 'Couldn’t sign you in'));
 const code = ref('');
 const useRecovery = ref(false);
 const otpInput = ref<HTMLInputElement | null>(null);

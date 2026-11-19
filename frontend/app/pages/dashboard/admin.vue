@@ -13,7 +13,7 @@
             </div>
             <div class="col-6 col-xl-3">
                 <StatCard label="Revenue" :value="ov ? formatNaira(ov.revenue_naira) : '–'" icon="bi-cash-coin" tone="green"
-                    :hint="ov ? `${formatNaira(ov.revenue_last_30_days_naira)} in 30 days` : ''" />
+                    :hint="ov ? `${formatNaira(ov.revenue_last_30_days_naira)} in 30 days · ${formatNaira(ov.paid_votes_fees_naira)} vote fees` : ''" />
             </div>
             <div class="col-6 col-xl-3">
                 <StatCard label="Ballots cast" :value="ov ? formatNumber(ov.ballots_cast) : '–'" icon="bi-check2-square" tone="amber"
@@ -53,11 +53,20 @@
                             <input id="p-fmax" v-model.number="pricing.free_max_voters" type="number" min="1" class="form-control" required />
                         </div>
                         <div class="col-sm-6">
-                            <label class="form-label" for="p-fev">Open free events per account</label>
+                            <label class="form-label" for="p-fev">Live free events per account</label>
                             <input id="p-fev" v-model.number="pricing.free_max_active_events" type="number" min="1" class="form-control" required />
                         </div>
                     </div>
-                    <div class="small text-muted mb-4">Free events can’t send codes by email or SMS, and show “Powered by Ballotify” on the ballot.</div>
+                    <div class="small text-muted mb-4">Free events can’t send codes by email or SMS, and show “Powered by Ballotify” on the ballot. Drafts (events without voters) are unlimited.</div>
+
+                    <div class="small-caps mb-2">Paid public voting</div>
+                    <div class="row g-3 mb-4">
+                        <div class="col-sm-6">
+                            <label class="form-label" for="p-fee">Platform fee (%)</label>
+                            <input id="p-fee" v-model.number="pricing.paid_vote_fee_percent" type="number" min="0" max="50" class="form-control" required />
+                        </div>
+                        <div class="col-sm-6 small text-muted d-flex align-items-end">Your share of every vote payment. The rest is paid out to the organiser.</div>
+                    </div>
 
                     <div class="d-flex justify-content-end">
                         <button class="btn btn-primary" :disabled="savingPricing">
@@ -90,6 +99,9 @@
                 </div>
             </div>
         </div>
+
+        <AdminPayouts v-else-if="tab === 'payouts'" />
+        <AdminHealth v-else-if="tab === 'health'" />
 
         <template v-else>
             <div class="d-flex flex-column flex-md-row gap-2 mb-3">
@@ -162,7 +174,7 @@
                             <tr v-for="ev in (page.data as PlatformEvent[])" :key="ev.id">
                                 <td>
                                     <div class="fw-semibold text-ink text-break">{{ ev.name }}</div>
-                                    <div class="small text-muted">{{ ev.selection_mode === 'multiple' ? 'Multiple choice' : 'One per category' }} · {{ formatDate(ev.created_at) }}</div>
+                                    <div class="small text-muted">{{ ev.voting_mode === 'paid' ? 'Paid voting' : 'Secret ballot' }} · {{ formatDate(ev.created_at) }}</div>
                                 </td>
                                 <td>
                                     <div class="small text-ink text-break">{{ ev.user?.name ?? '—' }}</div>
@@ -171,7 +183,7 @@
                                         <span v-if="ev.user?.suspended_at" class="text-danger fw-semibold">· suspended</span>
                                     </div>
                                 </td>
-                                <td><StatusBadge :status="ev.status" /></td>
+                                <td><StatusBadge :status="ev.status" :draft="isDraft(ev)" /></td>
                                 <td class="text-nowrap small">
                                     <span v-if="ev.plan === 'pro'" class="pill pill-violet"><i class="bi bi-gem"></i> Pro</span>
                                     <span v-else-if="ev.user?.pro_account_at || ev.user?.is_admin" class="pill pill-violet" title="Pro through the account">Pro (account)</span>
@@ -244,12 +256,14 @@ const { confirm } = useConfirm();
 const apiBase = String(useRuntimeConfig().public.apiBase || '').replace(/\/+$/, '');
 const webhookUrl = `${apiBase}/paystack/webhook`;
 
-type TabKey = 'users' | 'events' | 'payments' | 'pricing';
+type TabKey = 'users' | 'events' | 'payments' | 'payouts' | 'pricing' | 'health';
 const tabs: { key: TabKey; label: string; icon: string }[] = [
     { key: 'users', label: 'Organisers', icon: 'bi-people' },
     { key: 'events', label: 'Events', icon: 'bi-calendar2-week' },
     { key: 'payments', label: 'Payments', icon: 'bi-receipt' },
+    { key: 'payouts', label: 'Payouts', icon: 'bi-bank' },
     { key: 'pricing', label: 'Pricing', icon: 'bi-tags' },
+    { key: 'health', label: 'Health', icon: 'bi-heart-pulse' },
 ];
 const paymentLabel = { success: 'Paid', pending: 'Pending', failed: 'Failed' } as const;
 
@@ -264,7 +278,7 @@ const loadError = ref('');
 const acting = ref<number | null>(null);
 
 const searchPlaceholder = computed(() => ({
-    users: 'Search name or email', events: 'Search event or organiser', payments: 'Search reference, event or organiser', pricing: '',
+    users: 'Search name or email', events: 'Search event or organiser', payments: 'Search reference, event or organiser', pricing: '', payouts: '', health: '',
 })[tab.value]);
 
 const filters = computed(() => {
@@ -277,7 +291,7 @@ const filters = computed(() => {
 
 let requestId = 0;
 async function load(pageNo = 1) {
-    if (tab.value === 'pricing') return;
+    if (tab.value === 'pricing' || tab.value === 'payouts' || tab.value === 'health') return;
     const mine = ++requestId;
     loading.value = true;
     loadError.value = '';
@@ -390,7 +404,7 @@ async function act(id: number, fn: () => Promise<void>) {
 }
 
 // ----- Pricing -----
-const pricing = reactive({ pro_price_naira: 0, pro_max_voters: 0, free_max_voters: 0, free_max_active_events: 1 });
+const pricing = reactive({ pro_price_naira: 0, pro_max_voters: 0, free_max_voters: 0, free_max_active_events: 1, paid_vote_fee_percent: 10 });
 const pricingStatus = ref<PlanSettings | null>(null);
 const { loadPlans: refreshPlans } = useBilling();
 const savingPricing = ref(false);
@@ -404,6 +418,7 @@ async function loadPricing() {
             pro_max_voters: data.pro_max_voters,
             free_max_voters: data.free_max_voters,
             free_max_active_events: data.free_max_active_events,
+            paid_vote_fee_percent: data.paid_vote_fee_percent,
         });
     } catch (e) {
         toast.error(apiErrorMessage(e));

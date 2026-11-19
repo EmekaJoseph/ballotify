@@ -1,22 +1,34 @@
 <template>
-    <BaseModal :open="limitOpen" :title="allowed ? 'You can create an event' : 'You’ve reached your free event limit'" size="md" @close="close">
-        <!-- The allowance freed up since we last checked (event closed, upgraded or deleted). -->
+    <BaseModal :open="limitOpen" :title="allowed ? 'You can go live now' : 'You already have a live free event'" size="md" @close="close">
+        <!-- The allowance freed up since we last checked (event closed or upgraded). -->
         <div v-if="allowed" class="text-center py-2">
             <div class="icon-tile lg mx-auto mb-3"><i class="bi bi-check2-circle"></i></div>
-            <p class="text-muted mb-0">Your account has room for a new event again.</p>
+            <p class="text-muted mb-0">Your account has room for another live event. Try adding the voters again.</p>
         </div>
 
         <template v-else>
             <div class="d-flex gap-3 align-items-start mb-4">
-                <div class="icon-tile flex-shrink-0"><i class="bi bi-box"></i></div>
+                <div class="icon-tile flex-shrink-0"><i class="bi bi-broadcast"></i></div>
                 <p class="text-muted mb-0">
-                    Free accounts can run <b class="text-ink">{{ limitText }}</b> at a time.
-                    To start another, upgrade {{ events.length === 1 ? 'your open event' : 'one of your open events' }} to Pro,
-                    or close voting on it when you’re done.
+                    Free accounts can run <b class="text-ink">{{ limitText }}</b> at a time (drafts are unlimited).
+                    An event goes live when it gets its first voters. To add voters
+                    <template v-if="limitEvent">to <b class="text-ink">{{ limitEvent.name }}</b></template>, upgrade it to Pro,
+                    or upgrade or close the event that’s live.
                 </p>
             </div>
 
-            <div class="small-caps mb-2">{{ events.length === 1 ? 'Your open event' : 'Your open events' }}</div>
+            <div v-if="limitEvent" class="open-event mb-3 this-event">
+                <div class="min-w-0 flex-grow-1">
+                    <div class="small-caps">This event</div>
+                    <div class="fw-bold text-ink text-truncate">{{ limitEvent.name }}</div>
+                </div>
+                <button class="btn btn-primary btn-sm flex-shrink-0" :disabled="upgradingId !== null" @click="upgrade(limitEvent.id)">
+                    <span v-if="upgradingId === limitEvent.id" class="spinner-border spinner-border-sm"></span>
+                    <i v-else class="bi bi-lightning-charge"></i> {{ upgradingId === limitEvent.id ? 'Please wait…' : 'Upgrade this event' }}
+                </button>
+            </div>
+
+            <div class="small-caps mb-2">{{ events.length === 1 ? 'Your live event' : 'Your live events' }}</div>
             <ul class="list-unstyled d-grid gap-2 mb-3">
                 <li v-for="e in events" :key="e.id" class="open-event">
                     <div class="min-w-0 flex-grow-1">
@@ -24,12 +36,11 @@
                         <div class="small text-muted">{{ e.ends_at ? `Voting ends ${formatDate(e.ends_at, true)}` : 'No end date set' }}</div>
                     </div>
                     <div class="d-flex gap-2 flex-shrink-0">
-                        <button class="btn btn-ghost btn-sm" @click="go(e.id, 'settings')">Manage</button>
-                        <button v-if="plans?.payments_enabled" class="btn btn-primary btn-sm" :disabled="upgradingId !== null" @click="upgrade(e.id)">
+                        <button class="btn btn-ghost btn-sm" @click="go(e.id, 'settings')">Close voting</button>
+                        <button class="btn btn-soft btn-sm" :disabled="upgradingId !== null" @click="upgrade(e.id)">
                             <span v-if="upgradingId === e.id" class="spinner-border spinner-border-sm"></span>
                             <i v-else class="bi bi-lightning-charge"></i> {{ upgradingId === e.id ? 'Please wait…' : 'Upgrade' }}
                         </button>
-                        <button v-else class="btn btn-primary btn-sm" @click="go(e.id)">Upgrade</button>
                     </div>
                 </li>
             </ul>
@@ -41,21 +52,21 @@
         </template>
 
         <template #footer>
-            <button class="btn btn-ghost" @click="close">{{ allowed ? 'Cancel' : 'Not now' }}</button>
-            <button v-if="allowed" class="btn btn-primary" @click="createNow"><i class="bi bi-plus-lg"></i> New event</button>
+            <button class="btn btn-ghost" @click="close">{{ allowed ? 'OK' : 'Not now' }}</button>
         </template>
     </BaseModal>
 </template>
 
 <script setup lang="ts">
-const { quota, limitOpen } = useNewEvent();
+const { quota, limitOpen, limitEvent } = useNewEvent();
 const { plans, priceLabel, startUpgrade } = useBilling();
+const toast = useToast();
 
-const events = computed(() => quota.value?.open_events ?? []);
-const allowed = computed(() => quota.value?.can_create === true);
+const events = computed(() => (quota.value?.open_events ?? []).filter(e => e.id !== limitEvent.value?.id));
+const allowed = computed(() => quota.value?.can_go_live === true);
 const limitText = computed(() => {
     const max = quota.value?.max ?? 1;
-    return max === 1 ? 'one event' : `${max} events`;
+    return max === 1 ? 'one live event' : `${max} live events`;
 });
 
 const upgradingId = ref<number | null>(null);
@@ -71,14 +82,13 @@ async function go(id: number, tab?: string) {
 }
 
 async function upgrade(id: number) {
+    if (!plans.value?.payments_enabled) {
+        toast.info('Online payment isn’t available yet. Please contact us to upgrade.');
+        return;
+    }
     upgradingId.value = id;
     await startUpgrade(id); // leaves for Paystack; on failure it shows a toast
     upgradingId.value = null;
-}
-
-async function createNow() {
-    close();
-    await navigateTo('/dashboard/events/create');
 }
 </script>
 
@@ -87,5 +97,6 @@ async function createNow() {
     display: flex; align-items: center; gap: .75rem; flex-wrap: wrap;
     padding: .75rem .9rem; border: 1px solid var(--line); border-radius: 14px; background: var(--surface-2);
 }
+.this-event { border-color: var(--brand-200); background: var(--brand-50); }
 .tips .bi { margin-right: .35rem; }
 </style>

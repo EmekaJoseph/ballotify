@@ -46,10 +46,37 @@
                 <span v-else>Secret ballot · the organiser made {{ results.integrity.changes_during_voting }} recorded change{{ results.integrity.changes_during_voting === 1 ? '' : 's' }} after voting began.</span>
             </div>
 
+            <img v-if="results.event.brand?.logo_url" :src="results.event.brand.logo_url" alt="" class="brand-logo mb-3" />
             <ResultsBoard :results="results" />
 
+            <div v-if="!presenting" class="row g-4 mt-1 no-print">
+                <div class="col-lg-7">
+                    <div class="card-b pad h-100">
+                        <h3 class="h6 fw-800 mb-3">{{ isPaid ? 'Votes over time' : 'Ballots over time' }}</h3>
+                        <TurnoutChart :timeline="results.timeline" :unit="isPaid ? 'votes' : 'ballots'" />
+                    </div>
+                </div>
+                <div class="col-lg-5">
+                    <form class="card-b pad h-100" novalidate @submit.prevent="checkReceipt">
+                        <h3 class="h6 fw-800 mb-1"><i class="bi bi-patch-check text-brand"></i> Check your {{ isPaid ? 'votes' : 'ballot' }}</h3>
+                        <p class="small text-muted mb-3">{{ isPaid ? 'Enter the payment reference from your receipt email.' : 'Enter the receipt shown after you voted. It proves your ballot was counted without revealing your choices.' }}</p>
+                        <div class="d-flex gap-2">
+                            <input v-model.trim="receiptCode" class="form-control mono text-uppercase" :placeholder="isPaid ? 'PV-…' : 'XXXX-XXXX-XX'" maxlength="40" aria-label="Receipt" />
+                            <button class="btn btn-primary" :disabled="checkingReceipt || receiptCode.length < 6">
+                                <span v-if="checkingReceipt" class="spinner-border spinner-border-sm"></span><span v-else>Check</span>
+                            </button>
+                        </div>
+                        <div v-if="receiptResult" class="receipt-result mt-3" :class="receiptResult.valid ? 'ok' : 'bad'">
+                            <i class="bi" :class="receiptResult.valid ? 'bi-check-circle-fill' : 'bi-x-circle-fill'"></i>
+                            <span>{{ receiptResult.message }}<template v-if="receiptResult.valid && receiptResult.counted_at"> ({{ formatDate(receiptResult.counted_at, true) }})</template></span>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
             <p class="text-center small text-muted mt-2 no-print">
-                <i class="bi bi-incognito"></i> Totals only. Nobody, not even the organiser, can see how anyone voted.
+                <template v-if="isPaid"><i class="bi bi-cash-coin"></i> Public paid voting: each vote is a confirmed payment.</template>
+                <template v-else><i class="bi bi-incognito"></i> Totals only. Nobody, not even the organiser, can see how anyone voted.</template>
                 <template v-if="results.event.status === 'active'">
                     · {{ live ? 'Updates instantly as votes arrive.' : 'Refreshes automatically every 15 seconds.' }}
                 </template>
@@ -60,11 +87,12 @@
 
 <script setup lang="ts">
 import { publicApi } from '~/api/endpoints/public';
-import type { EventResults, EventStatus } from '~/types';
+import type { Brand, EventResults, EventStatus, ReceiptCheck } from '~/types';
 
 definePageMeta({ layout: 'ballot', wide: true });
 const branding = useBallotBranding();
-onBeforeUnmount(() => { branding.value = true; }); // other pages default to showing it
+const ballotMode = useBallotMode();
+onBeforeUnmount(() => { branding.value = true; ballotMode.value = 'codes'; }); // other pages use the defaults
 
 const POLL_MS = 15000;
 const route = useRoute();
@@ -87,10 +115,28 @@ const tick = ref(Date.now());
 interface HiddenResults {
     message: string;
     visibility: 'after_close' | 'private';
-    event: { name: string; status: EventStatus; starts_at: string | null; ends_at: string | null };
+    event: { name: string; status: EventStatus; starts_at: string | null; ends_at: string | null; brand?: Brand | null };
 }
 const hidden = ref<HiddenResults | null>(null);
 const closesIn = useCountdown(() => hidden.value?.event.ends_at);
+useBrandTheme(() => results.value?.event.brand ?? hidden.value?.event.brand);
+const isPaid = computed(() => results.value?.event.voting_mode === 'paid');
+
+// ----- Receipt check
+const receiptCode = ref('');
+const checkingReceipt = ref(false);
+const receiptResult = ref<ReceiptCheck | null>(null);
+async function checkReceipt() {
+    checkingReceipt.value = true;
+    try {
+        receiptResult.value = (await publicApi.checkReceipt(token, receiptCode.value)).data;
+    } catch (e) {
+        const body = (e as { response?: { data?: ReceiptCheck } }).response?.data;
+        receiptResult.value = body?.message ? body : { valid: false, message: apiErrorMessage(e) };
+    } finally {
+        checkingReceipt.value = false;
+    }
+}
 
 useHead({ title: computed(() => (results.value ? `Results · ${results.value.event.name}` : 'Results · Ballotify')) });
 
@@ -108,6 +154,7 @@ async function fetchResults(manual = false) {
     try {
         results.value = (await publicApi.getResults(token)).data;
         branding.value = results.value.event.branding !== false;
+        ballotMode.value = results.value.event.voting_mode ?? 'codes';
         hidden.value = null;
         updatedAt.value = new Date();
         error.value = '';
@@ -209,6 +256,10 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .results-root.presenting { background: var(--bg); padding: 2rem; overflow-y: auto; height: 100vh; }
+.brand-logo { display: block; max-height: 56px; max-width: 220px; object-fit: contain; }
+.receipt-result { display: flex; gap: .5rem; align-items: flex-start; padding: .7rem .9rem; border-radius: 12px; font-size: .9rem; font-weight: 600; }
+.receipt-result.ok { background: var(--success-50); color: var(--success); }
+.receipt-result.bad { background: var(--danger-50); color: var(--danger); }
 .integrity { display: flex; gap: .6rem; align-items: center; padding: .7rem 1rem; border-radius: var(--radius); background: var(--success-50); color: var(--success); font-size: .9rem; font-weight: 600; }
 .integrity.warn { background: var(--warning-50); color: var(--warning-text); }
 .countdown { display: inline-block; padding: .85rem 1.5rem; border-radius: 16px; background: var(--brand-50); }
