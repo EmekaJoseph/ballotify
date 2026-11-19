@@ -25,13 +25,47 @@
          background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.14); color: #99f6e4; font-weight: 700; font-size: 16px; letter-spacing: .02em; }
   h1 { margin-top: 18px; font-size: 74px; line-height: .98; font-weight: 800; letter-spacing: -.045em; }
   h1 span { background: linear-gradient(100deg, #5eead4, #a78bfa); -webkit-background-clip: text; background-clip: text; color: transparent; }
-  .art { position: relative; margin: 30px auto 0; width: 430px; }
-  .art img { width: 100%; border-radius: 32px; display: block; box-shadow: 0 50px 90px -30px rgba(0,0,0,.8); border: 1px solid rgba(255,255,255,.1); }
-  .chip { position: absolute; background: #fff; color: #0f172a; border-radius: 18px; padding: 14px 18px; box-shadow: 0 24px 50px -16px rgba(0,0,0,.6);
-          display: flex; align-items: center; gap: 12px; font-weight: 700; font-size: 17px; }
-  .chip .dot { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; font-size: 18px; }
-  .c1 { left: -52px; bottom: 44px; } .c1 .dot { background: #ecfdf3; color: #16a34a; }
-  .c2 { right: -48px; top: 40px; }   .c2 .dot { background: #f1edff; color: #7c5cff; }
+  /* Product mockup (same scene as the website hero). Sized in em so it scales as one piece. */
+  .hm { position: relative; margin: 22px auto 0; width: 504px; aspect-ratio: 36 / 33; font-size: 14px; color: #0f172a;
+        --line: #e5e9f0; --muted: #64748b; --brand: #0e7c77; --track: #edf1f6; }
+  .hm-muted { color: var(--muted); font-size: .78em; }
+  .hm-caps { font-size: .7em; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .hm-board { position: absolute; right: 0; top: 1.2em; width: 22em; padding: 1.4em 1.4em 1.1em 2.6em; background: #fff;
+              border-radius: 1.4em; box-shadow: 0 40px 80px -30px rgba(0,0,0,.75); }
+  .hm-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1em; }
+  .hm-live { display: inline-flex; align-items: center; gap: .45em; font-size: .78em; font-weight: 700; color: #16a34a; background: #ecfdf3; padding: .3em .7em; border-radius: 999px; }
+  .hm-dot { width: .6em; height: .6em; border-radius: 50%; background: #16a34a; box-shadow: 0 0 0 .3em rgba(22,163,74,.18); }
+  .hm-sum { display: flex; align-items: center; gap: 1em; margin-bottom: 1em; }
+  .hm-donut { width: 6.4em; height: 6.4em; flex-shrink: 0; }
+  .hm-leader { display: flex; align-items: center; gap: .3em; font-weight: 800; font-size: 1.1em; margin: .1em 0; }
+  .hm-leader svg { width: .9em; height: .9em; }
+  .hm-row + .hm-row { margin-top: .75em; }
+  .hm-rl { display: flex; justify-content: space-between; margin-bottom: .3em; font-size: .82em; }
+  .hm-rl span { font-weight: 600; } .hm-rl b { font-weight: 800; }
+  .hm-bar { height: .45em; border-radius: 999px; background: var(--track); overflow: hidden; }
+  .hm-bar i { display: block; height: 100%; border-radius: inherit; }
+  .hm-phone { position: absolute; left: .4em; top: 4.2em; width: 15em; padding: .5em; background: #070d19; border-radius: 2.3em;
+              border: 1px solid rgba(255,255,255,.16); box-shadow: 0 50px 90px -30px rgba(0,0,0,.9); }
+  .hm-screen { position: relative; background: #f4f7fa; border-radius: 1.85em; padding: 2em .85em 1em; min-height: 27em; }
+  .hm-notch { position: absolute; top: .55em; left: 50%; transform: translateX(-50%); width: 4.2em; height: 1em; border-radius: 999px; background: #070d19; }
+  .hm-head { background: linear-gradient(135deg, #0e7c77, #7c5cff); color: #fff; border-radius: 1em; padding: .8em .9em; margin-bottom: .7em; }
+  .hm-brand { display: flex; align-items: center; gap: .35em; font-size: .68em; font-weight: 700; opacity: .95; }
+  .hm-brand img { width: 1.5em; height: 1.5em; background: #fff; border-radius: .4em; padding: .15em; }
+  .hm-title { font-weight: 800; font-size: .95em; margin: .35em 0 .25em; line-height: 1.2; }
+  .hm-open { display: flex; align-items: center; gap: .4em; font-size: .64em; opacity: .92; }
+  .hm-open i { width: .55em; height: .55em; border-radius: 50%; background: #86efac; }
+  .hm-voter { display: inline-block; font-size: .68em; color: #334155; background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: .4em .8em; margin-bottom: .9em; }
+  .hm-cand { display: flex; align-items: center; gap: .6em; padding: .55em .6em; margin-bottom: .45em; background: #fff; border: 1.5px solid var(--line); border-radius: .85em; }
+  .hm-cand.on { border-color: #14918a; background: #ecf8f7; }
+  .hm-av { width: 2.1em; height: 2.1em; border-radius: 50%; color: #fff; font-size: .72em; font-weight: 800; display: grid; place-items: center; flex-shrink: 0; }
+  .hm-cname { flex-grow: 1; font-size: .8em; font-weight: 700; }
+  .hm-radio { width: 1.25em; height: 1.25em; border-radius: 50%; border: 1.5px solid #d5dbe5; font-size: .8em; display: grid; place-items: center; color: #fff; font-weight: 800; }
+  .hm-cand.on .hm-radio { background: var(--brand); border-color: var(--brand); }
+  .hm-btn { margin-top: .8em; text-align: center; font-size: .78em; font-weight: 700; padding: .75em; border-radius: .9em; background: var(--brand); color: #fff; }
+  .hm-toast { position: absolute; right: 1.2em; bottom: 1.6em; display: flex; gap: .7em; align-items: center; background: #fff; border-radius: 1em;
+              padding: .75em 1em; box-shadow: 0 24px 50px -16px rgba(0,0,0,.6); }
+  .hm-tic { width: 2.2em; height: 2.2em; border-radius: .7em; display: grid; place-items: center; background: #ecfdf3; color: #16a34a; font-weight: 800; }
+  .hm-tt { font-weight: 800; font-size: .85em; }
   .points { margin-top: auto; display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
   .pt { padding: 18px; border-radius: 18px; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1); }
   .pt b { display: block; font-size: 19px; margin-top: 10px; letter-spacing: -.01em; }
@@ -48,10 +82,47 @@
     <div class="tag">Elections · Awards · Polls</div>
     <h1>Run a fair vote<br><span>in minutes.</span></h1>
 
-    <div class="art">
-      <img src="../frontend/public/hero_illustration.png" alt="">
-      <div class="chip c1"><span class="dot">✓</span>Vote recorded</div>
-      <div class="chip c2"><span class="dot">●</span>Live results</div>
+    <div class="hm">
+      <div class="hm-board">
+        <div class="hm-top"><span class="hm-live"><span class="hm-dot"></span> Live results</span><span class="hm-muted">Student Union 2026</span></div>
+        <div class="hm-sum">
+          <svg class="hm-donut" viewBox="0 0 42 42">
+            <circle cx="21" cy="21" r="15.915" fill="none" stroke="#edf1f6" stroke-width="5"/>
+            <circle cx="21" cy="21" r="15.915" fill="none" stroke="#14918a" stroke-width="5" stroke-dasharray="49.4 50.6" stroke-dashoffset="25"/>
+            <circle cx="21" cy="21" r="15.915" fill="none" stroke="#7c5cff" stroke-width="5" stroke-dasharray="32 68" stroke-dashoffset="-25"/>
+            <circle cx="21" cy="21" r="15.915" fill="none" stroke="#f59e0b" stroke-width="5" stroke-dasharray="16.8 83.2" stroke-dashoffset="-57.6"/>
+            <text x="21" y="21" text-anchor="middle" font-size="7" font-weight="800" fill="#0f172a" font-family="Plus Jakarta Sans">1,284</text>
+            <text x="21" y="26.5" text-anchor="middle" font-size="3.6" font-weight="600" fill="#64748b" font-family="Plus Jakarta Sans">votes</text>
+          </svg>
+          <div>
+            <div class="hm-caps">President</div>
+            <div class="hm-leader"><svg viewBox="0 0 16 16" fill="#f59e0b"><path d="M2.5.5A.5.5 0 0 1 3 0h10a.5.5 0 0 1 .5.5c0 .538-.012 1.05-.034 1.536a3 3 0 1 1-1.133 5.89c-.79 1.865-1.878 2.777-2.833 3.011v2.173l1.425.356c.194.048.377.135.537.255L13.3 15.1a.5.5 0 0 1-.3.9H3a.5.5 0 0 1-.3-.9l1.838-1.379c.16-.12.343-.207.537-.255L6.5 13.11v-2.173c-.955-.234-2.043-1.146-2.833-3.012a3 3 0 1 1-1.132-5.89A33 33 0 0 1 2.5.5"/></svg> Ada Obi</div>
+            <div class="hm-muted">Turnout 61%</div>
+          </div>
+        </div>
+        <div class="hm-row"><div class="hm-rl"><span>Ada Obi</span><b>50.0%</b></div><div class="hm-bar"><i style="width:50%;background:#14918a"></i></div></div>
+        <div class="hm-row"><div class="hm-rl"><span>Bola Ade</span><b>32.6%</b></div><div class="hm-bar"><i style="width:32.6%;background:#7c5cff"></i></div></div>
+        <div class="hm-row"><div class="hm-rl"><span>Chidi Eze</span><b>17.4%</b></div><div class="hm-bar"><i style="width:17.4%;background:#f59e0b"></i></div></div>
+      </div>
+
+      <div class="hm-phone">
+        <div class="hm-screen">
+          <div class="hm-notch"></div>
+          <div class="hm-head">
+            <div class="hm-brand"><img src="../frontend/public/logo.svg" alt=""> Ballotify</div>
+            <div class="hm-title">Student Union Elections</div>
+            <div class="hm-open"><i></i> Open &middot; closes in 3h 12m</div>
+          </div>
+          <div class="hm-voter">Voting as <b>Tolu A.</b></div>
+          <div class="hm-caps" style="padding:0 .2em .6em">President &middot; pick one</div>
+          <div class="hm-cand on"><span class="hm-av" style="background:#14918a">AO</span><span class="hm-cname">Ada Obi</span><span class="hm-radio">&#10003;</span></div>
+          <div class="hm-cand"><span class="hm-av" style="background:#7c5cff">BA</span><span class="hm-cname">Bola Ade</span><span class="hm-radio"></span></div>
+          <div class="hm-cand"><span class="hm-av" style="background:#f59e0b">CE</span><span class="hm-cname">Chidi Eze</span><span class="hm-radio"></span></div>
+          <div class="hm-btn">Review my vote &rarr;</div>
+        </div>
+      </div>
+
+      <div class="hm-toast"><span class="hm-tic">&#10003;</span><div><div class="hm-tt">Vote recorded</div><div class="hm-muted">Secret ballot &middot; code used</div></div></div>
     </div>
 
     <div class="points">

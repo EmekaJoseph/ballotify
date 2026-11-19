@@ -147,7 +147,7 @@ onBeforeUnmount(() => {
 
 /* Results board */
 .hm-board {
-    position: absolute; right: 0; top: 1.2em; width: 22em; padding: 1.4em 1.4em 1.1em;
+    position: absolute; right: 0; top: 1.2em; width: 22em; padding: 1.4em 1.4em 1.1em 2.6em;
     background: var(--surface); color: var(--ink); border: 1px solid rgba(255, 255, 255, .08);
     border-radius: 1.4em; box-shadow: 0 40px 80px -30px rgba(0, 0, 0, .7);
     animation: hm-float 7s ease-in-out infinite;
