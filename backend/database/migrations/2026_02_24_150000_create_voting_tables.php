@@ -45,6 +45,10 @@ return new class extends Migration
             $table->timestamp('ends_at')->nullable();
             // live | after_close | private
             $table->string('results_visibility', 20)->default('after_close');
+            // Billing: 'free' or 'pro' (unlocked by a Paystack payment or by the admin).
+            $table->string('plan', 10)->default('free');
+            $table->timestamp('upgraded_at')->nullable();
+            $table->string('upgraded_via', 10)->nullable(); // payment | admin
             $table->timestamps();
         });
 

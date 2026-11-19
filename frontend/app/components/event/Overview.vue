@@ -1,6 +1,6 @@
 <template>
     <div class="row g-4">
-        <div class="col-xl-8 d-grid gap-4">
+        <div class="col-xl-8 d-grid gap-4 align-content-start">
             <div class="row g-3">
                 <div class="col-6 col-md-3"><StatCard label="Categories" :value="event.categories?.length ?? 0" icon="bi-grid" /></div>
                 <div class="col-6 col-md-3"><StatCard label="Candidates" :value="event.candidates?.length ?? 0" icon="bi-person-badge" tone="violet" /></div>
@@ -41,7 +41,8 @@
             </div>
         </div>
 
-        <div class="col-xl-4">
+        <div class="col-xl-4 d-grid gap-4 align-content-start">
+            <EventUpgradeCard :event="event" />
             <div class="card-b pad">
                 <div class="d-flex justify-content-between align-items-center mb-1">
                     <h3 class="h6 fw-800 mb-0">Setup checklist</h3>

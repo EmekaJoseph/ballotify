@@ -1,7 +1,7 @@
 <template>
     <div>
         <PageHeader title="Events" subtitle="All your elections, awards and polls.">
-            <NuxtLink to="/dashboard/events/create" class="btn btn-primary"><i class="bi bi-plus-lg"></i> New event</NuxtLink>
+            <NewEventButton />
         </PageHeader>
 
         <div class="d-flex flex-column flex-md-row gap-2 mb-4">
@@ -27,7 +27,7 @@
         </div>
         <div v-else-if="!events.length" class="card-b">
             <EmptyState icon="bi-calendar-plus" title="No events yet" text="Create an event to start building your ballot.">
-                <NuxtLink to="/dashboard/events/create" class="btn btn-primary"><i class="bi bi-plus-lg"></i> New event</NuxtLink>
+                <NewEventButton />
             </EmptyState>
         </div>
         <div v-else-if="!visible.length" class="card-b">

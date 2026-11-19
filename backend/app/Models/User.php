@@ -41,6 +41,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'two_factor_confirmed_at' => 'datetime',
             'is_admin' => 'boolean',
             'suspended_at' => 'datetime',
+            'pro_account_at' => 'datetime',
         ];
     }
 

@@ -63,6 +63,8 @@ import { publicApi } from '~/api/endpoints/public';
 import type { EventResults, EventStatus } from '~/types';
 
 definePageMeta({ layout: 'ballot', wide: true });
+const branding = useBallotBranding();
+onBeforeUnmount(() => { branding.value = true; }); // other pages default to showing it
 
 const POLL_MS = 15000;
 const route = useRoute();
@@ -105,6 +107,7 @@ async function fetchResults(manual = false) {
     refreshing.value = true;
     try {
         results.value = (await publicApi.getResults(token)).data;
+        branding.value = results.value.event.branding !== false;
         hidden.value = null;
         updatedAt.value = new Date();
         error.value = '';

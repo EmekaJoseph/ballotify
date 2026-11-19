@@ -24,6 +24,8 @@ return new class extends Migration
             // Platform owner (super admin) and account suspension.
             $table->boolean('is_admin')->default(false);
             $table->timestamp('suspended_at')->nullable();
+            // Set by the platform admin: every event of this account is Pro, free of charge.
+            $table->timestamp('pro_account_at')->nullable();
             $table->rememberToken();
             $table->timestamps();
         });

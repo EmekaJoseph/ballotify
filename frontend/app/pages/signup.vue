@@ -28,22 +28,16 @@
             </div>
             <div class="mb-3">
                 <label for="password" class="form-label">Password</label>
-                <div class="input-icon">
-                    <i class="bi bi-lock"></i>
-                    <input id="password" v-model="form.password" type="password" class="form-control form-control-lg"
-                        :class="{ 'is-invalid': fieldErrors.password }" autocomplete="new-password" placeholder="At least 8 characters" required :disabled="loading" />
-                </div>
+                <PasswordInput id="password" v-model="form.password" :invalid="!!fieldErrors.password"
+                    autocomplete="new-password" placeholder="At least 8 characters" required :disabled="loading" />
                 <div class="bar slim mt-2"><span :style="{ width: strength.pct + '%', background: strength.color }"></span></div>
                 <div class="form-text">{{ strength.label }}</div>
                 <div v-if="fieldErrors.password" class="field-error">{{ fieldErrors.password }}</div>
             </div>
             <div class="mb-4">
                 <label for="confirm" class="form-label">Confirm password</label>
-                <div class="input-icon">
-                    <i class="bi bi-shield-lock"></i>
-                    <input id="confirm" v-model="form.confirm" type="password" class="form-control form-control-lg"
-                        :class="{ 'is-invalid': fieldErrors.confirm }" autocomplete="new-password" placeholder="Repeat password" required :disabled="loading" />
-                </div>
+                <PasswordInput id="confirm" v-model="form.confirm" icon="bi-shield-lock" :invalid="!!fieldErrors.confirm"
+                    autocomplete="new-password" placeholder="Repeat password" required :disabled="loading" />
                 <div v-if="fieldErrors.confirm" class="field-error">{{ fieldErrors.confirm }}</div>
             </div>
             <div class="form-check mb-4">

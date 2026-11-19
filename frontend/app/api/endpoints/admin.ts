@@ -1,7 +1,8 @@
 import api from '../index';
 import type {
     AuditEntry, BallotEvent, Candidate, CandidateImportResult, CandidateImportRow, Category, EventResults, GeneratedCode,
-    InviteChannel, MessagingStatus, Paginated, PlatformEvent, PlatformOverview, PlatformUser, ResultsVisibility,
+    InviteChannel, MessagingStatus, Paginated, PlanInfo, PlanSettings, PlatformEvent, PlatformOverview, PlatformPayment,
+    PlatformUser, ResultsVisibility,
     SelectionMode, User, Voter, VoterContact,
 } from '~/types';
 
@@ -103,4 +104,20 @@ export const platformApi = {
     unsuspend: (userId: Id) => api.post<PlatformUser>(`/admin/users/${userId}/unsuspend`),
     events: (params: { search?: string; status?: string; page?: number }) =>
         api.get<Paginated<PlatformEvent>>('/admin/events', { params }),
+    setEventPlan: (eventId: Id, plan: 'free' | 'pro') =>
+        api.post<{ id: number; plan: 'free' | 'pro'; upgraded_via: 'payment' | 'admin' | null }>(`/admin/events/${eventId}/plan`, { plan }),
+    setAccountPro: (userId: Id, enabled: boolean) => api.post<PlatformUser>(`/admin/users/${userId}/pro`, { enabled }),
+    plans: () => api.get<PlanSettings>('/admin/plans'),
+    updatePlans: (data: Partial<Omit<PlanSettings, 'billing_enabled' | 'payments_enabled'>>) => api.put<PlanSettings>('/admin/plans', data),
+    payments: (params: { search?: string; status?: string; page?: number }) =>
+        api.get<Paginated<PlatformPayment>>('/admin/payments', { params }),
+};
+
+/** Pay per event (Paystack). */
+export const billingApi = {
+    plans: () => api.get<PlanInfo>('/billing/plans'),
+    /** Returns the Paystack checkout URL to send the organiser to. */
+    checkout: (eventId: Id) => api.post<{ authorization_url: string; reference: string }>(`/events/${eventId}/upgrade`),
+    verify: (reference: string) =>
+        api.post<{ status: 'pending' | 'success' | 'failed'; message: string; event_id: number | null }>('/billing/verify', { reference }),
 };

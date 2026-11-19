@@ -8,4 +8,21 @@ return [
     | cron entry running `php artisan schedule:run` every minute (production).
     */
     'voter_contact_retention_days' => (int) env('VOTER_CONTACT_RETENTION_DAYS', 30),
+
+    /*
+    | Billing (pay per event through Paystack). With BILLING_ENABLED=false every
+    | event behaves as Pro: no limits, no payments (useful for private installs).
+    | Prices and limits below are only the starting values: the platform admin
+    | changes them from the Admin page, and those saved values win.
+    */
+    'billing' => [
+        'enabled' => (bool) env('BILLING_ENABLED', true),
+        'currency' => 'NGN',
+        'defaults' => [
+            'pro_price_naira' => 10000,
+            'free_max_active_events' => 1,
+            'free_max_voters' => 50,
+            'pro_max_voters' => 5000,
+        ],
+    ],
 ];

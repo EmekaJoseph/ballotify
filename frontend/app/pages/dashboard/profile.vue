@@ -14,7 +14,7 @@
                 </div>
             </div>
 
-            <div class="col-lg-8 d-grid gap-4">
+            <div class="col-lg-8 d-grid gap-4 align-content-start">
                 <form class="card-b pad" novalidate @submit.prevent="saveProfile">
                     <h3 class="h6 fw-800 mb-4">Profile</h3>
                     <div class="row g-3">

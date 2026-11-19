@@ -17,12 +17,13 @@
             <form novalidate @submit.prevent="submit">
                 <div class="mb-3">
                     <label for="pw" class="form-label">New password</label>
-                    <input id="pw" v-model="password" type="password" class="form-control form-control-lg" autocomplete="new-password"
+                    <PasswordInput id="pw" v-model="password" autocomplete="new-password"
                         placeholder="At least 8 characters" :disabled="loading" />
                 </div>
                 <div class="mb-4">
                     <label for="pw2" class="form-label">Confirm new password</label>
-                    <input id="pw2" v-model="confirm" type="password" class="form-control form-control-lg" autocomplete="new-password" :disabled="loading" />
+                    <PasswordInput id="pw2" v-model="confirm" icon="bi-shield-lock" autocomplete="new-password"
+                        placeholder="Repeat password" :disabled="loading" />
                 </div>
                 <button type="submit" class="btn btn-primary btn-lg w-100" :disabled="loading">
                     <span v-if="loading" class="spinner-border spinner-border-sm"></span> Save new password

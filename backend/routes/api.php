@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\VoterController;
 use App\Http\Controllers\Api\VoteController;
 use App\Http\Controllers\Api\MessagingController;
 use App\Http\Controllers\Api\PlatformAdminController;
+use App\Http\Controllers\Api\BillingController;
 
 // ---------------------------------------------------------------- authentication
 Route::prefix('auth')->group(function () {
@@ -75,6 +76,11 @@ Route::middleware(['auth:sanctum', 'active'])->scopeBindings()->group(function (
 
     Route::get('messaging/status', [MessagingController::class, 'status']);
 
+    // Billing (pay per event)
+    Route::get('billing/plans', [BillingController::class, 'plans']);
+    Route::post('events/{event}/upgrade', [BillingController::class, 'checkout'])->middleware('throttle:10,1');
+    Route::post('billing/verify', [BillingController::class, 'verify'])->middleware('throttle:30,1');
+
     // ------------------------------------------------------------ platform owner
     Route::prefix('admin')->middleware('superadmin')->group(function () {
         Route::get('overview', [PlatformAdminController::class, 'overview']);
@@ -82,11 +88,20 @@ Route::middleware(['auth:sanctum', 'active'])->scopeBindings()->group(function (
         Route::post('users/{user}/suspend', [PlatformAdminController::class, 'suspend']);
         Route::post('users/{user}/unsuspend', [PlatformAdminController::class, 'unsuspend']);
         Route::get('events', [PlatformAdminController::class, 'events']);
+        Route::post('events/{event}/plan', [PlatformAdminController::class, 'setEventPlan']);
+        Route::post('users/{user}/pro', [PlatformAdminController::class, 'setAccountPro']);
+        Route::get('plans', [PlatformAdminController::class, 'plans']);
+        Route::put('plans', [PlatformAdminController::class, 'updatePlans']);
+        Route::get('payments', [PlatformAdminController::class, 'payments']);
     });
 });
 
+// ---------------------------------------------------------------- payments provider
+Route::post('paystack/webhook', [BillingController::class, 'webhook'])->middleware('throttle:120,1');
+
 // ---------------------------------------------------------------- public (voters)
 Route::prefix('public')->group(function () {
+    Route::get('plans', [BillingController::class, 'publicPlans'])->middleware('throttle:public');
     Route::get('events/{token}', [EventController::class, 'publicShow'])->middleware('throttle:public');
     Route::get('events/{token}/results', [EventController::class, 'results'])->middleware('throttle:public');
     // Code guessing endpoints are tightly limited per IP to stop brute forcing.

@@ -10,6 +10,8 @@ export interface User {
     /** Platform owner: can open the admin area. */
     is_admin?: boolean;
     suspended_at?: string | null;
+    /** Granted by the platform admin: every event of this account is Pro. */
+    pro_account_at?: string | null;
     created_at?: string;
 }
 
@@ -70,6 +72,10 @@ export interface BallotEvent {
     /** Structure frozen: first vote cast or voting closed. */
     ballot_locked: boolean;
     created_at: string;
+    plan?: 'free' | 'pro';
+    upgraded_via?: 'payment' | 'admin' | null;
+    /** What this event may do on its plan (Free or Pro). */
+    limits?: EventLimits;
     categories_count?: number;
     candidates_count?: number;
     voters_count?: number;
@@ -89,7 +95,9 @@ export interface PublicEvent {
     status: EventStatus;
     selection_mode: SelectionMode;
     results_visibility: ResultsVisibility;
-    categories: Pick<Category, 'id' | 'name'>[];
+    /** Free events show "Powered by Ballotify". */
+    branding?: boolean;
+    categories: Pick<Category, 'id' | 'name' | 'max_choices'>[];
     candidates: Candidate[];
 }
 
@@ -121,6 +129,7 @@ export interface EventResults {
         starts_at: string | null;
         ends_at: string | null;
         results_visibility?: ResultsVisibility;
+        branding?: boolean;
     };
     stats: {
         total_votes: number;
@@ -172,6 +181,9 @@ export interface PlatformOverview {
     voters: number;
     ballots_cast: number;
     votes_counted: number;
+    pro_events: number;
+    revenue_naira: number;
+    revenue_last_30_days_naira: number;
 }
 
 export interface PlatformUser extends User {
@@ -189,7 +201,9 @@ export interface PlatformEvent {
     created_at: string;
     voters_count: number;
     voted_count: number;
-    user: { id: number; name: string; email: string; suspended_at: string | null } | null;
+    plan: 'free' | 'pro';
+    upgraded_via: 'payment' | 'admin' | null;
+    user: { id: number; name: string; email: string; suspended_at: string | null; pro_account_at: string | null; is_admin: boolean } | null;
 }
 
 export interface CandidateImportRow {
@@ -202,4 +216,61 @@ export interface CandidateImportResult {
     created: number;
     categories_created: number;
     skipped: { row: number; reason: string }[];
+}
+
+// ---------------------------------------------------------------- billing
+
+export interface EventLimits {
+    plan: 'free' | 'pro';
+    /** null = no cap (billing switched off). */
+    max_voters: number | null;
+    messaging: boolean;
+    branding: boolean;
+    /** Pro because the whole account was upgraded by the admin. */
+    via_account: boolean;
+}
+
+export interface PlanInfo {
+    billing_enabled: boolean;
+    payments_enabled: boolean;
+    currency: string;
+    pro_price_naira: number;
+    free: { max_active_events: number; max_voters: number; messaging: boolean; branding: boolean };
+    pro: { max_voters: number; messaging: boolean; branding: boolean };
+    /** Dashboard only. */
+    account_pro?: boolean;
+    /** Dashboard only: whether this account may create another event right now. */
+    event_quota?: EventQuota;
+}
+
+export interface EventQuota {
+    can_create: boolean;
+    /** null = no limit (Pro account or billing off). */
+    max: number | null;
+    /** The open Free events using up the allowance. */
+    open_events: { id: number; name: string; ends_at: string | null }[];
+}
+
+export interface PlanSettings {
+    pro_price_naira: number;
+    free_max_active_events: number;
+    free_max_voters: number;
+    pro_max_voters: number;
+    billing_enabled: boolean;
+    payments_enabled: boolean;
+}
+
+export interface PlatformPayment {
+    id: number;
+    reference: string;
+    event_id: number | null;
+    event_name: string | null;
+    amount_kobo: number;
+    currency: string;
+    status: 'pending' | 'success' | 'failed';
+    channel: string | null;
+    failure_reason: string | null;
+    paid_at: string | null;
+    created_at: string;
+    user: { id: number; name: string; email: string } | null;
 }

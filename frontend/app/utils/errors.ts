@@ -20,6 +20,12 @@ export function apiFieldErrors(err: unknown): Record<string, string> {
     return Object.fromEntries(Object.entries(errors).map(([k, v]) => [k, v[0] ?? '']));
 }
 
+/** The API refused because of the event's plan (HTTP 402). Returns the reason, e.g. 'voters'. */
+export function planLimitReason(err: unknown): string | null {
+    if (!isAxiosError(err) || err.response?.status !== 402) return null;
+    return (err.response.data as { plan_limit?: string } | undefined)?.plan_limit ?? 'plan';
+}
+
 export function apiStatus(err: unknown): number | undefined {
     return isAxiosError(err) ? err.response?.status : undefined;
 }

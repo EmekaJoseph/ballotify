@@ -8,6 +8,7 @@
   - `401` not signed in, or login expired
   - `403` event not open / results not published / email not confirmed / account suspended (`{ message, suspended: true }`)
   - `404` not found, or not your event
+  - `402` the event's plan doesn't allow it (Free limits): `{ message, plan_limit: 'events' | 'voters' | 'messaging', upgrade }`
   - `409` the ballot is locked (voting has started): `{ message, locked: true }`
   - `429` rate limited
 
@@ -53,6 +54,8 @@ Sign-in, registration, two-factor and password-reset endpoints are limited to 10
 - `starts_at`, `ends_at` (ISO dates, nullable; `ends_at` must not be before `starts_at`)
 
 **Event object adds:**
+- `plan` (`free` or `pro`), `upgraded_via` (`payment`, `admin` or null)
+- `limits`: `{ plan, max_voters, messaging, branding, via_account }`, the effective plan (an admin-granted Pro account makes every event Pro)
 - `status`: `upcoming`, `active` or `completed`, computed from the voting window
 - `selection_mode`
 - `ballot_locked`: true once the first vote is cast or voting has closed
@@ -135,17 +138,40 @@ How codes behave:
 
 **Rate limits:** code validation and voting allow 30 requests per minute per IP per event. Public reads allow 120 per minute per IP.
 
+## Plans and payments (Paystack)
+
+Pay per event. Free events: a limited number of open events per account, a voter cap, no email/SMS, and "Powered by Ballotify" on the ballot. Pro removes those for one event.
+
+| Method | Path | Notes |
+|---|---|---|
+| GET | `/public/plans` | Public pricing: `{ billing_enabled, payments_enabled, currency, pro_price_naira, free: {...}, pro: {...} }` |
+| GET | `/billing/plans` | The same, plus `account_pro` for the signed-in organiser |
+| POST | `/events/{id}/upgrade` | Starts a Paystack checkout: `{ authorization_url, reference }`. Returns `409` if already Pro, `422` if voting has closed, and `503 { payments_enabled: false }` if no Paystack key is set. |
+| POST | `/billing/verify` | `{ reference }` (the organiser's own payment). Asks Paystack, then upgrades the event: `{ status: success\|pending\|failed, message, event_id }` |
+| POST | `/paystack/webhook` | Paystack server-to-server notification. It must carry a valid `x-paystack-signature` (HMAC-SHA512), otherwise it gets `401`. The transaction is always re-checked with Paystack. |
+
+Payments are settled exactly once, under a row lock. An event is upgraded only when Paystack reports `success` for at least the stored amount in the stored currency. An abandoned checkout stays pending, so the organiser can still finish paying.
+
+Limits enforced (`402`):
+- Creating or duplicating an event when the free open-event limit is reached.
+- Adding, generating or importing voters beyond the event's cap.
+- Sending email/SMS invitations from a Free event.
+
 ## Platform admin
 
 For accounts with `is_admin` (grant it with `php artisan ballotify:make-admin you@example.com`, remove it with `--revoke`). Everyone else gets `404`. These endpoints never return ballot contents, voter lists or codes.
 
 | Method | Path | Notes |
 |---|---|---|
-| GET | `/admin/overview` | `{ users, users_last_30_days, suspended_users, events, events_live, voters, ballots_cast, votes_counted }` |
+| GET | `/admin/overview` | `{ users, users_last_30_days, suspended_users, events, events_live, voters, ballots_cast, votes_counted, pro_events, revenue_naira, revenue_last_30_days_naira }` |
 | GET | `/admin/users?search&filter&page` | `filter`: `suspended`, `unverified` or `admins`. Paginated (25), with `events_count`. |
 | POST | `/admin/users/{id}/suspend` | Signs the user out everywhere and blocks sign-in. Their voting links and results pages return `404` until restored. You can't suspend yourself or another admin. |
 | POST | `/admin/users/{id}/unsuspend` | Restores the account. |
-| GET | `/admin/events?search&status&page` | Every event with its organiser and turnout. `status`: `upcoming`, `active` or `completed`. Paginated (25). |
+| GET | `/admin/events?search&status&page` | Every event with its organiser, plan and turnout. `status`: `upcoming`, `active` or `completed`. Paginated (25). |
+| POST | `/admin/events/{id}/plan` | `{ plan: free\|pro }`: upgrade or downgrade an event without payment (logged in its activity) |
+| POST | `/admin/users/{id}/pro` | `{ enabled }`: make every event of the account Pro, free of charge |
+| GET / PUT | `/admin/plans` | Read or change `pro_price_naira`, `pro_max_voters`, `free_max_voters`, `free_max_active_events` |
+| GET | `/admin/payments?search&status&page` | Paystack payments with organiser and event. `status`: `pending`, `success` or `failed`. |
 
 ## Live results (Laravel Reverb)
 

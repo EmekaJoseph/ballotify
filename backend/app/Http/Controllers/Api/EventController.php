@@ -8,6 +8,7 @@ use App\Models\Category;
 use App\Models\Event;
 use App\Models\EventType;
 use App\Support\Audit;
+use App\Support\Plans;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -61,12 +62,20 @@ class EventController extends Controller
             ->withCount($this->counts())
             ->latest()
             ->get();
+        // All owned by this user: reuse it instead of loading it per event.
+        $user = $request->user();
+        $events->each(function (Event $e) use ($user) {
+            $e->setRelation('user', $user);
+            $e->setAttribute('limits', Plans::limits($e));
+            $e->unsetRelation('user');
+        });
 
         return response()->json($events);
     }
 
     public function store(Request $request)
     {
+        Plans::ensureCanCreateEvent($request->user());
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:5000'],
@@ -89,7 +98,7 @@ class EventController extends Controller
         ]);
         Audit::log($event, 'event.created', "Event “{$event->name}” created");
 
-        return response()->json($event->load('type')->loadCount($this->counts()), 201);
+        return response()->json(Plans::withLimits($event->load('type')->loadCount($this->counts())), 201);
     }
 
     public function show(Event $event)
@@ -97,7 +106,7 @@ class EventController extends Controller
         Gate::authorize('manage', $event);
         // Voters are fetched separately (GET /events/{id}/voters): an event can have thousands.
         $event->load(['type', 'categories', 'candidates'])->loadCount($this->counts());
-        return response()->json($event);
+        return response()->json(Plans::withLimits($event));
     }
 
     public function update(Request $request, Event $event)
@@ -138,7 +147,7 @@ class EventController extends Controller
         $event = $event->fresh()->load('type');
         $this->auditChanges($event, $before);
 
-        return response()->json($event->loadCount($this->counts()));
+        return response()->json(Plans::withLimits($event->loadCount($this->counts())));
     }
 
     public function destroy(Event $event)
@@ -156,6 +165,7 @@ class EventController extends Controller
     public function duplicate(Request $request, Event $event)
     {
         Gate::authorize('manage', $event);
+        Plans::ensureCanCreateEvent($request->user());
         $event->load(['categories', 'candidates']);
 
         $copy = DB::transaction(function () use ($request, $event) {
@@ -196,7 +206,7 @@ class EventController extends Controller
 
         Audit::log($copy, 'event.created', "Event created as a copy of “{$event->name}”");
 
-        return response()->json($copy->load('type')->loadCount($this->counts()), 201);
+        return response()->json(Plans::withLimits($copy->load('type')->loadCount($this->counts())), 201);
     }
 
     public function link(Event $event)
@@ -256,6 +266,8 @@ class EventController extends Controller
             'status' => $event->status,
             'selection_mode' => $event->selection_mode,
             'results_visibility' => $event->results_visibility,
+            // Free events show "Powered by Ballotify" on the ballot.
+            'branding' => Plans::limits($event)['branding'],
             'categories' => $event->categories,
             'candidates' => $event->candidates,
         ]);
@@ -323,6 +335,7 @@ class EventController extends Controller
                 'starts_at' => $event->starts_at,
                 'ends_at' => $event->ends_at,
                 'results_visibility' => $event->results_visibility,
+                'branding' => Plans::limits($event)['branding'],
             ],
             'stats' => [
                 'total_votes' => $totalVotes,

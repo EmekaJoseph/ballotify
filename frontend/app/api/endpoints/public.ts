@@ -1,5 +1,5 @@
 import api from '../index';
-import type { Choice, EventResults, PublicEvent } from '~/types';
+import type { Choice, EventResults, PlanInfo, PublicEvent } from '~/types';
 
 export const publicApi = {
     /** Ballot for an open event. Responds 403 with {status, message} when not open, 404 when unknown. */
@@ -12,4 +12,7 @@ export const publicApi = {
 
     castVote: (token: string, payload: { code: string; choices: Choice[] }) =>
         api.post<{ message: string }>(`/public/events/${token}/vote`, payload),
+
+    /** Free vs Pro pricing for the landing page. */
+    plans: () => api.get<PlanInfo>('/public/plans'),
 };

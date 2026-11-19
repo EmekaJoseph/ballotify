@@ -119,6 +119,8 @@
             </div>
         </section>
 
+        <PricingPlans />
+
         <!-- CTA -->
         <section class="pb-6">
             <div class="container">

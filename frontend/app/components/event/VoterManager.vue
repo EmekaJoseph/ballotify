@@ -34,7 +34,18 @@
                 </div>
             </div>
 
-            <div v-if="!loading && voters.length && !reachableCount && event.status !== 'completed'" class="hint">
+            <div v-if="isFree" class="hint plan-hint">
+                <i class="bi bi-box"></i>
+                <span class="flex-grow-1">
+                    <b>Free event:</b> {{ formatNumber(voters.length) }} of {{ formatNumber(event.limits!.max_voters ?? 0) }} voters used.
+                    Codes can be shared by CSV or printed slips. Upgrade to Pro for up to {{ plans ? formatNumber(plans.pro.max_voters) : 'more' }} voters and email/SMS invitations.
+                </span>
+                <button v-if="event.status !== 'completed'" class="btn btn-soft btn-sm flex-shrink-0" @click="askUpgrade('Upgrade to Pro')">
+                    <i class="bi bi-lightning-charge"></i> Upgrade
+                </button>
+            </div>
+
+            <div v-if="!loading && voters.length && !reachableCount && event.status !== 'completed' && !isFree" class="hint">
                 <i class="bi bi-lightbulb"></i>
                 <span class="flex-grow-1">
                     To send codes by email or SMS, voters need an email address or phone number.
@@ -283,7 +294,33 @@ function pollStatuses() {
 onBeforeUnmount(() => clearInterval(pollTimer));
 
 function openForm(v: Voter | null) { editing.value = v; dialog.value = 'form'; }
-function openInvite(targets: Voter[] | null) { inviting.value = targets; dialog.value = 'invite'; }
+function openInvite(targets: Voter[] | null) {
+    if (isFree.value) {
+        askUpgrade('Sending codes is a Pro feature');
+        return;
+    }
+    inviting.value = targets;
+    dialog.value = 'invite';
+}
+
+// ----- Plan (Free / Pro) -----
+const { plans, loadPlans, priceLabel, startUpgrade } = useBilling();
+onMounted(() => loadPlans());
+const isFree = computed(() => props.event.limits?.plan === 'free' && props.event.limits.max_voters !== null);
+
+async function askUpgrade(title: string) {
+    await loadPlans();
+    if (!plans.value?.payments_enabled) {
+        toast.info('Upgrading to Pro isn’t available online yet. Please contact us to upgrade this event.');
+        return;
+    }
+    const ok = await confirm({
+        title,
+        message: `Upgrade “${props.event.name}” to Pro for a one-off ${priceLabel.value}: up to ${formatNumber(plans.value.pro.max_voters)} voters, email & SMS invitations, and no Ballotify branding. You’ll pay securely with Paystack.`,
+        confirmText: 'Upgrade now',
+    });
+    if (ok) await startUpgrade(props.event.id);
+}
 
 /** Row "Send": if the voter can't be reached yet, take the organiser to add a contact. */
 function sendToOne(v: Voter) {
@@ -306,7 +343,9 @@ function sendToSelected() {
 
 /** Always clickable, so the organiser learns why sending isn't possible yet. */
 function onSendCodes() {
-    if (props.event.status === 'completed') {
+    if (isFree.value && props.event.status !== 'completed') {
+        askUpgrade('Sending codes is a Pro feature');
+    } else if (props.event.status === 'completed') {
         toast.info('Voting has closed for this event, so codes can no longer be sent.');
     } else if (!voters.value.length) {
         toast.info('Add voters first. Import a list with emails or phone numbers.');
@@ -398,6 +437,8 @@ function printSlips(list: (Voter | GeneratedCode)[]) {
     background: var(--brand-50); color: var(--brand-900); font-size: .9rem; border-bottom: 1px solid var(--line);
 }
 .hint > .bi { color: var(--brand-600); font-size: 1.1rem; }
+/* Text takes the remaining width and wraps inside; the button only drops below on narrow screens. */
+.hint > span { flex: 1 1 260px; min-width: 0; }
 .select-bar {
     display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; padding: .6rem 1.25rem;
     background: var(--brand-50); color: var(--brand-900); border-bottom: 1px solid var(--brand-100); font-size: .9rem;

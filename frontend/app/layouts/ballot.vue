@@ -12,7 +12,8 @@
         <main class="container py-4 py-md-5" :style="{ maxWidth: wide ? '1140px' : '760px' }">
             <slot />
         </main>
-        <footer class="text-center small text-muted pb-4">
+        <!-- Shown on Free events (and demo pages); Pro events hide it. -->
+        <footer v-if="branding" class="text-center small text-muted pb-4">
             Powered by <NuxtLink to="/" class="fw-bold">Ballotify</NuxtLink>
         </footer>
     </div>
@@ -21,6 +22,7 @@
 <script setup lang="ts">
 const route = useRoute();
 const wide = computed(() => Boolean(route.meta.wide));
+const branding = useBallotBranding();
 </script>
 
 <style scoped>

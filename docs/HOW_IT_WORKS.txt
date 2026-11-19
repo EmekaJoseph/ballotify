@@ -83,6 +83,11 @@ VOTERS take part from any phone or laptop using a one-time code.
 4. THE ORGANISER'S JOURNEY
 --------------------------------------------------------------------------------
 
+   Plans: every event starts FREE (1 open event per account, 50 voters,
+   codes shared by CSV/printed slips, "Powered by Ballotify" on the ballot).
+   Upgrading ONE event to PRO is a one-off Paystack payment: 5,000 voters,
+   email & SMS invitations, no branding. (Prices/limits: Admin -> Pricing.)
+
    [ Sign up ] --> [ Create event ] --> [ Build ballot ] --> [ Issue codes ]
                                                                    |
    [ Announce ] <-- [ Watch results ] <-- [ Share link ] <---------+

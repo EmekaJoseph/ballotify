@@ -53,13 +53,14 @@
         <div class="row g-3 mb-2">
             <div class="col-md-6">
                 <label for="ev-start" class="form-label">Voting opens</label>
-                <input id="ev-start" v-model="form.starts_at" type="datetime-local" class="form-control" :disabled="busy" />
+                <DateTimePicker id="ev-start" v-model="form.starts_at" label="Voting opens" placeholder="Opens immediately"
+                    default-time="09:00" :disabled="busy" />
                 <div class="form-text">Leave empty to open immediately.</div>
             </div>
             <div class="col-md-6">
                 <label for="ev-end" class="form-label">Voting closes</label>
-                <input id="ev-end" v-model="form.ends_at" type="datetime-local" class="form-control"
-                    :class="{ 'is-invalid': errors.ends_at }" :min="form.starts_at || undefined" :disabled="busy" />
+                <DateTimePicker id="ev-end" v-model="form.ends_at" label="Voting closes" placeholder="Open until you close it"
+                    default-time="18:00" :min="form.starts_at" :invalid="!!errors.ends_at" :disabled="busy" />
                 <div v-if="errors.ends_at" class="field-error">{{ errors.ends_at }}</div>
                 <div v-else class="form-text">Leave empty to keep it open until you close it.</div>
             </div>

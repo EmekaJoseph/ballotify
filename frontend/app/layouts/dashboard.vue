@@ -10,9 +10,7 @@
             </div>
 
             <div class="px-3 mb-3">
-                <NuxtLink to="/dashboard/events/create" class="btn btn-primary w-100">
-                    <i class="bi bi-plus-lg"></i> New event
-                </NuxtLink>
+                <NewEventButton class="w-100" />
             </div>
 
             <nav class="px-2 d-grid gap-1">
@@ -69,6 +67,7 @@
                 </div>
                 <slot />
             </main>
+            <EventLimitModal />
         </div>
     </div>
 </template>
@@ -93,8 +92,14 @@ const isActive = (item: { to: string; exact: boolean }) =>
 
 watch(() => route.fullPath, () => { sidebarOpen.value = false; });
 
+// Whether another event can be created; refreshed on each page, since events
+// get created, closed, upgraded or deleted along the way.
+const { refreshQuota } = useNewEvent();
+watch(() => route.path, () => refreshQuota());
+
 onMounted(() => {
     if (!auth.user && auth.isAuthenticated) auth.fetchUser();
+    refreshQuota();
 });
 
 const resending = ref(false);

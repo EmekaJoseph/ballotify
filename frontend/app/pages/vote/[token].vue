@@ -88,6 +88,8 @@ import { publicApi } from '~/api/endpoints/public';
 import type { Choice, EventStatus, PublicEvent } from '~/types';
 
 definePageMeta({ layout: 'ballot' });
+const branding = useBallotBranding();
+onBeforeUnmount(() => { branding.value = true; }); // other pages default to showing it
 
 type Stage = 'loading' | 'unavailable' | 'code' | 'ballot' | 'done';
 
@@ -135,6 +137,7 @@ async function load() {
     stage.value = 'loading';
     try {
         event.value = (await publicApi.getEvent(token)).data;
+        branding.value = event.value.branding !== false;
         stage.value = 'code';
         await nextTick();
         codeInput.value?.focus();

@@ -7,6 +7,7 @@ use App\Jobs\SendVoterInvitation;
 use App\Models\Event;
 use App\Models\Voter;
 use App\Support\Audit;
+use App\Support\Plans;
 use App\Support\PhoneNumber;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -45,6 +46,7 @@ class VoterController extends Controller
             'phone' => ['nullable', 'string', 'max:32', $this->phoneRule()],
             'code' => ['nullable', 'string', 'min:4', 'max:64', Rule::unique('voters', 'code')->where('event_id', $event->id)],
         ]);
+        Plans::ensureVoterCapacity($event, 1);
 
         $voter = Voter::create([
             'event_id' => $event->id,
@@ -118,6 +120,7 @@ class VoterController extends Controller
         $data = $request->validate([
             'count' => ['required', 'integer', 'min:1', 'max:' . self::MAX_BATCH],
         ]);
+        Plans::ensureVoterCapacity($event, (int) $data['count']);
 
         $created = $this->createMany($event, array_fill(0, $data['count'], []));
         Audit::log($event, 'voters.generated', "{$data['count']} anonymous code" . ($data['count'] === 1 ? '' : 's') . ' generated');
@@ -164,6 +167,7 @@ class VoterController extends Controller
         if ($errors) {
             throw ValidationException::withMessages(array_slice($errors, 0, 20, true));
         }
+        Plans::ensureVoterCapacity($event, count($rows));
 
         $created = $this->createMany($event, $rows);
         $n = count($created);
@@ -186,6 +190,7 @@ class VoterController extends Controller
             'voter_ids.*' => ['integer'],
         ]);
 
+        Plans::ensureCanMessage($event);
         if ($event->status === Event::STATUS_COMPLETED) {
             throw ValidationException::withMessages(['channel' => ['Voting has closed for this event, so invitations can no longer be sent.']]);
         }

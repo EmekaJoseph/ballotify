@@ -25,6 +25,7 @@
 | Results as CSV, or a printable signed report (save as PDF)         |                                        |
 | Activity log of every change; two-step login; dark mode            |                                        |
 | **Platform admin:** see every organiser and event, suspend abuse    |                                        |
+| **Free and Pro plans:** pay per event with Paystack                 |                                        |
 
 **Integrity guarantees, all enforced on the server:**
 
@@ -146,6 +147,38 @@ A provider that fails never breaks the app:
 - Everything else keeps working.
 - People who have already voted are never messaged.
 
+### Plans and payments (Paystack)
+
+Billing is **pay per event**:
+
+| | Free | Pro (one-off, per event) |
+|---|---|---|
+| Open events | 1 at a time per account | Doesn't count towards the free limit |
+| Voters per event | 50 | 5,000 |
+| Email & SMS invitations | No (share codes by CSV or printed slips) | Yes |
+| Ballot branding | "Powered by Ballotify" | None |
+| Price | ₦0 | ₦10,000 |
+
+These are the starting values. Change prices and limits any time in **Admin → Pricing**; changes apply straight away.
+
+Organisers upgrade from the event page. They pay on Paystack's checkout (card, bank transfer or USSD) and are sent back to the event, which is upgraded once Paystack confirms the payment. A webhook covers organisers who close the tab before returning.
+
+The platform admin can also upgrade without payment:
+- **Admin → Events → Make Pro** upgrades one event.
+- **Admin → Organisers → Give Pro** makes every event of an account Pro, for partners, sponsors or staff.
+- Admin accounts are always Pro.
+
+To go live:
+1. In `backend/.env`, set `PAYSTACK_SECRET_KEY` (a test key `sk_test_…` works for trying it out). Then run `php artisan config:clear`.
+2. In the Paystack dashboard (Settings → API Keys & Webhooks), set the webhook URL to `{APP_URL}/api/paystack/webhook`.
+
+Until a key is set, nothing breaks: organisers see "Contact us to upgrade" (using `NUXT_PUBLIC_CONTACT_EMAIL`), and you can upgrade events from the admin page. Set `BILLING_ENABLED=false` to remove plans entirely, for example for a private installation; every event then behaves as Pro.
+
+| Key | Purpose |
+|---|---|
+| `BILLING_ENABLED` | `true` (default) for Free/Pro plans, `false` for no limits and no payments. |
+| `PAYSTACK_SECRET_KEY` | Your Paystack secret key. Empty = online payment off. |
+
 ### Frontend `.env`
 
 | Key                          | Purpose                                                                      |
@@ -158,7 +191,7 @@ A provider that fails never breaks the app:
 ## Testing
 
 ```bash
-cd backend  && php artisan test                                    # 66 feature tests
+cd backend  && php artisan test                                    # 83 feature tests
 cd frontend && npx nuxi prepare && npx vue-tsc --noEmit -p .nuxt/tsconfig.app.json   # type check
 cd frontend && npm run build                                       # production build
 ```
@@ -171,7 +204,8 @@ cd frontend && npm run build                                       # production 
 2. Run `composer install --no-dev -o`, `php artisan migrate --force` and `php artisan config:cache route:cache`.
 3. Point the web root at `backend/public`, and make sure `public/candidates/` is writable for photos.
 4. Add one cron entry for daily cleanup (expired logins, old voter contacts): `* * * * * cd /path/to/backend && php artisan schedule:run`.
-5. For instant live results, keep `php artisan reverb:start` running (e.g. with Supervisor) behind your web server's websocket proxy, and set the `REVERB_*` / `NUXT_PUBLIC_REVERB_*` values to the public host. Without it, results refresh every 15 seconds.
+5. For payments, set `PAYSTACK_SECRET_KEY` (live key) and the Paystack webhook URL `https://your-api/api/paystack/webhook`.
+6. For instant live results, keep `php artisan reverb:start` running (e.g. with Supervisor) behind your web server's websocket proxy, and set the `REVERB_*` / `NUXT_PUBLIC_REVERB_*` values to the public host. Without it, results refresh every 15 seconds.
 
 **Frontend.** It's a static SPA:
 

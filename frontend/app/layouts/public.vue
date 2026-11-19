@@ -60,6 +60,7 @@ const scrolled = ref(false);
 const links = [
     { to: '/#features', label: 'Features' },
     { to: '/#how', label: 'How it works' },
+    { to: '/#pricing', label: 'Pricing' },
     { to: '/demo/vote', label: 'Live demo' },
 ];
 

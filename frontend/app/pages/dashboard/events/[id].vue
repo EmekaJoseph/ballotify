@@ -25,6 +25,9 @@
                 <template #meta>
                     <div class="d-flex flex-wrap align-items-center gap-2 mt-2">
                         <StatusBadge :status="event.status" />
+                        <span v-if="event.limits && event.limits.max_voters !== null" class="pill" :class="event.limits.plan === 'pro' ? 'pill-violet' : 'pill-completed'">
+                            <i class="bi" :class="event.limits.plan === 'pro' ? 'bi-gem' : 'bi-box'"></i> {{ event.limits.plan === 'pro' ? 'Pro' : 'Free' }}
+                        </span>
                         <span class="small text-muted"><i class="bi bi-calendar3"></i> {{ formatWindow(event.starts_at, event.ends_at) }}</span>
                     </div>
                 </template>
@@ -94,7 +97,7 @@
 </template>
 
 <script setup lang="ts">
-import { adminApi, type EventPayload } from '~/api/endpoints/admin';
+import { adminApi, billingApi, type EventPayload } from '~/api/endpoints/admin';
 import type { BallotEvent } from '~/types';
 
 definePageMeta({ layout: 'dashboard', middleware: ['auth'] });
@@ -130,6 +133,7 @@ watch(tab, (t) => router.replace({ query: { ...route.query, tab: t === 'overview
 
 const { voteUrl } = useEventLinks(() => event.value?.link_token);
 
+const { refreshQuota, showLimit } = useNewEvent();
 const duplicating = ref(false);
 async function duplicate() {
     duplicating.value = true;
@@ -138,6 +142,11 @@ async function duplicate() {
         toast.success(`Created “${data.name}”. Set its dates and add voters when you’re ready.`);
         await navigateTo({ path: `/dashboard/events/${data.id}`, query: { tab: 'settings' } });
     } catch (e) {
+        if (planLimitReason(e) === 'events') {
+            await refreshQuota();
+            showLimit();
+            return;
+        }
         toast.error(apiErrorMessage(e));
     } finally {
         duplicating.value = false;
@@ -180,7 +189,30 @@ async function load(silent = false) {
         loading.value = false;
     }
 }
-onMounted(() => load());
+onMounted(async () => {
+    await load();
+    confirmPaymentReturn();
+});
+
+/**
+ * Back from Paystack: it appends ?reference=… (and trxref) to our callback URL.
+ * Confirm it with the API (which asks Paystack), then tidy the URL.
+ */
+async function confirmPaymentReturn() {
+    const reference = String(route.query.reference ?? route.query.trxref ?? '');
+    if (!route.query.payment || !reference) return;
+    const { payment: _p, reference: _r, trxref: _t, ...rest } = route.query;
+    router.replace({ query: rest });
+    try {
+        const { data } = await billingApi.verify(reference);
+        if (data.status === 'success') toast.success(data.message);
+        else if (data.status === 'failed') toast.error(data.message);
+        else toast.info(data.message);
+        await load(true);
+    } catch (e) {
+        toast.error(apiErrorMessage(e, 'We couldn’t confirm the payment. If you were charged, it will be applied shortly.'));
+    }
+}
 watch(eventId, () => load());
 
 async function save(payload: EventPayload) {

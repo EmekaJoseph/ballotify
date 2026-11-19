@@ -36,6 +36,7 @@ class Event extends Model
     protected $casts = [
         'starts_at' => 'datetime',
         'ends_at' => 'datetime',
+        'upgraded_at' => 'datetime',
     ];
 
     protected $attributes = [

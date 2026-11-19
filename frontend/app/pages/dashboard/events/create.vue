@@ -5,7 +5,17 @@
 
         <div class="row g-4">
             <div class="col-lg-8">
-                <div class="card-b pad">
+                <!-- At the free limit: explain up front instead of a form that will be refused. -->
+                <div v-if="blocked" class="card-b">
+                    <EmptyState icon="bi-lock" title="You’ve reached your free event limit"
+                        text="Upgrade your open event to Pro, or close voting on it, to create another.">
+                        <div class="d-flex flex-wrap gap-2 justify-content-center">
+                            <NuxtLink to="/dashboard/events" class="btn btn-ghost">Back to events</NuxtLink>
+                            <button class="btn btn-primary" @click="showLimit"><i class="bi bi-lightning-charge"></i> See options</button>
+                        </div>
+                    </EmptyState>
+                </div>
+                <div v-else class="card-b pad">
                     <div v-if="error" class="alert alert-danger border-0 rounded-4 small">{{ error }}</div>
                     <EventForm :busy="busy" :server-errors="fieldErrors" submit-label="Create event" @submit="create">
                         <template #actions>
@@ -43,6 +53,12 @@ const next = [
     'Generate voter codes and share the voting link.',
 ];
 
+const { blocked, showLimit, refreshQuota } = useNewEvent();
+onMounted(async () => {
+    await refreshQuota();
+    if (blocked.value) showLimit();
+});
+
 async function create(payload: EventPayload) {
     busy.value = true;
     error.value = '';
@@ -51,6 +67,12 @@ async function create(payload: EventPayload) {
         useToast().success('Event created. Now build your ballot.');
         await navigateTo(`/dashboard/events/${data.id}?tab=ballot`);
     } catch (e) {
+        if (planLimitReason(e) === 'events') {
+            // Limit reached since the page opened: explain in a modal, not a banner up top.
+            await refreshQuota();
+            showLimit();
+            return;
+        }
         fieldErrors.value = apiFieldErrors(e);
         error.value = apiErrorMessage(e, 'Could not create the event.');
     } finally {

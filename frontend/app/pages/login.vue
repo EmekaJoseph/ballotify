@@ -56,15 +56,8 @@
                 </div>
                 <div class="mb-4">
                     <label for="password" class="form-label">Password</label>
-                    <div class="input-icon position-relative">
-                        <i class="bi bi-lock"></i>
-                        <input id="password" v-model="form.password" :type="show ? 'text' : 'password'"
-                            class="form-control form-control-lg pe-5" autocomplete="current-password" placeholder="Your password"
-                            required :disabled="loading" />
-                        <button type="button" class="reveal" :aria-label="show ? 'Hide password' : 'Show password'" @click="show = !show">
-                            <i class="bi" :class="show ? 'bi-eye-slash' : 'bi-eye'"></i>
-                        </button>
-                    </div>
+                    <PasswordInput id="password" v-model="form.password" autocomplete="current-password"
+                        placeholder="Your password" required :disabled="loading" />
                     <div class="text-end mt-2">
                         <NuxtLink :to="{ path: '/forgot-password', query: form.email ? { email: form.email } : {} }" class="small fw-semibold">Forgot password?</NuxtLink>
                     </div>
@@ -92,7 +85,6 @@ useHead({ title: 'Sign in · Ballotify' });
 const auth = useAuthStore();
 const route = useRoute();
 const loading = ref(false);
-const show = ref(false);
 const error = ref('');
 const form = reactive({ email: typeof route.query.email === 'string' ? route.query.email : '', password: '' });
 
@@ -153,7 +145,5 @@ function resetFlow() {
 </script>
 
 <style scoped>
-.reveal { position: absolute; right: .6rem; top: 50%; transform: translateY(-50%); border: 0; background: none; color: var(--muted); padding: .25rem .4rem; }
-.reveal:hover { color: var(--ink); }
 .otp { font-size: 1.6rem; letter-spacing: .4em; font-weight: 700; }
 </style>

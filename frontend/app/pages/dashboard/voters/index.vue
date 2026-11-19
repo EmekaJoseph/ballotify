@@ -14,7 +14,7 @@
                 <button class="btn btn-soft" @click="load">Try again</button>
             </EmptyState>
             <EmptyState v-else-if="!events.length" icon="bi-people" title="No events yet" text="Create an event, then generate voter codes for it.">
-                <NuxtLink to="/dashboard/events/create" class="btn btn-primary"><i class="bi bi-plus-lg"></i> New event</NuxtLink>
+                <NewEventButton />
             </EmptyState>
             <div v-else class="table-responsive">
                 <table class="table-b">
