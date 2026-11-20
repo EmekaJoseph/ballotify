@@ -160,6 +160,9 @@ class PlatformAdminController extends Controller
             'mail' => ['driver' => config('mail.default'), 'from' => config('mail.from.address')],
             'sms' => ['driver' => config('services.sms.driver', config('sms.driver'))],
             'paystack' => Paystack::configured(),
+            'flutterwave' => \App\Support\Flutterwave::configured(),
+            // Failed to start a checkout in the last couple of minutes (payers were sent to the backup).
+            'paystack_down' => \App\Support\Payments::isDown(\App\Support\Payments::PAYSTACK),
             'broadcasting' => config('broadcasting.default'),
             'delivery_errors' => [
                 'last_7_days' => Voter::whereNotNull('invite_error')->where('updated_at', '>=', $since)->count(),
@@ -257,7 +260,8 @@ class PlatformAdminController extends Controller
     {
         return Plans::settings() + [
             'billing_enabled' => Plans::enabled(),
-            'payments_enabled' => Paystack::configured(),
+            'payments_enabled' => \App\Support\Payments::available(),
+            'payment_providers' => \App\Support\Payments::providers(),
         ];
     }
 

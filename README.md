@@ -24,13 +24,14 @@
 | Choose when results are public: live, after close, or never        |                                        |
 | Import candidates from a spreadsheet; duplicate an event            |                                        |
 | Results as CSV, a printable report, a turnout chart, and **Present / Reveal** on a projector | **Paid voting:** pick a nominee, pay per vote |
-| **Paid public voting** for award nights: fans pay per vote via Paystack | Payment reference doubles as a receipt |
+| **Paid public voting** for award nights: fans pay per vote via Paystack (Flutterwave as automatic backup) | Payment reference doubles as a receipt |
 | **Co-organisers** with roles (editor, voter manager, viewer)       | **Self-registration:** request your code with your matric/member ID |
 | Optional: voter self-registration, USSD voting, public nominations, candidate profile links | **USSD voting** on any phone, no data needed |
 | **Certified results** with a QR code anyone can verify             | Check a results certificate at /verify |
 | Automatic payouts for paid voting (Paystack split payments)        |                                        |
 | Pro: your own logo and colour on the ballot and results pages      |                                        |
-| Activity log of every change; two-step login; dark mode            |                                        |
+| Activity log of every change; two-step login (Google Authenticator); dark mode |
+| Voting pages in **English, Yorùbá, Hausa, Igbo and French**         |                                        |                                        |
 | **Platform admin:** organisers, events, payments, payouts, system health; suspend abuse |                                        |
 | **Free and Pro plans:** pay per event with Paystack                 |                                        |
 
@@ -45,7 +46,7 @@
 - Code guessing is rate-limited per network and event.
 - **Results visibility** is per event: live, after voting closes (the default), or organiser only.
 
-**Accounts and privacy:** password reset by email, email confirmation (required before sending messages), optional two-step login with an authenticator app, logins that expire (7 days by default), and signing out other devices after a password change. Voter contact details are erased automatically after the event (30 days by default) or on demand. Privacy and Terms pages are included.
+**Accounts and privacy:** password reset by email, email confirmation (required before sending messages), optional two-step login with Google Authenticator (codes can't be reused; 5 wrong codes lock the step for 15 minutes; recovery codes can be renewed), logins that expire (7 days by default), and signing out other devices after a password change. Voter contact details are erased automatically after the event (30 days by default) or on demand. Privacy and Terms pages are included.
 
 ## Tech stack
 
@@ -184,18 +185,24 @@ The platform admin can also upgrade without payment:
 To go live:
 1. In `backend/.env`, set `PAYSTACK_SECRET_KEY` (a test key `sk_test_…` works for trying it out). Then run `php artisan config:clear`.
 2. In the Paystack dashboard (Settings → API Keys & Webhooks), set the webhook URL to `{APP_URL}/api/paystack/webhook`.
+3. Optional backup: set `FLUTTERWAVE_SECRET_KEY` and `FLUTTERWAVE_WEBHOOK_HASH` (any long random string). In Flutterwave (Settings → Webhooks) set the URL to `{APP_URL}/api/flutterwave/webhook` and the same secret hash. If Paystack can't start a checkout, payers are sent to Flutterwave automatically, and Paystack is skipped for two minutes. Admin → Health shows when that happens.
 
 Until a key is set, nothing breaks: organisers see "Contact us to upgrade" (using `NUXT_PUBLIC_CONTACT_EMAIL`), and you can upgrade events from the admin page. Set `BILLING_ENABLED=false` to remove plans entirely, for example for a private installation; every event then behaves as Pro.
 
 | Key | Purpose |
 |---|---|
 | `BILLING_ENABLED` | `true` (default) for Free/Pro plans, `false` for no limits and no payments. |
-| `PAYSTACK_SECRET_KEY` | Your Paystack secret key. Empty = online payment off. |
+| `PAYSTACK_SECRET_KEY` | Your Paystack secret key. Empty = online payment off (unless Flutterwave is set). |
+| `FLUTTERWAVE_SECRET_KEY` | Backup payment provider. Empty = no backup. |
+| `FLUTTERWAVE_WEBHOOK_HASH` | The secret hash you also enter in Flutterwave's webhook settings. |
+| `PAYMENT_PROVIDERS` | Order of preference, default `paystack,flutterwave`. |
 | `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile secret (free bot / card-testing check on sign-up, paid votes, nominations, self-registration). Empty = off. Put the matching site key in the frontend as `NUXT_PUBLIC_TURNSTILE_SITE_KEY`. |
 | `USSD_SERVICE_CODE` | Your Africa's Talking USSD code, e.g. `*384*1234#` (shown to organisers). Empty = USSD voting unavailable. |
 | `USSD_WEBHOOK_SECRET` | A long random string. In Africa's Talking set the USSD callback URL to `{APP_URL}/api/ussd/{USSD_WEBHOOK_SECRET}`. |
 
-**Automatic payouts:** with Paystack set up, organisers verify their bank account on the event's Earnings tab and Ballotify creates a Paystack subaccount for them. Every paid vote is then split by Paystack: the platform fee to you, the rest straight to the organiser. Without it, record transfers in Admin → Payouts.
+**Automatic payouts:** with Paystack set up, organisers verify their bank account on the event's Earnings tab and Ballotify creates a Paystack subaccount for them. Every paid vote is then split by Paystack: the platform fee to you, the rest straight to the organiser. Payments that went through the Flutterwave backup aren't split: they show as owed on the Earnings tab. Without automatic payouts, record transfers in Admin → Payouts.
+
+**Languages:** voting, results and nomination pages come in English, Yorùbá, Hausa, Igbo and French. English by default. Organisers can pick another default per event (Settings → Voting options), and voters can switch with the language button (their choice is remembered). Texts: `frontend/app/i18n/messages.ts`; API messages: `backend/lang/*.json`. Have a native speaker review the Yorùbá, Hausa and Igbo before a big event.
 
 ### Frontend `.env`
 
@@ -210,7 +217,7 @@ Until a key is set, nothing breaks: organisers see "Contact us to upgrade" (usin
 ## Testing
 
 ```bash
-cd backend  && php artisan test                                    # 112 feature tests
+cd backend  && php artisan test                                    # 122 feature tests
 cd frontend && npx nuxi prepare && npx vue-tsc --noEmit -p .nuxt/tsconfig.app.json   # type check
 cd frontend && npm run build                                       # production build
 ```

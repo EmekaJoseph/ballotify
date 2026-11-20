@@ -28,10 +28,10 @@ class SelfRegistrationController extends Controller
         $label = $event->member_id_label ?: 'ID';
 
         if ($event->isPaid() || ! $event->self_registration || ! Plans::isPro($event)) {
-            return response()->json(['message' => 'This event doesn’t let voters request their own code. Ask the organiser for yours.'], 403);
+            return response()->json(['message' => __('This event doesn’t let voters request their own code. Ask the organiser for yours.')], 403);
         }
         if ($event->status === Event::STATUS_COMPLETED) {
-            return response()->json(['message' => 'Voting has ended.'], 403);
+            return response()->json(['message' => __('Voting has ended.')], 403);
         }
 
         $voter = Voter::where('event_id', $event->id)
@@ -39,18 +39,18 @@ class SelfRegistrationController extends Controller
             ->first();
 
         if (! $voter) {
-            return response()->json(['message' => "That {$label} isn’t on the voter list. Check it, or contact the organiser."], 404);
+            return response()->json(['message' => __('That :label isn’t on the voter list. Check it, or contact the organiser.', ['label' => $label])], 404);
         }
         if ($voter->used_at) {
-            return response()->json(['message' => 'This voter has already voted.'], 409);
+            return response()->json(['message' => __('This voter has already voted.')], 409);
         }
         if (! $voter->email && ! $voter->phone) {
-            return response()->json(['message' => 'There’s no email or phone number on file for you. Please contact the organiser for your code.'], 422);
+            return response()->json(['message' => __('There’s no email or phone number on file for you. Please contact the organiser for your code.')], 422);
         }
 
         // At most one message per voter every 2 minutes.
         if (! Cache::add("self-reg:{$voter->id}", true, now()->addMinutes(2))) {
-            return response()->json(['message' => 'We’ve just sent your code. Please wait a couple of minutes before asking again.'], 429);
+            return response()->json(['message' => __('We’ve just sent your code. Please wait a couple of minutes before asking again.')], 429);
         }
 
         $channels = array_values(array_filter([$voter->email ? 'email' : null, $voter->phone ? 'sms' : null]));
@@ -59,7 +59,7 @@ class SelfRegistrationController extends Controller
             : SendVoterInvitation::dispatch($voter->id, $channels);
 
         return response()->json([
-            'message' => 'Your voting code is on its way.',
+            'message' => __('Your voting code is on its way.'),
             'sent_to' => array_values(array_filter([
                 $voter->email ? self::maskEmail($voter->email) : null,
                 $voter->phone ? self::maskPhone($voter->phone) : null,

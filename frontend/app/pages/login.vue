@@ -5,7 +5,7 @@
             <div class="icon-tile lg mb-3"><i class="bi bi-shield-lock"></i></div>
             <h1 class="h2 fw-800 mb-2">Two-step sign in</h1>
             <p class="text-muted mb-4">
-                {{ useRecovery ? 'Enter one of your recovery codes.' : 'Enter the 6-digit code from your authenticator app.' }}
+                {{ useRecovery ? 'Enter one of your recovery codes.' : 'Open Google Authenticator and enter the 6-digit code for Ballotify.' }}
             </p>
             <form novalidate @submit.prevent="submitCode">
                 <input id="otp" ref="otpInput" v-model.trim="code" class="form-control form-control-lg mono text-center otp mb-3"
@@ -18,7 +18,7 @@
             </form>
             <div class="d-flex justify-content-between mt-4 small">
                 <button class="btn btn-link p-0 small" @click="useRecovery = !useRecovery; code = ''">
-                    {{ useRecovery ? 'Use authenticator code' : 'Use a recovery code' }}
+                    {{ useRecovery ? 'Use Google Authenticator code' : 'Use a recovery code' }}
                 </button>
                 <button class="btn btn-link p-0 small text-muted" @click="resetFlow">Start over</button>
             </div>

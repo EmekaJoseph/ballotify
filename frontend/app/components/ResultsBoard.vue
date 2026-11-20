@@ -2,41 +2,41 @@
     <div>
         <div class="row g-3 mb-4">
             <div class="col-6 col-lg-3">
-                <StatCard label="Votes cast" :value="formatNumber(results.stats.total_votes)" icon="bi-check2-square" />
+                <StatCard :label="t('res.votesCast')" :value="formatNumber(results.stats.total_votes)" icon="bi-check2-square" />
             </div>
             <div class="col-6 col-lg-3">
-                <StatCard label="Turnout" :value="turnout" icon="bi-people" tone="violet"
-                    :hint="`${formatNumber(results.stats.voted)} of ${formatNumber(results.stats.total_voters)} voters`" />
+                <StatCard :label="t('res.turnout')" :value="turnout" icon="bi-people" tone="violet"
+                    :hint="t('res.ofVoters', { voted: formatNumber(results.stats.voted), total: formatNumber(results.stats.total_voters) })" />
             </div>
             <div class="col-6 col-lg-3">
-                <StatCard label="Categories" :value="results.categories.length" icon="bi-grid" tone="amber" />
+                <StatCard :label="t('res.categories')" :value="results.categories.length" icon="bi-grid" tone="amber" />
             </div>
             <div class="col-6 col-lg-3">
-                <StatCard label="Candidates" :value="results.stats.total_candidates" icon="bi-person-badge" tone="green" />
+                <StatCard :label="t('res.candidates')" :value="results.stats.total_candidates" icon="bi-person-badge" tone="green" />
             </div>
         </div>
 
-        <EmptyState v-if="!results.categories.length" class="card-b" icon="bi-bar-chart" title="No categories yet"
-            text="Results will appear here once the ballot has categories and candidates." />
+        <EmptyState v-if="!results.categories.length" class="card-b" icon="bi-bar-chart" :title="t('res.noCategories')"
+            :text="t('res.noCategoriesText')" />
 
         <section v-for="cat in results.categories" :key="cat.id" class="card-b mb-4 overflow-hidden">
             <header class="card-header-b">
                 <div class="min-w-0">
                     <h2 class="h5 fw-800 mb-0 text-break">{{ cat.name }}</h2>
-                    <div class="small text-muted">{{ formatNumber(catTotal(cat)) }} votes</div>
+                    <div class="small text-muted">{{ tn('res.votes', catTotal(cat)) }}</div>
                 </div>
                 <div v-if="cat.leader && cat.leader.votes > 0" class="pill pill-brand">
                     <i class="bi bi-trophy-fill"></i>
-                    {{ isTie(cat) ? 'Tied' : (closed ? 'Winner' : 'Leading') }}: {{ isTie(cat) ? tiedNames(cat) : cat.leader.name }}
+                    {{ isTie(cat) ? t('res.tied') : (closed ? t('res.winner') : t('res.leading')) }}: {{ isTie(cat) ? tiedNames(cat) : cat.leader.name }}
                 </div>
             </header>
             <div class="p-3 p-md-4">
                 <div class="row g-4 align-items-center">
                     <div class="col-md-auto d-flex justify-content-center">
-                        <DonutChart :values="cat.candidates.map(c => c.votes)" :colors="palette" :size="170" />
+                        <DonutChart :values="cat.candidates.map(c => c.votes)" :colors="palette" :size="170" :label="t('res.votesWord')" />
                     </div>
                     <div class="col">
-                        <EmptyState v-if="!cat.candidates.length" icon="bi-person" title="No candidates" />
+                        <EmptyState v-if="!cat.candidates.length" icon="bi-person" :title="t('res.noCandidates')" />
                         <ol class="list-unstyled mb-0 d-grid gap-3">
                             <li v-for="(cand, i) in cat.candidates" :key="cand.id" class="d-flex align-items-center gap-3">
                                 <div class="rank" :class="{ first: i === 0 && cand.votes > 0 }">{{ i + 1 }}</div>

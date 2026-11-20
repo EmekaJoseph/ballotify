@@ -1,7 +1,7 @@
 <template>
     <div ref="wrap" class="turnout" :style="{ height: height + 'px' }">
         <div v-if="loading" class="skeleton h-100"></div>
-        <div v-else-if="!points.length" class="empty small text-muted"><i class="bi bi-graph-up"></i> The chart fills in as votes arrive.</div>
+        <div v-else-if="!points.length" class="empty small text-muted"><i class="bi bi-graph-up"></i> {{ t('chart.empty') }}</div>
         <template v-else>
             <svg :width="w" :height="height" role="img" :aria-label="summary" @pointermove="onMove" @pointerleave="hover = null">
                 <!-- recessive grid + y labels -->

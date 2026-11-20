@@ -76,9 +76,15 @@ class AuthController extends Controller
         if (! $user) {
             throw ValidationException::withMessages(['code' => ['This sign-in attempt expired. Please sign in again.']]);
         }
+        // Per account, so guessing from many addresses doesn't help.
+        if (TwoFactor::lockedOut($user)) {
+            throw ValidationException::withMessages(['code' => ['Too many wrong codes. Wait ' . TwoFactor::LOCK_MINUTES . ' minutes, then sign in again.']]);
+        }
         if (! TwoFactor::verify($user, $data['code'])) {
+            TwoFactor::recordFailure($user);
             throw ValidationException::withMessages(['code' => ['That code is not valid. Try the latest code from your app, or a recovery code.']]);
         }
+        TwoFactor::clearFailures($user);
 
         $this->ensureNotSuspended($user);
 
@@ -235,6 +241,28 @@ class AuthController extends Controller
         $user->forceFill(['two_factor_confirmed_at' => now(), 'two_factor_recovery_codes' => $codes])->save();
 
         return response()->json(['recovery_codes' => $codes, 'user' => $user->fresh()]);
+    }
+
+    /** How many recovery codes are left (shown on the profile page). */
+    public function twoFactorStatus(Request $request)
+    {
+        $user = $request->user();
+        return response()->json([
+            'enabled' => $user->two_factor_enabled,
+            'recovery_codes_left' => $user->two_factor_enabled ? count($user->two_factor_recovery_codes ?? []) : 0,
+        ]);
+    }
+
+    /** Replace the recovery codes (the old ones stop working). */
+    public function twoFactorRecoveryCodes(Request $request)
+    {
+        $request->validate(['password' => ['required', 'current_password:sanctum']]);
+        $user = $request->user();
+        abort_unless($user->two_factor_enabled, 422, 'Two-step login is not on.');
+        $codes = TwoFactor::newRecoveryCodes();
+        $user->forceFill(['two_factor_recovery_codes' => $codes])->save();
+
+        return response()->json(['recovery_codes' => $codes]);
     }
 
     public function twoFactorDisable(Request $request)

@@ -1,11 +1,11 @@
 <template>
     <div>
         <div v-if="!paymentsReady" class="alert alert-warning border-0 rounded-4 small d-flex gap-2 mb-3">
-            <i class="bi bi-exclamation-triangle"></i> Paying for votes isn’t available right now. Please check back soon.
+            <i class="bi bi-exclamation-triangle"></i> {{ t('paid.unavailable') }}
         </div>
 
         <!-- Category tabs (sticky) -->
-        <div v-if="categories.length > 1" class="cat-tabs mb-3" role="tablist" aria-label="Categories">
+        <div v-if="categories.length > 1" class="cat-tabs mb-3" role="tablist" :aria-label="t('paid.categories')">
             <button v-for="cat in categories" :key="cat.id" type="button" role="tab" class="cat-tab"
                 :class="{ active: activeCat === cat.id }" :aria-selected="activeCat === cat.id" @click="scrollTo(cat.id)">
                 {{ cat.name }}
@@ -26,39 +26,39 @@
                             <div v-if="cand.description" class="small text-muted mt-1 desc">{{ cand.description }}</div>
                             <button type="button" class="btn btn-primary btn-sm w-100 mt-auto pt-2" style="margin-top: .75rem !important"
                                 :disabled="!paymentsReady" @click="openBuy(cand, cat.name)">
-                                <i class="bi bi-heart-fill"></i> Vote
+                                <i class="bi bi-heart-fill"></i> {{ t('paid.vote') }}
                             </button>
                         </div>
                     </div>
                 </div>
             </div>
-            <div v-if="!(byCategory[cat.id]?.length)" class="text-muted small">No nominees yet.</div>
+            <div v-if="!(byCategory[cat.id]?.length)" class="text-muted small">{{ t('paid.noNominees') }}</div>
         </section>
 
         <!-- Buy votes -->
-        <BaseModal :open="!!buying" :title="buying ? `Vote for ${buying.name}` : ''" :subtitle="buying?.category" size="sm" @close="buying = null">
+        <BaseModal :open="!!buying" :title="buying ? t('paid.voteFor', { name: buying.name }) : ''" :subtitle="buying?.category" size="sm" @close="buying = null">
             <form v-if="buying" id="buy-form" novalidate @submit.prevent="pay">
                 <div class="d-flex align-items-center gap-3 mb-3">
                     <CandidateAvatar :name="buying.name" :src="buying.image_url" size="lg" />
-                    <div class="small text-muted">₦{{ price.toLocaleString('en-NG') }} per vote · as many votes as you like</div>
+                    <div class="small text-muted">{{ t('paid.priceLine', { price: price.toLocaleString('en-NG') }) }}</div>
                 </div>
 
-                <label class="form-label" for="qty">Number of votes</label>
+                <label class="form-label" for="qty">{{ t('paid.howMany') }}</label>
                 <div class="stepper mb-2">
-                    <button type="button" class="btn btn-ghost" aria-label="Fewer votes" :disabled="qty <= 1" @click="qty = Math.max(1, qty - 1)"><i class="bi bi-dash-lg"></i></button>
+                    <button type="button" class="btn btn-ghost" :aria-label="t('paid.fewer')" :disabled="qty <= 1" @click="qty = Math.max(1, qty - 1)"><i class="bi bi-dash-lg"></i></button>
                     <input id="qty" v-model.number="qty" type="number" min="1" max="10000" inputmode="numeric" class="form-control text-center fw-800" />
-                    <button type="button" class="btn btn-ghost" aria-label="More votes" @click="qty = Math.min(10000, qty + 1)"><i class="bi bi-plus-lg"></i></button>
+                    <button type="button" class="btn btn-ghost" :aria-label="t('paid.more')" @click="qty = Math.min(10000, qty + 1)"><i class="bi bi-plus-lg"></i></button>
                 </div>
                 <div class="d-flex flex-wrap gap-1 mb-3">
                     <button v-for="n in quick" :key="n" type="button" class="chip" :class="{ on: qty === n }" @click="qty = n">{{ n }}</button>
                 </div>
 
                 <div class="mb-3">
-                    <label for="buyer-email" class="form-label">Email <span class="text-muted fw-normal">(for your receipt)</span></label>
+                    <label for="buyer-email" class="form-label">{{ t('paid.email') }} <span class="text-muted fw-normal">{{ t('paid.forReceipt') }}</span></label>
                     <input id="buyer-email" v-model.trim="email" type="email" class="form-control" autocomplete="email" placeholder="you@example.com" required />
                 </div>
                 <div class="mb-2">
-                    <label for="buyer-name" class="form-label">Name <span class="text-muted fw-normal">(optional)</span></label>
+                    <label for="buyer-name" class="form-label">{{ t('paid.name') }} <span class="text-muted fw-normal">{{ t('common.optional') }}</span></label>
                     <input id="buyer-name" v-model.trim="name" type="text" class="form-control" autocomplete="name" maxlength="120" />
                 </div>
                 <HumanCheck ref="human" v-model="captcha" class="mt-3" />
@@ -66,15 +66,15 @@
             <template #footer>
                 <div class="w-100">
                     <div class="d-flex justify-content-between align-items-baseline mb-2">
-                        <span class="text-muted small">Total</span>
+                        <span class="text-muted small">{{ t('paid.total') }}</span>
                         <span class="fs-4 fw-800 text-ink">₦{{ total.toLocaleString('en-NG') }}</span>
                     </div>
-                    <div v-if="tooSmall" class="small text-warning-emphasis mb-2">The smallest payment is ₦{{ minPayment }}. Choose at least {{ minQty }} votes.</div>
+                    <div v-if="tooSmall" class="small text-warning-emphasis mb-2">{{ t('paid.min', { min: minPayment, n: minQty }) }}</div>
                     <button type="submit" form="buy-form" class="btn btn-primary btn-lg w-100" :disabled="paying || tooSmall || !validEmail || qty < 1">
                         <span v-if="paying" class="spinner-border spinner-border-sm"></span>
-                        {{ paying ? 'Please wait…' : 'Pay and vote' }}
+                        {{ paying ? t('paid.wait') : t('paid.pay') }}
                     </button>
-                    <div class="small text-muted text-center mt-2"><i class="bi bi-lock"></i> Secure payment by Paystack: card, transfer or USSD.</div>
+                    <div class="small text-muted text-center mt-2"><i class="bi bi-lock"></i> {{ t('paid.secure') }}</div>
                 </div>
             </template>
         </BaseModal>
@@ -153,9 +153,9 @@ async function pay() {
         // Pops up over the vote dialog; "Try again" retries with the same choices.
         // Field errors (e.g. "choose at least 2 votes") read as one message too.
         const retry = await alert({
-            title: 'Payment didn’t start',
-            message: Object.values(apiFieldErrors(e))[0] ?? apiErrorMessage(e, 'Could not start the payment. Please try again.'),
-            actionText: 'Try again',
+            title: t('paid.didntStart'),
+            message: Object.values(apiFieldErrors(e))[0] ?? apiErrorMessage(e, t('paid.startFailed')),
+            actionText: t('common.tryAgain'),
         });
         if (retry) pay();
     }

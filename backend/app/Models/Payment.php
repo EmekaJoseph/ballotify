@@ -13,7 +13,7 @@ class Payment extends Model
     public const FAILED = 'failed';
 
     protected $fillable = [
-        'user_id', 'event_id', 'event_name', 'reference', 'amount_kobo', 'currency',
+        'user_id', 'event_id', 'event_name', 'reference', 'provider', 'amount_kobo', 'currency',
         'status', 'channel', 'failure_reason', 'paid_at',
     ];
 

@@ -25,6 +25,7 @@ return new class extends Migration
             $table->foreignId('event_id')->nullable()->constrained()->nullOnDelete();
             $table->string('event_name')->nullable();
             $table->string('reference', 64)->unique();
+            $table->string('provider', 16)->default('paystack'); // paystack | flutterwave
             $table->unsignedBigInteger('amount_kobo');
             $table->string('currency', 3)->default('NGN');
             $table->string('status', 12)->default('pending'); // pending | success | failed

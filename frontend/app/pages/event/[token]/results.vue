@@ -13,37 +13,38 @@
                 <div class="icon-tile lg mx-auto mb-3" :class="hidden.visibility === 'private' ? 'violet' : ''">
                     <i class="bi" :class="hidden.visibility === 'private' ? 'bi-eye-slash' : 'bi-hourglass-split'"></i>
                 </div>
-                <h2 class="h4 fw-800 mb-2">{{ hidden.visibility === 'private' ? 'Results are not public' : 'Results aren’t published yet' }}</h2>
+                <h2 class="h4 fw-800 mb-2">{{ hidden.visibility === 'private' ? t('res.notPublic') : t('res.notYet') }}</h2>
                 <p class="text-muted mx-auto mb-3" style="max-width: 440px">{{ hidden.message }}</p>
                 <div v-if="hidden.visibility === 'after_close' && closesIn.label" class="countdown mx-auto">
-                    <div class="small-caps">Results in</div>
+                    <div class="small-caps">{{ t('res.in') }}</div>
                     <div class="fs-3 fw-800 text-ink mono">{{ closesIn.label }}</div>
                 </div>
-                <p v-if="hidden.visibility === 'after_close'" class="small text-muted mt-3 mb-0">This page updates by itself when voting closes.</p>
+                <p v-if="hidden.visibility === 'after_close'" class="small text-muted mt-3 mb-0">{{ t('res.autoUpdate') }}</p>
             </div>
         </div>
 
         <div v-else-if="error" class="card-b">
-            <EmptyState :icon="notFound ? 'bi-search' : 'bi-wifi-off'" :title="notFound ? 'Results not found' : 'Couldn\'t load results'"
-                :text="notFound ? 'This results link is invalid.' : error">
-                <button v-if="!notFound" class="btn btn-soft" @click="fetchResults()">Try again</button>
+            <EmptyState :icon="notFound ? 'bi-search' : 'bi-wifi-off'" :title="notFound ? t('res.notFound') : t('res.cantLoad')"
+                :text="notFound ? t('res.invalidLink') : error">
+                <button v-if="!notFound" class="btn btn-soft" @click="fetchResults()">{{ t('common.tryAgain') }}</button>
             </EmptyState>
         </div>
 
         <template v-else-if="results">
             <ResultsHeader :name="results.event.name" :status="results.event.status" :ends-at="results.event.ends_at" :updated-at="updatedLabel">
                 <button class="btn btn-outline-light-on-dark btn-sm" :disabled="refreshing" @click="fetchResults(true)">
-                    <i class="bi bi-arrow-clockwise" :class="{ spin: refreshing }"></i> Refresh
+                    <i class="bi bi-arrow-clockwise" :class="{ spin: refreshing }"></i> {{ t('res.refresh') }}
                 </button>
                 <button class="btn btn-light-on-dark btn-sm" @click="togglePresent">
-                    <i class="bi" :class="presenting ? 'bi-fullscreen-exit' : 'bi-fullscreen'"></i> {{ presenting ? 'Exit' : 'Present' }}
+                    <i class="bi" :class="presenting ? 'bi-fullscreen-exit' : 'bi-fullscreen'"></i> {{ presenting ? t('res.exit') : t('res.present') }}
                 </button>
             </ResultsHeader>
 
             <div v-if="results.integrity" class="integrity mb-4" :class="{ warn: results.integrity.changes_during_voting > 0 }">
                 <i class="bi" :class="results.integrity.changes_during_voting ? 'bi-info-circle' : 'bi-shield-check'"></i>
-                <span v-if="!results.integrity.changes_during_voting">Secret ballot · no changes were made to this ballot after voting began.</span>
-                <span v-else>Secret ballot · the organiser made {{ results.integrity.changes_during_voting }} recorded change{{ results.integrity.changes_during_voting === 1 ? '' : 's' }} after voting began.</span>
+                <span><template v-if="!isPaid">{{ t('layout.secretBallot') }} · </template>{{ results.integrity.changes_during_voting
+                    ? tn('res.integrityChanges', results.integrity.changes_during_voting)
+                    : t('res.integrityOk') }}</span>
             </div>
 
             <img v-if="results.event.brand?.logo_url" :src="results.event.brand.logo_url" alt="" class="brand-logo mb-3" />
@@ -52,18 +53,18 @@
             <div v-if="!presenting" class="row g-4 mt-1 no-print">
                 <div class="col-lg-7">
                     <div class="card-b pad h-100">
-                        <h3 class="h6 fw-800 mb-3">{{ isPaid ? 'Votes over time' : 'Ballots over time' }}</h3>
+                        <h3 class="h6 fw-800 mb-3">{{ isPaid ? t('res.votesOverTime') : t('res.ballotsOverTime') }}</h3>
                         <TurnoutChart :timeline="results.timeline" :unit="isPaid ? 'votes' : 'ballots'" />
                     </div>
                 </div>
                 <div class="col-lg-5">
                     <form class="card-b pad h-100" novalidate @submit.prevent="checkReceipt">
-                        <h3 class="h6 fw-800 mb-1"><i class="bi bi-patch-check text-brand"></i> Check your {{ isPaid ? 'votes' : 'ballot' }}</h3>
-                        <p class="small text-muted mb-3">{{ isPaid ? 'Enter the payment reference from your receipt email.' : 'Enter the receipt shown after you voted. It proves your ballot was counted without revealing your choices.' }}</p>
+                        <h3 class="h6 fw-800 mb-1"><i class="bi bi-patch-check text-brand"></i> {{ isPaid ? t('res.checkVotes') : t('res.checkBallot') }}</h3>
+                        <p class="small text-muted mb-3">{{ isPaid ? t('res.checkVotesHint') : t('res.checkBallotHint') }}</p>
                         <div class="d-flex gap-2">
-                            <input v-model.trim="receiptCode" class="form-control mono text-uppercase" :placeholder="isPaid ? 'PV-…' : 'XXXX-XXXX-XX'" maxlength="40" aria-label="Receipt" />
+                            <input v-model.trim="receiptCode" class="form-control mono text-uppercase" :placeholder="isPaid ? 'PV-…' : 'XXXX-XXXX-XX'" maxlength="40" :aria-label="t('res.receipt')" />
                             <button class="btn btn-primary" :disabled="checkingReceipt || receiptCode.length < 6">
-                                <span v-if="checkingReceipt" class="spinner-border spinner-border-sm"></span><span v-else>Check</span>
+                                <span v-if="checkingReceipt" class="spinner-border spinner-border-sm"></span><span v-else>{{ t('res.check') }}</span>
                             </button>
                         </div>
                         <div v-if="receiptResult" class="receipt-result mt-3" :class="receiptResult.valid ? 'ok' : 'bad'">
@@ -75,10 +76,10 @@
             </div>
 
             <p class="text-center small text-muted mt-2 no-print">
-                <template v-if="isPaid"><i class="bi bi-cash-coin"></i> Public paid voting: each vote is a confirmed payment.</template>
-                <template v-else><i class="bi bi-incognito"></i> Totals only. Nobody, not even the organiser, can see how anyone voted.</template>
+                <template v-if="isPaid"><i class="bi bi-cash-coin"></i> {{ t('res.paidNote') }}</template>
+                <template v-else><i class="bi bi-incognito"></i> {{ t('res.secretNote') }}</template>
                 <template v-if="results.event.status === 'active'">
-                    · {{ live ? 'Updates instantly as votes arrive.' : 'Refreshes automatically every 15 seconds.' }}
+                    · {{ live ? t('res.liveNote') : t('res.pollNote') }}
                 </template>
             </p>
         </template>
@@ -115,7 +116,7 @@ const tick = ref(Date.now());
 interface HiddenResults {
     message: string;
     visibility: 'after_close' | 'private';
-    event: { name: string; status: EventStatus; starts_at: string | null; ends_at: string | null; brand?: Brand | null };
+    event: { name: string; status: EventStatus; starts_at: string | null; ends_at: string | null; brand?: Brand | null; language?: string };
 }
 const hidden = ref<HiddenResults | null>(null);
 const closesIn = useCountdown(() => hidden.value?.event.ends_at);
@@ -138,13 +139,13 @@ async function checkReceipt() {
     }
 }
 
-useHead({ title: computed(() => (results.value ? `Results · ${results.value.event.name}` : 'Results · Ballotify')) });
+useHead({ title: computed(() => `${t('res.title')} · ${results.value?.event.name ?? hidden.value?.event.name ?? 'Ballotify'}`) });
 
 const updatedLabel = computed(() => {
     if (!updatedAt.value) return '';
     const s = Math.round((tick.value - updatedAt.value.getTime()) / 1000);
-    if (s < 5) return 'just now';
-    if (s < 60) return `${s}s ago`;
+    if (s < 5) return t('res.justNow');
+    if (s < 60) return t('res.secondsAgo', { n: s });
     return updatedAt.value.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
 });
 
@@ -153,6 +154,7 @@ async function fetchResults(manual = false) {
     refreshing.value = true;
     try {
         results.value = (await publicApi.getResults(token)).data;
+        setEventLanguage(results.value.event.language);
         branding.value = results.value.event.branding !== false;
         ballotMode.value = results.value.event.voting_mode ?? 'codes';
         hidden.value = null;
@@ -161,6 +163,7 @@ async function fetchResults(manual = false) {
     } catch (e) {
         if (apiStatus(e) === 403) {
             hidden.value = (e as { response: { data: HiddenResults } }).response.data;
+            setEventLanguage(hidden.value.event.language);
             results.value = null;
             return;
         }
@@ -222,7 +225,7 @@ async function togglePresent() {
 function onFullscreen() { presenting.value = !!document.fullscreenElement; }
 
 onMounted(async () => {
-    if (!token) { error.value = 'This results link is invalid.'; notFound.value = true; loading.value = false; return; }
+    if (!token) { error.value = t('res.invalidLink'); notFound.value = true; loading.value = false; return; }
     await fetchResults();
     startLive();
     // Waiting for publication: check again every 30 s (and right after the countdown ends).

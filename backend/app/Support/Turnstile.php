@@ -26,7 +26,7 @@ class Turnstile
         }
         $token = (string) $request->input('captcha_token', '');
         $fail = fn () => throw ValidationException::withMessages([
-            'captcha_token' => ['Please complete the “I’m human” check and try again.'],
+            'captcha_token' => [__('Please complete the “I’m human” check and try again.')],
         ]);
         if ($token === '') {
             $fail();

@@ -95,6 +95,8 @@ export interface BallotEvent {
     /** Voters can request their own code with an ID on the list. */
     self_registration?: boolean;
     member_id_label?: string | null;
+    /** Default language of the public voting pages (voters can switch). */
+    language?: string;
     /** Name of the account that owns the event. */
     owner_name?: string | null;
     ussd_enabled?: boolean;
@@ -127,6 +129,8 @@ export interface BallotEvent {
 
 /** What the public ballot endpoint returns for an open event. */
 export interface PublicEvent {
+    /** Default language of the voting pages. */
+    language?: string;
     id: number;
     name: string;
     description: string | null;
@@ -186,6 +190,7 @@ export interface EventResults {
         voting_mode?: VotingMode;
         branding?: boolean;
         brand?: Brand | null;
+        language?: string;
     };
     stats: {
         total_votes: number;
@@ -329,6 +334,8 @@ export interface PlanSettings {
     paid_vote_fee_percent: number;
     billing_enabled: boolean;
     payments_enabled: boolean;
+    /** Configured providers in order of preference, e.g. ['paystack', 'flutterwave']. */
+    payment_providers?: string[];
 }
 
 export interface PlatformPayment {
@@ -447,6 +454,9 @@ export interface SystemHealth {
     mail: { driver: string; from: string | null };
     sms: { driver: string | null };
     paystack: boolean;
+    flutterwave?: boolean;
+    /** Paystack failed to start a checkout in the last few minutes (payers went to the backup). */
+    paystack_down?: boolean;
     broadcasting: string;
     delivery_errors: { last_7_days: number; recent: { event: string | null; event_id: number; error: string; at: string }[] };
     failed_jobs: { uuid: string; queue: string; job: string; error: string; failed_at: string }[];
@@ -462,6 +472,8 @@ export interface NominationSummary {
 }
 
 export interface NominationForm {
+    /** Default language of the voting pages. */
+    language?: string;
     name: string;
     description: string | null;
     open: boolean;

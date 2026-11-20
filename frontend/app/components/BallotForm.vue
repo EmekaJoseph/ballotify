@@ -5,33 +5,33 @@
             <div class="small fw-bold text-ink text-nowrap">{{ answered }} / {{ categories.length }}</div>
             <div class="bar slim flex-grow-1"><span :style="{ width: progress + '%' }"></span></div>
             <button v-if="nextUnanswered" type="button" class="btn btn-soft btn-sm text-nowrap" @click="jumpTo(nextUnanswered.id)">
-                Next <i class="bi bi-arrow-down"></i>
+                {{ t('ballot.next') }} <i class="bi bi-arrow-down"></i>
             </button>
-            <span v-else class="pill pill-brand"><i class="bi bi-check2"></i> All done</span>
+            <span v-else class="pill pill-brand"><i class="bi bi-check2"></i> {{ t('ballot.allDone') }}</span>
         </div>
 
         <section v-for="(cat, idx) in categories" :id="`ballot-cat-${cat.id}`" :key="cat.id" class="card-b mb-3 overflow-hidden fade-up ballot-cat"
             :style="{ animationDelay: `${Math.min(idx, 6) * 60}ms` }">
             <header class="d-flex align-items-center justify-content-between gap-2 px-3 px-sm-4 pt-3 pb-2">
                 <div class="min-w-0">
-                    <div class="small-caps">Category {{ idx + 1 }}</div>
+                    <div class="small-caps">{{ t('ballot.category', { n: idx + 1 }) }}</div>
                     <h3 class="h5 fw-800 mb-0 text-break">{{ cat.name }}</h3>
                     <div class="small mt-1" :class="isFull(cat) && !single(cat) ? 'text-brand fw-semibold' : 'text-muted'">
-                        <template v-if="single(cat)">Choose one</template>
-                        <template v-else-if="limitFor(cat)">Pick up to {{ limitFor(cat) }} · {{ countFor(cat.id) }} picked</template>
-                        <template v-else>Pick as many as you like<template v-if="countFor(cat.id)"> · {{ countFor(cat.id) }} picked</template></template>
+                        <template v-if="single(cat)">{{ t('ballot.chooseOne') }}</template>
+                        <template v-else-if="limitFor(cat)">{{ t('ballot.pickUpTo', { n: limitFor(cat)!, picked: countFor(cat.id) }) }}</template>
+                        <template v-else>{{ t('ballot.pickAny') }}<template v-if="countFor(cat.id)"> · {{ t('ballot.picked', { n: countFor(cat.id) }) }}</template></template>
                     </div>
                 </div>
-                <i v-if="countFor(cat.id) > 0" class="bi bi-check-circle-fill text-brand fs-5" aria-label="Answered"></i>
+                <i v-if="countFor(cat.id) > 0" class="bi bi-check-circle-fill text-brand fs-5" :aria-label="t('ballot.answered')"></i>
             </header>
 
             <div class="px-2 px-sm-3 pb-3">
-                <div v-if="!(byCategory[cat.id]?.length)" class="text-muted small px-2 py-3">No candidates in this category.</div>
+                <div v-if="!(byCategory[cat.id]?.length)" class="text-muted small px-2 py-3">{{ t('ballot.noCandidates') }}</div>
                 <div class="row g-2" role="group" :aria-label="cat.name">
                     <div v-for="cand in byCategory[cat.id]" :key="cand.id" class="col-12 col-sm-6">
                         <button type="button" class="option" :class="{ selected: isSelected(cat.id, cand.id) }"
                             :aria-pressed="isSelected(cat.id, cand.id)" :disabled="disabled || (!single(cat) && isFull(cat) && !isSelected(cat.id, cand.id))"
-                            :title="!single(cat) && isFull(cat) && !isSelected(cat.id, cand.id) ? `You can pick up to ${limitFor(cat)}. Unselect one to change.` : undefined"
+                            :title="!single(cat) && isFull(cat) && !isSelected(cat.id, cand.id) ? t('ballot.limitTitle', { n: limitFor(cat) ?? 0 }) : undefined"
                             @click="toggle(cat.id, cand.id)">
                             <CandidateAvatar :name="cand.name" :src="cand.image_url" />
                             <span class="flex-grow-1 text-start min-w-0">
@@ -51,15 +51,15 @@
         <div class="submit-bar">
             <button type="button" class="btn btn-primary btn-lg w-100" :disabled="disabled || answered === 0"
                 @click="reviewOpen = true">
-                Review &amp; submit <i class="bi bi-arrow-right"></i>
+                {{ t('ballot.review') }} <i class="bi bi-arrow-right"></i>
             </button>
             <p v-if="answered < categories.length && answered > 0" class="small text-muted text-center mt-2 mb-0">
-                {{ categories.length - answered }} categor{{ categories.length - answered === 1 ? 'y' : 'ies' }} left blank. That's allowed.
+                {{ tn('ballot.blank', categories.length - answered) }}
             </p>
         </div>
 
         <!-- Review -->
-        <BaseModal :open="reviewOpen" title="Review your ballot" subtitle="Votes are final once submitted." @close="reviewOpen = false">
+        <BaseModal :open="reviewOpen" :title="t('ballot.reviewTitle')" :subtitle="t('ballot.reviewSub')" @close="reviewOpen = false">
             <ul class="list-unstyled mb-0">
                 <li v-for="cat in categories" :key="cat.id" class="py-2 border-bottom">
                     <div class="small-caps mb-1">{{ cat.name }}</div>
@@ -72,14 +72,14 @@
                             </span>
                         </span>
                     </div>
-                    <div v-else class="text-muted small fst-italic">No selection</div>
+                    <div v-else class="text-muted small fst-italic">{{ t('ballot.noSelection') }}</div>
                 </li>
             </ul>
             <template #footer>
-                <button type="button" class="btn btn-ghost" :disabled="submitting" @click="reviewOpen = false">Change</button>
+                <button type="button" class="btn btn-ghost" :disabled="submitting" @click="reviewOpen = false">{{ t('ballot.change') }}</button>
                 <button type="button" class="btn btn-primary" :disabled="submitting" @click="submit">
                     <span v-if="submitting" class="spinner-border spinner-border-sm"></span>
-                    {{ submitting ? 'Submitting…' : 'Cast my vote' }}
+                    {{ submitting ? t('ballot.submitting') : t('ballot.cast') }}
                 </button>
             </template>
         </BaseModal>

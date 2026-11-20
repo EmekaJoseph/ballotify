@@ -127,6 +127,38 @@ it('supports two-step login with an authenticator app and recovery codes', funct
     $this->actingAs($user)->deleteJson('/api/me/two-factor', ['password' => 'secret123'])->assertOk()->assertJsonPath('user.two_factor_enabled', false);
 });
 
+it('refuses a reused code, locks after repeated wrong codes, and renews recovery codes', function () {
+    $user = User::factory()->create(['email' => 'tfa2@example.com', 'password' => 'secret123']);
+    $g = new Google2FA();
+    $secret = $this->actingAs($user)->postJson('/api/me/two-factor', ['password' => 'secret123'])->json('secret');
+    $old = $this->actingAs($user)->postJson('/api/me/two-factor/confirm', ['code' => $g->getCurrentOtp($secret)])->json('recovery_codes');
+    $challenge = fn () => $this->postJson('/api/auth/login', ['email' => 'tfa2@example.com', 'password' => 'secret123'])->json('challenge');
+
+    // The same app code can't be used twice.
+    $code = $g->getCurrentOtp($secret);
+    $this->postJson('/api/auth/two-factor', ['challenge' => $challenge(), 'code' => $code])->assertOk();
+    $this->postJson('/api/auth/two-factor', ['challenge' => $challenge(), 'code' => $code])->assertStatus(422);
+
+    // Five wrong codes lock the account's second step, even for a correct code.
+    \Illuminate\Support\Facades\Cache::flush(); // reset the per-IP limiter so the per-account lock is what's tested
+    $c = $challenge();
+    foreach (range(1, 5) as $i) {
+        $this->postJson('/api/auth/two-factor', ['challenge' => $c, 'code' => '000000'])->assertStatus(422);
+    }
+    $this->postJson('/api/auth/two-factor', ['challenge' => $c, 'code' => $old[0]])
+        ->assertStatus(422)->assertJsonFragment(['code' => ['Too many wrong codes. Wait 15 minutes, then sign in again.']]);
+    \Illuminate\Support\Facades\Cache::flush();
+
+    // New recovery codes replace the old ones.
+    $this->actingAs($user)->getJson('/api/me/two-factor')->assertJsonPath('recovery_codes_left', 8);
+    $this->actingAs($user)->postJson('/api/me/two-factor/recovery-codes', ['password' => 'nope'])->assertStatus(422);
+    $new = $this->actingAs($user)->postJson('/api/me/two-factor/recovery-codes', ['password' => 'secret123'])->assertOk()->json('recovery_codes');
+    expect($new)->toHaveCount(8)->not->toContain($old[1]);
+    $this->postJson('/api/auth/two-factor', ['challenge' => $challenge(), 'code' => $old[1]])->assertStatus(422);
+    $this->postJson('/api/auth/two-factor', ['challenge' => $challenge(), 'code' => $new[0]])->assertOk();
+    $this->actingAs($user->fresh())->getJson('/api/me/two-factor')->assertJsonPath('recovery_codes_left', 7);
+});
+
 it('never exposes the two-factor secret', function () {
     $user = User::factory()->create(['password' => 'secret123']);
     $this->actingAs($user)->postJson('/api/me/two-factor', ['password' => 'secret123'])->assertOk();

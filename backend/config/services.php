@@ -25,6 +25,15 @@ return [
         'base_url' => env('PAYSTACK_BASE_URL', 'https://api.paystack.co'),
     ],
 
+    // Backup payment provider: used when Paystack can't start a checkout.
+    // Keys at https://app.flutterwave.com -> Settings -> API keys. The webhook
+    // "secret hash" is any long random string, set both there and here.
+    'flutterwave' => [
+        'secret_key' => env('FLUTTERWAVE_SECRET_KEY'),
+        'webhook_hash' => env('FLUTTERWAVE_WEBHOOK_HASH'),
+        'base_url' => env('FLUTTERWAVE_BASE_URL', 'https://api.flutterwave.com/v3'),
+    ],
+
     // Cloudflare Turnstile (bot / card-testing protection). Empty = off.
     'turnstile' => [
         'secret_key' => env('TURNSTILE_SECRET_KEY'),

@@ -30,8 +30,12 @@
 | POST | `/me/two-factor` | `password` | `{ secret, otpauth_url }` (not active until confirmed) |
 | POST | `/me/two-factor/confirm` | `code` | `{ recovery_codes: string[8], user }` |
 | DELETE | `/me/two-factor` | `password` | `{ user }` |
+| GET | `/me/two-factor` | | `{ enabled, recovery_codes_left }` |
+| POST | `/me/two-factor/recovery-codes` | `password` | `{ recovery_codes: string[8] }` (the old ones stop working) |
 
-Sign-in, registration, two-factor and password-reset endpoints are limited to 10 requests per minute per IP. The emailed links open the frontend (`FRONTEND_URL/reset-password`, `FRONTEND_URL/verify-email`).
+Sign-in, registration, two-factor and password-reset endpoints are limited to 10 requests per minute per IP. Each authenticator code works once, and 5 wrong codes lock that account's second step for 15 minutes.
+
+Public endpoints answer in the voter's language when the request has `X-Locale: yo | ha | ig | fr` (anything else: English). Events have a `language` field (the voting pages' default), settable with `PATCH /events/{id}`. The emailed links open the frontend (`FRONTEND_URL/reset-password`, `FRONTEND_URL/verify-email`).
 
 ## Events (organiser)
 
@@ -207,6 +211,7 @@ Pay per event. Free events: a limited number of open events per account, a voter
 | POST | `/billing/verify` | `{ reference }` (the organiser's own payment). Asks Paystack, then upgrades the event: `{ status: success\|pending\|failed, message, event_id }`. A receipt is emailed. |
 | GET | `/billing/payments` | The organiser's own payments |
 | GET | `/billing/payments/{reference}` | One successful payment, for the printable receipt |
+| POST | `/flutterwave/webhook` | Flutterwave (backup provider) notification. It must carry `verif-hash` equal to `FLUTTERWAVE_WEBHOOK_HASH`, otherwise `401`. The transaction is re-checked with Flutterwave. |
 | POST | `/paystack/webhook` | Paystack server-to-server notification. It must carry a valid `x-paystack-signature` (HMAC-SHA512), otherwise it gets `401`. The transaction is always re-checked with Paystack. |
 
 Payments are settled exactly once, under a row lock. An event is upgraded only when Paystack reports `success` for at least the stored amount in the stored currency. An abandoned checkout stays pending, so the organiser can still finish paying.

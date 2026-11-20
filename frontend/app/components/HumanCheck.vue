@@ -44,6 +44,8 @@ onMounted(async () => {
         if (!box.value || !window.turnstile) return;
         widgetId = window.turnstile.render(box.value, {
             sitekey: siteKey,
+            // Turnstile speaks French and English; for Yorùbá, Hausa and Igbo it follows the browser.
+            language: ballotLang.value === 'fr' || ballotLang.value === 'en' ? ballotLang.value : 'auto',
             theme: document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light',
             callback: (t: string) => { token.value = t; },
             'expired-callback': () => { token.value = ''; },

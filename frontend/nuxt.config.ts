@@ -40,6 +40,12 @@ export default defineNuxtConfig({
           rel: 'stylesheet',
           href: 'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap',
         },
+        // Plus Jakarta Sans has no Hausa hooked letters (ƙ ɗ ɓ ƴ): a tiny Noto Sans subset with only those
+        // glyphs fills them in, so Hausa voting pages don't fall back to a mismatched serif font.
+        {
+          rel: 'stylesheet',
+          href: 'https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;700;800&display=swap&text=%C6%81%C9%93%C6%8A%C9%97%C6%98%C6%99%C6%B3%C6%B4',
+        },
       ],
     },
   },

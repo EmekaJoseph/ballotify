@@ -92,8 +92,13 @@ const checks = computed(() => {
             ? { label: 'Email', state: 'warn' as State, text: `Driver “${x.mail.driver}”: emails are written to the log, not sent.` }
             : { label: 'Email', state: 'good' as State, text: `Sending with “${x.mail.driver}” from ${x.mail.from ?? '(no from address)'}.` },
         x.paystack
-            ? { label: 'Paystack', state: 'good' as State, text: 'Connected: upgrades and paid voting work.' }
-            : { label: 'Paystack', state: 'warn' as State, text: 'Not set up: no online payments yet.' },
+            ? x.paystack_down
+                ? { label: 'Paystack', state: 'bad' as State, text: x.flutterwave ? 'Failing right now: payers are being sent to Flutterwave.' : 'Failing right now, and no backup provider is set up.' }
+                : { label: 'Paystack', state: 'good' as State, text: 'Connected: upgrades and paid voting work.' }
+            : { label: 'Paystack', state: 'warn' as State, text: x.flutterwave ? 'Not set up: Flutterwave takes all payments.' : 'Not set up: no online payments yet.' },
+        x.flutterwave
+            ? { label: 'Flutterwave', state: 'good' as State, text: 'Connected as the backup: used when Paystack is down.' }
+            : { label: 'Flutterwave', state: 'warn' as State, text: 'No backup provider: paid voting stops if Paystack is down.' },
     ];
 });
 

@@ -8,6 +8,8 @@ use App\Mail\PaymentReceipt;
 use App\Models\Payment;
 use App\Models\VotePurchase;
 use App\Support\Audit;
+use App\Support\Flutterwave;
+use App\Support\Payments;
 use App\Support\Paystack;
 use App\Support\Plans;
 use Illuminate\Http\Request;
@@ -18,12 +20,13 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 /**
- * Pay per event: a one-off Paystack payment upgrades one event to Pro.
+ * Pay per event: a one-off payment upgrades one event to Pro. Paystack takes
+ * it; Flutterwave is the backup when Paystack is down (see Payments).
  *
- *  1. POST /events/{id}/upgrade        -> Paystack checkout URL (organiser is redirected)
- *  2. Paystack redirects back to the dashboard with ?reference=...
- *  3. POST /billing/verify {reference} -> we ask Paystack, then upgrade the event
- *  4. Paystack also calls POST /paystack/webhook (covers closed tabs)
+ *  1. POST /events/{id}/upgrade        -> checkout URL (organiser is redirected)
+ *  2. The provider redirects back to the dashboard with ?reference=...
+ *  3. POST /billing/verify {reference} -> we ask the provider, then upgrade the event
+ *  4. The provider also calls its webhook (covers closed tabs)
  *
  * Steps 3 and 4 both go through settle(), which is idempotent: an event is
  * upgraded once per payment, however many times either arrives.
@@ -55,7 +58,7 @@ class BillingController extends Controller
         if ($event->status === Event::STATUS_COMPLETED) {
             return response()->json(['message' => 'Voting has closed for this event, so it can no longer be upgraded.'], 422);
         }
-        if (! Paystack::configured()) {
+        if (! Payments::available()) {
             return response()->json([
                 'message' => 'Online payment isn’t available yet. Please contact us to upgrade this event.',
                 'payments_enabled' => false,
@@ -75,11 +78,12 @@ class BillingController extends Controller
         $callback = rtrim(config('app.frontend_url'), '/') . "/dashboard/events/{$event->id}?tab=overview&payment=1";
 
         try {
-            $url = Paystack::initialize($request->user()->email, $payment->amount_kobo, $payment->reference, $callback, [
+            [$provider, $url] = Payments::checkout($request->user()->email, $request->user()->name, $payment->amount_kobo, $payment->reference, $callback, [
                 'event_id' => $event->id,
                 'payment_id' => $payment->id,
                 'custom_fields' => [['display_name' => 'Event', 'variable_name' => 'event', 'value' => $event->name]],
-            ]);
+            ], [], "Pro upgrade: {$event->name}");
+            $payment->update(['provider' => $provider]);
         } catch (\Throwable $e) {
             report($e);
             $payment->update(['status' => Payment::FAILED, 'failure_reason' => 'Could not start checkout']);
@@ -97,7 +101,7 @@ class BillingController extends Controller
 
         if ($payment->status === Payment::PENDING) {
             try {
-                $this->settle($payment, Paystack::verify($payment->reference));
+                $this->settle($payment, Payments::verify($payment->provider, $payment->reference));
             } catch (\Throwable $e) {
                 report($e);
                 return response()->json(['message' => 'We couldn’t confirm the payment yet. If you were charged, it will be applied automatically within a few minutes.', 'status' => 'pending'], 202);
@@ -134,7 +138,7 @@ class BillingController extends Controller
 
         // Paid public votes share the same Paystack account and webhook.
         if (str_starts_with($reference, PaidVoteController::PREFIX)) {
-            $purchase = VotePurchase::where('reference', $reference)->first();
+            $purchase = VotePurchase::where('reference', $reference)->where('provider', Payments::PAYSTACK)->first();
             if (! $purchase) {
                 Log::warning('Paystack webhook for unknown vote purchase', ['reference' => $reference]);
                 return response()->json(['ok' => true]);
@@ -148,7 +152,7 @@ class BillingController extends Controller
             return response()->json(['ok' => true]);
         }
 
-        $payment = Payment::where('reference', $reference)->first();
+        $payment = Payment::where('reference', $reference)->where('provider', Payments::PAYSTACK)->first();
         if (! $payment) {
             Log::warning('Paystack webhook for unknown reference', ['reference' => $reference]);
             return response()->json(['ok' => true]);
@@ -166,7 +170,38 @@ class BillingController extends Controller
     }
 
     /**
-     * Apply a verified Paystack transaction to our payment record, exactly once.
+     * Flutterwave server-to-server notification (backup provider). Like
+     * Paystack's: the body is only a hint; the transaction is verified with
+     * Flutterwave's API before anything is applied.
+     */
+    public function flutterwaveWebhook(Request $request)
+    {
+        if (! Flutterwave::validWebhook($request->header('verif-hash'))) {
+            return response()->json(['message' => 'Invalid signature'], 401);
+        }
+
+        $reference = (string) ($request->input('data.tx_ref') ?? $request->input('txRef') ?? '');
+        $record = str_starts_with($reference, PaidVoteController::PREFIX)
+            ? VotePurchase::where('reference', $reference)->where('provider', Payments::FLUTTERWAVE)->first()
+            : Payment::where('reference', $reference)->where('provider', Payments::FLUTTERWAVE)->first();
+        if (! $record) {
+            Log::warning('Flutterwave webhook for unknown reference', ['reference' => $reference]);
+            return response()->json(['ok' => true]);
+        }
+
+        try {
+            $tx = Flutterwave::verify($reference);
+            $record instanceof VotePurchase ? PaidVoteController::settle($record, $tx) : $this->settle($record, $tx);
+        } catch (\Throwable $e) {
+            report($e);
+            return response()->json(['message' => 'Retry later'], 500); // Flutterwave retries
+        }
+
+        return response()->json(['ok' => true]);
+    }
+
+    /**
+     * Apply a verified transaction (Paystack's shape) to our payment record, exactly once.
      * The event is upgraded only if Paystack says success for the full amount.
      */
     private function settle(Payment $payment, array $tx): void
@@ -183,7 +218,7 @@ class BillingController extends Controller
                     || (int) ($tx['amount'] ?? 0) < $payment->amount_kobo
                     || strtoupper((string) ($tx['currency'] ?? '')) !== $payment->currency) {
                     $payment->update(['status' => Payment::FAILED, 'failure_reason' => 'Amount or currency did not match. Contact support.']);
-                    Log::error('Paystack amount mismatch', ['reference' => $payment->reference, 'tx' => $tx]);
+                    Log::error('Payment amount mismatch', ['reference' => $payment->reference, 'provider' => $payment->provider, 'tx' => $tx]);
                     return;
                 }
 
@@ -258,7 +293,7 @@ class BillingController extends Controller
 
         return [
             'billing_enabled' => Plans::enabled(),
-            'payments_enabled' => Plans::enabled() && Paystack::configured(),
+            'payments_enabled' => Plans::enabled() && Payments::available(),
             'currency' => config('ballotify.billing.currency', 'NGN'),
             'pro_price_naira' => $s['pro_price_naira'],
             'free' => [

@@ -335,7 +335,7 @@ async function askUpgrade(title: string) {
     }
     const ok = await confirm({
         title,
-        message: `Upgrade “${props.event.name}” to Pro for a one-off ${priceLabel.value}: up to ${formatNumber(plans.value.pro.max_voters)} voters, email & SMS invitations, and no Ballotify branding. You’ll pay securely with Paystack.`,
+        message: `Upgrade “${props.event.name}” to Pro for a one-off ${priceLabel.value}: up to ${formatNumber(plans.value.pro.max_voters)} voters, email & SMS invitations, and no Ballotify branding. You’ll pay securely online (card, bank transfer or USSD).`,
         confirmText: 'Upgrade now',
     });
     if (ok) await startUpgrade(props.event.id);

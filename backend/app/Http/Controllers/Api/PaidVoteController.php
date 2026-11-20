@@ -8,7 +8,7 @@ use App\Mail\VotePurchaseReceipt;
 use App\Models\Candidate;
 use App\Models\Event;
 use App\Models\VotePurchase;
-use App\Support\Paystack;
+use App\Support\Payments;
 use App\Support\Plans;
 use App\Support\Turnstile;
 use Illuminate\Http\Request;
@@ -22,12 +22,13 @@ use Illuminate\Validation\ValidationException;
 
 /**
  * Paid public voting (award nights, pageants): anyone picks a candidate, pays
- * on Paystack for N votes, and the votes are added once Paystack confirms.
+ * for N votes, and the votes are added once the payment is confirmed.
+ * Paystack takes the payment; Flutterwave is the backup if Paystack is down.
  *
- *  1. POST /public/events/{token}/paid-votes  -> Paystack checkout URL
- *  2. Paystack sends the voter back to /vote/{token}?ref=...
+ *  1. POST /public/events/{token}/paid-votes  -> checkout URL (Paystack or Flutterwave)
+ *  2. The provider sends the voter back to /vote/{token}?ref=...
  *  3. POST /public/paid-votes/verify          -> votes added (idempotent)
- *  4. Paystack's webhook also lands in settle() (covers closed tabs)
+ *  4. The providers' webhooks also land in settle() (covers closed tabs)
  */
 class PaidVoteController extends Controller
 {
@@ -46,25 +47,25 @@ class PaidVoteController extends Controller
         $event = Event::publicToken($token)->with('user')->firstOrFail();
 
         if (! $event->isPaid()) {
-            return response()->json(['message' => 'This event doesn’t use paid voting.'], 422);
+            return response()->json(['message' => __('This event doesn’t use paid voting.')], 422);
         }
         if (! $event->isOpen()) {
-            return response()->json(['message' => $event->status === Event::STATUS_UPCOMING ? 'Voting has not started yet.' : 'Voting has ended.'], 403);
+            return response()->json(['message' => $event->status === Event::STATUS_UPCOMING ? __('Voting has not started yet.') : __('Voting has ended.')], 403);
         }
-        if (! Paystack::configured()) {
-            return response()->json(['message' => 'Paid voting isn’t available right now. Please try again later.', 'payments_enabled' => false], 503);
+        if (! Payments::available()) {
+            return response()->json(['message' => __('Paid voting isn’t available right now. Please try again later.'), 'payments_enabled' => false], 503);
         }
 
         $candidate = Candidate::where('event_id', $event->id)->find($data['candidate_id']);
         if (! $candidate) {
-            throw ValidationException::withMessages(['candidate_id' => ['Choose a candidate from this event.']]);
+            throw ValidationException::withMessages(['candidate_id' => [__('Choose a candidate from this event.')]]);
         }
 
         $amountKobo = $data['quantity'] * (int) $event->vote_price_naira * 100;
         $min = (int) config('ballotify.billing.min_vote_payment_naira', 50);
         if ($amountKobo < $min * 100) {
             $need = (int) ceil($min / max(1, (int) $event->vote_price_naira));
-            throw ValidationException::withMessages(['quantity' => ["The smallest payment is ₦{$min}. Choose at least {$need} votes."]]);
+            throw ValidationException::withMessages(['quantity' => [__('The smallest payment is ₦:min. Choose at least :count votes.', ['min' => $min, 'count' => $need])]]);
         }
 
         // Automatic payouts: the organiser's verified subaccount gets their share directly.
@@ -89,18 +90,21 @@ class PaidVoteController extends Controller
         $callback = rtrim(config('app.frontend_url'), '/') . "/vote/{$event->link_token}?ref={$purchase->reference}";
 
         try {
-            $url = Paystack::initialize($purchase->email, $amountKobo, $purchase->reference, $callback, [
+            [$provider, $url] = Payments::checkout($purchase->email, $purchase->name, $amountKobo, $purchase->reference, $callback, [
                 'kind' => 'paid_vote',
                 'event_id' => $event->id,
                 'custom_fields' => [
                     ['display_name' => 'Event', 'variable_name' => 'event', 'value' => $event->name],
                     ['display_name' => 'Votes', 'variable_name' => 'votes', 'value' => "{$purchase->quantity} for {$candidate->name}"],
                 ],
-            ], $subaccount ? ['subaccount' => $subaccount, 'transaction_charge' => $fee] : []);
+            ], $subaccount ? ['subaccount' => $subaccount, 'transaction_charge' => $fee] : [], "{$purchase->quantity} vote(s) for {$candidate->name}");
+            // Split payments are Paystack's: through the backup provider the platform collects
+            // the whole amount and the organiser's share shows as owed in their earnings.
+            $purchase->update(['provider' => $provider, 'subaccount' => $provider === Payments::PAYSTACK ? $subaccount : null]);
         } catch (\Throwable $e) {
             report($e);
             $purchase->update(['status' => VotePurchase::FAILED, 'failure_reason' => 'Could not start checkout']);
-            return response()->json(['message' => 'We couldn’t reach the payment provider. Please try again in a moment.'], 502);
+            return response()->json(['message' => __('We couldn’t reach the payment provider. Please try again in a moment.')], 502);
         }
 
         return response()->json(['authorization_url' => $url, 'reference' => $purchase->reference]);
@@ -114,10 +118,10 @@ class PaidVoteController extends Controller
 
         if ($purchase->status === VotePurchase::PENDING) {
             try {
-                self::settle($purchase, Paystack::verify($purchase->reference));
+                self::settle($purchase, Payments::verify($purchase->provider, $purchase->reference));
             } catch (\Throwable $e) {
                 report($e);
-                return response()->json(['status' => 'pending', 'message' => 'We couldn’t confirm the payment yet. If you were charged, your votes will be added automatically within a few minutes.'], 202);
+                return response()->json(['status' => 'pending', 'message' => __('We couldn’t confirm the payment yet. If you were charged, your votes will be added automatically within a few minutes.')], 202);
             }
         }
         $purchase->refresh();
@@ -128,16 +132,16 @@ class PaidVoteController extends Controller
             'quantity' => $purchase->quantity,
             'candidate' => $purchase->candidate_name,
             'message' => match ($purchase->status) {
-                VotePurchase::SUCCESS => "{$purchase->quantity} vote" . ($purchase->quantity === 1 ? '' : 's') . " for {$purchase->candidate_name} counted.",
-                VotePurchase::LATE => 'Your payment arrived after voting closed, so the votes could not be counted. The organiser will arrange a refund.',
-                VotePurchase::FAILED => $purchase->failure_reason ?: 'The payment was not completed, so no votes were added.',
-                default => 'Your payment is still being processed.',
+                VotePurchase::SUCCESS => __($purchase->quantity === 1 ? ':count vote for :candidate counted.' : ':count votes for :candidate counted.', ['count' => $purchase->quantity, 'candidate' => $purchase->candidate_name]),
+                VotePurchase::LATE => __('Your payment arrived after voting closed, so the votes could not be counted. The organiser will arrange a refund.'),
+                VotePurchase::FAILED => $purchase->failure_reason ? __($purchase->failure_reason) : __('The payment was not completed, so no votes were added.'),
+                default => __('Your payment is still being processed.'),
             },
         ]);
     }
 
     /**
-     * Apply a verified Paystack transaction exactly once. Votes are added only
+     * Apply a verified transaction (Paystack's shape) exactly once. Votes are added only
      * for a successful payment of the full amount made while voting was open.
      */
     public static function settle(VotePurchase $purchase, array $tx): void
@@ -154,7 +158,7 @@ class PaidVoteController extends Controller
                     || (int) ($tx['amount'] ?? 0) < $purchase->amount_kobo
                     || strtoupper((string) ($tx['currency'] ?? '')) !== $purchase->currency) {
                     $purchase->update(['status' => VotePurchase::FAILED, 'failure_reason' => 'Amount or currency did not match. Contact the organiser.']);
-                    Log::error('Paystack amount mismatch (paid vote)', ['reference' => $purchase->reference]);
+                    Log::error('Payment amount mismatch (paid vote)', ['reference' => $purchase->reference, 'provider' => $purchase->provider]);
                     return null;
                 }
 

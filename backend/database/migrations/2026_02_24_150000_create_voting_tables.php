@@ -48,6 +48,8 @@ return new class extends Migration
             // Voters request their own code with an ID on the organiser's list (e.g. matric number).
             $table->boolean('self_registration')->default(false);
             $table->string('member_id_label', 40)->nullable();
+            // Default language of the public voting pages (voters can switch): en | yo | ha | ig | fr
+            $table->string('language', 5)->default('en');
             // Voting by USSD (Africa's Talking): voters dial in with this event number.
             $table->boolean('ussd_enabled')->default(false);
             $table->string('ussd_code', 8)->nullable()->unique();
@@ -130,6 +132,7 @@ return new class extends Migration
             $table->unsignedBigInteger('fee_kobo')->default(0); // platform's share
             $table->string('currency', 3)->default('NGN');
             $table->string('reference', 64)->unique();
+            $table->string('provider', 16)->default('paystack'); // paystack | flutterwave
             $table->string('email');
             $table->string('name')->nullable();
             // pending | success | failed | late (paid after voting closed: not counted, refund due)

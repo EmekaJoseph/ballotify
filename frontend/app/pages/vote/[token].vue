@@ -14,25 +14,25 @@
             <h1 class="h4 fw-800 mb-2">{{ unavailable.title }}</h1>
             <p class="text-muted mx-auto mb-3" style="max-width: 420px">{{ unavailable.text }}</p>
             <div v-if="unavailable.status === 'upcoming' && opensIn.label" class="countdown mx-auto mb-4">
-                <div class="small-caps">Opens in</div>
+                <div class="small-caps">{{ t('vote.opensIn') }}</div>
                 <div class="fs-3 fw-800 text-ink mono">{{ opensIn.label }}</div>
             </div>
             <div class="d-flex flex-column flex-sm-row gap-2 justify-content-center">
                 <NuxtLink v-if="unavailable.status === 'upcoming' && nominationsOpen" :to="`/nominate/${token}`" class="btn btn-primary">
-                    <i class="bi bi-megaphone"></i> Nominate someone
+                    <i class="bi bi-megaphone"></i> {{ t('vote.nominate') }}
                 </NuxtLink>
                 <NuxtLink v-if="unavailable.status === 'completed' && resultsPublic" :to="`/event/${token}/results`" class="btn btn-primary">
-                    <i class="bi bi-bar-chart-line"></i> See the results
+                    <i class="bi bi-bar-chart-line"></i> {{ t('vote.seeResults') }}
                 </NuxtLink>
-                <button v-if="unavailable.retry" class="btn btn-ghost" @click="load"><i class="bi bi-arrow-clockwise"></i> Try again</button>
+                <button v-if="unavailable.retry" class="btn btn-ghost" @click="load"><i class="bi bi-arrow-clockwise"></i> {{ t('common.tryAgain') }}</button>
             </div>
         </div>
 
         <!-- Paid voting: confirming a payment after Paystack sent the voter back -->
         <div v-else-if="stage === 'confirming'" class="card-b text-center px-4 py-5">
             <span class="spinner-border text-brand mb-3"></span>
-            <h1 class="h5 fw-800 mb-1">Confirming your payment…</h1>
-            <p class="text-muted small mb-0">This takes a few seconds.</p>
+            <h1 class="h5 fw-800 mb-1">{{ t('vote.confirming') }}</h1>
+            <p class="text-muted small mb-0">{{ t('vote.confirmingHint') }}</p>
         </div>
 
         <!-- Enter code (or, for paid voting, the nominee list) -->
@@ -43,36 +43,36 @@
             <div class="intro card-b overflow-hidden mb-3">
                 <div class="intro-band">
                     <img v-if="event.brand?.logo_url" :src="event.brand.logo_url" alt="" class="brand-logo mb-3" />
-                    <span class="pill pill-active pill-live"><span class="dot"></span>Voting open</span>
+                    <span class="pill pill-active pill-live"><span class="dot"></span>{{ t('vote.open') }}</span>
                     <h1 class="h2 fw-800 text-white mt-3 mb-2 text-break">{{ event.name }}</h1>
                     <p v-if="event.description" class="intro-text mb-0" style="white-space: pre-line">{{ event.description }}</p>
                 </div>
                 <div class="d-flex flex-wrap gap-3 gap-sm-4 px-4 py-3 small">
-                    <span class="text-muted"><i class="bi bi-grid me-1"></i>{{ event.categories.length }} categor{{ event.categories.length === 1 ? 'y' : 'ies' }}</span>
-                    <span v-if="isPaid" class="text-muted"><i class="bi bi-cash-coin me-1"></i>₦{{ (event.vote_price_naira ?? 0).toLocaleString('en-NG') }} per vote</span>
-                    <span v-else class="text-muted"><i class="bi me-1" :class="allSingle ? 'bi-record-circle' : 'bi-ui-checks'"></i>{{ allSingle ? 'One choice per category' : 'Some categories allow several picks' }}</span>
-                    <span v-if="closesIn.label" class="text-muted"><i class="bi bi-hourglass-split me-1"></i>Closes in <b class="text-ink">{{ closesIn.label }}</b></span>
+                    <span class="text-muted"><i class="bi bi-grid me-1"></i>{{ tn('vote.categories', event.categories.length) }}</span>
+                    <span v-if="isPaid" class="text-muted"><i class="bi bi-cash-coin me-1"></i>{{ t('vote.perVote', { price: (event.vote_price_naira ?? 0).toLocaleString('en-NG') }) }}</span>
+                    <span v-else class="text-muted"><i class="bi me-1" :class="allSingle ? 'bi-record-circle' : 'bi-ui-checks'"></i>{{ allSingle ? t('vote.oneChoice') : t('vote.severalPicks') }}</span>
+                    <span v-if="closesIn.label" class="text-muted"><i class="bi bi-hourglass-split me-1"></i><Tx k="vote.closesIn"><template #time><b class="text-ink">{{ closesIn.label }}</b></template></Tx></span>
                 </div>
             </div>
 
             <PaidBallot v-if="isPaid" :token="token" :categories="event.categories" :candidates="event.candidates"
                 :price="event.vote_price_naira ?? 0" :min-payment="event.min_payment_naira ?? 50" :payments-ready="!!event.payments_enabled" />
             <p v-if="isPaid && event.results_visibility === 'live'" class="text-center mt-2">
-                <NuxtLink :to="`/event/${token}/results`" class="btn btn-ghost btn-sm"><i class="bi bi-bar-chart-line"></i> Live leaderboard</NuxtLink>
+                <NuxtLink :to="`/event/${token}/results`" class="btn btn-ghost btn-sm"><i class="bi bi-bar-chart-line"></i> {{ t('vote.leaderboard') }}</NuxtLink>
             </p>
 
             <form v-if="!isPaid" class="card-b pad" novalidate @submit.prevent="checkCode">
-                <label for="code" class="h5 fw-800 d-block mb-1">Enter your voting code</label>
-                <p class="text-muted small mb-3">You'll find it on your invitation or voter slip. Each code works once.</p>
+                <label for="code" class="h5 fw-800 d-block mb-1">{{ t('vote.enterCode') }}</label>
+                <p class="text-muted small mb-3">{{ t('vote.enterCodeHint') }}</p>
                 <input id="code" ref="codeInput" v-model="code" class="form-control code-input mono" :class="{ 'is-invalid': codeError }"
                     placeholder="XXXXXXXX" maxlength="64" autocomplete="one-time-code" autocapitalize="characters" spellcheck="false"
                     inputmode="text" :disabled="checking" @input="codeError = ''" />
                 <div v-if="codeError" class="field-error d-flex gap-1 align-items-start"><i class="bi bi-exclamation-circle"></i>{{ codeError }}</div>
                 <button type="submit" class="btn btn-primary btn-lg w-100 mt-3" :disabled="checking || code.trim().length < 4">
                     <span v-if="checking" class="spinner-border spinner-border-sm"></span>
-                    {{ checking ? 'Checking…' : 'Continue to ballot' }} <i v-if="!checking" class="bi bi-arrow-right"></i>
+                    {{ checking ? t('vote.checking') : t('vote.continue') }} <i v-if="!checking" class="bi bi-arrow-right"></i>
                 </button>
-                <p class="small text-muted text-center mt-3 mb-0"><i class="bi bi-incognito"></i> Your choices are never shown with your name or code.</p>
+                <p class="small text-muted text-center mt-3 mb-0"><i class="bi bi-incognito"></i> {{ t('vote.privacy') }}</p>
             </form>
 
             <!-- Self-registration: the code goes to the contact the organiser has on file -->
@@ -80,27 +80,27 @@
                 <template v-if="!selfReg.open && !selfReg.sentTo.length">
                     <div class="d-flex align-items-center gap-3 flex-wrap">
                         <span class="icon-tile flex-shrink-0"><i class="bi bi-person-vcard"></i></span>
-                        <span class="flex-grow-1 small text-muted">Don’t have your code? Get it with your <b class="text-ink">{{ event.member_id_label }}</b>.</span>
-                        <button class="btn btn-soft btn-sm" @click="selfReg.open = true">Get my code</button>
+                        <span class="flex-grow-1 small text-muted"><Tx k="vote.noCode"><template #label><b class="text-ink">{{ event.member_id_label }}</b></template></Tx></span>
+                        <button class="btn btn-soft btn-sm" @click="selfReg.open = true">{{ t('vote.getCode') }}</button>
                     </div>
                 </template>
                 <form v-else-if="!selfReg.sentTo.length" novalidate @submit.prevent="requestCode">
-                    <label for="member-id" class="form-label">Your {{ event.member_id_label }}</label>
+                    <label for="member-id" class="form-label">{{ t('vote.yourId', { label: event.member_id_label ?? 'ID' }) }}</label>
                     <input id="member-id" v-model.trim="selfReg.memberId" class="form-control form-control-lg mb-3" autocomplete="off" maxlength="64" :disabled="selfReg.busy" />
                     <HumanCheck ref="human" v-model="selfReg.captcha" class="mb-3" />
                     <div class="d-flex gap-2">
-                        <button type="button" class="btn btn-ghost" @click="selfReg.open = false">Cancel</button>
+                        <button type="button" class="btn btn-ghost" @click="selfReg.open = false">{{ t('common.cancel') }}</button>
                         <button class="btn btn-primary flex-grow-1" :disabled="selfReg.busy || selfReg.memberId.length < 2">
-                            <span v-if="selfReg.busy" class="spinner-border spinner-border-sm"></span> Send my code
+                            <span v-if="selfReg.busy" class="spinner-border spinner-border-sm"></span> {{ t('vote.sendCode') }}
                         </button>
                     </div>
-                    <p class="small text-muted mt-2 mb-0">We’ll send it to the email or phone the organiser has on file for you.</p>
+                    <p class="small text-muted mt-2 mb-0">{{ t('vote.sendCodeHint') }}</p>
                 </form>
                 <div v-else class="d-flex gap-3 align-items-start">
                     <span class="icon-tile flex-shrink-0" style="background: var(--success-50); color: var(--success)"><i class="bi bi-send-check"></i></span>
                     <div class="small">
-                        <div class="fw-bold text-ink mb-1">Your code is on its way</div>
-                        <div class="text-muted">Sent to {{ selfReg.sentTo.join(' and ') }}. It can take a minute. Then enter it above.</div>
+                        <div class="fw-bold text-ink mb-1">{{ t('vote.codeOnWay') }}</div>
+                        <div class="text-muted">{{ t('vote.sentTo', { to: selfReg.sentTo.join(` ${t('common.and')} `) }) }}</div>
                     </div>
                 </div>
             </div>
@@ -109,7 +109,7 @@
         <!-- Ballot -->
         <div v-else-if="stage === 'ballot' && event" class="fade-up">
             <div class="mb-3">
-                <div class="small-caps">Official ballot</div>
+                <div class="small-caps">{{ t('vote.officialBallot') }}</div>
                 <h1 class="h4 fw-800 mb-0 text-break">{{ event.name }}</h1>
             </div>
 
@@ -117,27 +117,27 @@
                 <span v-if="voterName" class="avatar sm" :style="{ background: colorFor(voterName) }" aria-hidden="true">{{ initials(voterName) }}</span>
                 <span v-else class="icon-tile" style="width: 34px; height: 34px; font-size: 1rem"><i class="bi bi-person"></i></span>
                 <div class="min-w-0 flex-grow-1">
-                    <div class="small text-muted lh-sm">Voting as</div>
-                    <div class="fw-bold text-ink truncate">{{ voterName || 'Anonymous voter' }}</div>
+                    <div class="small text-muted lh-sm">{{ t('vote.votingAs') }}</div>
+                    <div class="fw-bold text-ink truncate">{{ voterName || t('vote.anonymous') }}</div>
                 </div>
                 <span class="code-chip d-none d-sm-inline">{{ maskedCode }}</span>
-                <button class="btn btn-link btn-sm text-muted p-0 flex-shrink-0" @click="changeCode">Not you?</button>
+                <button class="btn btn-link btn-sm text-muted p-0 flex-shrink-0" @click="changeCode">{{ t('vote.notYou') }}</button>
             </div>
             <BallotForm ref="ballot" :categories="event.categories" :candidates="event.candidates"
                 :submitting="submitting" :error="submitError" @submit="castVote" />
         </div>
 
         <!-- Done -->
-        <VoteSuccess v-else-if="stage === 'done' && paidResult" :event-name="event?.name ?? ''" title="Thank you for voting!" :message="paidResult.message"
-            :receipt="paidResult.reference" receipt-label="Payment reference" receipt-hint="Also emailed to you. Use it on the results page to check your votes were counted."
-            :results-to="event?.results_visibility === 'private' ? '' : `/event/${token}/results`" results-label="See the leaderboard" hide-done>
+        <VoteSuccess v-else-if="stage === 'done' && paidResult" :event-name="event?.name ?? ''" :title="t('vote.thanksTitle')" :message="paidResult.message"
+            :receipt="paidResult.reference" :receipt-label="t('vote.paymentRef')" :receipt-hint="t('vote.paymentRefHint')"
+            :results-to="event?.results_visibility === 'private' ? '' : `/event/${token}/results`" :results-label="t('vote.seeLeaderboard')" hide-done>
             <template #actions>
-                <button class="btn btn-ghost" @click="voteAgain"><i class="bi bi-heart"></i> Vote again</button>
+                <button class="btn btn-ghost" @click="voteAgain"><i class="bi bi-heart"></i> {{ t('vote.voteAgain') }}</button>
             </template>
         </VoteSuccess>
-        <VoteSuccess v-else-if="stage === 'done'" :event-name="event?.name ?? 'this election'" :voter-name="voterName" :receipt="receipt"
+        <VoteSuccess v-else-if="stage === 'done'" :event-name="event?.name ?? ''" :voter-name="voterName" :receipt="receipt"
             :results-to="event?.results_visibility === 'private' ? '' : `/event/${token}/results`"
-            :results-label="event?.results_visibility === 'live' ? 'View live results' : 'Results page (published when voting closes)'" />
+            :results-label="event?.results_visibility === 'live' ? t('vote.viewLive') : t('vote.resultsLater')" />
     </div>
 </template>
 
@@ -178,7 +178,7 @@ async function requestCode() {
         selfReg.sentTo = data.sent_to;
     } catch (e) {
         human.value?.reset();
-        await alert({ title: 'Couldn’t send your code', message: apiFieldErrors(e).captcha_token ?? apiErrorMessage(e) });
+        await alert({ title: t('vote.codeSendFailed'), message: apiFieldErrors(e).captcha_token ?? apiErrorMessage(e) });
     } finally {
         selfReg.busy = false;
     }
@@ -186,7 +186,7 @@ async function requestCode() {
 const checking = ref(false);
 const submitting = ref(false);
 const submitError = ref('');
-useErrorAlert(submitError, 'Your vote wasn’t submitted');
+useErrorAlert(submitError, () => t('vote.notSubmitted'));
 const codeInput = ref<HTMLInputElement | null>(null);
 const ballot = ref<{ closeReview: () => void } | null>(null);
 /** Receipt for a counted ballot (code voting). */
@@ -215,7 +215,7 @@ const closesIn = useCountdown(() => event.value?.ends_at);
 const normalized = computed(() => code.value.trim().toUpperCase());
 const maskedCode = computed(() => (normalized.value.length > 4 ? '••••' + normalized.value.slice(-4) : normalized.value));
 
-useHead({ title: computed(() => (event.value ? `Vote · ${event.value.name}` : 'Vote · Ballotify')) });
+useHead({ title: computed(() => `${t('vote.title')} · ${event.value?.name ?? 'Ballotify'}`) });
 
 function showUnavailable(opts: Partial<typeof unavailable>) {
     Object.assign(unavailable, { status: '', icon: 'bi-shield-x', tone: '', retry: false, startsAt: null }, opts);
@@ -226,6 +226,7 @@ async function load() {
     stage.value = 'loading';
     try {
         event.value = (await publicApi.getEvent(token)).data;
+        setEventLanguage(event.value.language);
         branding.value = event.value.branding !== false;
         ballotMode.value = event.value.voting_mode;
         stage.value = isPaid.value ? 'paid' : 'code';
@@ -235,20 +236,21 @@ async function load() {
         }
     } catch (e) {
         const status = apiStatus(e);
-        const body = (e as { response?: { data?: { status?: EventStatus; starts_at?: string | null; results_public?: boolean; nominations_open?: boolean } } }).response?.data;
+        const body = (e as { response?: { data?: { status?: EventStatus; starts_at?: string | null; results_public?: boolean; nominations_open?: boolean; language?: string } } }).response?.data;
         nominationsOpen.value = !!body?.nominations_open;
+        if (body?.language) setEventLanguage(body.language);
         if (status === 403 && body?.status === 'upcoming') {
-            showUnavailable({ status: 'upcoming', title: 'Voting hasn\'t started yet', text: `The ballot opens ${formatDate(body.starts_at ?? null, true)}. Come back then with your code.`, icon: 'bi-clock', tone: 'amber', startsAt: body.starts_at ?? null });
+            showUnavailable({ status: 'upcoming', title: t('vote.notStarted'), text: t('vote.opensAt', { date: formatDate(body.starts_at ?? null, true) }), icon: 'bi-clock', tone: 'amber', startsAt: body.starts_at ?? null });
         } else if (status === 403) {
             resultsPublic.value = !!body?.results_public;
             showUnavailable({
-                status: 'completed', title: 'Voting has closed', icon: 'bi-check2-circle', tone: 'green',
-                text: resultsPublic.value ? 'This election is over. You can still see the results.' : 'This election is over. The organiser will announce the results.',
+                status: 'completed', title: t('vote.closed'), icon: 'bi-check2-circle', tone: 'green',
+                text: resultsPublic.value ? t('vote.closedPublic') : t('vote.closedPrivate'),
             });
         } else if (status === 404) {
-            showUnavailable({ title: 'Ballot not found', text: 'This voting link is invalid. Check the link you were sent, or contact the organiser.' });
+            showUnavailable({ title: t('vote.notFound'), text: t('vote.invalidLink') });
         } else {
-            showUnavailable({ title: 'Can\'t load the ballot', text: apiErrorMessage(e), icon: 'bi-wifi-off', retry: true });
+            showUnavailable({ title: t('vote.cantLoad'), text: apiErrorMessage(e), icon: 'bi-wifi-off', retry: true });
         }
     }
 }
@@ -264,7 +266,7 @@ async function checkCode() {
         window.scrollTo({ top: 0 });
     } catch (e) {
         const status = apiStatus(e);
-        if (status === 422) codeError.value = 'That code isn\'t valid or has already been used. Check it and try again.';
+        if (status === 422) codeError.value = t('vote.badCode');
         else if (status === 403) await load();
         else codeError.value = apiErrorMessage(e);
     } finally {
@@ -291,9 +293,9 @@ async function castVote(choices: Choice[]) {
         ballot.value?.closeReview();
         const status = apiStatus(e);
         if (status === 403) {
-            submitError.value = 'Voting closed before your ballot was submitted.';
+            submitError.value = t('vote.closedBeforeSubmit');
         } else {
-            submitError.value = apiErrorMessage(e, 'Your vote could not be submitted. Please try again.');
+            submitError.value = apiErrorMessage(e, t('vote.submitFailed'));
         }
     } finally {
         submitting.value = false;
@@ -315,7 +317,7 @@ async function confirmPayment(reference: string) {
         }
     } catch (e) {
         await load();
-        paidNotice.value = { ok: false, text: apiErrorMessage(e, 'We couldn’t confirm the payment yet. If you were charged, your votes will be added automatically.') };
+        paidNotice.value = { ok: false, text: apiErrorMessage(e, t('vote.confirmFailed')) };
     }
 }
 
@@ -329,7 +331,7 @@ onMounted(() => {
     const ref = String(route.query.ref ?? route.query.reference ?? '');
     if (token && ref) confirmPayment(ref);
     else if (token) load();
-    else showUnavailable({ title: 'Ballot not found', text: 'This voting link is incomplete.' });
+    else showUnavailable({ title: t('vote.notFound'), text: t('vote.incompleteLink') });
 });
 </script>
 

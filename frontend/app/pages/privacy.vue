@@ -17,7 +17,7 @@
         <ul>
             <li><b>Organisers and co-organisers:</b> name, email address, password (stored only as a secure hash), optional two-step login settings, and, for paid voting, payout bank details (bank, account number and account name).</li>
             <li><b>Voters:</b> whatever the organiser provides (typically a name, email address, phone number and/or member ID) plus a one-time voting code.</li>
-            <li><b>People who pay to vote:</b> email address, optional name, the nominee and number of votes, and the payment reference. Card details are handled by Paystack and never reach us.</li>
+            <li><b>People who pay to vote:</b> email address, optional name, the nominee and number of votes, and the payment reference. Card details are handled by our payment providers (Paystack, or Flutterwave as a backup) and never reach us.</li>
             <li><b>Nominators:</b> the nomination, an optional reason and an optional email address.</li>
             <li><b>Candidates</b> who use their profile link: the photo and short description they add.</li>
             <li><b>Technical data:</b> IP addresses are used briefly for rate limiting and security (stored only as a one-way hash for nominations), and kept in server logs for a short period. Our bot check (Cloudflare Turnstile) processes browser signals to tell people from bots.</li>
@@ -44,7 +44,7 @@
         <h2>Sharing</h2>
         <p>
             We share data only with providers needed to run Ballotify: hosting; email delivery; SMS and USSD providers (such as
-            Termii, Africa’s Talking or Twilio); Paystack for payments and payouts; and Cloudflare for bot protection. They
+            Termii, Africa’s Talking or Twilio); Paystack (and Flutterwave as a backup) for payments, Paystack for payouts; and Cloudflare for bot protection. They
             process it under contract and only for these purposes. We may disclose data where the law requires it.
         </p>
 

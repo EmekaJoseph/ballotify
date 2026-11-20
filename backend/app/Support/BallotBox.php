@@ -27,12 +27,12 @@ class BallotBox
     public static function cast(Event $event, string $code, array $choices): string
     {
         if ($event->isPaid()) {
-            throw new BallotRejected('This event uses paid voting. Choose a candidate and pay to vote.', 422);
+            throw new BallotRejected(__('This event uses paid voting. Choose a candidate and pay to vote.'), 422);
         }
         if (! $event->isOpen()) {
             throw new BallotRejected($event->status === Event::STATUS_UPCOMING
-                ? 'This election has not started yet.'
-                : 'This election has ended.', 403);
+                ? __('This election has not started yet.')
+                : __('This election has ended.'), 403);
         }
 
         // De-duplicate identical (category, candidate) pairs.
@@ -42,7 +42,7 @@ class BallotBox
             ->values()
             ->all();
         if (! $clean) {
-            throw new BallotRejected('Choose at least one candidate.', 422);
+            throw new BallotRejected(__('Choose at least one candidate.'), 422);
         }
 
         $categories = Category::whereIn('id', array_column($clean, 'category_id'))
@@ -67,8 +67,8 @@ class BallotBox
             $limit = $categories[$categoryId]->max_choices;
             if ($limit && $count > $limit) {
                 throw new BallotRejected($limit === 1
-                    ? "Choose only one candidate in “{$categories[$categoryId]->name}”."
-                    : "You can pick at most {$limit} in “{$categories[$categoryId]->name}”.", 422);
+                    ? __('Choose only one candidate in “:category”.', ['category' => $categories[$categoryId]->name])
+                    : __('You can pick at most :limit in “:category”.', ['limit' => $limit, 'category' => $categories[$categoryId]->name]), 422);
             }
         }
 
@@ -99,7 +99,7 @@ class BallotBox
         });
 
         if ($receipt === null) {
-            throw new BallotRejected('Invalid or used code', 422);
+            throw new BallotRejected(__('Invalid or used code'), 422);
         }
 
         // Live results ping (carries no ballot content). Skipped when results aren't public.

@@ -269,13 +269,14 @@ onMounted(async () => {
 });
 
 /**
- * Back from Paystack: it appends ?reference=… (and trxref) to our callback URL.
- * Confirm it with the API (which asks Paystack), then tidy the URL.
+ * Back from checkout: Paystack appends ?reference=… (and trxref), Flutterwave
+ * (the backup provider) ?tx_ref=…&status=…&transaction_id=…. Confirm it with
+ * the API (which asks the provider), then tidy the URL.
  */
 async function confirmPaymentReturn() {
-    const reference = String(route.query.reference ?? route.query.trxref ?? '');
+    const reference = String(route.query.reference ?? route.query.trxref ?? route.query.tx_ref ?? '');
     if (!route.query.payment || !reference) return;
-    const { payment: _p, reference: _r, trxref: _t, ...rest } = route.query;
+    const { payment: _p, reference: _r, trxref: _t, tx_ref: _x, status: _s, transaction_id: _i, ...rest } = route.query;
     router.replace({ query: rest });
     try {
         const { data } = await billingApi.verify(reference);

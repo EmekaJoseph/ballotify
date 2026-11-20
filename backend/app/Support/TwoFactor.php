@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\User;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Str;
 use PragmaRX\Google2FA\Google2FA;
@@ -35,11 +36,19 @@ class TwoFactor
         return collect(range(1, 8))->map(fn () => Str::lower(Str::random(5) . '-' . Str::random(5)))->all();
     }
 
-    /** Accepts an app code, or consumes one recovery code. */
+    /** Wrong codes allowed per account before the sign-in attempt is locked for a while. */
+    public const MAX_FAILURES = 5;
+    public const LOCK_MINUTES = 15;
+
+    /**
+     * Accepts an app code (each one only once: a code someone saw over your
+     * shoulder can't be replayed), or consumes one recovery code.
+     */
     public static function verify(User $user, string $code): bool
     {
         if ($user->two_factor_secret && self::verifyTotp($user->two_factor_secret, $code)) {
-            return true;
+            // Valid for ~90 s with the drift window, so remember it a little longer.
+            return Cache::add('2fa-used:' . $user->id . ':' . preg_replace('/\s+/', '', $code), true, 150);
         }
         $codes = $user->two_factor_recovery_codes ?? [];
         $given = Str::lower(trim($code));
@@ -51,6 +60,27 @@ class TwoFactor
             }
         }
         return false;
+    }
+
+    public static function lockedOut(User $user): bool
+    {
+        return (int) Cache::get(self::failKey($user), 0) >= self::MAX_FAILURES;
+    }
+
+    public static function recordFailure(User $user): void
+    {
+        Cache::add(self::failKey($user), 0, now()->addMinutes(self::LOCK_MINUTES));
+        Cache::increment(self::failKey($user));
+    }
+
+    public static function clearFailures(User $user): void
+    {
+        Cache::forget(self::failKey($user));
+    }
+
+    private static function failKey(User $user): string
+    {
+        return '2fa-fail:' . $user->id;
     }
 
     public static function makeChallenge(User $user): string

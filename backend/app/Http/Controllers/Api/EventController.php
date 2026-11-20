@@ -168,6 +168,7 @@ class EventController extends Controller
             'reminder_channel' => ['sometimes', 'nullable', Rule::in(['email', 'sms', 'both'])],
             'self_registration' => ['sometimes', 'boolean'],
             'member_id_label' => ['sometimes', 'nullable', 'string', 'max:40'],
+            'language' => ['sometimes', 'string', \Illuminate\Validation\Rule::in(config('ballotify.languages'))],
             'ussd_enabled' => ['sometimes', 'boolean'],
             'nominations_enabled' => ['sometimes', 'boolean'],
             'nominations_ends_at' => ['sometimes', 'nullable', 'date'],
@@ -407,9 +408,10 @@ class EventController extends Controller
         if (! $event->isOpen()) {
             return response()->json([
                 'message' => $event->status === Event::STATUS_UPCOMING
-                    ? 'Voting has not started yet.'
-                    : 'Voting has ended.',
+                    ? __('Voting has not started yet.')
+                    : __('Voting has ended.'),
                 'name' => $event->name,
+                'language' => $event->language,
                 'status' => $event->status,
                 'starts_at' => $event->starts_at,
                 'ends_at' => $event->ends_at,
@@ -430,7 +432,7 @@ class EventController extends Controller
             ->flatMap(fn ($group, $categoryId) => isset($shuffled[$categoryId]) ? $group->shuffle() : $group)
             ->values();
 
-        $paymentsReady = Paystack::configured();
+        $paymentsReady = \App\Support\Payments::available();
 
         return response()->json([
             'id' => $event->id,
@@ -450,6 +452,7 @@ class EventController extends Controller
             // Voters can request their own code with an ID on the organiser's list.
             'self_registration' => $event->self_registration && ! $event->isPaid() && Plans::isPro($event),
             'member_id_label' => $event->member_id_label ?: 'ID',
+            'language' => $event->language,
             'categories' => $event->categories->map->only(['id', 'event_id', 'name', 'max_choices']),
             'candidates' => $candidates,
         ]);
@@ -463,11 +466,12 @@ class EventController extends Controller
         if (! $event->resultsArePublic()) {
             return response()->json([
                 'message' => $event->results_visibility === Event::RESULTS_PRIVATE
-                    ? 'The organiser has chosen not to publish these results.'
-                    : 'Results will be published when voting closes.',
+                    ? __('The organiser has chosen not to publish these results.')
+                    : __('Results will be published when voting closes.'),
                 'visibility' => $event->results_visibility,
                 'event' => [
                     'name' => $event->name,
+                    'language' => $event->language,
                     'status' => $event->status,
                     'starts_at' => $event->starts_at,
                     'ends_at' => $event->ends_at,
@@ -488,7 +492,7 @@ class EventController extends Controller
         if ($event->isPaid()) {
             $purchase = VotePurchase::where('event_id', $event->id)->where('reference', strtoupper(trim($data['receipt'])))->first();
             if (! $purchase) {
-                return response()->json(['valid' => false, 'message' => 'No payment with this reference was found for this event.'], 404);
+                return response()->json(['valid' => false, 'message' => __('No payment with this reference was found for this event.')], 404);
             }
             return response()->json([
                 'valid' => $purchase->status === VotePurchase::SUCCESS,
@@ -497,10 +501,10 @@ class EventController extends Controller
                 'votes' => $purchase->quantity,
                 'candidate' => $purchase->candidate_name,
                 'message' => match ($purchase->status) {
-                    VotePurchase::SUCCESS => "{$purchase->quantity} vote(s) for {$purchase->candidate_name} counted.",
-                    VotePurchase::LATE => 'This payment arrived after voting closed, so it was not counted. The organiser will arrange a refund.',
-                    VotePurchase::PENDING => 'This payment is still being confirmed.',
-                    default => 'This payment did not go through, so no votes were added.',
+                    VotePurchase::SUCCESS => __($purchase->quantity === 1 ? ':count vote for :candidate counted.' : ':count votes for :candidate counted.', ['count' => $purchase->quantity, 'candidate' => $purchase->candidate_name]),
+                    VotePurchase::LATE => __('This payment arrived after voting closed, so it was not counted. The organiser will arrange a refund.'),
+                    VotePurchase::PENDING => __('This payment is still being confirmed.'),
+                    default => __('This payment did not go through, so no votes were added.'),
                 },
             ]);
         }
@@ -514,9 +518,9 @@ class EventController extends Controller
                 'valid' => true,
                 // Minute precision only.
                 'counted_at' => $receipt->created_at->startOfMinute(),
-                'message' => 'This ballot was received and counted.',
+                'message' => __('This ballot was received and counted.'),
             ])
-            : response()->json(['valid' => false, 'message' => 'No ballot with this receipt was found for this event. Check the code and try again.'], 404);
+            : response()->json(['valid' => false, 'message' => __('No ballot with this receipt was found for this event. Check the code and try again.')], 404);
     }
 
     // ------------------------------------------------------------------ helpers
@@ -575,6 +579,7 @@ class EventController extends Controller
             'event' => [
                 'id' => $event->id,
                 'name' => $event->name,
+                'language' => $event->language,
                 'status' => $event->status,
                 'starts_at' => $event->starts_at,
                 'ends_at' => $event->ends_at,

@@ -1,13 +1,14 @@
 import { isAxiosError } from 'axios';
+import { t } from './i18n';
 
 /** Best human-readable message from an API error (Laravel validation aware). */
-export function apiErrorMessage(err: unknown, fallback = 'Something went wrong. Please try again.'): string {
+export function apiErrorMessage(err: unknown, fallback = t('err.generic')): string {
     if (isAxiosError(err)) {
-        if (!err.response) return 'Cannot reach the server. Check your connection and try again.';
+        if (!err.response) return t('err.network');
         const data = err.response.data as { message?: string; errors?: Record<string, string[]> } | undefined;
         const firstFieldError = data?.errors ? Object.values(data.errors)[0]?.[0] : undefined;
         if (firstFieldError) return firstFieldError;
-        if (err.response.status === 429) return 'Too many attempts. Please wait a minute and try again.';
+        if (err.response.status === 429) return t('err.tooMany');
         if (data?.message) return data.message;
     }
     return fallback;

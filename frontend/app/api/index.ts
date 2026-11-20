@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { ballotLang } from '~/utils/i18n';
 
 export const TOKEN_KEY = 'auth_token';
 
@@ -35,6 +36,8 @@ export function setUnauthorizedHandler(handler: (reason: SignOutReason) => void)
 api.interceptors.request.use((config) => {
     const token = tokenStorage.get();
     if (token) config.headers.Authorization = `Bearer ${token}`;
+    // Voter-facing messages from the API come back in the voting page's language.
+    if (config.url?.startsWith('/public/') && ballotLang.value !== 'en') config.headers['X-Locale'] = ballotLang.value;
     return config;
 });
 

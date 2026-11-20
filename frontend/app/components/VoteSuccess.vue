@@ -3,31 +3,28 @@
         <div class="check-wrap mx-auto mb-4" aria-hidden="true">
             <svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="24" /><path d="M15 27l7 7 15-15" /></svg>
         </div>
-        <h1 class="h3 fw-800 mb-2">{{ title || (voterName ? `Thank you, ${firstName}!` : 'Your vote has been recorded') }}</h1>
+        <h1 class="h3 fw-800 mb-2">{{ title || (voterName ? t('done.thanksName', { name: firstName }) : t('done.recorded')) }}</h1>
         <p class="text-muted mx-auto mb-4" style="max-width: 440px">
             <template v-if="message">{{ message }}</template>
-            <template v-else>
-                <template v-if="voterName">Your vote has been recorded</template><template v-else>Thank you for voting</template>
-                in <b class="text-ink">{{ eventName }}</b>. Your code has now been used and can't vote again.
-            </template>
+            <Tx v-else :k="voterName ? 'done.bodyNamed' : 'done.bodyAnon'"><template #event><b class="text-ink">{{ eventName }}</b></template></Tx>
         </p>
 
         <!-- Receipt: proof the ballot was counted (it says nothing about the choices) -->
         <div v-if="receipt" class="receipt mx-auto mb-4">
-            <div class="small-caps mb-1">{{ receiptLabel }}</div>
+            <div class="small-caps mb-1">{{ receiptLabel || t('done.receipt') }}</div>
             <div class="d-flex align-items-center justify-content-center gap-2">
                 <span class="mono fw-800 fs-5 text-ink">{{ receipt }}</span>
-                <button type="button" class="btn btn-ghost btn-icon btn-sm" :title="copied ? 'Copied' : 'Copy'" :aria-label="copied ? 'Copied' : 'Copy receipt'" @click="copy">
+                <button type="button" class="btn btn-ghost btn-icon btn-sm" :title="copied ? t('done.copied') : t('done.copy')" :aria-label="copied ? t('done.copied') : t('done.copyReceipt')" @click="copy">
                     <i class="bi" :class="copied ? 'bi-check2' : 'bi-copy'"></i>
                 </button>
             </div>
-            <div class="small text-muted mt-1">{{ receiptHint }}</div>
+            <div class="small text-muted mt-1">{{ receiptHint || t('done.receiptHint') }}</div>
         </div>
 
         <div class="d-flex flex-column flex-sm-row gap-2 justify-content-center">
-            <NuxtLink v-if="resultsTo" :to="resultsTo" class="btn btn-primary"><i class="bi bi-bar-chart-line"></i> {{ resultsLabel }}</NuxtLink>
+            <NuxtLink v-if="resultsTo" :to="resultsTo" class="btn btn-primary"><i class="bi bi-bar-chart-line"></i> {{ resultsLabel || t('vote.viewLive') }}</NuxtLink>
             <slot name="actions" />
-            <NuxtLink v-if="!hideDone" to="/" class="btn btn-ghost">Done</NuxtLink>
+            <NuxtLink v-if="!hideDone" to="/" class="btn btn-ghost">{{ t('done.done') }}</NuxtLink>
         </div>
     </div>
 </template>
@@ -46,13 +43,13 @@ const props = withDefaults(defineProps<{
     hideDone?: boolean;
 }>(), {
     resultsTo: '',
-    resultsLabel: 'View live results',
+    resultsLabel: '',
     voterName: null,
     title: '',
     message: '',
     receipt: null,
-    receiptLabel: 'Your ballot receipt',
-    receiptHint: 'Save it: you can check on the results page that your ballot was counted. It doesn’t reveal how you voted.',
+    receiptLabel: '',
+    receiptHint: '',
     hideDone: false,
 });
 const firstName = computed(() => props.voterName?.trim().split(/\s+/)[0] ?? '');

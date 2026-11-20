@@ -43,6 +43,7 @@ class Event extends Model
         'reminder_channel',
         'self_registration',
         'member_id_label',
+        'language',
         'nominations_enabled',
         'nominations_ends_at',
     ];
@@ -63,6 +64,7 @@ class Event extends Model
     protected $attributes = [
         'results_visibility' => self::RESULTS_AFTER_CLOSE,
         'voting_mode' => self::MODE_CODES,
+        'language' => 'en',
     ];
 
     protected $appends = ['status', 'ballot_locked', 'brand_logo_url'];

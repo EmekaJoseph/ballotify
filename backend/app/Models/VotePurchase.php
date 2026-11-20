@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-/** Votes bought through Paystack on a paid (public) voting event. */
+/** Votes bought (through Paystack or Flutterwave) on a paid (public) voting event. */
 class VotePurchase extends Model
 {
     public const PENDING = 'pending';
@@ -16,7 +16,7 @@ class VotePurchase extends Model
 
     protected $fillable = [
         'event_id', 'candidate_id', 'candidate_name', 'quantity', 'amount_kobo', 'fee_kobo', 'currency',
-        'reference', 'email', 'name', 'status', 'channel', 'failure_reason', 'subaccount', 'paid_at',
+        'reference', 'provider', 'email', 'name', 'status', 'channel', 'failure_reason', 'subaccount', 'paid_at',
     ];
 
     protected $casts = [

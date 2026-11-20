@@ -3,10 +3,11 @@
         <header class="ballot-header">
             <div class="container d-flex align-items-center justify-content-between" :style="{ maxWidth: wide ? '1140px' : '760px' }">
                 <AppLogo />
-                <div class="d-flex align-items-center gap-3">
-                    <span v-if="mode === 'paid'" class="small text-muted d-none d-sm-inline-flex align-items-center gap-1"><i class="bi bi-lock"></i> Secure payments by Paystack</span>
-                    <span v-else-if="mode === 'nominate'" class="small text-muted d-none d-sm-inline-flex align-items-center gap-1"><i class="bi bi-megaphone"></i> Nominations</span>
-                    <span v-else-if="mode === 'codes'" class="small text-muted d-none d-sm-inline-flex align-items-center gap-1"><i class="bi bi-shield-lock"></i> Secret ballot</span>
+                <div class="d-flex align-items-center gap-2 gap-sm-3">
+                    <span v-if="mode === 'paid'" class="small text-muted d-none d-md-inline-flex align-items-center gap-1"><i class="bi bi-lock"></i> {{ t('layout.securePayments') }}</span>
+                    <span v-else-if="mode === 'nominate'" class="small text-muted d-none d-md-inline-flex align-items-center gap-1"><i class="bi bi-megaphone"></i> {{ t('layout.nominations') }}</span>
+                    <span v-else-if="mode === 'codes'" class="small text-muted d-none d-md-inline-flex align-items-center gap-1"><i class="bi bi-shield-lock"></i> {{ t('layout.secretBallot') }}</span>
+                    <LangSwitcher />
                     <ThemeToggle />
                 </div>
             </div>
@@ -16,7 +17,7 @@
         </main>
         <!-- Shown on Free events (and demo pages); Pro events hide it. -->
         <footer v-if="branding" class="text-center small text-muted pb-4">
-            Powered by <NuxtLink to="/" class="fw-bold">Ballotify</NuxtLink>
+            {{ t('common.poweredBy') }} <NuxtLink to="/" class="fw-bold">Ballotify</NuxtLink>
         </footer>
     </div>
 </template>
@@ -26,6 +27,11 @@ const route = useRoute();
 const wide = computed(() => Boolean(route.meta.wide));
 const branding = useBallotBranding();
 const mode = useBallotMode();
+
+// Public pages speak the voter's language; the rest of the app stays English.
+enterBallotPages();
+onBeforeUnmount(leaveBallotPages);
+useHead({ htmlAttrs: { lang: ballotLang } });
 </script>
 
 <style scoped>

@@ -1,5 +1,23 @@
 <template>
     <div class="d-grid gap-4">
+        <!-- Language of the voting pages -->
+        <section class="card-b pad">
+            <div class="opt-head">
+                <span class="icon-tile"><i class="bi bi-translate"></i></span>
+                <div class="flex-grow-1 min-w-0">
+                    <h3 class="h6 fw-800 mb-1">Voting page language</h3>
+                    <p class="small text-muted mb-0">
+                        The language voters see first on the voting, nominations and results pages.
+                        They can still switch with the language button at the top of the page.
+                    </p>
+                </div>
+                <select id="opt-lang" class="form-select lang-select" :value="event.language || 'en'" :disabled="busy === 'language'"
+                    aria-label="Voting page language" @change="saveLanguage(($event.target as HTMLSelectElement).value)">
+                    <option v-for="l in LANGUAGES" :key="l.code" :value="l.code">{{ l.name }}</option>
+                </select>
+            </div>
+        </section>
+
         <!-- Self-registration -->
         <section v-if="!paid" class="card-b pad">
             <div class="opt-head">
@@ -125,6 +143,11 @@ const toast = useToast();
 const { confirm } = useConfirm();
 
 const LABELS = ['Matric number', 'Member number', 'Staff ID', 'Registration number'];
+
+async function saveLanguage(code: string) {
+    const name = LANGUAGES.find(l => l.code === code)?.name ?? code;
+    await patch('language', { language: code }, `Voting pages now open in ${name}`);
+}
 const paid = computed(() => props.event.voting_mode === 'paid');
 const busy = ref<string | null>(null);
 const label = ref(props.event.member_id_label ?? '');
@@ -201,6 +224,8 @@ function saveNomEnds() {
 </script>
 
 <style scoped>
+.lang-select { width: auto; min-width: 140px; flex-shrink: 0; align-self: center; }
+@media (max-width: 575.98px) { .lang-select { min-width: 0; max-width: 130px; } }
 .opt-head { display: flex; gap: 1rem; align-items: flex-start; }
 .opt-head .form-switch .form-check-input { width: 2.6em; height: 1.4em; cursor: pointer; }
 .opt-body { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--line); }

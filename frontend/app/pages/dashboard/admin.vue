@@ -78,17 +78,20 @@
             <div class="col-lg-5 d-grid gap-4 align-content-start">
                 <div class="card-b pad">
                     <h3 class="h6 fw-800 mb-3">Payments</h3>
-                    <div class="d-flex align-items-center gap-2 mb-2">
-                        <span class="pill" :class="pricingStatus?.payments_enabled ? 'pill-active' : 'pill-upcoming'"><span class="dot"></span>
-                            {{ pricingStatus?.payments_enabled ? 'Paystack connected' : 'Paystack not set up' }}
+                    <div v-if="pricingStatus" class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                        <span v-for="p in providerPills" :key="p.key" class="pill" :class="p.on ? 'pill-active' : 'pill-upcoming'"><span class="dot"></span>
+                            {{ p.label }} {{ p.on ? (p.backup ? 'connected (backup)' : 'connected') : 'not set up' }}
                         </span>
                     </div>
-                    <p v-if="!pricingStatus?.payments_enabled" class="small text-muted mb-2">
-                        Add <code>PAYSTACK_SECRET_KEY</code> to the API’s <code>.env</code>, then run <code>php artisan config:clear</code>.
+                    <p v-if="pricingStatus && !pricingStatus.payments_enabled" class="small text-muted mb-2">
+                        Add <code>PAYSTACK_SECRET_KEY</code> (and, as a backup, <code>FLUTTERWAVE_SECRET_KEY</code>) to the API’s <code>.env</code>,
+                        then run <code>php artisan config:clear</code>.
                         Until then organisers see “Contact us to upgrade”, and you can upgrade events yourself from the Events tab.
                     </p>
-                    <p class="small text-muted mb-1">In your Paystack dashboard, set the webhook URL to:</p>
-                    <code class="d-block small text-break">{{ webhookUrl }}</code>
+                    <p class="small text-muted mb-1">Paystack dashboard → webhook URL:</p>
+                    <code class="d-block small text-break mb-2">{{ webhookUrl }}</code>
+                    <p class="small text-muted mb-1">Flutterwave dashboard → Settings → Webhooks → URL (and the same secret hash as <code>FLUTTERWAVE_WEBHOOK_HASH</code>):</p>
+                    <code class="d-block small text-break">{{ flutterwaveWebhookUrl }}</code>
                 </div>
                 <div class="card-b pad">
                     <h3 class="h6 fw-800 mb-2">Free upgrades</h3>
@@ -255,6 +258,14 @@ const toast = useToast();
 const { confirm } = useConfirm();
 const apiBase = String(useRuntimeConfig().public.apiBase || '').replace(/\/+$/, '');
 const webhookUrl = `${apiBase}/paystack/webhook`;
+const flutterwaveWebhookUrl = `${apiBase}/flutterwave/webhook`;
+const providerPills = computed(() => {
+    const on = pricingStatus.value?.payment_providers ?? [];
+    return [
+        { key: 'paystack', label: 'Paystack', on: on.includes('paystack'), backup: false },
+        { key: 'flutterwave', label: 'Flutterwave', on: on.includes('flutterwave'), backup: on.includes('paystack') },
+    ];
+});
 
 type TabKey = 'users' | 'events' | 'payments' | 'payouts' | 'pricing' | 'health';
 const tabs: { key: TabKey; label: string; icon: string }[] = [

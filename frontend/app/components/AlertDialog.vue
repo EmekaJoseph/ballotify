@@ -8,7 +8,7 @@
                     <p :id="textId" class="text-muted mb-4 alert-text">{{ message }}</p>
                     <div class="d-grid gap-2">
                         <button v-if="actionText" ref="actionBtn" type="button" class="btn btn-lg" :class="actionVariant === 'danger' ? 'btn-danger' : 'btn-primary'" @click="emit('action')">{{ actionText }}</button>
-                        <button type="button" class="btn btn-ghost" @click="emit('close')">{{ closeText }}</button>
+                        <button type="button" class="btn btn-ghost" @click="emit('close')">{{ closeText || t('common.close') }}</button>
                     </div>
                 </div>
             </div>
@@ -32,7 +32,7 @@ const props = withDefaults(defineProps<{
     actionVariant?: 'primary' | 'danger';
     /** Override the tone's icon (Bootstrap icon class). */
     iconClass?: string;
-}>(), { tone: 'danger', actionText: '', closeText: 'Close', actionVariant: 'primary', iconClass: '' });
+}>(), { tone: 'danger', actionText: '', closeText: '', actionVariant: 'primary', iconClass: '' });
 const emit = defineEmits<{ close: []; action: [] }>();
 
 const titleId = useId();

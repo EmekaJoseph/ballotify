@@ -7,6 +7,12 @@ return [
     | Runs daily via the scheduler: `php artisan schedule:work` (dev) or a
     | cron entry running `php artisan schedule:run` every minute (production).
     */
+    /*
+    | Languages of the public voting pages (the organiser picks the default,
+    | voters can switch). Translations: frontend app/i18n, backend lang/*.json.
+    */
+    'languages' => ['en', 'yo', 'ha', 'ig', 'fr'],
+
     'voter_contact_retention_days' => (int) env('VOTER_CONTACT_RETENTION_DAYS', 30),
 
     /*
@@ -18,6 +24,8 @@ return [
     'billing' => [
         'enabled' => (bool) env('BILLING_ENABLED', true),
         'currency' => 'NGN',
+        // Payment providers in order of preference; the next is used when one is down.
+        'providers' => env('PAYMENT_PROVIDERS', 'paystack,flutterwave'),
         'defaults' => [
             'pro_price_naira' => 10000,
             'free_max_active_events' => 1,

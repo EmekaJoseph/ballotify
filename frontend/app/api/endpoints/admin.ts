@@ -9,6 +9,7 @@ import type {
 type Id = number | string;
 
 export interface EventPayload {
+    language?: string;
     name?: string;
     description?: string | null;
     results_visibility?: ResultsVisibility;
@@ -63,6 +64,8 @@ export const adminApi = {
     twoFactorSetup: (password: string) => api.post<{ secret: string; otpauth_url: string }>('/me/two-factor', { password }),
     twoFactorConfirm: (code: string) => api.post<{ recovery_codes: string[]; user: User }>('/me/two-factor/confirm', { code }),
     twoFactorDisable: (password: string) => api.delete<{ user: User }>('/me/two-factor', { data: { password } }),
+    twoFactorStatus: () => api.get<{ enabled: boolean; recovery_codes_left: number }>('/me/two-factor'),
+    twoFactorRecoveryCodes: (password: string) => api.post<{ recovery_codes: string[] }>('/me/two-factor/recovery-codes', { password }),
 
     // Events
     getTemplates: () => api.get<EventTemplate[]>('/event-templates'),

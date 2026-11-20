@@ -31,6 +31,7 @@ class NominationController extends Controller
             'open' => $event->nominationsOpen(),
             'ends_at' => $event->nominations_ends_at,
             'voting_starts_at' => $event->starts_at,
+            'language' => $event->language,
             'brand' => ($event->brand_color || $event->brand_logo_path) && \App\Support\Plans::isPro($event)
                 ? ['color' => $event->brand_color, 'logo_url' => $event->brand_logo_url] : null,
             'categories' => $event->categories->map->only(['id', 'name']),
@@ -50,17 +51,17 @@ class NominationController extends Controller
 
         $event = Event::publicToken($token)->firstOrFail();
         if (! $event->nominationsOpen()) {
-            return response()->json(['message' => 'Nominations are closed for this event.'], 403);
+            return response()->json(['message' => __('Nominations are closed for this event.')], 403);
         }
         $category = Category::where('event_id', $event->id)->find($data['category_id']);
         if (! $category) {
-            throw ValidationException::withMessages(['category_id' => ['Choose a category from this event.']]);
+            throw ValidationException::withMessages(['category_id' => [__('Choose a category from this event.')]]);
         }
 
         $ipHash = hash_hmac('sha256', (string) $request->ip(), (string) config('app.key'));
         $mine = Nomination::where('category_id', $category->id)->where('ip_hash', $ipHash)->count();
         if ($mine >= self::PER_PERSON_PER_CATEGORY) {
-            return response()->json(['message' => 'You’ve already sent the most nominations allowed for this category.'], 429);
+            return response()->json(['message' => __('You’ve already sent the most nominations allowed for this category.')], 429);
         }
 
         $name = trim(preg_replace('/\s+/u', ' ', $data['nominee_name']) ?? '');
@@ -74,7 +75,7 @@ class NominationController extends Controller
             'ip_hash' => $ipHash,
         ]);
 
-        return response()->json(['message' => "Thank you! Your nomination of {$name} for “{$category->name}” was received."], 201);
+        return response()->json(['message' => __('Thank you! Your nomination of :name for “:category” was received.', ['name' => $name, 'category' => $category->name])], 201);
     }
 
     /** Organiser: nominations grouped by category and name, most nominated first. */

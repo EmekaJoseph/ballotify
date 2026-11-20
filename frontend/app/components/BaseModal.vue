@@ -8,7 +8,7 @@
                             <h5 class="mb-1 fw-800">{{ title }}</h5>
                             <p v-if="subtitle" class="text-muted small mb-0">{{ subtitle }}</p>
                         </div>
-                        <button type="button" class="btn btn-ghost btn-icon btn-sm flex-shrink-0" aria-label="Close"
+                        <button type="button" class="btn btn-ghost btn-icon btn-sm flex-shrink-0" :aria-label="t('common.close')"
                             @click="emit('close')">
                             <i class="bi bi-x-lg"></i>
                         </button>

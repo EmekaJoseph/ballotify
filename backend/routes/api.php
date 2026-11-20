@@ -49,6 +49,8 @@ Route::middleware(['auth:sanctum', 'active'])->scopeBindings()->group(function (
     Route::post('me/two-factor', [AuthController::class, 'twoFactorSetup'])->middleware('throttle:6,1');
     Route::post('me/two-factor/confirm', [AuthController::class, 'twoFactorConfirm'])->middleware('throttle:12,1');
     Route::delete('me/two-factor', [AuthController::class, 'twoFactorDisable'])->middleware('throttle:6,1');
+    Route::get('me/two-factor', [AuthController::class, 'twoFactorStatus']);
+    Route::post('me/two-factor/recovery-codes', [AuthController::class, 'twoFactorRecoveryCodes'])->middleware('throttle:6,1');
     Route::post('me/onboarded', [AuthController::class, 'onboarded']);
     // Data rights + payout account (automatic payouts via Paystack)
     Route::get('me/export', [AccountController::class, 'export'])->middleware('throttle:6,1');
@@ -146,6 +148,7 @@ Route::post('ussd/{secret}', [UssdController::class, 'handle'])->middleware('thr
 
 // ---------------------------------------------------------------- payments provider
 Route::post('paystack/webhook', [BillingController::class, 'webhook'])->middleware('throttle:120,1');
+Route::post('flutterwave/webhook', [BillingController::class, 'flutterwaveWebhook'])->middleware('throttle:120,1');
 
 // ---------------------------------------------------------------- public (voters)
 Route::prefix('public')->group(function () {

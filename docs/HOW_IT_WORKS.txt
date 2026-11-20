@@ -263,6 +263,14 @@ VOTERS take part from any phone or laptop using a one-time code.
 5. THE VOTER'S JOURNEY
 --------------------------------------------------------------------------------
 
+   LANGUAGE: every voting, results and nominations page has a language
+   button (English, Yorùbá, Hausa, Igbo, Français). Pages open in ENGLISH
+   by default. They open in another language only if:
+     the voter picked one earlier (remembered on their phone), or
+     the organiser set one for the event (Settings -> Voting options).
+   Messages from the server ("code already used", "voting has ended"...)
+   come back in the same language.
+
    Opens link            Enters code            Picks candidates
    +------------+        +------------+         +----------------+
    | Student    |        | Enter your |         | PRESIDENT      |
@@ -478,7 +486,11 @@ VOTERS take part from any phone or laptop using a one-time code.
    [x] Results published live, after close, or never, as the organiser chooses.
    [x] Passwords hashed; changing a password requires the current one and
        signs out other devices. Password reset by email.
-   [x] Optional two-step login (authenticator app + recovery codes).
+   [x] Optional two-step login with Google Authenticator (+ recovery codes).
+       Each code works once; 5 wrong codes lock the second step for 15 min.
+   [x] Payments: Paystack first, Flutterwave as automatic backup. Whichever
+       took the payment, it is re-checked with that provider before votes
+       or upgrades are applied, and only once.
    [x] Logins expire (7 days by default).
    [x] Email must be confirmed before codes can be sent to voters.
    [x] Voter contact details erased automatically after the event.

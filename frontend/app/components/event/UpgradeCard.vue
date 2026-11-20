@@ -57,7 +57,7 @@
                 {{ redirecting ? 'Please wait…' : 'Upgrade now' }}
             </button>
             <div v-if="plans?.payments_enabled && event.status !== 'completed'" class="secure small text-muted mt-2">
-                <i class="bi bi-lock"></i> Secure payment by Paystack: card, bank transfer or USSD.
+                <i class="bi bi-lock"></i> Secure payment: card, bank transfer or USSD.
             </div>
         </template>
     </div>
