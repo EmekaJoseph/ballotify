@@ -44,13 +44,9 @@
 
                     <div class="dtp-time">
                         <i class="bi bi-clock text-muted"></i>
-                        <select v-model.number="hour12" class="form-select form-select-sm" aria-label="Hour">
-                            <option v-for="h in 12" :key="h" :value="h">{{ h }}</option>
-                        </select>
+                        <AppSelect v-model="hour12" :options="hourOptions" size="sm" :block="false" :menu-min-width="76" :searchable="false" aria-label="Hour" class="dtp-sel" />
                         <span class="fw-bold text-muted">:</span>
-                        <select v-model.number="minute" class="form-select form-select-sm" aria-label="Minute">
-                            <option v-for="m in minuteOptions" :key="m" :value="m">{{ String(m).padStart(2, '0') }}</option>
-                        </select>
+                        <AppSelect v-model="minute" :options="minuteSelect" size="sm" :block="false" :menu-min-width="76" :searchable="false" aria-label="Minute" class="dtp-sel" />
                         <div class="dtp-ampm" role="group" aria-label="AM or PM">
                             <button type="button" :class="{ active: !pm }" @click="pm = false">AM</button>
                             <button type="button" :class="{ active: pm }" @click="pm = true">PM</button>
@@ -150,6 +146,12 @@ const cells = computed(() => {
 
 // ---- time (edits the current value; before a day is chosen, it's held until one is)
 const minuteOptions = Array.from({ length: 12 }, (_, i) => i * 5);
+/** Minutes in steps of 5, plus the current minute if it's in between (e.g. a default of 23:59). */
+const minuteSelect = computed(() => {
+    const list = minuteOptions.includes(minute.value) ? minuteOptions : [...minuteOptions, minute.value].sort((a, b) => a - b);
+    return list.map(m => ({ value: m, label: String(m).padStart(2, '0') }));
+});
+const hourOptions = Array.from({ length: 12 }, (_, i) => ({ value: i + 1, label: String(i + 1) }));
 const [dh, dm] = props.defaultTime.split(':').map(Number);
 const pending = reactive({ h: dh ?? 9, m: dm ?? 0 });
 
@@ -227,7 +229,9 @@ function clear() {
 }
 
 function onDocDown(e: MouseEvent) {
-    if (open.value && root.value && !root.value.contains(e.target as Node)) open.value = false;
+    const target = e.target as Element;
+    // Dropdown menus (hour/minute) are teleported to <body>: clicks in them aren't "outside".
+    if (open.value && root.value && !root.value.contains(target) && !target.closest?.('.as-menu')) open.value = false;
 }
 function onKey(e: KeyboardEvent) {
     if (e.key === 'Escape' && open.value) open.value = false;
@@ -302,7 +306,7 @@ onBeforeUnmount(() => {
 .dtp-day:focus-visible, .dtp-nav:focus-visible, .dtp-chip:focus-visible { outline: 2px solid var(--brand-500); outline-offset: 1px; }
 
 .dtp-time { display: flex; align-items: center; gap: .4rem; margin-top: .85rem; padding-top: .85rem; border-top: 1px solid var(--line); }
-.dtp-time .form-select { width: auto; padding-right: 1.8rem; font-weight: 600; }
+.dtp-sel { width: 76px; font-weight: 600; }
 .dtp-ampm { margin-left: auto; display: inline-flex; padding: 2px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; }
 .dtp-ampm button { border: 0; background: none; padding: .22rem .6rem; border-radius: 8px; font-size: .78rem; font-weight: 700; color: var(--muted); }
 .dtp-ampm button.active { background: var(--surface); color: var(--brand-700); box-shadow: var(--shadow-sm, 0 1px 2px rgba(0,0,0,.08)); }

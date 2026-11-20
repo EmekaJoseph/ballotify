@@ -289,6 +289,13 @@ VOTERS take part from any phone or laptop using a one-time code.
    Messages from the server ("code already used", "voting has ended"...)
    come back in the same language.
 
+   IDLE TIMEOUT: once a code is typed in, a ballot (or the thank-you screen,
+   or a paid-vote payment form) left untouched for 1 minute shows "Are you
+   still there?" with a 30-second countdown, then closes: the code is
+   cleared and any choices are thrown away. Nothing is submitted, so the
+   voter can enter the same code again. Protects shared phones and
+   polling-booth tablets.
+
    Opens link            Enters code            Picks candidates
    +------------+        +------------+         +----------------+
    | Student    |        | Enter your |         | PRESIDENT      |

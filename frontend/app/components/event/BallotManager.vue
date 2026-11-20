@@ -48,16 +48,8 @@
                                 <template v-if="!paid">
                                     <span aria-hidden="true">·</span>
                                     <span v-if="locked || !canEdit">{{ methodName(cat) }}</span>
-                                    <label v-else class="d-inline-flex align-items-center gap-1 mb-0" :title="METHOD_HELP">
-                                        <span class="visually-hidden">Voting method</span>
-                                        <select class="form-select form-select-sm limit-select" :value="cat.method === 'ranked' ? 'ranked' : (cat.max_choices ?? '')"
-                                            :aria-label="`Voting method for ${cat.name}`" :disabled="busy" @change="setLimit(cat, $event)">
-                                            <option :value="1">Choose one</option>
-                                            <option v-for="n in limitOptions(cat)" :key="n" :value="n">Pick up to {{ n }}</option>
-                                            <option value="">Approval: pick any number</option>
-                                            <option value="ranked">Ranked choice</option>
-                                        </select>
-                                    </label>
+                                    <AppSelect v-else :model-value="methodValue(cat)" :options="methodOptions(cat)" size="sm" :block="false" :menu-min-width="280"
+                                        class="limit-select" :aria-label="`Voting method for ${cat.name}`" :disabled="busy" @change="setLimit(cat, $event)" />
                                 </template>
                                 <span v-if="cat.shuffle_candidates" class="pill pill-violet shuffle-pill"><i class="bi bi-shuffle"></i> Random order</span>
                             </div>
@@ -136,9 +128,8 @@
                 </div>
                 <div>
                     <label for="cand-cat" class="form-label">Category</label>
-                    <select id="cand-cat" v-model.number="modal.categoryId" class="form-select" :disabled="locked" :title="locked ? 'Locked while voting is under way' : ''">
-                        <option v-for="c in categories" :key="c.id" :value="c.id">{{ c.name }}</option>
-                    </select>
+                    <AppSelect id="cand-cat" v-model="modal.categoryId" :options="categories.map(c => ({ value: c.id, label: c.name }))"
+                        :disabled="locked" :title="locked ? 'Locked while voting is under way' : ''" />
                 </div>
                 <div v-if="modal.error" class="field-error mt-3">{{ modal.error }}</div>
             </form>
@@ -178,8 +169,6 @@ const locked = computed(() => props.event.ballot_locked);
 const candidatesOf = (catId: number): Candidate[] =>
     (props.event.candidates ?? []).filter(c => c.category_id === catId && !hidden.value.has(c.id));
 
-const METHOD_HELP = 'Choose one: most votes wins. Pick up to N: voters pick several. Approval: voters tick everyone they approve of. '
-    + 'Ranked choice: voters rank candidates; the last is eliminated each round until someone has more than half.';
 
 async function run(action: () => Promise<unknown>, success: string) {
     busy.value = true;
@@ -219,10 +208,20 @@ async function toggleShuffle(cat: Category) {
         on ? `Candidates in “${cat.name}” will appear in random order` : `Candidates in “${cat.name}” will appear in a fixed order`);
 }
 
-async function setLimit(cat: Category, e: Event) {
-    const raw = (e.target as HTMLSelectElement).value;
+/** The method picker's value: '1'…'N', 'any' (approval) or 'ranked'. */
+const methodValue = (cat: Category) => (cat.method === 'ranked' ? 'ranked' : cat.max_choices == null ? 'any' : String(cat.max_choices));
+function methodOptions(cat: Category) {
+    return [
+        { value: '1', label: 'Choose one', hint: 'Most votes wins' },
+        ...limitOptions(cat).map(n => ({ value: String(n), label: `Pick up to ${n}`, hint: `Voters choose up to ${n}` })),
+        { value: 'any', label: 'Approval', hint: 'Voters tick everyone they approve of' },
+        { value: 'ranked', label: 'Ranked choice', hint: 'Voters rank candidates; counted in rounds until someone has over half' },
+    ];
+}
+
+async function setLimit(cat: Category, raw: string) {
     const method = raw === 'ranked' ? 'ranked' : 'plurality';
-    const max_choices = raw && raw !== 'ranked' ? Number(raw) : null;
+    const max_choices = raw === 'ranked' || raw === 'any' ? null : Number(raw);
     if (method === (cat.method ?? 'plurality') && max_choices === (cat.max_choices ?? null)) return;
     const label = methodName({ method, max_choices });
     await run(() => adminApi.updateCategory(props.event.id, cat.id, { method, max_choices }), `“${cat.name}”: ${label.charAt(0).toLowerCase()}${label.slice(1)}`);
@@ -362,7 +361,7 @@ async function revokeProfileLink() {
 .cand-row { display: flex; align-items: center; gap: .85rem; padding: .75rem 1.25rem; border-bottom: 1px solid var(--line); }
 .cand-row:last-child { border-bottom: 0; }
 .cand-row:hover { background: var(--surface-2); }
-.limit-select { width: auto; display: inline-block; padding: .1rem 1.8rem .1rem .5rem; font-size: .8rem; min-height: 0; }
+.limit-select :deep(.as-trigger) { padding: .12rem .5rem; font-size: .8rem; border-radius: 8px; }
 .shuffle-on { color: var(--violet-600, #7c5cff); background: var(--violet-50, rgba(124, 92, 255, .1)); }
 .shuffle-pill { font-size: .7rem; padding: .1rem .45rem; }
 .link-box { display: flex; align-items: center; gap: .5rem; padding: .5rem .5rem .5rem .8rem; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-2); }

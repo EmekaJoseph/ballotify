@@ -11,10 +11,8 @@
                         They can still switch with the language button at the top of the page.
                     </p>
                 </div>
-                <select id="opt-lang" class="form-select lang-select" :value="event.language || 'en'" :disabled="busy === 'language'"
-                    aria-label="Voting page language" @change="saveLanguage(($event.target as HTMLSelectElement).value)">
-                    <option v-for="l in LANGUAGES" :key="l.code" :value="l.code">{{ l.name }}</option>
-                </select>
+                <AppSelect id="opt-lang" :model-value="event.language || 'en'" :options="LANGUAGES.map(l => ({ value: l.code, label: l.name }))"
+                    :block="false" class="lang-select" :disabled="busy === 'language'" aria-label="Voting page language" @change="saveLanguage" />
             </div>
         </section>
 

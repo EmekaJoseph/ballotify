@@ -14,13 +14,7 @@
                         <i class="bi bi-search"></i>
                         <input v-model="query" type="search" class="form-control form-control-sm py-2" placeholder="Search name, email, phone or code" aria-label="Search voters" />
                     </div>
-                    <select v-model="statusFilter" class="form-select form-select-sm py-2" style="max-width: 170px" aria-label="Filter by status">
-                        <option value="all">All voters</option>
-                        <option value="pending">Not voted</option>
-                        <option value="voted">Voted</option>
-                        <option value="not_invited">Not invited</option>
-                        <option value="failed">Delivery failed</option>
-                    </select>
+                    <AppSelect v-model="statusFilter" :options="STATUS_FILTERS" size="sm" :block="false" icon="bi-funnel" class="status-filter" aria-label="Filter by status" />
                 </div>
                 <div class="d-flex flex-wrap gap-2">
                     <button class="btn btn-primary btn-sm" @click="onSendCodes">
@@ -224,6 +218,13 @@ const busy = ref(false);
 const voters = ref<Voter[]>([]);
 const query = ref('');
 const statusFilter = ref<'all' | 'voted' | 'pending' | 'not_invited' | 'failed'>('all');
+const STATUS_FILTERS: { value: typeof statusFilter.value; label: string }[] = [
+    { value: 'all', label: 'All voters' },
+    { value: 'pending', label: 'Not voted' },
+    { value: 'voted', label: 'Voted' },
+    { value: 'not_invited', label: 'Not invited' },
+    { value: 'failed', label: 'Delivery failed' },
+];
 const page = ref(1);
 
 const dialog = ref<null | 'form' | 'import' | 'generate' | 'created' | 'invite' | 'whatsapp' | 'remind'>(null);
@@ -484,6 +485,8 @@ function printSlips(list: (Voter | GeneratedCode)[]) {
 </script>
 
 <style scoped>
+.status-filter { flex-shrink: 0; min-width: 160px; }
+.status-filter :deep(.as-trigger) { padding-top: .5rem; padding-bottom: .5rem; }
 .codes-grid { display: grid; gap: .5rem; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
 .code-tile { padding: .6rem .75rem; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-2); }
 .code-chip.masked { color: var(--muted); letter-spacing: .12em; }

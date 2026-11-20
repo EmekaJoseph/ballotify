@@ -29,10 +29,8 @@
                                 <span v-else>Joined</span>
                             </div>
                         </div>
-                        <select v-if="isOwner" class="form-select form-select-sm role-select" :value="m.role" :aria-label="`Role for ${m.email}`"
-                            @change="changeRole(m, ($event.target as HTMLSelectElement).value as MemberRole)">
-                            <option v-for="r in roles" :key="r" :value="r">{{ ROLE_INFO[r].label }}</option>
-                        </select>
+                        <AppSelect v-if="isOwner" :model-value="m.role" :options="roleOptions" size="sm" :block="false" :menu-min-width="260"
+                            class="role-select" :aria-label="`Role for ${m.email}`" @change="changeRole(m, $event as MemberRole)" />
                         <span v-else class="pill pill-completed">{{ ROLE_INFO[m.role].label }}</span>
                         <button v-if="isOwner || m.email === myEmail" class="btn btn-ghost btn-icon btn-sm text-danger"
                             :title="m.email === myEmail ? 'Leave this event' : 'Remove from team'" :aria-label="m.email === myEmail ? 'Leave this event' : 'Remove from team'"
@@ -93,6 +91,7 @@ const { confirm } = useConfirm();
 const auth = useAuthStore();
 
 const roles: MemberRole[] = ['editor', 'voters', 'viewer'];
+const roleOptions = roles.map(r => ({ value: r as string, label: ROLE_INFO[r].label, hint: ROLE_INFO[r].text, icon: ROLE_INFO[r].icon }));
 const team = ref<TeamInfo | null>(null);
 const loading = ref(true);
 const busy = ref(false);
@@ -159,7 +158,7 @@ async function remove(m: TeamMember) {
 <style scoped>
 .member { display: flex; align-items: center; gap: .8rem; padding: .8rem 1.25rem; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
 .member:last-child { border-bottom: 0; }
-.role-select { width: auto; }
+.role-select { flex-shrink: 0; }
 .pro-lock { display: flex; gap: .6rem; align-items: center; flex-wrap: wrap; padding: .8rem; border-radius: 12px; background: var(--brand-50); }
 .pro-lock > span { flex: 1 1 180px; }
 .icon-tile.sm { width: 34px; height: 34px; font-size: 1rem; flex-shrink: 0; }

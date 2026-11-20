@@ -39,10 +39,8 @@
 
             <form v-else class="card-b pad" novalidate @submit.prevent="submit">
                 <label for="nom-cat" class="form-label">{{ t('nom.category') }}</label>
-                <select id="nom-cat" v-model.number="categoryId" class="form-select form-select-lg mb-3">
-                    <option :value="0" disabled>{{ t('nom.chooseCategory') }}</option>
-                    <option v-for="c in form.categories" :key="c.id" :value="c.id">{{ c.name }}</option>
-                </select>
+                <AppSelect id="nom-cat" v-model="categoryId" :options="form.categories.map(c => ({ value: c.id, label: c.name }))" size="lg" class="mb-3"
+                    :placeholder="t('nom.chooseCategory')" :search-placeholder="t('nom.chooseCategory')" :empty-text="'—'" />
 
                 <label for="nom-name" class="form-label">{{ t('nom.who') }}</label>
                 <input id="nom-name" v-model.trim="nominee" class="form-control form-control-lg mb-3" maxlength="120" :placeholder="t('nom.fullName')" />

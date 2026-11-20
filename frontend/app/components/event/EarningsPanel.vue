@@ -51,10 +51,8 @@
                             </p>
                             <form novalidate @submit.prevent="saveVerified">
                                 <label for="v-bank" class="form-label">Bank</label>
-                                <select id="v-bank" v-model="vbank.code" class="form-select mb-2" @change="vbank.name = ''">
-                                    <option value="" disabled>Choose your bank</option>
-                                    <option v-for="b in banks" :key="b.code" :value="b.code">{{ b.name }}</option>
-                                </select>
+                                <AppSelect id="v-bank" v-model="vbank.code" :options="banks.map(b => ({ value: b.code, label: b.name }))" class="mb-2"
+                                    placeholder="Choose your bank" search-placeholder="Search banks…" searchable @change="vbank.name = ''" />
                                 <label for="v-acct" class="form-label">Account number</label>
                                 <div class="d-flex gap-2 mb-2">
                                     <input id="v-acct" v-model.trim="vbank.number" class="form-control mono" inputmode="numeric" maxlength="10" placeholder="10 digits" @input="vbank.name = ''" />

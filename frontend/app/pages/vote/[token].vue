@@ -37,6 +37,9 @@
 
         <!-- Enter code (or, for paid voting, the nominee list) -->
         <div v-else-if="(stage === 'code' || stage === 'paid') && event" class="fade-up">
+            <div v-if="idleClosed" class="alert alert-info border-0 rounded-4 small d-flex gap-2 mb-3" role="status">
+                <i class="bi bi-shield-lock"></i> <span>{{ t('idle.closed') }}</span>
+            </div>
             <div v-if="paidNotice" class="alert border-0 rounded-4 small d-flex gap-2 mb-3" :class="paidNotice.ok ? 'alert-success' : 'alert-warning'">
                 <i class="bi" :class="paidNotice.ok ? 'bi-check-circle-fill' : 'bi-info-circle'"></i> {{ paidNotice.text }}
             </div>
@@ -138,6 +141,7 @@
         <VoteSuccess v-else-if="stage === 'done'" :event-name="event?.name ?? ''" :voter-name="voterName" :receipt="receipt"
             :results-to="event?.results_visibility === 'private' ? '' : `/event/${token}/results`"
             :results-label="event?.results_visibility === 'live' ? t('vote.viewLive') : t('vote.resultsLater')" />
+        <IdleWarning :show="idle.warning.value" :seconds="idle.secondsLeft.value" :total="IDLE_WARN_MS / 1000" @stay="idle.stay" />
     </div>
 </template>
 
@@ -196,6 +200,32 @@ const paidResult = ref<{ message: string; reference: string } | null>(null);
 const paidNotice = ref<{ ok: boolean; text: string } | null>(null);
 
 const isPaid = computed(() => event.value?.voting_mode === 'paid');
+
+// ----- Idle timeout: a ballot left open (shared phone, polling-booth tablet) closes by itself.
+// Nothing is submitted, so the code still works; the voter just enters it again.
+// Warning after 1 minute with no tap, then 30 seconds to answer it before the ballot closes.
+const IDLE_WARN_MS = 30 * 1000;
+const IDLE_MS = 60 * 1000 + IDLE_WARN_MS;
+const idleClosed = ref(false);
+const idle = useIdleTimeout({
+    idleMs: IDLE_MS,
+    warnMs: IDLE_WARN_MS,
+    active: () => stage.value === 'ballot' || (stage.value === 'done' && !isPaid.value)
+        || (stage.value === 'code' && (code.value.trim() !== '' || selfReg.memberId !== '')),
+    onTimeout: closeIdleSession,
+});
+function closeIdleSession() {
+    code.value = '';
+    voterName.value = null;
+    receipt.value = null;
+    codeError.value = '';
+    submitError.value = '';
+    Object.assign(selfReg, { open: false, memberId: '', captcha: '', sentTo: [] });
+    stage.value = 'code';
+    idleClosed.value = true;
+    window.scrollTo({ top: 0 });
+}
+watch(code, (v) => { if (v) idleClosed.value = false; });
 const allSingle = computed(() => (event.value?.categories ?? []).every(c => c.max_choices === 1 && c.method !== 'ranked'));
 useBrandTheme(() => event.value?.brand);
 

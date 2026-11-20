@@ -213,6 +213,10 @@ const en = {
     'res.wonInRound': 'Won in round {round} with {votes} of {total} votes ({pct}%)',
     'res.firstChoices': 'first choices',
     'res.approvalNote': 'Approval vote: each voter could pick several. Percentages are of voters, so they can add up to more than 100%.',
+    'idle.title': 'Are you still there?',
+    'idle.text': 'For your privacy, this ballot closes in {n} seconds. Nothing has been submitted.',
+    'idle.stay': 'I’m still here',
+    'idle.closed': 'Your ballot closed after a while without activity, so nobody else could use it. No vote was cast: enter your code to start again.',
 } as const;
 
 export type MessageKey = keyof typeof en;
@@ -417,6 +421,10 @@ const fr: Dictionary = {
     'res.wonInRound': 'Gagné au tour {round} avec {votes} voix sur {total} ({pct} %)',
     'res.firstChoices': 'premiers choix',
     'res.approvalNote': 'Vote par approbation : chaque électeur pouvait en choisir plusieurs. Les pourcentages portent sur les électeurs, leur total peut donc dépasser 100 %.',
+    'idle.title': 'Êtes-vous toujours là ?',
+    'idle.text': 'Pour protéger votre vote, ce bulletin se ferme dans {n} secondes. Rien n’a été envoyé.',
+    'idle.stay': 'Je suis toujours là',
+    'idle.closed': 'Votre bulletin s’est fermé après un moment d’inactivité, pour que personne d’autre ne puisse l’utiliser. Aucun vote n’a été envoyé : saisissez votre code pour recommencer.',
 };
 
 const yo: Dictionary = {
@@ -618,6 +626,10 @@ const yo: Dictionary = {
     'res.wonInRound': 'Ó borí ní ìpele {round} pẹ̀lú ìbò {votes} nínú {total} ({pct}%)',
     'res.firstChoices': 'àṣàyàn àkọ́kọ́',
     'res.approvalNote': 'Ìdìbò ìfọwọ́sí: olùdìbò kọ̀ọ̀kan lè yan ọ̀pọ̀. Ìdá-ọgọ́rùn-ún jẹ́ ti àwọn olùdìbò, nítorí náà àpapọ̀ lè ju 100% lọ.',
+    'idle.title': 'Ṣé o ṣì wà níbẹ̀?',
+    'idle.text': 'Láti dáàbò bo ìbò rẹ, ìwé ìdìbò yìí yóò tì ní ìṣẹ́jú-àáyá {n}. A kò tíì fi nǹkan kan ránṣẹ́.',
+    'idle.stay': 'Mo ṣì wà níbí',
+    'idle.closed': 'Ìwé ìdìbò rẹ tì lẹ́yìn àkókò díẹ̀ tí o kò ṣe nǹkan kan, kí ẹlòmíràn má bàa lò ó. A kò fi ìbò kankan ránṣẹ́: tẹ kóòdù rẹ láti tún bẹ̀rẹ̀.',
 };
 
 const ha: Dictionary = {
@@ -819,6 +831,10 @@ const ha: Dictionary = {
     'res.wonInRound': 'Ya yi nasara a zagaye na {round} da ƙuri’u {votes} cikin {total} ({pct}%)',
     'res.firstChoices': 'zaɓi na farko',
     'res.approvalNote': 'Zaɓe na amincewa: kowane mai zaɓe zai iya zaɓar da yawa. Kashi-kashi na masu zaɓe ne, don haka jimilla na iya wuce 100%.',
+    'idle.title': 'Kana nan har yanzu?',
+    'idle.text': 'Don kare ƙuri’arka, wannan takardar zaɓe za ta rufe nan da daƙiƙa {n}. Ba a aika komai ba.',
+    'idle.stay': 'Ina nan',
+    'idle.closed': 'Takardar zaɓenka ta rufe bayan ɗan lokaci ba tare da wani aiki ba, don kada wani ya yi amfani da ita. Ba a jefa ƙuri’a ba: shigar da lambarka don sake farawa.',
 };
 
 const ig: Dictionary = {
@@ -1020,6 +1036,10 @@ const ig: Dictionary = {
     'res.wonInRound': 'O meriri n’agba {round} jiri votu {votes} n’ime {total} ({pct}%)',
     'res.firstChoices': 'nhọrọ mbụ',
     'res.approvalNote': 'Ntuli aka nkwado: onye ọ bụla nwere ike ịhọrọ ọtụtụ. Pasent bụ nke ndị ntuli aka, ya mere ngụkọta nwere ike karịa 100%.',
+    'idle.title': 'Ị ka nọ ebe ahụ?',
+    'idle.text': 'Iji chekwaa votu gị, akwụkwọ ntuli aka a ga-emechi n’ime sekọnd {n}. E zigabeghị ihe ọ bụla.',
+    'idle.stay': 'Anọ m ebe a',
+    'idle.closed': 'Akwụkwọ ntuli aka gị mechiri mgbe oge ụfọdụ gachara n’emeghị ihe ọ bụla, ka onye ọzọ ghara iji ya. Etụghị votu ọ bụla: tinye koodu gị iji malite ọzọ.',
 };
 
 export const messages: Record<'en' | 'yo' | 'ha' | 'ig' | 'fr', Dictionary> = { en, yo, ha, ig, fr };

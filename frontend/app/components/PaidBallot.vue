@@ -78,6 +78,7 @@
                 </div>
             </template>
         </BaseModal>
+        <IdleWarning :show="idle.warning.value" :seconds="idle.secondsLeft.value" :total="30" @stay="idle.stay" />
     </div>
 </template>
 
@@ -125,6 +126,12 @@ const paying = ref(false);
 const { alert } = useAlert();
 const captcha = ref('');
 const human = ref<{ reset: () => void } | null>(null);
+// A payment form left open on a shared phone closes by itself (nothing is charged).
+const idle = useIdleTimeout({
+    idleMs: 90 * 1000, warnMs: 30 * 1000, // warning after 1 minute, closes 30 s later
+    active: () => !!buying.value && !paying.value,
+    onTimeout: () => { buying.value = null; name.value = ''; },
+});
 
 const minQty = computed(() => Math.max(1, Math.ceil(props.minPayment / Math.max(1, props.price))));
 const quick = computed(() => [...new Set([minQty.value, 5, 10, 20, 50, 100].filter(n => n >= minQty.value))].slice(0, 6));

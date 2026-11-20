@@ -31,7 +31,8 @@
 | Automatic payouts for paid voting (Paystack split payments)        |                                        |
 | Pro: your own logo and colour on the ballot and results pages      |                                        |
 | Activity log of every change; two-step login (Google Authenticator); dark mode |
-| Voting pages in **English, Yorùbá, Hausa, Igbo and French**         |                                        |                                        |
+| Voting pages in **English, Yorùbá, Hausa, Igbo and French**         |                                        |
+| Idle ballots warn after 1 minute without a tap, then close 30 s later |                                        |                                        |
 | **Platform admin:** organisers, events, payments, payouts, system health; suspend abuse |                                        |
 | **Free and Pro plans:** pay per event with Paystack                 |                                        |
 
