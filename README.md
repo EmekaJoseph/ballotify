@@ -25,7 +25,10 @@
 | Import candidates from a spreadsheet; duplicate an event            |                                        |
 | Results as CSV, a printable report, a turnout chart, and **Present / Reveal** on a projector | **Paid voting:** pick a nominee, pay per vote |
 | **Paid public voting** for award nights: fans pay per vote via Paystack | Payment reference doubles as a receipt |
-| **Co-organisers** with roles (editor, voter manager, viewer)       |                                        |
+| **Co-organisers** with roles (editor, voter manager, viewer)       | **Self-registration:** request your code with your matric/member ID |
+| Optional: voter self-registration, USSD voting, public nominations, candidate profile links | **USSD voting** on any phone, no data needed |
+| **Certified results** with a QR code anyone can verify             | Check a results certificate at /verify |
+| Automatic payouts for paid voting (Paystack split payments)        |                                        |
 | Pro: your own logo and colour on the ballot and results pages      |                                        |
 | Activity log of every change; two-step login; dark mode            |                                        |
 | **Platform admin:** organisers, events, payments, payouts, system health; suspend abuse |                                        |
@@ -188,6 +191,11 @@ Until a key is set, nothing breaks: organisers see "Contact us to upgrade" (usin
 |---|---|
 | `BILLING_ENABLED` | `true` (default) for Free/Pro plans, `false` for no limits and no payments. |
 | `PAYSTACK_SECRET_KEY` | Your Paystack secret key. Empty = online payment off. |
+| `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile secret (free bot / card-testing check on sign-up, paid votes, nominations, self-registration). Empty = off. Put the matching site key in the frontend as `NUXT_PUBLIC_TURNSTILE_SITE_KEY`. |
+| `USSD_SERVICE_CODE` | Your Africa's Talking USSD code, e.g. `*384*1234#` (shown to organisers). Empty = USSD voting unavailable. |
+| `USSD_WEBHOOK_SECRET` | A long random string. In Africa's Talking set the USSD callback URL to `{APP_URL}/api/ussd/{USSD_WEBHOOK_SECRET}`. |
+
+**Automatic payouts:** with Paystack set up, organisers verify their bank account on the event's Earnings tab and Ballotify creates a Paystack subaccount for them. Every paid vote is then split by Paystack: the platform fee to you, the rest straight to the organiser. Without it, record transfers in Admin → Payouts.
 
 ### Frontend `.env`
 
@@ -197,11 +205,12 @@ Until a key is set, nothing breaks: organisers see "Contact us to upgrade" (usin
 | `NUXT_PUBLIC_REVERB_KEY` | Same as `REVERB_APP_KEY`. Leave empty to use 15-second polling. |
 | `NUXT_PUBLIC_REVERB_HOST` / `_PORT` / `_SCHEME` | Where browsers reach Reverb, e.g. `ws.example.com` / `443` / `https`. |
 | `NUXT_PUBLIC_COMPANY_NAME`, `NUXT_PUBLIC_CONTACT_EMAIL` | Shown on the Privacy and Terms pages. |
+| `NUXT_PUBLIC_TURNSTILE_SITE_KEY` | Cloudflare Turnstile site key. Empty = no bot check shown. |
 
 ## Testing
 
 ```bash
-cd backend  && php artisan test                                    # 102 feature tests
+cd backend  && php artisan test                                    # 112 feature tests
 cd frontend && npx nuxi prepare && npx vue-tsc --noEmit -p .nuxt/tsconfig.app.json   # type check
 cd frontend && npm run build                                       # production build
 ```

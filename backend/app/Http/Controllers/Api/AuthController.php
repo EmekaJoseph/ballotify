@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\EventMember;
 use App\Models\User;
+use App\Support\Turnstile;
 use App\Support\TwoFactor;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\Request;
@@ -26,6 +27,7 @@ class AuthController extends Controller
             'password' => ['required', 'string', 'min:8'],
             'terms' => ['accepted'],
         ], ['terms.accepted' => 'Please accept the Terms and Privacy Policy to continue.']);
+        Turnstile::verify($request);
 
         $user = User::create([
             'name' => $data['name'],

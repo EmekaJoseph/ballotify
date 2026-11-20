@@ -53,11 +53,22 @@ VOTERS take part from any phone or laptop using a one-time code.
                link, watches turnout, announces results.
                -> needs to sign in.
 
-   VOTER       Receives a link + a personal code. Votes once.
+   CO-ORGANISER  Invited by the owner (Pro): Editor, Voter manager or Viewer.
+               -> signs in with the invited email; sees only what the role allows.
+
+   VOTER       Receives a link + a personal code (or requests their own with
+               an ID on the list, if allowed). Votes once, online or by USSD.
                -> no account, no app to install.
+
+   FAN         Paid voting: picks a nominee and pays per vote. Can vote again.
+
+   NOMINATOR   Suggests nominees before voting (if nominations are on).
+
+   CANDIDATE   Optional private link to add their own photo and description.
 
    AUDIENCE    Anyone with the results link (e.g. a projector at the venue).
                -> sees totals only, never who voted for whom.
+               Anyone can check a results certificate at /verify.
 
 
 --------------------------------------------------------------------------------
@@ -97,25 +108,40 @@ VOTERS take part from any phone or laptop using a one-time code.
                             vote on Paystack; the platform keeps a fee and
                             pays the rest to the organiser.
 
-   [ Sign up ] --> [ Create event ] --> [ Build ballot ] --> [ Issue codes ]
-                                                                   |
-   [ Announce ] <-- [ Watch results ] <-- [ Share link ] <---------+
+   [ Sign up ] --> [ Create event ] --> ( Nominations ) --> [ Build ballot ]
+                                          optional               |
+                                                                 v
+   [ Certify & announce ] <-- [ Watch results ] <-- [ Share ] <-- [ Issue codes ]
 
    Step by step:
 
    (1) CREATE EVENT
-       Name, description, voting style, opening/closing time.
+       Pick a template (Student union, Award night, AGM, Board) or a blank
+       event, then: name, description, how people vote (secret ballot or
+       paid voting + price), who sees results, opening/closing time.
+       Pick limits are set per category on the Ballot tab:
+         "Choose one" (default)  |  "Pick up to N"  |  "Pick any number"
 
-         Voting style
-         +-----------------------------+   +-----------------------------+
-         | (o) One per category        |   | [x] Multiple choice         |
-         |     pick 1 President,       |   |     pick several nominees;  |
-         |     1 Treasurer ...         |   |     optional "up to N" per  |
-         |                             |   |     category                |
-         +-----------------------------+   +-----------------------------+
+       Already ran this vote last year? Settings -> Advanced -> "Duplicate
+       event" copies the whole ballot (no voters, votes or dates).
 
-       Already ran this vote last year? Settings -> "Duplicate event" copies
-       the whole ballot (no voters, votes or dates).
+       SETTINGS TAB is split into four sections:
+         General ........ name, dates, voting mode, results visibility
+         Voting options . self-registration, USSD, nominations (switches)
+         Branding ....... your logo and colour (Pro)
+         Advanced ....... duplicate, close voting, erase contacts, delete
+
+   (1b) NOMINATIONS (optional, before voting)
+       Voting options -> Nominations ON, set when they close (before voting
+       opens), share the link /nominate/<link>. The public suggests nominees
+       per category (max 3 per person per category; bot check). The
+       Nominations tab groups them by name with counts:
+
+         President                                   2 nominees
+          1  Kemi Adeyemi   "Always shows up..."  14   [+ Add to ballot]
+          2  Tunde Bello                           6   [+ Add to ballot]
+
+       Nominations close automatically at the first vote.
 
    (2) BUILD THE BALLOT  (Ballot tab)
 
@@ -132,14 +158,34 @@ VOTERS take part from any phone or laptop using a one-time code.
          Many candidates? "Import candidates" takes a spreadsheet with
          Category, Name, Description columns and creates missing categories.
 
+         CANDIDATE PROFILES (optional): the link icon next to a candidate
+         gives a private link (copy or send on WhatsApp). The candidate opens
+         it, adds their own photo and short description; they can't change
+         their name or category. Every change is in the Activity log. The
+         organiser can switch the link off at any time.
+
    (3) ISSUE VOTER CODES  (Voters tab)
 
          Option A: "Generate 500"  -> 500 anonymous codes
-         Option B: "Import"        -> paste/upload a list (name, email, phone),
+         Option B: "Import"        -> paste/upload a list (name, email, phone,
+                                    optional ID such as matric number),
                                     1 code per person
-         Option C: "Add"           -> one voter: name, email, phone, code
+         Option C: "Add"           -> one voter: name, email, phone, ID, code
 
          Codes look like:  K7M2QX9P   (8 chars, no 0/O or 1/I/L look-alikes)
+         With USSD voting on:  4831907265  (10 digits: keypads can't type
+         letters; "Switch existing codes to numbers" converts old ones)
+
+         VOTER SELF-REGISTRATION (optional, Pro). You can still send codes
+         yourself. If switched on, the ballot shows "Don't have your code?":
+
+           voter types their ID  -->  found on YOUR list?  --no-->  "not on the list"
+                                            | yes
+                                            v
+                 code sent ONLY to the email/phone YOU have on file
+                 ("Sent to ad••@gmail.com"), max once every 2 minutes
+
+         Knowing someone's matric number is not enough to vote as them.
 
          Then:  [Send codes]  -> by Email / SMS / Both (link + personal code)
                 [Download CSV]  or  [Print slips]
@@ -171,9 +217,42 @@ VOTERS take part from any phone or laptop using a one-time code.
 
    (6) ANNOUNCE
          Results tab -> [CSV] spreadsheet of the full tally
-                     -> [Report / PDF] a printable results report with the
-                        integrity statement and signature lines for a
-                        returning officer and a witness.
+                     -> [Report / PDF] the full record of the vote, saved as
+                        a PDF from the browser's print window (A4):
+                          page 1: headline numbers (ballots cast, registered
+                                  voters, turnout, categories, candidates,
+                                  votes), the winners with share and margin
+                                  (ties marked), the turnout chart, and the
+                                  certificate number + QR code if certified.
+                          then:   every category, every candidate: votes,
+                                  % share bars, winner highlighted; the
+                                  integrity statement; optional signature
+                                  lines (returning officer, witness).
+                          appendix (optional, on by default once anyone has
+                                  voted): the voter register: each voter, their
+                                  member ID, "Voted"/"Did not vote" and the
+                                  time. Never HOW anyone voted: that isn't
+                                  stored.
+                        Paid events show votes, payments and a payments
+                        summary appendix (raised, platform fee, organiser's
+                        share, the latest 50 payments) instead.
+                        "Changes after voting began" counts only edits to
+                        candidates/categories made once votes existed.
+                     -> [Present] / [Reveal] full screen on a projector.
+
+         CERTIFY (after voting closes): Results tab -> "Certify results".
+         Ballotify signs a snapshot of the final totals and gives it a number
+         (BLT-XXXX-XXXX). The printable certificate has a QR code. Anyone can
+         open /verify/<number> and see one of:
+           [OK]    Genuine; matches the event's current totals
+           [WARN]  Genuine, but the totals have changed since it was issued
+           [BAD]   Not valid (the stored certificate was altered)
+
+         PAID VOTING MONEY: Earnings tab. Pick your bank and account number,
+         Ballotify checks the account name with Paystack, then turns on
+         AUTOMATIC PAYOUTS: Paystack splits every vote payment, sending your
+         share straight to your bank and the platform fee to Ballotify.
+         Without it, the admin pays you by transfer (Admin -> Payouts).
 
    Once the FIRST vote is cast the ballot is LOCKED: no adding, removing
    or moving categories/candidates. Name and photo fixes are still allowed
@@ -206,8 +285,30 @@ VOTERS take part from any phone or laptop using a one-time code.
         +---------------------------+
 
    - Blank categories are allowed (a voter may abstain).
-   - If the event isn't open yet: a countdown is shown instead of the ballot.
+   - If the event isn't open yet: a countdown is shown instead of the ballot
+     (plus "Nominate someone" while nominations are open).
    - If it has closed: "Voting has closed" + a button to see results.
+   - After voting: a RECEIPT (e.g. K7QM-3XPA-9D). On the results page,
+     "Check your ballot" confirms it was counted, without showing the choice.
+
+   VOTING BY USSD (no smartphone or data needed; Pro, Africa's Talking):
+
+     Dial *384*1234#
+       CON Welcome to Ballotify          -> types event number 476235
+       CON Campus Election
+           Enter your voting code:       -> types 4831907265
+       CON President (1/4)
+           1. Ada Obi  2. Bola Ade
+           0. Skip                       -> 1   (one screen per category;
+                                                 "98. More" for long lists)
+       CON Confirm your vote:
+           President: Ada Obi ...
+           1. Submit  2. Cancel          -> 1
+       END Thank you! Your vote was recorded.
+           Receipt: R5H8-V37P-K2
+
+     Same rules as the web ballot (same code, once only, secret). On USSD a
+     voter picks one candidate per category. The phone number isn't stored.
 
 
 --------------------------------------------------------------------------------
@@ -313,20 +414,27 @@ VOTERS take part from any phone or laptop using a one-time code.
    events
      |  name, description, link_token (the secret part of the voting URL),
      |  starts_at, ends_at, voting_mode (codes / paid), vote_price_naira,
-     |  brand colour + logo, scheduled reminder, plan (free / pro)
+     |  brand colour + logo, scheduled reminder, plan (free / pro),
+     |  self_registration + ID label, ussd_enabled + event number,
+     |  nominations_enabled + nominations_ends_at
      |
      +--< categories           e.g. "President"; max_choices (1 = choose one,
      |       |                 N = up to N, empty = any) + shuffle flag
      |       |
-     |       +--< candidates   e.g. "Ada Obi" (+ photo, + votes = running total)
+     |       +--< candidates   e.g. "Ada Obi" (+ photo, + votes = running total,
+     |                         + optional private profile-link token)
      |
      +--< voters               one row per code; used_at = THAT it voted
-     |                         (never for whom)
+     |                         (never for whom); optional member ID
      |
      +--< ballot_receipts      hashed receipt codes; NOT linked to a voter
      |                         or a choice
      |
-     +--< vote_purchases       paid votes (Paystack reference, quantity, fee)
+     +--< nominations          public nominations (name, reason; IP kept
+     |                         only as a hash, to limit repeats)
+     +--< result_certificates  signed snapshot of the final results
+     +--< vote_purchases       paid votes (Paystack reference, quantity, fee,
+     |                         subaccount when split to the organiser)
      +--< payouts              money sent to the organiser for paid voting
      +--< event_members        co-organisers: editor / voters / viewer
      |
@@ -353,6 +461,15 @@ VOTERS take part from any phone or laptop using a one-time code.
    [x] Paid votes count once, only for the full amount, and only if paid
        before voting closed.
    [x] Brute-force protection on code entry and vote submission.
+   [x] Bot / card-testing check (Cloudflare Turnstile) on sign-up, paid-vote
+       checkout, nominations and self-registration, once its keys are set.
+   [x] Self-registration sends codes only to contact details the organiser
+       has on file, never to an address the voter types in.
+   [x] USSD voting goes through the same checks as the web ballot; its
+       callback URL holds a secret, and the phone number isn't stored.
+   [x] Results certificates are signed (HMAC with the app key): an edited
+       certificate fails verification, and changed totals are flagged.
+   [x] Payout bank accounts are verified with Paystack before payouts start.
    [x] Organisers can only see and change their own events (others get 404);
        co-organisers get only what their role allows.
    [x] Nested items can't be edited through another event's URL.
@@ -365,6 +482,8 @@ VOTERS take part from any phone or laptop using a one-time code.
    [x] Logins expire (7 days by default).
    [x] Email must be confirmed before codes can be sent to voters.
    [x] Voter contact details erased automatically after the event.
+   [x] Organisers can download their data and delete their account
+       (Account page), in line with NDPA / GDPR rights.
    [x] Uploaded photos are type-checked and size-limited (5 MB).
    [x] CSV exports are protected against spreadsheet formula injection.
    [x] The platform owner can suspend an abusive organiser: they are signed

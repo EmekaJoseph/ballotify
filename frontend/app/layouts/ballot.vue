@@ -5,7 +5,8 @@
                 <AppLogo />
                 <div class="d-flex align-items-center gap-3">
                     <span v-if="mode === 'paid'" class="small text-muted d-none d-sm-inline-flex align-items-center gap-1"><i class="bi bi-lock"></i> Secure payments by Paystack</span>
-                    <span v-else class="small text-muted d-none d-sm-inline-flex align-items-center gap-1"><i class="bi bi-shield-lock"></i> Secret ballot</span>
+                    <span v-else-if="mode === 'nominate'" class="small text-muted d-none d-sm-inline-flex align-items-center gap-1"><i class="bi bi-megaphone"></i> Nominations</span>
+                    <span v-else-if="mode === 'codes'" class="small text-muted d-none d-sm-inline-flex align-items-center gap-1"><i class="bi bi-shield-lock"></i> Secret ballot</span>
                     <ThemeToggle />
                 </div>
             </div>

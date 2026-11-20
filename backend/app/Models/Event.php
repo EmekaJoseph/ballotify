@@ -41,6 +41,10 @@ class Event extends Model
         'brand_color',
         'reminder_at',
         'reminder_channel',
+        'self_registration',
+        'member_id_label',
+        'nominations_enabled',
+        'nominations_ends_at',
     ];
 
     protected $casts = [
@@ -50,6 +54,10 @@ class Event extends Model
         'reminder_at' => 'datetime',
         'reminder_sent_at' => 'datetime',
         'vote_price_naira' => 'integer',
+        'self_registration' => 'boolean',
+        'ussd_enabled' => 'boolean',
+        'nominations_enabled' => 'boolean',
+        'nominations_ends_at' => 'datetime',
     ];
 
     protected $attributes = [
@@ -91,6 +99,25 @@ class Event extends Model
     public function purchases(): HasMany
     {
         return $this->hasMany(VotePurchase::class);
+    }
+
+    public function nominations(): HasMany
+    {
+        return $this->hasMany(Nomination::class);
+    }
+
+    public function certificates(): HasMany
+    {
+        return $this->hasMany(ResultCertificate::class);
+    }
+
+    /** Nominations are being accepted right now (and voting hasn't started). */
+    public function nominationsOpen(): bool
+    {
+        return $this->nominations_enabled
+            && (! $this->nominations_ends_at || $this->nominations_ends_at->isFuture())
+            && ! $this->hasVotes()
+            && $this->status !== self::STATUS_COMPLETED;
     }
 
     public function payouts(): HasMany

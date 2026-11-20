@@ -116,9 +116,10 @@
                                 </td>
                                 <td style="min-width: 200px">
                                     <div class="fw-semibold text-ink">{{ v.name || 'Anonymous' }}</div>
-                                    <div v-if="v.email || v.phone" class="small text-muted d-flex flex-wrap column-gap-3">
+                                    <div v-if="v.email || v.phone || v.member_id" class="small text-muted d-flex flex-wrap column-gap-3">
                                         <span v-if="v.email" class="text-break"><i class="bi bi-envelope me-1"></i>{{ v.email }}</span>
                                         <span v-if="v.phone" class="text-nowrap"><i class="bi bi-phone me-1"></i>{{ v.phone }}</span>
+                                        <span v-if="v.member_id" class="text-nowrap mono" :title="event.member_id_label || 'Member ID'"><i class="bi bi-person-vcard me-1"></i>{{ v.member_id }}</span>
                                     </div>
                                 </td>
                                 <td class="text-nowrap">
@@ -162,7 +163,7 @@
         </div>
 
         <!-- Dialogs -->
-        <EventVoterFormModal :open="dialog === 'form'" :event-id="event.id" :voter="editing" @close="dialog = null" @saved="onSaved" @limit="onLimit" />
+        <EventVoterFormModal :open="dialog === 'form'" :event-id="event.id" :voter="editing" :member-label="event.member_id_label || 'Member ID'" @close="dialog = null" @saved="onSaved" @limit="onLimit" />
         <EventVoterImportModal :open="dialog === 'import'" :event-id="event.id" @close="dialog = null" @created="afterCreate" @limit="onLimit" />
         <EventWhatsAppModal :open="dialog === 'whatsapp'" :event="event" :voters="voters" :vote-url="voteUrl" @close="dialog = null" @shared="onShared" />
         <EventRemindModal :open="dialog === 'remind'" :event="event" :pending="pendingVoters.length" :reachable="reachableCount"
@@ -279,7 +280,7 @@ const filtered = computed(() => {
         if (s === 'not_invited' && (v.invited_at || v.used_at)) return false;
         if (s === 'failed' && !v.invite_error) return false;
         if (!q) return true;
-        return [v.code, v.name, v.email, v.phone].some(f => (f ?? '').toLowerCase().includes(q));
+        return [v.code, v.name, v.email, v.phone, v.member_id].some(f => (f ?? '').toLowerCase().includes(q));
     });
 });
 const pages = computed(() => Math.max(1, Math.ceil(filtered.value.length / PER_PAGE)));

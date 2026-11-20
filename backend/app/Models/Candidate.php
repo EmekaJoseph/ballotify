@@ -16,7 +16,7 @@ class Candidate extends Model
      * The running vote total is never serialised by default: ballots and admin
      * lists must not leak results. Results endpoints read it explicitly.
      */
-    protected $hidden = ['votes'];
+    protected $hidden = ['votes', 'profile_token'];
 
     protected $casts = ['votes' => 'integer'];
 

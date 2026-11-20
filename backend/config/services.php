@@ -25,6 +25,18 @@ return [
         'base_url' => env('PAYSTACK_BASE_URL', 'https://api.paystack.co'),
     ],
 
+    // Cloudflare Turnstile (bot / card-testing protection). Empty = off.
+    'turnstile' => [
+        'secret_key' => env('TURNSTILE_SECRET_KEY'),
+    ],
+
+    // USSD voting through Africa's Talking. The callback URL contains this
+    // secret (Africa's Talking doesn't sign USSD requests).
+    'ussd' => [
+        'service_code' => env('USSD_SERVICE_CODE'), // e.g. *384*1234#  (shown to organisers)
+        'webhook_secret' => env('USSD_WEBHOOK_SECRET'),
+    ],
+
     'resend' => [
         'key' => env('RESEND_API_KEY'),
     ],

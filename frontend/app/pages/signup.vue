@@ -45,6 +45,7 @@
                 </label>
                 <div v-if="fieldErrors.terms" class="field-error">{{ fieldErrors.terms }}</div>
             </div>
+            <HumanCheck ref="human" v-model="captcha" class="mb-3" />
             <button type="submit" class="btn btn-primary btn-lg w-100" :disabled="loading">
                 <span v-if="loading" class="spinner-border spinner-border-sm"></span>
                 {{ loading ? 'Creating account…' : 'Create account' }}
@@ -68,6 +69,8 @@ const loading = ref(false);
 const error = ref('');
 useErrorAlert(error, 'Couldn’t create your account');
 const fieldErrors = ref<Record<string, string>>({});
+const captcha = ref('');
+const human = ref<{ reset: () => void } | null>(null);
 const form = reactive({ name: '', email: '', password: '', confirm: '', terms: false });
 
 const strength = computed(() => {
@@ -101,11 +104,13 @@ async function submit() {
     if (!validate()) return;
     loading.value = true;
     try {
-        await auth.register({ name: form.name, email: form.email, password: form.password, terms: form.terms });
+        await auth.register({ name: form.name, email: form.email, password: form.password, terms: form.terms, captcha_token: captcha.value || undefined });
         useToast().success('Welcome to Ballotify! We sent you an email to confirm your address.');
         await navigateTo('/dashboard/events/create');
     } catch (e) {
+        human.value?.reset();
         fieldErrors.value = apiFieldErrors(e);
+        if (fieldErrors.value.captcha_token) error.value = fieldErrors.value.captcha_token;
         if (!Object.keys(fieldErrors.value).length) error.value = apiErrorMessage(e);
     } finally {
         loading.value = false;

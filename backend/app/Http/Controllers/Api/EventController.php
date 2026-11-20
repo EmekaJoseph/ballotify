@@ -55,6 +55,10 @@ class EventController extends Controller
         Plans::withLimits($event);
         $event->setAttribute('my_role', EventPolicy::roleOf($user, $event));
         $event->setAttribute('abilities', EventPolicy::abilitiesOf($user, $event));
+        // Name only: never serialise the owner's user record (it holds payout details).
+        $event->setAttribute('owner_name', $event->relationLoaded('user') ? $event->user?->name : $event->user()->value('name'));
+        // The shortcode voters dial (set by the platform in .env); null = USSD not available here.
+        $event->setAttribute('ussd_service_code', config('services.ussd.service_code') ?: null);
         if ($event->isPaid()) {
             $event->setAttribute('votes_sold', (int) $event->purchases()->where('status', VotePurchase::SUCCESS)->sum('quantity'));
         }
@@ -162,13 +166,18 @@ class EventController extends Controller
             'ends_at' => ['sometimes', 'nullable', 'date'],
             'reminder_at' => ['sometimes', 'nullable', 'date'],
             'reminder_channel' => ['sometimes', 'nullable', Rule::in(['email', 'sms', 'both'])],
+            'self_registration' => ['sometimes', 'boolean'],
+            'member_id_label' => ['sometimes', 'nullable', 'string', 'max:40'],
+            'ussd_enabled' => ['sometimes', 'boolean'],
+            'nominations_enabled' => ['sometimes', 'boolean'],
+            'nominations_ends_at' => ['sometimes', 'nullable', 'date'],
         ]);
         // Compare against the stored value for whichever bound was not sent.
         $start = array_key_exists('starts_at', $data) ? $data['starts_at'] : $event->starts_at;
         $end = array_key_exists('ends_at', $data) ? $data['ends_at'] : $event->ends_at;
         $this->ensureValidWindow($start, $end);
 
-        $before = $event->only(['name', 'voting_mode', 'vote_price_naira', 'results_visibility', 'starts_at', 'ends_at', 'reminder_at']) + ['status' => $event->status];
+        $before = $event->only(['name', 'voting_mode', 'vote_price_naira', 'results_visibility', 'starts_at', 'ends_at', 'reminder_at', 'self_registration', 'ussd_enabled', 'nominations_enabled']) + ['status' => $event->status];
 
         if (array_key_exists('voting_mode', $data) && $data['voting_mode'] !== $event->voting_mode) {
             if ($event->ballot_locked) {
@@ -204,6 +213,28 @@ class EventController extends Controller
             if (! $data['reminder_at']) {
                 $data['reminder_channel'] = null;
             }
+        }
+
+        // Optional voting features. Self-registration and USSD send messages / use paid channels: Pro.
+        if (! empty($data['self_registration']) && ! $event->self_registration) {
+            Plans::ensureCanMessage($event);
+            if ($event->isPaid()) {
+                throw ValidationException::withMessages(['self_registration' => ['Paid voting doesn’t use voter codes.']]);
+            }
+        }
+        if (array_key_exists('ussd_enabled', $data)) {
+            if ($data['ussd_enabled'] && ! $event->ussd_enabled) {
+                Plans::ensureCanMessage($event);
+                if ($event->isPaid()) {
+                    throw ValidationException::withMessages(['ussd_enabled' => ['USSD voting works with voter codes, not paid voting.']]);
+                }
+                $event->ussd_code ??= self::newUssdCode();
+            }
+            $event->ussd_enabled = (bool) $data['ussd_enabled'];
+            unset($data['ussd_enabled']);
+        }
+        if (! empty($data['nominations_ends_at']) && $start && Carbon::parse($data['nominations_ends_at'])->gt(Carbon::parse($start))) {
+            throw ValidationException::withMessages(['nominations_ends_at' => ['Nominations must close before voting opens.']]);
         }
 
         $event->fill($data)->save();
@@ -332,7 +363,10 @@ class EventController extends Controller
         $paid = $event->purchases()->where('status', VotePurchase::SUCCESS);
         $gross = (int) (clone $paid)->sum('amount_kobo');
         $fee = (int) (clone $paid)->sum('fee_kobo');
-        $paidOut = (int) $event->payouts()->sum('amount_kobo');
+        // Split payments went straight to the organiser's bank: count them as paid out.
+        $split = (clone $paid)->whereNotNull('subaccount');
+        $autoPaid = (int) (clone $split)->sum('amount_kobo') - (int) (clone $split)->sum('fee_kobo');
+        $paidOut = (int) $event->payouts()->sum('amount_kobo') + $autoPaid;
 
         $recent = $event->purchases()->whereIn('status', [VotePurchase::SUCCESS, VotePurchase::LATE])
             ->latest('paid_at')->limit(50)
@@ -356,6 +390,8 @@ class EventController extends Controller
             'net_naira' => ($gross - $fee) / 100,
             'paid_out_naira' => $paidOut / 100,
             'balance_naira' => ($gross - $fee - $paidOut) / 100,
+            'auto_paid_naira' => $autoPaid / 100,
+            'automatic_payouts' => (bool) $event->user?->paystack_subaccount_code,
             'late_payments' => $event->purchases()->where('status', VotePurchase::LATE)->count(),
             'payouts' => Payout::where('event_id', $event->id)->latest()->get(['amount_kobo', 'note', 'created_at'])
                 ->map(fn ($p) => ['amount_naira' => $p->amount_kobo / 100, 'note' => $p->note, 'created_at' => $p->created_at]),
@@ -379,6 +415,7 @@ class EventController extends Controller
                 'ends_at' => $event->ends_at,
                 'results_public' => $event->resultsArePublic(),
                 'brand' => $this->publicBrand($event),
+                'nominations_open' => $event->nominationsOpen(),
             ], 403);
         }
 
@@ -410,6 +447,9 @@ class EventController extends Controller
             // Free events show "Powered by Ballotify" on the ballot.
             'branding' => Plans::limits($event)['branding'],
             'brand' => $this->publicBrand($event),
+            // Voters can request their own code with an ID on the organiser's list.
+            'self_registration' => $event->self_registration && ! $event->isPaid() && Plans::isPro($event),
+            'member_id_label' => $event->member_id_label ?: 'ID',
             'categories' => $event->categories->map->only(['id', 'event_id', 'name', 'max_choices']),
             'candidates' => $candidates,
         ]);
@@ -551,7 +591,10 @@ class EventController extends Controller
             ],
             // Transparency: how many organiser changes happened after voting began.
             'integrity' => [
-                'changes_during_voting' => $event->auditLogs()->where('during_voting', true)->count(),
+                // Edits to the ballot itself (candidates, categories) once votes existed; not settings, certification etc.
+                'changes_during_voting' => $event->auditLogs()->where('during_voting', true)
+                    ->where(fn ($q) => $q->where('action', 'like', 'candidate.%')->orWhere('action', 'like', 'category.%'))
+                    ->count(),
             ],
             'timeline' => Timeline::for($event),
             'categories' => $results,
@@ -585,11 +628,25 @@ class EventController extends Controller
             Audit::log($event, 'event.visibility', 'Results visibility changed: '
                 . self::VISIBILITY_LABELS[$before['results_visibility']] . ' → ' . self::VISIBILITY_LABELS[$event->results_visibility]);
         }
+        foreach (['self_registration' => 'Voter self-registration', 'ussd_enabled' => 'USSD voting', 'nominations_enabled' => 'Nominations'] as $field => $label) {
+            if ((bool) ($before[$field] ?? false) !== (bool) $event->{$field}) {
+                Audit::log($event, 'event.feature', $label . ($event->{$field} ? ' switched on' : ' switched off'));
+            }
+        }
         if ((string) $before['reminder_at'] !== (string) $event->reminder_at) {
             Audit::log($event, 'event.reminder', $event->reminder_at
                 ? "Reminder scheduled for {$fmt($event->reminder_at)}"
                 : 'Scheduled reminder cancelled');
         }
+    }
+
+    /** A 6-digit event number for USSD (no leading zero, unique). */
+    private static function newUssdCode(): string
+    {
+        do {
+            $code = (string) random_int(100000, 999999);
+        } while (Event::where('ussd_code', $code)->exists());
+        return $code;
     }
 
     private function storeLogo(UploadedFile $file): string

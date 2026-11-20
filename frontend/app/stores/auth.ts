@@ -58,7 +58,7 @@ export const useAuthStore = defineStore('auth', {
             this.setSession(data.token, data.user);
         },
 
-        async register(payload: { name: string; email: string; password: string; terms: boolean }) {
+        async register(payload: { name: string; email: string; password: string; terms: boolean; captcha_token?: string }) {
             const { data } = await adminApi.register(payload);
             this.setSession(data.token, data.user);
         },

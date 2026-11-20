@@ -14,6 +14,8 @@ use Illuminate\Support\Facades\Schema;
  *          │     ├─< vote_purchases  (paid public voting: Paystack payments for votes)
  *          │     ├─< payouts         (money paid out to the organiser for paid voting)
  *          │     ├─< event_members   (co-organisers and their roles)
+ *          │     ├─< nominations     (public nominations before voting)
+ *          │     ├─< result_certificates (signed snapshots of final results)
  *          │     └─< audit_logs      (organiser changes)
  *
  * Secret ballot (code voting): there is deliberately no table of individual
@@ -43,6 +45,15 @@ return new class extends Migration
             $table->timestamp('reminder_at')->nullable();
             $table->string('reminder_channel', 8)->nullable(); // email | sms | both
             $table->timestamp('reminder_sent_at')->nullable();
+            // Voters request their own code with an ID on the organiser's list (e.g. matric number).
+            $table->boolean('self_registration')->default(false);
+            $table->string('member_id_label', 40)->nullable();
+            // Voting by USSD (Africa's Talking): voters dial in with this event number.
+            $table->boolean('ussd_enabled')->default(false);
+            $table->string('ussd_code', 8)->nullable()->unique();
+            // Public nomination phase before voting (award nights).
+            $table->boolean('nominations_enabled')->default(false);
+            $table->timestamp('nominations_ends_at')->nullable();
             // Billing: 'free' or 'pro' (unlocked by a Paystack payment or by the admin).
             $table->string('plan', 10)->default('free');
             $table->timestamp('upgraded_at')->nullable();
@@ -71,6 +82,8 @@ return new class extends Migration
             // Optional short blurb shown under the name.
             $table->string('description', 280)->nullable();
             $table->string('image_path')->nullable();
+            // Private link for the candidate to edit their own photo and description.
+            $table->string('profile_token', 64)->nullable()->unique();
             $table->unsignedInteger('votes')->default(0);
             $table->timestamps();
             $table->unique(['category_id', 'name']);
@@ -82,6 +95,8 @@ return new class extends Migration
             $table->string('name')->nullable();
             $table->string('email')->nullable();
             $table->string('phone', 32)->nullable();
+            // Eligibility ID for self-registration (matric number, member number...).
+            $table->string('member_id', 64)->nullable();
             $table->string('code', 64);
             $table->timestamp('used_at')->nullable()->index();
             // Outcome of the most recent email / SMS / WhatsApp invitation.
@@ -91,6 +106,7 @@ return new class extends Migration
             $table->string('invite_error', 500)->nullable();
             $table->timestamps();
             $table->unique(['event_id', 'code']);
+            $table->unique(['event_id', 'member_id']);
             $table->index(['event_id', 'email']);
         });
 
@@ -120,6 +136,8 @@ return new class extends Migration
             $table->string('status', 12)->default('pending');
             $table->string('channel', 32)->nullable();
             $table->string('failure_reason', 255)->nullable();
+            // Set when Paystack split the payment straight to the organiser's subaccount.
+            $table->string('subaccount', 64)->nullable();
             $table->timestamp('paid_at')->nullable();
             $table->timestamps();
             $table->index(['event_id', 'status']);
@@ -149,6 +167,31 @@ return new class extends Migration
             $table->index('email');
         });
 
+        Schema::create('nominations', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('event_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('category_id')->constrained()->cascadeOnDelete();
+            $table->string('nominee_name', 120);
+            // Lower-case, single-spaced: groups "Ada Obi" and "ada  obi" together.
+            $table->string('normalized_name', 120);
+            $table->string('reason', 280)->nullable();
+            $table->string('nominator_email')->nullable();
+            $table->char('ip_hash', 64)->nullable();
+            $table->timestamp('created_at')->useCurrent();
+            $table->index(['event_id', 'category_id', 'normalized_name']);
+        });
+
+        // Signed snapshot of final results that anyone can verify later.
+        Schema::create('result_certificates', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('event_id')->constrained()->cascadeOnDelete();
+            $table->string('serial', 24)->unique();
+            $table->json('payload');
+            $table->char('signature', 64);
+            $table->foreignId('issued_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->timestamp('issued_at');
+        });
+
         Schema::create('audit_logs', function (Blueprint $table) {
             $table->id();
             $table->foreignId('event_id')->constrained()->cascadeOnDelete();
@@ -166,6 +209,8 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('audit_logs');
+        Schema::dropIfExists('result_certificates');
+        Schema::dropIfExists('nominations');
         Schema::dropIfExists('event_members');
         Schema::dropIfExists('payouts');
         Schema::dropIfExists('vote_purchases');

@@ -61,6 +61,7 @@
                     <label for="buyer-name" class="form-label">Name <span class="text-muted fw-normal">(optional)</span></label>
                     <input id="buyer-name" v-model.trim="name" type="text" class="form-control" autocomplete="name" maxlength="120" />
                 </div>
+                <HumanCheck ref="human" v-model="captcha" class="mt-3" />
             </form>
             <template #footer>
                 <div class="w-100">
@@ -122,6 +123,8 @@ const email = ref('');
 const name = ref('');
 const paying = ref(false);
 const { alert } = useAlert();
+const captcha = ref('');
+const human = ref<{ reset: () => void } | null>(null);
 
 const minQty = computed(() => Math.max(1, Math.ceil(props.minPayment / Math.max(1, props.price))));
 const quick = computed(() => [...new Set([minQty.value, 5, 10, 20, 50, 100].filter(n => n >= minQty.value))].slice(0, 6));
@@ -141,11 +144,12 @@ async function pay() {
     try { localStorage.setItem('paid-vote-email', email.value); } catch { /* private mode */ }
     try {
         const { data } = await publicApi.buyVotes(props.token, {
-            candidate_id: buying.value.id, quantity: Math.floor(qty.value), email: email.value, name: name.value || undefined,
+            candidate_id: buying.value.id, quantity: Math.floor(qty.value), email: email.value, name: name.value || undefined, captcha_token: captcha.value || undefined,
         });
         window.location.assign(data.authorization_url);
     } catch (e) {
         paying.value = false;
+        human.value?.reset(); // each check works once
         // Pops up over the vote dialog; "Try again" retries with the same choices.
         // Field errors (e.g. "choose at least 2 votes") read as one message too.
         const retry = await alert({

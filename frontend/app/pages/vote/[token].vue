@@ -18,6 +18,9 @@
                 <div class="fs-3 fw-800 text-ink mono">{{ opensIn.label }}</div>
             </div>
             <div class="d-flex flex-column flex-sm-row gap-2 justify-content-center">
+                <NuxtLink v-if="unavailable.status === 'upcoming' && nominationsOpen" :to="`/nominate/${token}`" class="btn btn-primary">
+                    <i class="bi bi-megaphone"></i> Nominate someone
+                </NuxtLink>
                 <NuxtLink v-if="unavailable.status === 'completed' && resultsPublic" :to="`/event/${token}/results`" class="btn btn-primary">
                     <i class="bi bi-bar-chart-line"></i> See the results
                 </NuxtLink>
@@ -71,6 +74,36 @@
                 </button>
                 <p class="small text-muted text-center mt-3 mb-0"><i class="bi bi-incognito"></i> Your choices are never shown with your name or code.</p>
             </form>
+
+            <!-- Self-registration: the code goes to the contact the organiser has on file -->
+            <div v-if="!isPaid && event.self_registration" class="card-b pad mt-3 selfreg">
+                <template v-if="!selfReg.open && !selfReg.sentTo.length">
+                    <div class="d-flex align-items-center gap-3 flex-wrap">
+                        <span class="icon-tile flex-shrink-0"><i class="bi bi-person-vcard"></i></span>
+                        <span class="flex-grow-1 small text-muted">Don’t have your code? Get it with your <b class="text-ink">{{ event.member_id_label }}</b>.</span>
+                        <button class="btn btn-soft btn-sm" @click="selfReg.open = true">Get my code</button>
+                    </div>
+                </template>
+                <form v-else-if="!selfReg.sentTo.length" novalidate @submit.prevent="requestCode">
+                    <label for="member-id" class="form-label">Your {{ event.member_id_label }}</label>
+                    <input id="member-id" v-model.trim="selfReg.memberId" class="form-control form-control-lg mb-3" autocomplete="off" maxlength="64" :disabled="selfReg.busy" />
+                    <HumanCheck ref="human" v-model="selfReg.captcha" class="mb-3" />
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-ghost" @click="selfReg.open = false">Cancel</button>
+                        <button class="btn btn-primary flex-grow-1" :disabled="selfReg.busy || selfReg.memberId.length < 2">
+                            <span v-if="selfReg.busy" class="spinner-border spinner-border-sm"></span> Send my code
+                        </button>
+                    </div>
+                    <p class="small text-muted mt-2 mb-0">We’ll send it to the email or phone the organiser has on file for you.</p>
+                </form>
+                <div v-else class="d-flex gap-3 align-items-start">
+                    <span class="icon-tile flex-shrink-0" style="background: var(--success-50); color: var(--success)"><i class="bi bi-send-check"></i></span>
+                    <div class="small">
+                        <div class="fw-bold text-ink mb-1">Your code is on its way</div>
+                        <div class="text-muted">Sent to {{ selfReg.sentTo.join(' and ') }}. It can take a minute. Then enter it above.</div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Ballot -->
@@ -130,7 +163,26 @@ const code = ref('');
 const voterName = ref<string | null>(null);
 /** Whether a closed event's results are public (from the API). */
 const resultsPublic = ref(false);
+/** Upcoming event that is collecting nominations. */
+const nominationsOpen = ref(false);
 const codeError = ref('');
+
+// ----- Self-registration
+const selfReg = reactive({ open: false, memberId: '', captcha: '', busy: false, sentTo: [] as string[] });
+const human = ref<{ reset: () => void } | null>(null);
+const { alert } = useAlert();
+async function requestCode() {
+    selfReg.busy = true;
+    try {
+        const { data } = await publicApi.requestCode(token, { member_id: selfReg.memberId, captcha_token: selfReg.captcha || undefined });
+        selfReg.sentTo = data.sent_to;
+    } catch (e) {
+        human.value?.reset();
+        await alert({ title: 'Couldn’t send your code', message: apiFieldErrors(e).captcha_token ?? apiErrorMessage(e) });
+    } finally {
+        selfReg.busy = false;
+    }
+}
 const checking = ref(false);
 const submitting = ref(false);
 const submitError = ref('');
@@ -183,7 +235,8 @@ async function load() {
         }
     } catch (e) {
         const status = apiStatus(e);
-        const body = (e as { response?: { data?: { status?: EventStatus; starts_at?: string | null; results_public?: boolean } } }).response?.data;
+        const body = (e as { response?: { data?: { status?: EventStatus; starts_at?: string | null; results_public?: boolean; nominations_open?: boolean } } }).response?.data;
+        nominationsOpen.value = !!body?.nominations_open;
         if (status === 403 && body?.status === 'upcoming') {
             showUnavailable({ status: 'upcoming', title: 'Voting hasn\'t started yet', text: `The ballot opens ${formatDate(body.starts_at ?? null, true)}. Come back then with your code.`, icon: 'bi-clock', tone: 'amber', startsAt: body.starts_at ?? null });
         } else if (status === 403) {

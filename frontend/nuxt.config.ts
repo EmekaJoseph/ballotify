@@ -56,6 +56,8 @@ export default defineNuxtConfig({
       // Shown on the Privacy / Terms pages.
       companyName: 'Ballotify',
       contactEmail: '',
+      // Cloudflare Turnstile site key (bot protection). Empty = off.
+      turnstileSiteKey: '',
     },
   },
 })

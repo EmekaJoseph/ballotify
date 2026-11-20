@@ -111,6 +111,29 @@ Names are unique within a category. Candidate objects include `image_url` (an ab
 
 Voter endpoints return `422` for paid-voting events (they have no codes). Adding the first voters to a Free event makes it **live**; if the account already has its maximum live Free events, this returns `402 { plan_limit: "events" }`.
 
+## Voting options, nominations, profiles, certificates (organiser)
+
+| Method | Path | Notes |
+|---|---|---|
+| PATCH | `/events/{id}` | Also takes `self_registration`, `member_id_label` (Pro), `ussd_enabled` (Pro; creates a 6-digit `ussd_code`), `nominations_enabled`, `nominations_ends_at` (before `starts_at`). |
+| POST | `/events/{id}/voters/numeric-codes` | USSD: replace the codes of voters who haven't voted with 10-digit numbers: `{ replaced }` |
+| GET | `/events/{id}/nominations` | `{ open, enabled, ends_at, total, categories: [ { id, name, nominees: [ { name, count, reasons, on_ballot } ] } ] }` |
+| POST | `/events/{id}/nominations/promote` | `{ category_id, name }`: add a nominee to the ballot (`409` once locked) |
+| GET / DELETE | `/events/{id}/candidates/{candidateId}/profile-link` | Get (or create) the candidate's private link `{ url }`; DELETE switches it off |
+| GET / POST | `/events/{id}/certificates` | List certificates, or certify the final results (`422` until voting closes; same totals return the existing certificate) |
+
+Voters also take an optional `member_id` (unique per event, matched case-insensitively) on add, edit and import. On USSD events, typed codes must be numbers only.
+
+## Account, payouts and data rights
+
+| Method | Path | Notes |
+|---|---|---|
+| GET | `/billing/banks` | `{ banks: [ { name, code } ], verified }` (`verified` = Paystack is set up) |
+| POST | `/billing/resolve-account` | `{ bank_code, account_number }` returns `{ account_name }` |
+| PUT | `/me/payout-account` | `{ bank_code, account_number }`: verifies the account and creates or updates a Paystack subaccount; paid votes are then split automatically |
+| GET | `/me/export` | Everything held about the account, as JSON |
+| DELETE | `/me` | `{ password }`. Deletes the account and its events. `422` while paid-voting money is still owed to the organiser. |
+
 ## Team (co-organisers)
 
 | Method | Path | Body | Returns |
@@ -144,20 +167,28 @@ How codes behave:
 
 | Method | Path | Notes |
 |---|---|---|
-| GET | `/public/events/{token}` | Ballot of an **open** event: `{ id, name, description, status, voting_mode, vote_price_naira, payments_enabled, min_payment_naira, results_visibility, branding, brand, starts_at, ends_at, categories, candidates }`. Shuffled categories come back in a new random order each time. |
+| GET | `/public/events/{token}` | Ballot of an **open** event: `{ id, name, description, status, voting_mode, vote_price_naira, payments_enabled, min_payment_naira, results_visibility, branding, brand, self_registration, member_id_label, starts_at, ends_at, categories, candidates }`. Shuffled categories come back in a new random order each time. |
+| POST | `/public/events/{token}/request-code` | Self-registration: `{ member_id, captcha_token? }`. Sends the voter's code to the email/phone the organiser has on file: `{ message, sent_to: ['ad••@gmail.com'] }`. `404` ID not on the list, `409` already voted, `422` no contact on file, `429` asked in the last 2 minutes, `403` not switched on. |
+| GET / POST | `/public/events/{token}/nominations` | GET: the nomination form `{ name, open, ends_at, voting_starts_at, brand, categories }`. POST: `{ category_id, nominee_name, reason?, email?, captcha_token? }` (max 3 per person per category). |
+| GET / POST | `/public/candidate-profile/{token}` | The candidate's private link. POST (multipart): `description?, image?, remove_image?`. Name and category can't change. |
+| GET | `/public/certificates/{serial}` | Verify a results certificate: `{ serial, payload, signature, valid, matches_current, message, verify_url, certificate_url }`. |
 | POST | `/public/events/{token}/code/validate` | `{ code }` returns `{ valid: true, name }`, or `422` if invalid/used, or `403` if not open |
 | POST | `/public/events/{token}/vote` | `{ code, choices: [ { category_id, candidate_id } ] }` returns `{ message, receipt }` |
 | POST | `/public/events/{token}/receipt` | `{ receipt }` (ballot receipt, or a paid-vote reference) returns `{ valid, message, counted_at }` or `404` |
-| POST | `/public/events/{token}/paid-votes` | `{ candidate_id, quantity (1–10000), email, name? }` returns `{ authorization_url, reference }` (Paystack). `503` if payments aren't set up; `422` below the minimum payment. |
+| POST | `/public/events/{token}/paid-votes` | `{ candidate_id, quantity (1–10000), email, name?, captcha_token? }` returns `{ authorization_url, reference }` (Paystack). `503` if payments aren't set up; `422` below the minimum payment. |
 | POST | `/public/paid-votes/verify` | `{ reference }` returns `{ status: success\|pending\|failed\|late, message, quantity, candidate, reference }` |
 | GET | `/public/events/{token}/results` | `{ event, stats, integrity: { changes_during_voting }, timeline: { bucket_minutes, points: [ { t, votes } ] }, categories: [ { id, name, candidates: [ { id, name, description, image_url, votes } ], leader } ] }`, or `403 { message, visibility, event }` while results aren't published |
 
-**Not open.** For an event that hasn't started or has ended, `GET /public/events/{token}` returns `403 { message, status, starts_at, ends_at, results_public }`.
+**Not open.** For an event that hasn't started or has ended, `GET /public/events/{token}` returns `403 { message, status, starts_at, ends_at, results_public, brand, nominations_open }`.
+
+**Bot check.** When `TURNSTILE_SECRET_KEY` is set, sign-up, paid-vote checkout, nominations and self-registration need a `captcha_token` from the Cloudflare Turnstile widget; otherwise they return `422 { errors: { captcha_token } }`.
+
+**USSD (Africa's Talking).** `POST /ussd/{USSD_WEBHOOK_SECRET}` receives `sessionId, serviceCode, phoneNumber, text` and answers `text/plain` starting with `CON` (more input) or `END`. Menu: event number, voting code, one screen per category (`0` skip, `98` more), confirm. Ballots go through the same checks as `/vote`.
 
 **How a ballot is processed:** the server checks each of these before recording anything.
 - The event is inside its voting window.
 - Every candidate belongs to the event and to the stated category.
-- In `single` mode, there is at most one pick per category. In `multiple` mode, no more than the category's `max_choices`.
+- No more picks in a category than its `max_choices` (1 = choose one; null = no limit).
 - The code exists and is unused. The check runs under a row lock in the same transaction.
 
 **What gets stored (secret ballot):** each chosen candidate's total goes up by one, and the code is marked as used. No ballot row, choice, timestamp or IP is stored that could link the vote to the voter.

@@ -15,6 +15,7 @@ class Voter extends Model
         'name',
         'email',
         'phone',
+        'member_id',
         'code',
         'used_at',
         'invited_at',

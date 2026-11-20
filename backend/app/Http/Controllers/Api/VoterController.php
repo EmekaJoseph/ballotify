@@ -23,6 +23,13 @@ class VoterController extends Controller
     private const CODE_LENGTH = 8;
     private const MAX_BATCH = 10000;
 
+    /** Member IDs (matric numbers...) match case-insensitively, ignoring spaces. */
+    public static function normalizeMemberId(?string $id): ?string
+    {
+        $id = strtoupper(preg_replace('/\s+/', '', (string) $id) ?? '');
+        return $id === '' ? null : $id;
+    }
+
     /** Codes are case-insensitive for voters: store and compare them upper-cased and trimmed. */
     public static function normalizeCode(string $code): string
     {
@@ -53,8 +60,9 @@ class VoterController extends Controller
             'name' => ['nullable', 'string', 'max:255'],
             'email' => ['nullable', 'string', 'email:rfc', 'max:255'],
             'phone' => ['nullable', 'string', 'max:32', $this->phoneRule()],
-            'code' => ['nullable', 'string', 'min:4', 'max:64', Rule::unique('voters', 'code')->where('event_id', $event->id)],
-        ]);
+            'member_id' => ['nullable', 'string', 'max:64', Rule::unique('voters', 'member_id')->where('event_id', $event->id)],
+            'code' => ['nullable', 'string', 'min:4', 'max:64', Rule::unique('voters', 'code')->where('event_id', $event->id), ...($event->ussd_enabled ? ['regex:/^\d+$/'] : [])],
+        ], ['member_id.unique' => 'Another voter already has this ID.', 'code.regex' => 'This event uses USSD voting, so codes must be numbers only.']);
         Plans::ensureVoterCapacity($event, 1);
 
         $voter = Voter::create([
@@ -62,6 +70,7 @@ class VoterController extends Controller
             'name' => $data['name'] ?? null,
             'email' => $data['email'] ?? null,
             'phone' => $data['phone'] ?? null,
+            'member_id' => $data['member_id'] ?? null,
             'code' => $data['code'] ?? $this->uniqueCodes($event, 1)[0],
         ]);
         Audit::log($event, 'voters.added', 'Voter added: ' . ($voter->name ?: 'anonymous code'));
@@ -83,10 +92,11 @@ class VoterController extends Controller
             'name' => ['sometimes', 'nullable', 'string', 'max:255'],
             'email' => ['sometimes', 'nullable', 'string', 'email:rfc', 'max:255'],
             'phone' => ['sometimes', 'nullable', 'string', 'max:32', $this->phoneRule()],
-            'code' => ['sometimes', 'string', 'min:4', 'max:64', Rule::unique('voters', 'code')->where('event_id', $event->id)->ignore($voter->id)],
-        ]);
+            'member_id' => ['sometimes', 'nullable', 'string', 'max:64', Rule::unique('voters', 'member_id')->where('event_id', $event->id)->ignore($voter->id)],
+            'code' => ['sometimes', 'string', 'min:4', 'max:64', Rule::unique('voters', 'code')->where('event_id', $event->id)->ignore($voter->id), ...($event->ussd_enabled ? ['regex:/^\d+$/'] : [])],
+        ], ['member_id.unique' => 'Another voter already has this ID.', 'code.regex' => 'This event uses USSD voting, so codes must be numbers only.']);
 
-        foreach (['name', 'email', 'phone', 'code'] as $field) {
+        foreach (['name', 'email', 'phone', 'member_id', 'code'] as $field) {
             if (array_key_exists($field, $data)) {
                 $voter->{$field} = $data[$field];
             }
@@ -108,6 +118,31 @@ class VoterController extends Controller
         Audit::log($event, 'voters.deleted', 'Voter removed: ' . ($voter->name ?: 'anonymous code') . ($voter->used_at ? ' (had already voted; vote stays counted)' : ''));
 
         return response()->json([], 204);
+    }
+
+    /**
+     * USSD: give every voter who hasn't voted a numbers-only code (keypads can't
+     * type letters). Old codes stop working, so codes must be sent again.
+     */
+    public function numericCodes(Event $event)
+    {
+        Gate::authorize('voters', $event);
+        $this->ensureCodeVoting($event);
+        abort_unless($event->ussd_enabled, 422, 'Switch on USSD voting first.');
+
+        $voters = Voter::where('event_id', $event->id)->whereNull('used_at')->get(['id', 'code'])
+            ->filter(fn ($v) => ! ctype_digit($v->code))->values();
+        $codes = $this->uniqueCodes($event, $voters->count());
+        DB::transaction(function () use ($voters, $codes) {
+            foreach ($voters as $i => $v) {
+                Voter::whereKey($v->id)->update(['code' => $codes[$i], 'invited_at' => null, 'invited_via' => null]);
+            }
+        });
+        if ($voters->count()) {
+            Audit::log($event, 'voters.numeric_codes', "{$voters->count()} code(s) replaced with numbers-only codes for USSD");
+        }
+
+        return response()->json(['replaced' => $voters->count()]);
     }
 
     /** Privacy: wipe every voter's email and phone for this event (codes and turnout are kept). */
@@ -158,12 +193,22 @@ class VoterController extends Controller
             'voters.*.name' => ['nullable', 'string', 'max:255'],
             'voters.*.email' => ['nullable', 'string', 'max:255'],
             'voters.*.phone' => ['nullable', 'string', 'max:32'],
+            'voters.*.member_id' => ['nullable', 'string', 'max:64'],
         ]);
 
         // Validate contacts row by row so the organiser gets the exact line to fix.
         $rows = [];
         $errors = [];
+        // IDs must be unique within the event (already on the list, or twice in this file).
+        $takenIds = array_flip(Voter::where('event_id', $event->id)->whereNotNull('member_id')->pluck('member_id')->all());
         foreach (array_values($request->input('voters')) as $i => $row) {
+            $memberId = self::normalizeMemberId($row['member_id'] ?? null);
+            if ($memberId !== null) {
+                if (isset($takenIds[$memberId])) {
+                    $errors["voters.{$i}.member_id"] = ['Row ' . ($i + 1) . ': ID "' . $memberId . '" is already on the voter list.'];
+                }
+                $takenIds[$memberId] = true;
+            }
             $email = isset($row['email']) ? strtolower(trim((string) $row['email'])) : '';
             $rawPhone = trim((string) ($row['phone'] ?? ''));
             $phone = PhoneNumber::normalize($rawPhone);
@@ -173,7 +218,7 @@ class VoterController extends Controller
             if ($rawPhone !== '' && ! PhoneNumber::isValid($phone)) {
                 $errors["voters.{$i}.phone"] = ['Row ' . ($i + 1) . ': "' . $row['phone'] . '" ' . PhoneNumber::problem($phone)];
             }
-            $rows[] = ['name' => $row['name'] ?? null, 'email' => $email ?: null, 'phone' => $phone];
+            $rows[] = ['name' => $row['name'] ?? null, 'email' => $email ?: null, 'phone' => $phone, 'member_id' => $memberId];
         }
         if ($errors) {
             throw ValidationException::withMessages(array_slice($errors, 0, 20, true));
@@ -324,6 +369,7 @@ class VoterController extends Controller
     private function normalizeInput(Request $request): void
     {
         $merge = [];
+        if ($request->has('member_id')) $merge['member_id'] = self::normalizeMemberId($request->input('member_id'));
         if ($request->filled('code')) $merge['code'] = self::normalizeCode((string) $request->input('code'));
         elseif ($request->has('code')) $merge['code'] = null;
         if ($request->has('email')) $merge['email'] = $request->filled('email') ? strtolower(trim((string) $request->input('email'))) : null;
@@ -357,7 +403,7 @@ class VoterController extends Controller
             $insert = [];
             foreach (array_values($rows) as $i => $row) {
                 $name = isset($row['name']) && trim((string) $row['name']) !== '' ? trim((string) $row['name']) : null;
-                $voter = ['name' => $name, 'email' => $row['email'] ?? null, 'phone' => $row['phone'] ?? null, 'code' => $codes[$i]];
+                $voter = ['name' => $name, 'email' => $row['email'] ?? null, 'phone' => $row['phone'] ?? null, 'member_id' => $row['member_id'] ?? null, 'code' => $codes[$i]];
                 $out[] = $voter;
                 $insert[] = $voter + ['event_id' => $event->id, 'created_at' => $now, 'updated_at' => $now];
             }
@@ -369,15 +415,20 @@ class VoterController extends Controller
     }
 
     /** @return string[] codes not yet used in this event */
+    /**
+     * Codes not yet used in this event. Events with USSD voting get numbers
+     * only (10 digits), because phone keypads can't type letters in USSD.
+     */
     private function uniqueCodes(Event $event, int $count): array
     {
         $taken = array_flip(Voter::where('event_id', $event->id)->pluck('code')->all());
         $codes = [];
-        $max = strlen(self::CODE_ALPHABET) - 1;
+        [$alphabet, $length] = $event->ussd_enabled ? ['0123456789', 10] : [self::CODE_ALPHABET, self::CODE_LENGTH];
+        $max = strlen($alphabet) - 1;
         while (count($codes) < $count) {
             $code = '';
-            for ($i = 0; $i < self::CODE_LENGTH; $i++) {
-                $code .= self::CODE_ALPHABET[random_int(0, $max)];
+            for ($i = 0; $i < $length; $i++) {
+                $code .= $alphabet[random_int(0, $max)];
             }
             if (! isset($taken[$code])) {
                 $taken[$code] = true;

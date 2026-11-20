@@ -52,17 +52,30 @@
             <EventActivityLog v-else-if="tab === 'activity'" :event-id="event.id" />
             <EventTeamPanel v-else-if="tab === 'team'" :event="event" @upgrade="upgrade" @left="onLeft" />
             <EventEarningsPanel v-else-if="tab === 'earnings'" :event="event" />
+            <EventNominationsPanel v-else-if="tab === 'nominations'" :event="event" @changed="load(true)" />
 
             <div v-else-if="tab === 'settings' && can('manage')" class="row g-4">
-                <div class="col-lg-8">
-                    <div class="card-b pad">
-                        <h3 class="h6 fw-800 mb-4">Event settings</h3>
+                <!-- Settings sections: a side menu on desktop, a scrollable bar on phones -->
+                <div class="col-lg-3">
+                    <nav class="settings-nav card-b" aria-label="Settings sections">
+                        <button v-for="s in settingsSections" :key="s.key" type="button" class="settings-link" :class="{ active: settingsTab === s.key }"
+                            :aria-current="settingsTab === s.key ? 'page' : undefined" @click="settingsTab = s.key">
+                            <i class="bi" :class="s.icon"></i>
+                            <span class="min-w-0"><span class="d-block fw-bold">{{ s.label }}</span><span class="d-none d-lg-block small text-muted">{{ s.hint }}</span></span>
+                        </button>
+                    </nav>
+                </div>
+                <div class="col-lg-9">
+                    <div v-if="settingsTab === 'general'" class="card-b pad">
+                        <h3 class="h6 fw-800 mb-4">General</h3>
                         <EventForm :key="event.id + '-' + formVersion" :event="event" :busy="saving" :server-errors="fieldErrors"
                             submit-label="Save changes" @submit="save" />
                     </div>
-                </div>
-                <div class="col-lg-4 d-grid gap-4 align-content-start">
-                    <EventBrandingCard :event="event" @upgrade="upgrade" @saved="load(true)" />
+                    <EventVotingOptions v-else-if="settingsTab === 'options'" :event="event" @changed="load(true)" @upgrade="upgrade" @go="goTab($event)" />
+                    <div v-else-if="settingsTab === 'branding'" style="max-width: 560px">
+                        <EventBrandingCard :event="event" @upgrade="upgrade" @saved="load(true)" />
+                    </div>
+                    <div v-else class="advanced-grid">
                     <div class="card-b pad">
                         <h3 class="h6 fw-800 mb-2">Duplicate event</h3>
                         <p class="small text-muted mb-3">
@@ -95,6 +108,7 @@
                         <p class="small text-muted mb-3">Permanently removes the ballot, voter list, results and activity log.</p>
                         <button class="btn btn-danger-soft w-100" @click="remove"><i class="bi bi-trash"></i> Delete event</button>
                     </div>
+                    </div>
                 </div>
             </div>
             <EventTour v-if="showTour" @done="finishTour" />
@@ -109,10 +123,11 @@ import type { BallotEvent, EventAbility } from '~/types';
 
 definePageMeta({ layout: 'dashboard', middleware: ['auth'] });
 
-type TabKey = 'overview' | 'ballot' | 'voters' | 'earnings' | 'results' | 'share' | 'team' | 'activity' | 'settings';
-const ALL_TABS: { key: TabKey; label: string; icon: string; needs?: EventAbility; mode?: 'codes' | 'paid' }[] = [
+type TabKey = 'overview' | 'ballot' | 'nominations' | 'voters' | 'earnings' | 'results' | 'share' | 'team' | 'activity' | 'settings';
+const ALL_TABS: { key: TabKey; label: string; icon: string; needs?: EventAbility; mode?: 'codes' | 'paid'; when?: (e: BallotEvent) => boolean }[] = [
     { key: 'overview', label: 'Overview', icon: 'bi-speedometer2' },
     { key: 'ballot', label: 'Ballot', icon: 'bi-ui-checks-grid' },
+    { key: 'nominations', label: 'Nominations', icon: 'bi-megaphone', when: e => !!e.nominations_enabled },
     { key: 'voters', label: 'Voters', icon: 'bi-people', needs: 'voters', mode: 'codes' },
     { key: 'earnings', label: 'Earnings', icon: 'bi-cash-coin', needs: 'manage', mode: 'paid' },
     { key: 'results', label: 'Results', icon: 'bi-bar-chart-line' },
@@ -133,7 +148,9 @@ const auth = useAuthStore();
 
 /** What this user may do here (owners and old responses: everything). */
 const can = (a: EventAbility) => event.value?.abilities?.includes(a) ?? true;
-const tabs = computed(() => ALL_TABS.filter(t => (!t.needs || can(t.needs)) && (!t.mode || t.mode === (event.value?.voting_mode ?? 'codes'))));
+const tabs = computed(() => ALL_TABS.filter(t => (!t.needs || can(t.needs))
+    && (!t.mode || t.mode === (event.value?.voting_mode ?? 'codes'))
+    && (!t.when || (event.value ? t.when(event.value) : false))));
 const loading = ref(true);
 const notFound = ref(false);
 const loadError = ref('');
@@ -154,6 +171,24 @@ watch(() => route.query.tab, (q) => {
         else router.replace({ query: { ...route.query, tab: tab.value === 'overview' ? undefined : tab.value } });
     }
 });
+
+// ----- Settings sections
+type SettingsKey = 'general' | 'options' | 'branding' | 'advanced';
+const settingsSections: { key: SettingsKey; label: string; hint: string; icon: string }[] = [
+    { key: 'general', label: 'General', hint: 'Name, dates, how people vote', icon: 'bi-sliders' },
+    { key: 'options', label: 'Voting options', hint: 'Self-registration, USSD, nominations', icon: 'bi-toggles' },
+    { key: 'branding', label: 'Branding', hint: 'Your logo and colour', icon: 'bi-palette' },
+    { key: 'advanced', label: 'Advanced', hint: 'Duplicate, close, erase, delete', icon: 'bi-tools' },
+];
+const initialSection = String(route.query.section ?? 'general');
+const settingsTab = ref<SettingsKey>(settingsSections.some(s => s.key === initialSection) ? (initialSection as SettingsKey) : 'general');
+watch(settingsTab, (s) => router.replace({ query: { ...route.query, section: s === 'general' ? undefined : s } }));
+// Phones: the sections bar scrolls sideways; keep the active one visible.
+watch([tab, settingsTab, loading], async () => {
+    if (tab.value !== 'settings') return;
+    await nextTick();
+    document.querySelector('.settings-link.active')?.scrollIntoView({ block: 'nearest', inline: 'center' });
+}, { immediate: true });
 
 const { startUpgrade } = useBilling();
 function upgrade() { startUpgrade(eventId.value); }
@@ -300,4 +335,19 @@ async function remove() {
 
 <style scoped>
 .danger-zone { border-color: var(--danger-line); }
+.settings-nav { display: flex; flex-direction: column; gap: .25rem; padding: .5rem; position: sticky; top: 1rem; }
+.settings-link {
+    display: flex; align-items: flex-start; gap: .7rem; text-align: left; border: 0; background: none;
+    padding: .7rem .8rem; border-radius: 12px; color: var(--ink-2); transition: background-color .15s;
+}
+.settings-link > .bi { font-size: 1.05rem; margin-top: 1px; color: var(--muted); }
+.settings-link:hover { background: var(--surface-2); }
+.settings-link.active { background: var(--brand-50); color: var(--brand-700); }
+.settings-link.active > .bi { color: var(--brand-600); }
+.advanced-grid { display: grid; gap: 1.25rem; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); align-items: start; }
+@media (max-width: 991.98px) {
+    .settings-nav { flex-direction: row; overflow-x: auto; position: static; scrollbar-width: none; }
+    .settings-nav::-webkit-scrollbar { display: none; }
+    .settings-link { flex-shrink: 0; padding: .5rem .8rem; }
+}
 </style>

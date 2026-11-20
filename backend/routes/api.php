@@ -12,6 +12,12 @@ use App\Http\Controllers\Api\PlatformAdminController;
 use App\Http\Controllers\Api\BillingController;
 use App\Http\Controllers\Api\PaidVoteController;
 use App\Http\Controllers\Api\TeamController;
+use App\Http\Controllers\Api\AccountController;
+use App\Http\Controllers\Api\CandidateProfileController;
+use App\Http\Controllers\Api\CertificateController;
+use App\Http\Controllers\Api\NominationController;
+use App\Http\Controllers\Api\SelfRegistrationController;
+use App\Http\Controllers\Api\UssdController;
 
 // ---------------------------------------------------------------- authentication
 Route::prefix('auth')->group(function () {
@@ -44,6 +50,12 @@ Route::middleware(['auth:sanctum', 'active'])->scopeBindings()->group(function (
     Route::post('me/two-factor/confirm', [AuthController::class, 'twoFactorConfirm'])->middleware('throttle:12,1');
     Route::delete('me/two-factor', [AuthController::class, 'twoFactorDisable'])->middleware('throttle:6,1');
     Route::post('me/onboarded', [AuthController::class, 'onboarded']);
+    // Data rights + payout account (automatic payouts via Paystack)
+    Route::get('me/export', [AccountController::class, 'export'])->middleware('throttle:6,1');
+    Route::delete('me', [AccountController::class, 'destroy'])->middleware('throttle:6,1');
+    Route::get('billing/banks', [AccountController::class, 'banks']);
+    Route::post('billing/resolve-account', [AccountController::class, 'resolve'])->middleware('throttle:20,1');
+    Route::put('me/payout-account', [AccountController::class, 'savePayoutAccount'])->middleware('throttle:10,1');
 
     Route::get('event-templates', [EventController::class, 'templates']);
 
@@ -58,6 +70,12 @@ Route::middleware(['auth:sanctum', 'active'])->scopeBindings()->group(function (
     Route::get('events/{event}/earnings', [EventController::class, 'earnings']);
     // POST: carries a logo upload (multipart).
     Route::post('events/{event}/branding', [EventController::class, 'branding']);
+
+    // Nominations (organiser view) and certified results
+    Route::get('events/{event}/nominations', [NominationController::class, 'index']);
+    Route::post('events/{event}/nominations/promote', [NominationController::class, 'promote']);
+    Route::get('events/{event}/certificates', [CertificateController::class, 'index']);
+    Route::post('events/{event}/certificates', [CertificateController::class, 'issue'])->middleware('throttle:10,1');
 
     // Co-organisers
     Route::get('events/{event}/members', [TeamController::class, 'index']);
@@ -76,6 +94,8 @@ Route::middleware(['auth:sanctum', 'active'])->scopeBindings()->group(function (
     // POST alias: browsers cannot send multipart/form-data (image upload) with PATCH to PHP.
     Route::match(['patch', 'post'], 'events/{event}/candidates/{candidate}', [CandidateController::class, 'update']);
     Route::delete('events/{event}/candidates/{candidate}', [CandidateController::class, 'destroy']);
+    Route::get('events/{event}/candidates/{candidate}/profile-link', [CandidateProfileController::class, 'show']);
+    Route::delete('events/{event}/candidates/{candidate}/profile-link', [CandidateProfileController::class, 'revoke']);
 
     Route::get('events/{event}/voters', [VoterController::class, 'index']);
     Route::post('events/{event}/voters', [VoterController::class, 'store']);
@@ -85,6 +105,7 @@ Route::middleware(['auth:sanctum', 'active'])->scopeBindings()->group(function (
     Route::post('events/{event}/voters/generate', [VoterController::class, 'generate']);
     Route::post('events/{event}/voters/erase-contacts', [VoterController::class, 'eraseContacts']);
     Route::post('events/{event}/voters/{voter}/shared', [VoterController::class, 'markShared']);
+    Route::post('events/{event}/voters/numeric-codes', [VoterController::class, 'numericCodes']);
     // Sending messages requires a confirmed email address (stops spam from throwaway accounts).
     Route::post('events/{event}/duplicate', [EventController::class, 'duplicate'])->middleware('throttle:20,1');
     Route::post('events/{event}/voters/invite', [VoterController::class, 'invite'])->middleware(['verified', 'throttle:20,1']);
@@ -119,6 +140,10 @@ Route::middleware(['auth:sanctum', 'active'])->scopeBindings()->group(function (
     });
 });
 
+// ---------------------------------------------------------------- USSD (Africa's Talking)
+// The secret in the path stands in for a signature (Africa's Talking doesn't sign USSD calls).
+Route::post('ussd/{secret}', [UssdController::class, 'handle'])->middleware('throttle:240,1');
+
 // ---------------------------------------------------------------- payments provider
 Route::post('paystack/webhook', [BillingController::class, 'webhook'])->middleware('throttle:120,1');
 
@@ -134,4 +159,14 @@ Route::prefix('public')->group(function () {
     // Paid public voting
     Route::post('events/{token}/paid-votes', [PaidVoteController::class, 'checkout'])->middleware('throttle:30,1');
     Route::post('paid-votes/verify', [PaidVoteController::class, 'verify'])->middleware('throttle:60,1');
+    // Voter self-registration: code sent to the contact the organiser has on file.
+    Route::post('events/{token}/request-code', [SelfRegistrationController::class, 'requestCode'])->middleware('throttle:voting');
+    // Nominations
+    Route::get('events/{token}/nominations', [NominationController::class, 'form'])->middleware('throttle:public');
+    Route::post('events/{token}/nominations', [NominationController::class, 'store'])->middleware('throttle:20,1');
+    // Candidate self-service (private link)
+    Route::get('candidate-profile/{token}', [CandidateProfileController::class, 'publicShow'])->middleware('throttle:public');
+    Route::post('candidate-profile/{token}', [CandidateProfileController::class, 'publicUpdate'])->middleware('throttle:20,1');
+    // Results certificates
+    Route::get('certificates/{serial}', [CertificateController::class, 'verify'])->middleware('throttle:public');
 });

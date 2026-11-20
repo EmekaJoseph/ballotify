@@ -72,6 +72,7 @@
 
                 <TwoFactorCard />
                 <PaymentsCard />
+                <DataRightsCard />
             </div>
         </div>
     </div>

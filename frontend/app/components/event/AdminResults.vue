@@ -26,6 +26,25 @@
                 </button>
             </div>
         </div>
+        <!-- Certified results (after voting closes) -->
+        <div v-if="event.status === 'completed' && canManage" class="cert-bar card-b mb-4">
+            <span class="icon-tile" :class="certificate ? 'green' : ''"><i class="bi bi-patch-check"></i></span>
+            <div class="flex-grow-1 min-w-0">
+                <div class="fw-bold text-ink">{{ certificate ? 'Results certified' : 'Certify the final results' }}</div>
+                <div class="small text-muted">
+                    <template v-if="certificate">Certificate <span class="mono">{{ certificate.serial }}</span> · anyone can check it with the QR code or link.</template>
+                    <template v-else>Create a signed certificate with a QR code that anyone can use to check the results are genuine.</template>
+                </div>
+            </div>
+            <template v-if="certificate">
+                <a :href="`/certificate/${certificate.serial}`" target="_blank" class="btn btn-primary btn-sm"><i class="bi bi-file-earmark-text"></i> Certificate</a>
+                <button class="btn btn-ghost btn-icon btn-sm" title="Copy verification link" aria-label="Copy verification link" @click="copyText(certificate.verify_url, 'Verification link copied')"><i class="bi bi-link-45deg"></i></button>
+            </template>
+            <button v-else class="btn btn-primary btn-sm" :disabled="certifying" @click="certify">
+                <span v-if="certifying" class="spinner-border spinner-border-sm"></span><i v-else class="bi bi-patch-check"></i> Certify results
+            </button>
+        </div>
+
         <div v-if="loading && !results" class="d-grid gap-3">
             <div class="row g-3"><div v-for="i in 4" :key="i" class="col-6 col-lg-3"><div class="skeleton" style="height: 92px"></div></div></div>
             <div class="skeleton" style="height: 240px"></div>
@@ -58,12 +77,32 @@
 
 <script setup lang="ts">
 import { adminApi } from '~/api/endpoints/admin';
-import type { BallotEvent, EventResults } from '~/types';
+import type { BallotEvent, EventResults, ResultCertificateInfo } from '~/types';
 
 const props = defineProps<{ event: BallotEvent }>();
 const results = ref<EventResults | null>(null);
 const loading = ref(true);
 const { resultsUrl } = useEventLinks(() => props.event.link_token);
+const canManage = computed(() => props.event.abilities?.includes('manage') ?? true);
+
+// ----- Certified results
+const certificate = ref<ResultCertificateInfo | null>(null);
+const certifying = ref(false);
+async function loadCertificate() {
+    if (props.event.status !== 'completed') return;
+    try { certificate.value = (await adminApi.getCertificates(props.event.id)).data[0] ?? null; } catch { /* optional */ }
+}
+async function certify() {
+    certifying.value = true;
+    try {
+        certificate.value = (await adminApi.issueCertificate(props.event.id)).data;
+        useToast().success(`Results certified: ${certificate.value.serial}`);
+    } catch (e) {
+        useToast().error(apiErrorMessage(e), 'Couldn’t certify the results');
+    } finally {
+        certifying.value = false;
+    }
+}
 
 const publicNow = computed(() => props.event.results_visibility === 'live'
     || (props.event.results_visibility === 'after_close' && props.event.status === 'completed'));
@@ -143,6 +182,7 @@ watch(presenting, (on) => {
 
 onMounted(() => {
     load();
+    loadCertificate();
     document.addEventListener('fullscreenchange', onFullscreen);
     document.addEventListener('keydown', onKey);
 });
@@ -160,6 +200,7 @@ onBeforeUnmount(() => {
     background: var(--surface); border: 1px solid var(--line); color: var(--ink-2); font-size: .9rem;
 }
 .visibility-note > .bi { color: var(--brand-600); font-size: 1.1rem; }
+.cert-bar { display: flex; align-items: center; gap: .9rem; flex-wrap: wrap; padding: .9rem 1.1rem; }
 .note-text { flex: 1 1 260px; }
 /* The buttons stay together and move to their own line as a group when space runs out. */
 .actions { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; margin-left: auto; }

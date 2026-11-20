@@ -28,6 +28,13 @@
                     <div v-if="errors.phone" class="field-error">{{ errors.phone }}</div>
                 </div>
             </div>
+            <div class="mb-3">
+                <label for="vf-member" class="form-label">{{ memberLabel }} <span class="text-muted fw-normal">(optional)</span></label>
+                <input id="vf-member" v-model.trim="form.member_id" class="form-control mono text-uppercase" maxlength="64"
+                    placeholder="e.g. CSC/19/001" autocomplete="off" :class="{ 'is-invalid': errors.member_id }" />
+                <div v-if="errors.member_id" class="field-error">{{ errors.member_id }}</div>
+                <div v-else class="form-text">Lets this voter request their own code, if you switch on self-registration.</div>
+            </div>
             <div>
                 <label for="vf-code" class="form-label">Voting code <span class="text-muted fw-normal">{{ voter ? '' : '(optional)' }}</span></label>
                 <input id="vf-code" v-model.trim="form.code" class="form-control mono text-uppercase" maxlength="64"
@@ -51,10 +58,10 @@
 import { adminApi } from '~/api/endpoints/admin';
 import type { Voter } from '~/types';
 
-const props = defineProps<{ open: boolean; eventId: number; voter: Voter | null }>();
+const props = withDefaults(defineProps<{ open: boolean; eventId: number; voter: Voter | null; memberLabel?: string }>(), { memberLabel: 'Member ID' });
 const emit = defineEmits<{ close: []; saved: [voter: Voter, created: boolean]; limit: [] }>();
 
-const form = reactive({ name: '', email: '', phone: '', code: '' });
+const form = reactive({ name: '', email: '', phone: '', member_id: '', code: '' });
 const errors = ref<Record<string, string>>({});
 const generalError = ref('');
 const busy = ref(false);
@@ -64,6 +71,7 @@ watch(() => props.open, (open) => {
     form.name = props.voter?.name ?? '';
     form.email = props.voter?.email ?? '';
     form.phone = props.voter?.phone ?? '';
+    form.member_id = props.voter?.member_id ?? '';
     form.code = props.voter?.code ?? '';
     errors.value = {};
     generalError.value = '';
@@ -77,7 +85,7 @@ async function submit() {
 
     busy.value = true;
     try {
-        const payload = { name: form.name || null, email: form.email || null, phone: form.phone || null };
+        const payload = { name: form.name || null, email: form.email || null, phone: form.phone || null, member_id: form.member_id || null };
         const { data } = props.voter
             ? await adminApi.updateVoter(props.eventId, props.voter.id, { ...payload, code: form.code })
             : await adminApi.createVoter(props.eventId, { ...payload, code: form.code || null });

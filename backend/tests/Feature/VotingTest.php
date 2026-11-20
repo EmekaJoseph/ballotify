@@ -205,6 +205,8 @@ it('locks the ballot structure once voting has started, but allows typo fixes', 
     // Cosmetic fixes are allowed, and recorded.
     $as->patchJson("/api/events/{$id}/candidates/{$e['a']->id}", ['name' => 'Ada Obi'])->assertOk();
     $as->patchJson("/api/events/{$id}/categories/{$e['category']->id}", ['name' => 'Presidency'])->assertOk();
+    // Settings changes are logged but are not ballot changes.
+    $as->patchJson("/api/events/{$id}", ['results_visibility' => 'live'])->assertOk();
 
     $this->getJson("/api/public/events/{$e['event']->link_token}/results")
         ->assertJsonPath('integrity.changes_during_voting', 2);

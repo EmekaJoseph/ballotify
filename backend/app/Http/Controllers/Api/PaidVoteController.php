@@ -10,6 +10,7 @@ use App\Models\Event;
 use App\Models\VotePurchase;
 use App\Support\Paystack;
 use App\Support\Plans;
+use App\Support\Turnstile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
@@ -41,7 +42,8 @@ class PaidVoteController extends Controller
             'email' => ['required', 'email:rfc', 'max:255'],
             'name' => ['nullable', 'string', 'max:120'],
         ]);
-        $event = Event::publicToken($token)->firstOrFail();
+        Turnstile::verify($request);
+        $event = Event::publicToken($token)->with('user')->firstOrFail();
 
         if (! $event->isPaid()) {
             return response()->json(['message' => 'This event doesn’t use paid voting.'], 422);
@@ -65,13 +67,18 @@ class PaidVoteController extends Controller
             throw ValidationException::withMessages(['quantity' => ["The smallest payment is ₦{$min}. Choose at least {$need} votes."]]);
         }
 
+        // Automatic payouts: the organiser's verified subaccount gets their share directly.
+        $subaccount = $event->user?->paystack_subaccount_code;
+        $fee = Plans::voteFeeKobo($amountKobo);
+
         $purchase = VotePurchase::create([
             'event_id' => $event->id,
             'candidate_id' => $candidate->id,
             'candidate_name' => $candidate->name,
             'quantity' => $data['quantity'],
             'amount_kobo' => $amountKobo,
-            'fee_kobo' => Plans::voteFeeKobo($amountKobo),
+            'fee_kobo' => $fee,
+            'subaccount' => $subaccount,
             'currency' => config('ballotify.billing.currency', 'NGN'),
             'reference' => self::PREFIX . Str::upper(Str::random(14)),
             'email' => strtolower($data['email']),
@@ -89,7 +96,7 @@ class PaidVoteController extends Controller
                     ['display_name' => 'Event', 'variable_name' => 'event', 'value' => $event->name],
                     ['display_name' => 'Votes', 'variable_name' => 'votes', 'value' => "{$purchase->quantity} for {$candidate->name}"],
                 ],
-            ]);
+            ], $subaccount ? ['subaccount' => $subaccount, 'transaction_charge' => $fee] : []);
         } catch (\Throwable $e) {
             report($e);
             $purchase->update(['status' => VotePurchase::FAILED, 'failure_reason' => 'Could not start checkout']);

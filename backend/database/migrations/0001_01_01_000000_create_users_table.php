@@ -30,6 +30,10 @@ return new class extends Migration
             $table->string('payout_bank_name')->nullable();
             $table->string('payout_account_number', 20)->nullable();
             $table->string('payout_account_name')->nullable();
+            // Paystack: bank code from their bank list, and the subaccount that
+            // receives the organiser's share automatically (split payments).
+            $table->string('payout_bank_code', 16)->nullable();
+            $table->string('paystack_subaccount_code', 64)->nullable();
             // First-run tour seen in the dashboard.
             $table->timestamp('onboarded_at')->nullable();
             $table->rememberToken();

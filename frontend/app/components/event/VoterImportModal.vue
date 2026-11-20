@@ -15,19 +15,21 @@
             </span>
         </div>
         <div class="form-text">
-            Spreadsheet exports work too. Columns named <b>Name</b>, <b>Email</b> and <b>Phone</b> are matched in any order.
+            Spreadsheet exports work too. Columns named <b>Name</b>, <b>Email</b>, <b>Phone</b> and an <b>ID</b> column (e.g. Matric number, Member no.) are matched in any order.
+            The ID lets voters request their own code if you switch on self-registration.
             Local numbers like 0801… are converted using your country code.
         </div>
 
         <div v-if="rows.length" class="table-responsive mt-3 border rounded-3">
             <table class="table-b small">
-                <thead><tr><th>#</th><th>Name</th><th>Email</th><th>Phone</th></tr></thead>
+                <thead><tr><th>#</th><th>Name</th><th>Email</th><th>Phone</th><th v-if="withId">ID</th></tr></thead>
                 <tbody>
                     <tr v-for="(r, i) in rows.slice(0, 5)" :key="i">
                         <td class="text-muted">{{ i + 1 }}</td>
                         <td>{{ r.name || '—' }}</td>
                         <td :class="{ 'text-danger': r.email && !emailOk(r.email) }">{{ r.email || '—' }}</td>
                         <td>{{ r.phone || '—' }}</td>
+                        <td v-if="withId" class="mono">{{ r.member_id || '—' }}</td>
                     </tr>
                 </tbody>
             </table>
@@ -72,9 +74,12 @@ const rows = computed<VoterContact[]>(() => {
     const idx = {
         name: header.findIndex(h => /^(full ?)?name|voter/.test(h)),
         email: header.findIndex(h => /e-?mail/.test(h)),
-        phone: header.findIndex(h => /phone|mobile|tel|number|whatsapp/.test(h)),
+        member_id: header.findIndex(h => /matric|member|staff|student|reg(istration)?\.? ?(no|num)|\bid\b|identification/.test(h)),
+        phone: -1,
     };
-    const hasHeader = idx.name >= 0 || idx.email >= 0 || idx.phone >= 0;
+    // Phone: a phone-like column that isn't the ID column ("Member number" is an ID, not a phone).
+    idx.phone = header.findIndex((h, i) => i !== idx.member_id && /phone|mobile|tel|whatsapp|^number/.test(h));
+    const hasHeader = idx.name >= 0 || idx.email >= 0 || idx.phone >= 0 || idx.member_id >= 0;
 
     return (hasHeader ? table.slice(1) : table).map((cells) => {
         if (hasHeader) {
@@ -82,6 +87,7 @@ const rows = computed<VoterContact[]>(() => {
                 name: idx.name >= 0 ? cells[idx.name] || null : null,
                 email: idx.email >= 0 ? cells[idx.email] || null : null,
                 phone: idx.phone >= 0 ? cells[idx.phone] || null : null,
+                member_id: idx.member_id >= 0 ? cells[idx.member_id] || null : null,
             };
         }
         const row: VoterContact = { name: null, email: null, phone: null };
@@ -92,11 +98,12 @@ const rows = computed<VoterContact[]>(() => {
             else if (!row.name) row.name = cell;
         }
         return row;
-    }).filter(r => r.name || r.email || r.phone);
+    }).filter(r => r.name || r.email || r.phone || r.member_id);
 });
 
 const withEmail = computed(() => rows.value.filter(r => r.email).length);
 const withPhone = computed(() => rows.value.filter(r => r.phone).length);
+const withId = computed(() => rows.value.some(r => r.member_id));
 
 async function loadFile(e: Event) {
     const input = e.target as HTMLInputElement;

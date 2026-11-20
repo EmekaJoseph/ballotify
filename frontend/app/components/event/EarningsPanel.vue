@@ -6,7 +6,7 @@
                 <div class="col-6 col-lg-3"><StatCard label="Votes sold" :value="formatNumber(data.votes_sold)" icon="bi-heart" tone="amber" :hint="`${formatNumber(data.payments)} payments`" /></div>
                 <div class="col-6 col-lg-3"><StatCard label="Raised" :value="formatNaira(data.gross_naira)" icon="bi-cash-stack" /></div>
                 <div class="col-6 col-lg-3"><StatCard label="Yours" :value="formatNaira(data.net_naira)" icon="bi-wallet2" tone="green" :hint="`after ${data.fee_percent}% platform fee`" /></div>
-                <div class="col-6 col-lg-3"><StatCard label="To be paid out" :value="formatNaira(data.balance_naira)" icon="bi-bank" tone="violet" :hint="data.paid_out_naira ? `${formatNaira(data.paid_out_naira)} paid so far` : 'Nothing paid out yet'" /></div>
+                <div class="col-6 col-lg-3"><StatCard label="To be paid out" :value="formatNaira(data.balance_naira)" icon="bi-bank" tone="violet" :hint="payoutHint" /></div>
             </div>
 
             <div v-if="data.late_payments" class="alert alert-warning border-0 rounded-4 small d-flex gap-2">
@@ -39,7 +39,39 @@
 
                 <div class="col-lg-4 d-grid gap-4 align-content-start">
                     <div class="card-b pad">
-                        <h3 class="h6 fw-800 mb-1">Payout account</h3>
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <h3 class="h6 fw-800 mb-0">Payout account</h3>
+                            <span v-if="auth.user?.paystack_subaccount_code" class="pill pill-active"><i class="bi bi-lightning-charge"></i> Automatic</span>
+                        </div>
+                        <!-- Paystack set up: verified account + automatic payouts -->
+                        <template v-if="verifiedBanks">
+                            <p class="small text-muted mb-3">
+                                Paystack pays your share straight to this account after each vote payment (usually the next working day).
+                                Used for all your paid-voting events.
+                            </p>
+                            <form novalidate @submit.prevent="saveVerified">
+                                <label for="v-bank" class="form-label">Bank</label>
+                                <select id="v-bank" v-model="vbank.code" class="form-select mb-2" @change="vbank.name = ''">
+                                    <option value="" disabled>Choose your bank</option>
+                                    <option v-for="b in banks" :key="b.code" :value="b.code">{{ b.name }}</option>
+                                </select>
+                                <label for="v-acct" class="form-label">Account number</label>
+                                <div class="d-flex gap-2 mb-2">
+                                    <input id="v-acct" v-model.trim="vbank.number" class="form-control mono" inputmode="numeric" maxlength="10" placeholder="10 digits" @input="vbank.name = ''" />
+                                    <button type="button" class="btn btn-soft flex-shrink-0" :disabled="checking || !vbank.code || vbank.number.length !== 10" @click="checkAccount">
+                                        <span v-if="checking" class="spinner-border spinner-border-sm"></span><span v-else>Check</span>
+                                    </button>
+                                </div>
+                                <div v-if="vbank.name" class="acct-name mb-3"><i class="bi bi-person-check-fill"></i> {{ vbank.name }}</div>
+                                <button class="btn btn-primary w-100" :disabled="savingBank || !vbank.name">
+                                    <span v-if="savingBank" class="spinner-border spinner-border-sm"></span> {{ auth.user?.paystack_subaccount_code ? 'Update payout account' : 'Turn on automatic payouts' }}
+                                </button>
+                                <p v-if="auth.user?.payout_account_number" class="small text-muted mt-2 mb-0">
+                                    Current: {{ auth.user.payout_account_name }} · {{ auth.user.payout_bank_name }} · <span class="mono">{{ auth.user.payout_account_number }}</span>
+                                </p>
+                            </form>
+                        </template>
+                        <template v-else>
                         <p class="small text-muted mb-3">Where we send your share by bank transfer. It’s used for all your paid-voting events.</p>
                         <form novalidate @submit.prevent="saveBank">
                             <label for="bank" class="form-label">Bank</label>
@@ -54,6 +86,7 @@
                                 <span v-if="savingBank" class="spinner-border spinner-border-sm"></span> Save payout account
                             </button>
                         </form>
+                        </template>
                     </div>
                     <div v-if="data.payouts.length" class="card-b pad">
                         <h3 class="h6 fw-800 mb-2">Payouts received</h3>
@@ -73,7 +106,7 @@
 <script setup lang="ts">
 import { adminApi } from '~/api/endpoints/admin';
 import { useAuthStore } from '~/stores/auth';
-import type { BallotEvent, Earnings } from '~/types';
+import type { Bank, BallotEvent, Earnings } from '~/types';
 
 const props = defineProps<{ event: BallotEvent }>();
 const toast = useToast();
@@ -92,12 +125,59 @@ async function load() {
 }
 onMounted(load);
 
+/** What the "To be paid out" card says, for automatic, mixed and manual payouts. */
+const payoutHint = computed(() => {
+    const d = data.value;
+    if (!d) return '';
+    if (d.automatic_payouts) {
+        return d.balance_naira > 0
+            ? `From before automatic payouts: we pay this by transfer`
+            : 'Nothing owed: Paystack pays you automatically';
+    }
+    return d.paid_out_naira ? `${formatNaira(d.paid_out_naira)} paid so far` : 'Nothing paid out yet';
+});
+
 const bank = reactive({
     payout_bank_name: auth.user?.payout_bank_name ?? '',
     payout_account_number: auth.user?.payout_account_number ?? '',
     payout_account_name: auth.user?.payout_account_name ?? '',
 });
 const savingBank = ref(false);
+
+// ----- Verified account + automatic payouts (when Paystack is set up)
+const banks = ref<Bank[]>([]);
+const verifiedBanks = ref(false);
+const vbank = reactive({ code: auth.user?.payout_bank_code ?? '', number: auth.user?.payout_account_number ?? '', name: '' });
+const checking = ref(false);
+onMounted(async () => {
+    try {
+        const { data } = await adminApi.banks();
+        banks.value = data.banks;
+        verifiedBanks.value = data.verified && data.banks.length > 0;
+    } catch { /* manual form */ }
+});
+async function checkAccount() {
+    checking.value = true;
+    try {
+        vbank.name = (await adminApi.resolveAccount({ bank_code: vbank.code, account_number: vbank.number })).data.account_name;
+    } catch (e) {
+        toast.error(Object.values(apiFieldErrors(e))[0] ?? apiErrorMessage(e), 'Account not found');
+    } finally {
+        checking.value = false;
+    }
+}
+async function saveVerified() {
+    savingBank.value = true;
+    try {
+        auth.user = (await adminApi.savePayoutAccount({ bank_code: vbank.code, account_number: vbank.number })).data;
+        toast.success('Automatic payouts are on. Paystack will pay your share into this account.');
+        await load();
+    } catch (e) {
+        toast.error(Object.values(apiFieldErrors(e))[0] ?? apiErrorMessage(e), 'Payout account not saved');
+    } finally {
+        savingBank.value = false;
+    }
+}
 const bankError = ref('');
 async function saveBank() {
     savingBank.value = true;
@@ -120,4 +200,5 @@ async function saveBank() {
 
 <style scoped>
 .pill-failed { background: var(--danger-50); color: var(--danger); }
+.acct-name { display: flex; gap: .5rem; align-items: center; padding: .55rem .8rem; border-radius: 10px; background: var(--success-50); color: var(--success); font-weight: 700; font-size: .9rem; }
 </style>

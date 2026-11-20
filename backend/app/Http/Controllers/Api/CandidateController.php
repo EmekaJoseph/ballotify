@@ -46,7 +46,7 @@ class CandidateController extends Controller
             'category_id' => $category->id,
             'name' => $data['name'],
             'description' => self::cleanDescription($data['description'] ?? null),
-            'image_path' => $request->hasFile('image') ? $this->storeImage($request->file('image')) : null,
+            'image_path' => $request->hasFile('image') ? self::storeImage($request->file('image')) : null,
         ]);
         Audit::log($event, 'candidate.created', "Candidate “{$candidate->name}” added to “{$category->name}”");
 
@@ -155,8 +155,8 @@ class CandidateController extends Controller
         }
         $photoChanged = $request->hasFile('image') || $request->boolean('remove_image');
         if ($photoChanged) {
-            $this->deleteImage($candidate->image_path);
-            $candidate->image_path = $request->hasFile('image') ? $this->storeImage($request->file('image')) : null;
+            self::deleteImage($candidate->image_path);
+            $candidate->image_path = $request->hasFile('image') ? self::storeImage($request->file('image')) : null;
         }
 
         $movedCategory = $candidate->isDirty('category_id');
@@ -183,7 +183,7 @@ class CandidateController extends Controller
     {
         Gate::authorize('manage', $event);
         $this->ensureBallotEditable($event);
-        $this->deleteImage($candidate->image_path);
+        self::deleteImage($candidate->image_path);
         $candidate->delete();
         Audit::log($event, 'candidate.deleted', "Candidate “{$candidate->name}” removed");
 
@@ -191,7 +191,7 @@ class CandidateController extends Controller
     }
 
     /** Trim and collapse whitespace; an empty description is stored as null. */
-    private static function cleanDescription(?string $text): ?string
+    public static function cleanDescription(?string $text): ?string
     {
         $text = trim(preg_replace('/\s+/u', ' ', (string) $text) ?? '');
         return $text === '' ? null : $text;
@@ -232,7 +232,7 @@ class CandidateController extends Controller
         return $newPath;
     }
 
-    private function storeImage(UploadedFile $file): string
+    public static function storeImage(UploadedFile $file): string
     {
         // Use the extension detected from the file contents, never the client-supplied one.
         $ext = $file->extension() ?: 'jpg';
@@ -246,7 +246,7 @@ class CandidateController extends Controller
         return self::IMAGE_DIR . '/' . $filename;
     }
 
-    private function deleteImage(?string $path): void
+    public static function deleteImage(?string $path): void
     {
         if (! $path || ! str_starts_with($path, self::IMAGE_DIR . '/')) {
             return;

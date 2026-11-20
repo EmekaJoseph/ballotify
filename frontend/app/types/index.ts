@@ -19,6 +19,9 @@ export interface User {
     payout_bank_name?: string | null;
     payout_account_number?: string | null;
     payout_account_name?: string | null;
+    payout_bank_code?: string | null;
+    /** Set once Paystack pays the organiser automatically (split payments). */
+    paystack_subaccount_code?: string | null;
     /** First-run tour seen. */
     onboarded_at?: string | null;
     created_at?: string;
@@ -61,6 +64,7 @@ export interface Voter {
     name: string | null;
     email: string | null;
     phone: string | null;
+    member_id?: string | null;
     code: string;
     used_at: string | null;
     /** When the code was last delivered (email, SMS or shared on WhatsApp). */
@@ -88,6 +92,17 @@ export interface BallotEvent {
     reminder_at?: string | null;
     reminder_channel?: InviteChannel | null;
     reminder_sent_at?: string | null;
+    /** Voters can request their own code with an ID on the list. */
+    self_registration?: boolean;
+    member_id_label?: string | null;
+    /** Name of the account that owns the event. */
+    owner_name?: string | null;
+    ussd_enabled?: boolean;
+    ussd_code?: string | null;
+    /** The shortcode voters dial (null = USSD not set up on this platform). */
+    ussd_service_code?: string | null;
+    nominations_enabled?: boolean;
+    nominations_ends_at?: string | null;
     /** This user's role and what it allows. */
     my_role?: EventRole;
     abilities?: EventAbility[];
@@ -128,6 +143,8 @@ export interface PublicEvent {
     branding?: boolean;
     /** Pro events: the organiser's own colour and logo. */
     brand?: Brand | null;
+    self_registration?: boolean;
+    member_id_label?: string;
     categories: Pick<Category, 'id' | 'name' | 'max_choices'>[];
     candidates: Candidate[];
 }
@@ -193,6 +210,7 @@ export interface VoterContact {
     name?: string | null;
     email?: string | null;
     phone?: string | null;
+    member_id?: string | null;
 }
 
 export type InviteChannel = "email" | "sms" | "both";
@@ -369,6 +387,9 @@ export interface Earnings {
     late_payments: number;
     payouts: { amount_naira: number; note: string | null; created_at: string }[];
     recent: { candidate: string; quantity: number; amount_naira: number; buyer: string; status: string; paid_at: string | null }[];
+    /** Paid straight to the organiser by Paystack (split payments). */
+    auto_paid_naira?: number;
+    automatic_payouts?: boolean;
 }
 
 export interface ReceiptCheck {
@@ -415,6 +436,7 @@ export interface PlatformPayout {
     fee_naira: number;
     net_naira: number;
     paid_out_naira: number;
+    auto_paid_naira?: number;
     balance_naira: number;
     late_payments: number;
 }
@@ -428,4 +450,57 @@ export interface SystemHealth {
     broadcasting: string;
     delivery_errors: { last_7_days: number; recent: { event: string | null; event_id: number; error: string; at: string }[] };
     failed_jobs: { uuid: string; queue: string; job: string; error: string; failed_at: string }[];
+}
+// ---------------------------------------------------------------- nominations, certificates, banks
+
+export interface NominationSummary {
+    open: boolean;
+    enabled: boolean;
+    ends_at: string | null;
+    total: number;
+    categories: { id: number; name: string; nominees: { name: string; count: number; reasons: string[]; on_ballot: boolean }[] }[];
+}
+
+export interface NominationForm {
+    name: string;
+    description: string | null;
+    open: boolean;
+    ends_at: string | null;
+    voting_starts_at: string | null;
+    brand: Brand | null;
+    categories: { id: number; name: string }[];
+}
+
+export interface CertificatePayload {
+    event: { id: number; name: string; organiser: string | null; voting_mode: VotingMode; starts_at: string | null; ends_at: string | null };
+    stats: { voters?: number; ballots?: number; receipts?: number; votes?: number; payments?: number };
+    categories: { name: string; candidates: { name: string; votes: number }[]; winners: string[] }[];
+    issued_at: string;
+}
+
+export interface ResultCertificateInfo {
+    serial: string;
+    issued_at: string;
+    signature: string;
+    payload: CertificatePayload;
+    verify_url: string;
+    certificate_url: string;
+    /** Public verification only. */
+    valid?: boolean;
+    matches_current?: boolean | null;
+    message?: string;
+}
+
+export interface CandidateProfile {
+    name: string;
+    description: string | null;
+    image_url: string | null;
+    category: string | null;
+    event: { name: string; status: EventStatus };
+    editable: boolean;
+}
+
+export interface Bank {
+    name: string;
+    code: string;
 }

@@ -16,7 +16,7 @@ class VotePurchase extends Model
 
     protected $fillable = [
         'event_id', 'candidate_id', 'candidate_name', 'quantity', 'amount_kobo', 'fee_kobo', 'currency',
-        'reference', 'email', 'name', 'status', 'channel', 'failure_reason', 'paid_at',
+        'reference', 'email', 'name', 'status', 'channel', 'failure_reason', 'subaccount', 'paid_at',
     ];
 
     protected $casts = [

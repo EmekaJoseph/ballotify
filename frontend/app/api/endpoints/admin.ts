@@ -3,7 +3,7 @@ import type {
     AuditEntry, BallotEvent, Candidate, CandidateImportResult, CandidateImportRow, Category, Earnings, EventResults, EventTemplate,
     GeneratedCode, InviteChannel, MemberRole, MessagingStatus, MyPayment, Paginated, PaymentReceiptInfo, PlanInfo, PlanSettings,
     PlatformEvent, PlatformOverview, PlatformPayment, PlatformPayout, PlatformUser, ResultsVisibility, SystemHealth, TeamInfo,
-    TeamMember, User, Voter, VoterContact, VotingMode,
+    TeamMember, User, Voter, VoterContact, VotingMode, NominationSummary, ResultCertificateInfo, Bank,
 } from '~/types';
 
 type Id = number | string;
@@ -20,6 +20,11 @@ export interface EventPayload {
     reminder_channel?: InviteChannel | null;
     /** Create only: start from a template. */
     template?: string | null;
+    self_registration?: boolean;
+    member_id_label?: string | null;
+    ussd_enabled?: boolean;
+    nominations_enabled?: boolean;
+    nominations_ends_at?: string | null;
 }
 
 /** Sign-in either completes, or asks for the authenticator code. */
@@ -27,7 +32,7 @@ export type LoginResponse = { token: string; user: User } | { two_factor: true; 
 
 export const adminApi = {
     // Authentication
-    register: (data: { name: string; email: string; password: string; terms: boolean }) =>
+    register: (data: { name: string; email: string; password: string; terms: boolean; captcha_token?: string }) =>
         api.post<{ token: string; user: User }>('/auth/register', data),
     login: (data: { email: string; password: string }) => api.post<LoginResponse>('/auth/login', data),
     twoFactorChallenge: (data: { challenge: string; code: string }) =>
@@ -46,6 +51,13 @@ export const adminApi = {
     }) => api.patch<User>('/me', data),
     /** First-run tour seen or skipped. */
     markOnboarded: () => api.post<User>('/me/onboarded'),
+    /** Everything we hold about the account, as JSON. */
+    exportMyData: () => api.get<Record<string, unknown>>('/me/export'),
+    deleteAccount: (password: string) => api.delete<{ message: string }>('/me', { data: { password } }),
+    // Payout account (automatic payouts via Paystack)
+    banks: () => api.get<{ banks: Bank[]; verified: boolean }>('/billing/banks'),
+    resolveAccount: (data: { bank_code: string; account_number: string }) => api.post<{ account_name: string }>('/billing/resolve-account', data),
+    savePayoutAccount: (data: { bank_code: string; account_number: string }) => api.put<User>('/me/payout-account', data),
 
     // Two-step login
     twoFactorSetup: (password: string) => api.post<{ secret: string; otpauth_url: string }>('/me/two-factor', { password }),
@@ -70,6 +82,15 @@ export const adminApi = {
     getEarnings: (eventId: Id) => api.get<Earnings>(`/events/${eventId}/earnings`),
     /** Pro: brand colour and logo (multipart: brand_color, logo, remove_logo). */
     updateBranding: (eventId: Id, form: FormData) => api.post<BallotEvent>(`/events/${eventId}/branding`, form),
+
+    // Nominations and certified results
+    getNominations: (eventId: Id) => api.get<NominationSummary>(`/events/${eventId}/nominations`),
+    promoteNominee: (eventId: Id, data: { category_id: number; name: string }) => api.post(`/events/${eventId}/nominations/promote`, data),
+    getCertificates: (eventId: Id) => api.get<ResultCertificateInfo[]>(`/events/${eventId}/certificates`),
+    issueCertificate: (eventId: Id) => api.post<ResultCertificateInfo>(`/events/${eventId}/certificates`),
+    /** Private link for a candidate to edit their own photo and description. */
+    candidateProfileLink: (eventId: Id, candidateId: Id) => api.get<{ url: string }>(`/events/${eventId}/candidates/${candidateId}/profile-link`),
+    revokeCandidateProfileLink: (eventId: Id, candidateId: Id) => api.delete(`/events/${eventId}/candidates/${candidateId}/profile-link`),
 
     // Team (co-organisers)
     getTeam: (eventId: Id) => api.get<TeamInfo>(`/events/${eventId}/members`),
@@ -117,6 +138,8 @@ export const adminApi = {
         api.post<{ queued: number; email: number; sms: number; queue: string }>(`/events/${eventId}/voters/remind`, { channel }),
     /** The organiser shared this code themselves (WhatsApp). */
     markShared: (eventId: Id, voterId: Id) => api.post<Voter>(`/events/${eventId}/voters/${voterId}/shared`, { channel: 'whatsapp' }),
+    /** USSD: give unused codes numbers only. */
+    numericCodes: (eventId: Id) => api.post<{ replaced: number }>(`/events/${eventId}/voters/numeric-codes`),
     messagingStatus: () => api.get<MessagingStatus>('/messaging/status'),
 };
 

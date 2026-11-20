@@ -82,12 +82,27 @@
                             <span class="d-block fw-semibold text-ink text-break">{{ cand.name }}</span>
                             <span v-if="cand.description" class="small text-muted text-break cand-desc">{{ cand.description }}</span>
                         </span>
+                        <button v-if="canEdit" class="btn btn-ghost btn-icon btn-sm" title="Profile link: the candidate adds their own photo and description" aria-label="Candidate profile link" @click="openProfileLink(cand)"><i class="bi bi-link-45deg"></i></button>
                         <button v-if="canEdit" class="btn btn-ghost btn-icon btn-sm" title="Edit" aria-label="Edit candidate" @click="openCandidate(cand)"><i class="bi bi-pencil"></i></button>
                         <button v-if="!locked && canEdit" class="btn btn-ghost btn-icon btn-sm text-danger" title="Delete" aria-label="Delete candidate" @click="removeCandidate(cand)"><i class="bi bi-trash"></i></button>
                     </li>
                 </ul>
             </section>
         </div>
+
+        <!-- Candidate's private profile link -->
+        <BaseModal :open="!!profileLink.cand" :title="profileLink.cand ? `Profile link for ${profileLink.cand.name}` : ''" size="md" @close="profileLink.cand = null">
+            <p class="small text-muted">Send this private link to the candidate. They can add their own photo and short description (not their name or category). Every change is in the Activity log.</p>
+            <div v-if="profileLink.loading" class="skeleton" style="height: 44px"></div>
+            <div v-else class="link-box">
+                <span class="mono small text-truncate">{{ profileLink.url }}</span>
+                <button class="btn btn-primary btn-sm" @click="copyText(profileLink.url, 'Link copied')"><i class="bi bi-copy"></i> Copy</button>
+            </div>
+            <template #footer>
+                <button class="btn btn-ghost text-danger me-auto" :disabled="profileLink.loading" @click="revokeProfileLink">Switch link off</button>
+                <a v-if="profileLink.url" :href="whatsappLink(null, `Hi ${profileLink.cand?.name}, please add your photo and a short description for ${event.name}: ${profileLink.url}`)" target="_blank" rel="noopener" class="btn btn-wa"><i class="bi bi-whatsapp"></i> Send on WhatsApp</a>
+            </template>
+        </BaseModal>
 
         <EventCandidateImportModal :open="importOpen" :event-id="event.id" @close="importOpen = false" @imported="onImported" />
 
@@ -318,6 +333,23 @@ function removeCandidate(cand: Candidate) {
 }
 
 onBeforeUnmount(revokePreview);
+
+// ----- Candidate profile link (optional self-service)
+const profileLink = reactive({ cand: null as Candidate | null, url: '', loading: false });
+async function openProfileLink(cand: Candidate) {
+    Object.assign(profileLink, { cand, url: '', loading: true });
+    try { profileLink.url = (await adminApi.candidateProfileLink(props.event.id, cand.id)).data.url; }
+    catch (e) { profileLink.cand = null; toast.error(apiErrorMessage(e)); }
+    finally { profileLink.loading = false; }
+}
+async function revokeProfileLink() {
+    if (!profileLink.cand) return;
+    try {
+        await adminApi.revokeCandidateProfileLink(props.event.id, profileLink.cand.id);
+        toast.success('Link switched off. You can make a new one any time.');
+        profileLink.cand = null;
+    } catch (e) { toast.error(apiErrorMessage(e)); }
+}
 </script>
 
 <style scoped>
@@ -329,5 +361,7 @@ onBeforeUnmount(revokePreview);
 .limit-select { width: auto; display: inline-block; padding: .1rem 1.8rem .1rem .5rem; font-size: .8rem; min-height: 0; }
 .shuffle-on { color: var(--violet-600, #7c5cff); background: var(--violet-50, rgba(124, 92, 255, .1)); }
 .shuffle-pill { font-size: .7rem; padding: .1rem .45rem; }
+.link-box { display: flex; align-items: center; gap: .5rem; padding: .5rem .5rem .5rem .8rem; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-2); }
+.link-box .mono { flex: 1; min-width: 0; }
 .cand-desc { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.4; }
 </style>

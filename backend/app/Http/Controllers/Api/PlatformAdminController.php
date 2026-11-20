@@ -58,6 +58,9 @@ class PlatformAdminController extends Controller
             ->with('user:id,name,email,payout_bank_name,payout_account_number,payout_account_name')
             ->withSum(['purchases as gross_kobo' => fn ($q) => $q->where('status', VotePurchase::SUCCESS)], 'amount_kobo')
             ->withSum(['purchases as fee_kobo' => fn ($q) => $q->where('status', VotePurchase::SUCCESS)], 'fee_kobo')
+            // Paid straight to the organiser by Paystack (split): not owed by us.
+            ->withSum(['purchases as split_gross_kobo' => fn ($q) => $q->where('status', VotePurchase::SUCCESS)->whereNotNull('subaccount')], 'amount_kobo')
+            ->withSum(['purchases as split_fee_kobo' => fn ($q) => $q->where('status', VotePurchase::SUCCESS)->whereNotNull('subaccount')], 'fee_kobo')
             ->withCount(['purchases as late_count' => fn ($q) => $q->where('status', VotePurchase::LATE)])
             ->withSum('payouts as paid_out_kobo', 'amount_kobo')
             ->latest()
@@ -65,6 +68,7 @@ class PlatformAdminController extends Controller
 
         return response()->json($events->map(function (Event $e) {
             $net = (int) $e->gross_kobo - (int) $e->fee_kobo;
+            $auto = (int) $e->split_gross_kobo - (int) $e->split_fee_kobo;
             return [
                 'id' => $e->id,
                 'name' => $e->name,
@@ -79,8 +83,9 @@ class PlatformAdminController extends Controller
                 'gross_naira' => (int) $e->gross_kobo / 100,
                 'fee_naira' => (int) $e->fee_kobo / 100,
                 'net_naira' => $net / 100,
-                'paid_out_naira' => (int) $e->paid_out_kobo / 100,
-                'balance_naira' => ($net - (int) $e->paid_out_kobo) / 100,
+                'paid_out_naira' => ((int) $e->paid_out_kobo + $auto) / 100,
+                'auto_paid_naira' => $auto / 100,
+                'balance_naira' => ($net - $auto - (int) $e->paid_out_kobo) / 100,
                 'late_payments' => (int) $e->late_count,
             ];
         }));
