@@ -119,8 +119,26 @@ VOTERS take part from any phone or laptop using a one-time code.
        Pick a template (Student union, Award night, AGM, Board) or a blank
        event, then: name, description, how people vote (secret ballot or
        paid voting + price), who sees results, opening/closing time.
-       Pick limits are set per category on the Ballot tab:
-         "Choose one" (default)  |  "Pick up to N"  |  "Pick any number"
+       The voting method is set per category on the Ballot tab:
+         "Choose one" (default)   most votes wins
+         "Pick up to N"           voters pick several; most votes wins
+         "Approval"               voters tick everyone they approve of;
+                                  results show % of voters (can add up
+                                  to more than 100%)
+         "Ranked choice"          voters rank candidates 1st, 2nd, 3rd...
+                                  Counted in rounds (instant runoff):
+
+           Round 1: count everyone's 1st choice.
+           Anyone over half of the votes still counting?  -> they win.
+           Otherwise the last-placed candidate is out, and each of their
+           ballots moves to that voter's next choice still in the race.
+           Repeat. (Ballots with no choices left stop counting.)
+           A tie for last is broken by the earlier rounds; if everyone
+           left is tied, they share the win.
+
+         Results show "How the count went" round by round; the report,
+         CSV, live reveal and certificates use the same count. On USSD,
+         voters rank by picking their 1st choice, then 2nd... (0 = done).
 
        Already ran this vote last year? Settings -> Advanced -> "Duplicate
        event" copies the whole ballot (no voters, votes or dates).
@@ -426,8 +444,13 @@ VOTERS take part from any phone or laptop using a one-time code.
      |  self_registration + ID label, ussd_enabled + event number,
      |  nominations_enabled + nominations_ends_at
      |
-     +--< categories           e.g. "President"; max_choices (1 = choose one,
-     |       |                 N = up to N, empty = any) + shuffle flag
+     +--< categories           e.g. "President"; method (plurality | ranked),
+     |       |                 max_choices (1 = choose one, N = up to N,
+     |       |                 empty = any / approval), shuffle flag,
+     |       |                 ballots (how many voters answered it)
+     |       |
+     |       +--< ranked_ballots  ranked choice only: one ranking per ballot,
+     |       |                 with NO voter id, NO time, random id
      |       |
      |       +--< candidates   e.g. "Ada Obi" (+ photo, + votes = running total,
      |                         + optional private profile-link token)
@@ -464,6 +487,8 @@ VOTERS take part from any phone or laptop using a one-time code.
    [x] Voting window enforced by the server, not just hidden in the page.
    [x] Choices validated against the event, the category and the category's
        pick limit.
+   [x] Ranked choice keeps each ranking (to count the rounds) but nothing
+       that links it to a voter: no voter id, no timestamp, random ids.
    [x] Voters get a receipt to check their ballot was counted, without it
        revealing how they voted.
    [x] Paid votes count once, only for the full amount, and only if paid

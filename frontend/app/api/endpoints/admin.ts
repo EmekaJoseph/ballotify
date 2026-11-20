@@ -103,9 +103,9 @@ export const adminApi = {
 
     // Categories
     getCategories: (eventId: Id) => api.get<Category[]>(`/events/${eventId}/categories`),
-    createCategory: (eventId: Id, data: { name: string; max_choices?: number | null; shuffle_candidates?: boolean }) =>
+    createCategory: (eventId: Id, data: { name: string; max_choices?: number | null; shuffle_candidates?: boolean; method?: 'plurality' | 'ranked' }) =>
         api.post<Category>(`/events/${eventId}/categories`, data),
-    updateCategory: (eventId: Id, categoryId: Id, data: { name?: string; max_choices?: number | null; shuffle_candidates?: boolean }) =>
+    updateCategory: (eventId: Id, categoryId: Id, data: { name?: string; max_choices?: number | null; shuffle_candidates?: boolean; method?: 'plurality' | 'ranked' }) =>
         api.patch<Category>(`/events/${eventId}/categories/${categoryId}`, data),
     deleteCategory: (eventId: Id, categoryId: Id) => api.delete(`/events/${eventId}/categories/${categoryId}`),
 

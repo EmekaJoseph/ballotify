@@ -17,7 +17,10 @@
                     <div class="small-caps">{{ t('ballot.category', { n: idx + 1 }) }}</div>
                     <h3 class="h5 fw-800 mb-0 text-break">{{ cat.name }}</h3>
                     <div class="small mt-1" :class="isFull(cat) && !single(cat) ? 'text-brand fw-semibold' : 'text-muted'">
-                        <template v-if="single(cat)">{{ t('ballot.chooseOne') }}</template>
+                        <template v-if="ranked(cat)">
+                            {{ limitFor(cat) ? t('ballot.rankUpTo', { n: limitFor(cat)!, picked: countFor(cat.id) }) : t('ballot.rankHint') }}<template v-if="!limitFor(cat) && countFor(cat.id)"> · {{ t('ballot.ranked', { n: countFor(cat.id) }) }}</template>
+                        </template>
+                        <template v-else-if="single(cat)">{{ t('ballot.chooseOne') }}</template>
                         <template v-else-if="limitFor(cat)">{{ t('ballot.pickUpTo', { n: limitFor(cat)!, picked: countFor(cat.id) }) }}</template>
                         <template v-else>{{ t('ballot.pickAny') }}<template v-if="countFor(cat.id)"> · {{ t('ballot.picked', { n: countFor(cat.id) }) }}</template></template>
                     </div>
@@ -38,7 +41,10 @@
                                 <span class="d-block fw-semibold text-ink text-break">{{ cand.name }}</span>
                                 <span v-if="cand.description" class="d-block small text-muted text-break opt-desc">{{ cand.description }}</span>
                             </span>
-                            <span class="sel-mark" :class="single(cat) ? 'round' : 'square'">
+                            <span v-if="ranked(cat)" class="sel-mark round rank" :aria-label="rankOf(cat.id, cand.id) ? `#${rankOf(cat.id, cand.id)}` : undefined">
+                                {{ rankOf(cat.id, cand.id) || '' }}
+                            </span>
+                            <span v-else class="sel-mark" :class="single(cat) ? 'round' : 'square'">
                                 <i class="bi bi-check-lg"></i>
                             </span>
                         </button>
@@ -64,7 +70,8 @@
                 <li v-for="cat in categories" :key="cat.id" class="py-2 border-bottom">
                     <div class="small-caps mb-1">{{ cat.name }}</div>
                     <div v-if="selectedIn(cat.id).length" class="d-flex flex-wrap gap-2">
-                        <span v-for="c in selectedIn(cat.id)" :key="c.id" class="d-inline-flex align-items-center gap-2 min-w-0">
+                        <span v-for="(c, ci) in selectedIn(cat.id)" :key="c.id" class="d-inline-flex align-items-center gap-2 min-w-0">
+                            <span v-if="ranked(cat)" class="rank-no">{{ ci + 1 }}</span>
                             <CandidateAvatar :name="c.name" :src="c.image_url" size="sm" />
                             <span class="min-w-0">
                                 <span class="d-block fw-semibold text-break">{{ c.name }}</span>
@@ -89,7 +96,7 @@
 <script setup lang="ts">
 import type { Choice } from '~/types';
 
-interface BallotCategory { id: number; name: string; max_choices?: number | null }
+interface BallotCategory { id: number; name: string; max_choices?: number | null; method?: string }
 interface BallotCandidate { id: number; category_id: number; name: string; description?: string | null; image_url: string | null }
 
 const props = withDefaults(defineProps<{
@@ -113,7 +120,10 @@ const byCategory = computed(() => {
 
 const countFor = (catId: number) => picks.value[catId]?.length ?? 0;
 /** Choose-one category (the default). */
-const single = (cat: BallotCategory) => cat.max_choices === 1 || cat.max_choices === undefined;
+const single = (cat: BallotCategory) => !ranked(cat) && (cat.max_choices === 1 || cat.max_choices === undefined);
+/** Ranked choice: picks are kept in order of preference (tap order). */
+const ranked = (cat: BallotCategory) => cat.method === 'ranked';
+const rankOf = (catId: number, candId: number) => (picks.value[catId]?.indexOf(candId) ?? -1) + 1;
 /** Most picks allowed, or null for no limit. */
 const limitFor = (cat: BallotCategory) => (cat.max_choices ?? null);
 const isFull = (cat: BallotCategory) => {
@@ -149,13 +159,14 @@ function toggle(catId: number, candId: number) {
 
 function selectedIn(catId: number) {
     const ids = picks.value[catId] ?? [];
-    return (byCategory.value[catId] ?? []).filter(c => ids.includes(c.id));
+    // In pick order, so ranked categories review as 1st, 2nd, 3rd…
+    return ids.map(id => (byCategory.value[catId] ?? []).find(c => c.id === id)).filter((c): c is BallotCandidate => !!c);
 }
 
 function submit() {
     const choices: Choice[] = [];
     for (const [catId, ids] of Object.entries(picks.value)) {
-        for (const id of ids) choices.push({ category_id: Number(catId), candidate_id: id });
+        ids.forEach((id, i) => choices.push({ category_id: Number(catId), candidate_id: id, rank: i + 1 }));
     }
     emit('submit', choices);
 }
@@ -165,6 +176,9 @@ defineExpose({ closeReview: () => { reviewOpen.value = false; } });
 </script>
 
 <style scoped>
+.sel-mark.rank { font-size: .85rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+.option.selected .sel-mark.rank { color: #fff; }
+.rank-no { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--brand-600); color: #fff; font-size: .75rem; font-weight: 800; flex-shrink: 0; }
 .option {
     width: 100%; height: 100%; display: flex; align-items: center; gap: .85rem; padding: .7rem .85rem;
     border-radius: 14px; border: 1.5px solid var(--line); background: var(--surface);

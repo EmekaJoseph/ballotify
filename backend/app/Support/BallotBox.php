@@ -8,8 +8,10 @@ use App\Models\BallotReceipt;
 use App\Models\Candidate;
 use App\Models\Category;
 use App\Models\Event;
+use App\Models\RankedBallot;
 use App\Models\Voter;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use RuntimeException;
 
 /**
@@ -19,7 +21,9 @@ use RuntimeException;
 class BallotBox
 {
     /**
-     * @param  array<int, array{category_id: int, candidate_id: int}>  $choices
+     * @param  array<int, array{category_id: int, candidate_id: int, rank?: int}>  $choices
+     *         For ranked-choice categories, `rank` (1 = first choice) orders the picks;
+     *         without it, the order they are listed in is used.
      * @return string the ballot receipt
      *
      * @throws BallotRejected with a voter-friendly message and an HTTP status
@@ -35,9 +39,15 @@ class BallotBox
                 : __('This election has ended.'), 403);
         }
 
-        // De-duplicate identical (category, candidate) pairs.
+        // De-duplicate identical (category, candidate) pairs; keep the voter's ranking order.
         $clean = collect($choices)
-            ->map(fn ($c) => ['category_id' => (int) $c['category_id'], 'candidate_id' => (int) $c['candidate_id']])
+            ->values()
+            ->map(fn ($c, $i) => [
+                'category_id' => (int) $c['category_id'],
+                'candidate_id' => (int) $c['candidate_id'],
+                'rank' => isset($c['rank']) && is_numeric($c['rank']) ? (int) $c['rank'] : 1000 + $i,
+            ])
+            ->sortBy('rank')
             ->unique(fn ($c) => $c['category_id'] . ':' . $c['candidate_id'])
             ->values()
             ->all();
@@ -72,9 +82,23 @@ class BallotBox
             }
         }
 
-        $candidateIds = array_values(array_unique(array_column($clean, 'candidate_id')));
+        // Plurality categories add to every pick's total. Ranked categories add only to the
+        // first choice's total (the "first preferences"), and keep the ranking for the rounds.
+        $candidateIds = [];
+        $rankings = [];
+        foreach ($clean as $choice) {
+            if ($categories[$choice['category_id']]->isRanked()) {
+                $rankings[$choice['category_id']][] = $choice['candidate_id'];
+            } else {
+                $candidateIds[] = $choice['candidate_id'];
+            }
+        }
+        foreach ($rankings as $ranking) {
+            $candidateIds[] = $ranking[0];
+        }
+        $categoryIds = array_values(array_unique(array_column($clean, 'category_id')));
 
-        $receipt = DB::transaction(function () use ($event, $code, $candidateIds) {
+        $receipt = DB::transaction(function () use ($event, $code, $candidateIds, $rankings, $categoryIds) {
             // The row lock must be taken inside the transaction, otherwise two
             // concurrent requests with the same code could both cast a ballot.
             $voter = Voter::where('event_id', $event->id)
@@ -90,6 +114,15 @@ class BallotBox
             // voter chose what, so a ballot can never be traced back to a code,
             // not even by the organiser or a DBA.
             Candidate::whereIn('id', $candidateIds)->where('event_id', $event->id)->increment('votes');
+            Category::whereIn('id', $categoryIds)->increment('ballots');
+            if ($rankings) {
+                // No voter id and no time, and random ids (see RankedBallot).
+                RankedBallot::insert(array_map(fn ($ranking, $categoryId) => [
+                    'id' => (string) Str::uuid(),
+                    'category_id' => $categoryId,
+                    'ranking' => json_encode(array_values($ranking)),
+                ], $rankings, array_keys($rankings)));
+            }
 
             $voter->used_at = now();
             $voter->save();

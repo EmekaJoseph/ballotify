@@ -19,9 +19,9 @@
                                 <span class="name text-truncate">
                                     <i v-if="revealed && isWinner(c)" class="bi bi-trophy-fill trophy"></i>{{ c.name }}
                                 </span>
-                                <span class="votes" :class="{ show: revealed }">{{ formatNumber(c.votes) }} · {{ pct(c.votes) }}%</span>
+                                <span class="votes" :class="{ show: revealed }">{{ outIn(c) ? `Eliminated in round ${outIn(c)}` : `${formatNumber(votesOf(c))} · ${pct(votesOf(c))}%` }}</span>
                             </div>
-                            <div class="track"><span :style="{ width: revealed ? pct(c.votes) + '%' : '0%' }"></span></div>
+                            <div class="track"><span :style="{ width: revealed ? pct(votesOf(c)) + '%' : '0%' }"></span></div>
                         </div>
                     </li>
                 </ul>
@@ -50,14 +50,26 @@ const revealed = ref(false);
 const cat = computed(() => props.categories[index.value] ?? null);
 
 /** Nominees in a fixed, neutral order (by name) until the reveal. */
+/** Ranked choice shows the deciding round; other categories their votes. */
+const votesOf = (c: { id: number; votes: number }) => (cat.value && isRanked(cat.value) ? finalVotes(cat.value, c.id) : c.votes);
+/** Ranked choice: the round a candidate was eliminated in (0 = still in at the end). */
+const outIn = (c: { id: number }) => {
+    if (!cat.value || !isRanked(cat.value)) return 0;
+    const i = (cat.value.rounds ?? []).findIndex(r => r.eliminated.includes(c.id));
+    return i + 1;
+};
 const ordered = computed(() => {
     const list = [...(cat.value?.candidates ?? [])];
-    return revealed.value ? list.sort((a, b) => b.votes - a.votes) : list.sort((a, b) => a.name.localeCompare(b.name));
+    // Revealed: the results order (by method); before: a neutral order by name.
+    return revealed.value ? list : list.sort((a, b) => a.name.localeCompare(b.name));
 });
-const total = computed(() => (cat.value?.candidates ?? []).reduce((s, c) => s + c.votes, 0));
-const top = computed(() => Math.max(0, ...(cat.value?.candidates ?? []).map(c => c.votes)));
-const tie = computed(() => top.value > 0 && (cat.value?.candidates ?? []).filter(c => c.votes === top.value).length > 1);
-const isWinner = (c: { votes: number }) => top.value > 0 && c.votes === top.value;
+const total = computed(() => {
+    if (!cat.value) return 0;
+    return isRanked(cat.value) ? (finalRound(cat.value)?.continuing ?? 0) : categoryBase(cat.value);
+});
+const winnerIds = computed(() => (cat.value ? categoryWinners(cat.value).map(c => c.id) : []));
+const tie = computed(() => winnerIds.value.length > 1);
+const isWinner = (c: { id: number }) => winnerIds.value.includes(c.id);
 const pct = (v: number) => (total.value ? Math.round((v / total.value) * 1000) / 10 : 0);
 
 function forward() {

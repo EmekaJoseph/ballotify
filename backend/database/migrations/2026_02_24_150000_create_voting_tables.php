@@ -72,8 +72,22 @@ return new class extends Migration
             $table->unsignedSmallInteger('max_choices')->nullable()->default(1);
             // Show candidates in a random order on each ballot (no "first on the list" advantage).
             $table->boolean('shuffle_candidates')->default(false);
+            // plurality = most votes wins (choose one, pick up to N, or approval when max_choices is null)
+            // ranked    = voters rank candidates; counted in instant-runoff rounds
+            $table->string('method', 10)->default('plurality');
+            // Ballots that answered this category (the base for "% of voters").
+            $table->unsignedInteger('ballots')->default(0);
             $table->timestamps();
             $table->unique(['event_id', 'name']);
+        });
+
+        // Ranked-choice ballots, kept so a category can be counted in rounds. Nothing here
+        // identifies a voter: no voter id, no time, and a random (v4) id so even the row
+        // order doesn't follow the order people voted in.
+        Schema::create('ranked_ballots', function (Blueprint $table) {
+            $table->uuid('id')->primary();
+            $table->foreignId('category_id')->constrained()->cascadeOnDelete();
+            $table->json('ranking'); // candidate ids, first choice first
         });
 
         Schema::create('candidates', function (Blueprint $table) {
@@ -220,6 +234,7 @@ return new class extends Migration
         Schema::dropIfExists('ballot_receipts');
         Schema::dropIfExists('voters');
         Schema::dropIfExists('candidates');
+        Schema::dropIfExists('ranked_ballots');
         Schema::dropIfExists('categories');
         Schema::dropIfExists('events');
     }

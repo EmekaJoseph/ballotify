@@ -41,13 +41,22 @@ class CertificateController extends Controller
                    'ballots' => $event->voters()->whereNotNull('used_at')->count(),
                    'receipts' => BallotReceipt::where('event_id', $event->id)->count()],
             'categories' => $categories->map(function ($cat) {
-                $cands = $cat->candidates->sortByDesc('votes')->values();
-                $top = (int) ($cands->first()->votes ?? 0);
-                return [
+                $tally = \App\Support\Tally::category($cat, $cat->candidates);
+                $byId = $cat->candidates->keyBy('id');
+                $cands = collect($tally['order'])->map(fn ($id) => $byId[$id] ?? null)->filter()->values();
+                $row = [
                     'name' => $cat->name,
                     'candidates' => $cands->map(fn ($c) => ['name' => $c->name, 'votes' => (int) $c->votes])->all(),
-                    'winners' => $top > 0 ? $cands->where('votes', $top)->pluck('name')->values()->all() : [],
+                    'winners' => collect($tally['winners'])->map(fn ($id) => $byId[$id]->name ?? null)->filter()->values()->all(),
                 ];
+                if ($tally['rounds']) {
+                    // Ranked choice: the votes shown are first choices; the final round decided it.
+                    $last = end($tally['rounds']);
+                    $row['method'] = 'ranked';
+                    $row['final_round'] = collect($last['counts'])->map(fn ($r) => ['name' => $byId[$r['id']]->name ?? '', 'votes' => $r['votes']])->all();
+                    $row['rounds'] = count($tally['rounds']);
+                }
+                return $row;
             })->all(),
         ];
     }

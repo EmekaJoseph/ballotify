@@ -42,12 +42,17 @@
                 </div>
                 <table class="w-100 lines">
                     <tbody>
+                        <tr v-if="c.method === 'ranked'" class="ranked-head"><td></td><td class="text-end">First choices</td><td class="text-end">Final round</td></tr>
                         <tr v-for="cand in c.candidates" :key="cand.name" :class="{ won: c.winners.includes(cand.name) }">
                             <td>{{ cand.name }}</td>
                             <td class="text-end mono">{{ formatNumber(cand.votes) }}</td>
+                            <td v-if="c.method === 'ranked'" class="text-end mono">{{ finalOf(c, cand.name) }}</td>
                         </tr>
                     </tbody>
                 </table>
+                <p v-if="c.method === 'ranked'" class="small text-muted mt-1 mb-0">
+                    Ranked choice, decided in {{ c.rounds }} round{{ c.rounds === 1 ? '' : 's' }}: the last-placed candidate was eliminated each round and their ballots moved to the next choice.
+                </p>
             </section>
 
             <footer class="verify-box mt-4">
@@ -65,7 +70,7 @@
 <script setup lang="ts">
 import QRCode from 'qrcode';
 import { publicApi } from '~/api/endpoints/public';
-import type { ResultCertificateInfo } from '~/types';
+import type { CertificatePayload, ResultCertificateInfo } from '~/types';
 
 const route = useRoute();
 const serial = String(route.params.serial ?? '');
@@ -84,9 +89,16 @@ onMounted(async () => {
 });
 
 function print() { window.print(); }
+
+/** Ranked choice: a candidate's votes in the deciding round ('–' if eliminated earlier). */
+function finalOf(c: CertificatePayload['categories'][number], name: string): string {
+    const row = c.final_round?.find(r => r.name === name);
+    return row ? formatNumber(row.votes) : '–';
+}
 </script>
 
 <style scoped>
+.ranked-head td { font-size: .68rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); font-weight: 700; padding-bottom: .2rem; }
 .cert-page { min-height: 100vh; background: var(--bg); padding: 1.5rem 1rem 3rem; }
 .toolbar { max-width: 780px; margin: 0 auto 1rem; display: flex; justify-content: space-between; gap: .5rem; }
 .sheet { max-width: 780px; margin: 0 auto; background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 2.5rem; }

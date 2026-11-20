@@ -308,6 +308,7 @@ class EventController extends Controller
                     'name' => $category->name,
                     'max_choices' => $category->max_choices,
                     'shuffle_candidates' => $category->shuffle_candidates,
+                    'method' => $category->method,
                 ])->id;
             }
             foreach ($event->candidates as $candidate) {
@@ -422,7 +423,7 @@ class EventController extends Controller
         }
 
         $event->load([
-            'categories:id,event_id,name,max_choices,shuffle_candidates',
+            'categories:id,event_id,name,max_choices,shuffle_candidates,method',
             'candidates:id,event_id,category_id,name,description,image_path',
         ]);
 
@@ -453,7 +454,7 @@ class EventController extends Controller
             'self_registration' => $event->self_registration && ! $event->isPaid() && Plans::isPro($event),
             'member_id_label' => $event->member_id_label ?: 'ID',
             'language' => $event->language,
-            'categories' => $event->categories->map->only(['id', 'event_id', 'name', 'max_choices']),
+            'categories' => $event->categories->map->only(['id', 'event_id', 'name', 'max_choices', 'method']),
             'candidates' => $candidates,
         ]);
     }
@@ -551,24 +552,33 @@ class EventController extends Controller
 
         $totalVotes = 0;
         $results = $categories->map(function ($category) use (&$totalVotes) {
+            $tally = \App\Support\Tally::category($category, $category->candidates);
+            $position = array_flip($tally['order']);
             $candidates = $category->candidates
                 ->map(fn ($c) => [
                     'id' => $c->id,
                     'name' => $c->name,
                     'description' => $c->description,
                     'image_url' => $c->image_url,
+                    // Ranked categories: first-choice votes (the rounds show the rest).
                     'votes' => (int) $c->votes,
                 ])
-                ->sortByDesc('votes')
+                ->sortBy(fn ($c) => $position[$c['id']] ?? PHP_INT_MAX)
                 ->values();
             $totalVotes += $candidates->sum('votes');
+            $leaderId = $tally['winners'][0] ?? null;
 
             return [
                 'id' => $category->id,
                 'name' => $category->name,
                 'max_choices' => $category->max_choices,
+                'method' => $category->method,
+                // Ballots that answered this category: the base for "% of voters".
+                'ballots' => (int) $category->ballots,
+                'winners' => $tally['winners'],
+                'rounds' => $tally['rounds'],
                 'candidates' => $candidates,
-                'leader' => $candidates->first(),
+                'leader' => $leaderId ? $candidates->firstWhere('id', $leaderId) : $candidates->first(),
             ];
         });
 

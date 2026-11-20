@@ -196,7 +196,7 @@ const paidResult = ref<{ message: string; reference: string } | null>(null);
 const paidNotice = ref<{ ok: boolean; text: string } | null>(null);
 
 const isPaid = computed(() => event.value?.voting_mode === 'paid');
-const allSingle = computed(() => (event.value?.categories ?? []).every(c => c.max_choices === 1));
+const allSingle = computed(() => (event.value?.categories ?? []).every(c => c.max_choices === 1 && c.method !== 'ranked'));
 useBrandTheme(() => event.value?.brand);
 
 const unavailable = reactive({

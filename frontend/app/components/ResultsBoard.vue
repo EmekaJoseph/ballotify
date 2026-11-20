@@ -23,11 +23,13 @@
             <header class="card-header-b">
                 <div class="min-w-0">
                     <h2 class="h5 fw-800 mb-0 text-break">{{ cat.name }}</h2>
-                    <div class="small text-muted">{{ tn('res.votes', catTotal(cat)) }}</div>
+                    <div class="small text-muted">
+                        {{ tn('res.votes', catTotal(cat)) }}<template v-if="isRanked(cat)"> ({{ t('res.firstChoices') }})</template>
+                    </div>
                 </div>
-                <div v-if="cat.leader && cat.leader.votes > 0" class="pill pill-brand">
+                <div v-if="winners(cat).length" class="pill pill-brand">
                     <i class="bi bi-trophy-fill"></i>
-                    {{ isTie(cat) ? t('res.tied') : (closed ? t('res.winner') : t('res.leading')) }}: {{ isTie(cat) ? tiedNames(cat) : cat.leader.name }}
+                    {{ winners(cat).length > 1 ? t('res.tied') : (closed ? t('res.winner') : t('res.leading')) }}: {{ winners(cat).map(c => c.name).join(' & ') }}
                 </div>
             </header>
             <div class="p-3 p-md-4">
@@ -49,17 +51,19 @@
                                         </span>
                                         <span class="text-nowrap small">
                                             <b class="text-ink">{{ formatNumber(cand.votes) }}</b>
-                                            <span class="text-muted"> · {{ percent(cand.votes, catTotal(cat)) }}%</span>
+                                            <span class="text-muted"> · {{ categoryShare(cand.votes, cat) }}%</span>
                                         </span>
                                     </div>
                                     <div class="bar slim">
-                                        <span :style="{ width: percent(cand.votes, catTotal(cat)) + '%', background: palette[i % palette.length] }"></span>
+                                        <span :style="{ width: categoryShare(cand.votes, cat) + '%', background: palette[i % palette.length] }"></span>
                                     </div>
                                 </div>
                             </li>
                         </ol>
+                        <p v-if="isApproval(cat) && !paid && catTotal(cat)" class="small text-muted mt-3 mb-0"><i class="bi bi-ui-checks"></i> {{ t('res.approvalNote') }}</p>
                     </div>
                 </div>
+                <RoundsTable v-if="isRanked(cat)" :category="cat" />
             </div>
         </section>
     </div>
@@ -78,10 +82,9 @@ const turnout = computed(() => {
     return total_voters ? `${percent(voted, total_voters)}%` : '—';
 });
 
+const paid = computed(() => props.results.event.voting_mode === 'paid');
 const catTotal = (cat: ResultCategory) => cat.candidates.reduce((s, c) => s + c.votes, 0);
-const topVotes = (cat: ResultCategory) => cat.candidates[0]?.votes ?? 0;
-const isTie = (cat: ResultCategory) => topVotes(cat) > 0 && cat.candidates.filter(c => c.votes === topVotes(cat)).length > 1;
-const tiedNames = (cat: ResultCategory) => cat.candidates.filter(c => c.votes === topVotes(cat)).map(c => c.name).join(' & ');
+const winners = (cat: ResultCategory) => categoryWinners(cat);
 </script>
 
 <style scoped>

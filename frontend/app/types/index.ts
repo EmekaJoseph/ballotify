@@ -46,6 +46,19 @@ export interface Category {
     max_choices?: number | null;
     /** Candidates shown in random order on each ballot. */
     shuffle_candidates?: boolean;
+    /** plurality = most votes wins (choose one / up to N / approval); ranked = ranked choice. */
+    method?: VotingMethod;
+}
+
+export type VotingMethod = 'plurality' | 'ranked';
+
+/** One round of a ranked-choice count. */
+export interface RankedRound {
+    counts: { id: number; votes: number }[];
+    eliminated: number[];
+    /** Ballots with no choices left in the race. */
+    exhausted: number;
+    continuing: number;
 }
 
 export interface Candidate {
@@ -149,13 +162,15 @@ export interface PublicEvent {
     brand?: Brand | null;
     self_registration?: boolean;
     member_id_label?: string;
-    categories: Pick<Category, 'id' | 'name' | 'max_choices'>[];
+    categories: Pick<Category, 'id' | 'name' | 'max_choices' | 'method'>[];
     candidates: Candidate[];
 }
 
 export interface Choice {
     category_id: number;
     candidate_id: number;
+    /** Ranked-choice categories: 1 = first choice. */
+    rank?: number;
 }
 
 export interface ResultCandidate {
@@ -175,6 +190,13 @@ export interface ResultCategory {
     id: number;
     name: string;
     max_choices?: number | null;
+    method?: VotingMethod;
+    /** Ballots that answered this category (the base for "% of voters"). */
+    ballots?: number;
+    /** Winning candidate ids, by the category's method (several = a tie). */
+    winners?: number[];
+    /** Ranked choice: the rounds of the count. */
+    rounds?: RankedRound[] | null;
     candidates: ResultCandidate[];
     leader: ResultCandidate | null;
 }
@@ -486,7 +508,11 @@ export interface NominationForm {
 export interface CertificatePayload {
     event: { id: number; name: string; organiser: string | null; voting_mode: VotingMode; starts_at: string | null; ends_at: string | null };
     stats: { voters?: number; ballots?: number; receipts?: number; votes?: number; payments?: number };
-    categories: { name: string; candidates: { name: string; votes: number }[]; winners: string[] }[];
+    categories: {
+        name: string; candidates: { name: string; votes: number }[]; winners: string[];
+        /** Ranked choice: candidate votes are first choices; the final round decided it. */
+        method?: 'ranked'; rounds?: number; final_round?: { name: string; votes: number }[];
+    }[];
     issued_at: string;
 }
 

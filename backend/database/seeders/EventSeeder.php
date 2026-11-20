@@ -43,7 +43,9 @@ class EventSeeder extends Seeder
                 ->map(fn ($name) => Category::create([
                     'event_id' => $event->id,
                     'name' => $name,
-                    'max_choices' => $spec['max'],
+                    // Treasurer shows off ranked choice on the two events that have votes.
+                    'max_choices' => $name === 'Treasurer' && $idx < 2 ? null : $spec['max'],
+                    'method' => $name === 'Treasurer' && $idx < 2 ? Category::RANKED : Category::PLURALITY,
                     'shuffle_candidates' => $idx === 0 && $name === 'President',
                 ]))->values();
             // Some candidates get a short description, some don't (it's optional).

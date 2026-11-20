@@ -47,14 +47,15 @@
                                 <span>{{ candidatesOf(cat.id).length }} candidate{{ candidatesOf(cat.id).length === 1 ? '' : 's' }}</span>
                                 <template v-if="!paid">
                                     <span aria-hidden="true">·</span>
-                                    <span v-if="locked || !canEdit">{{ limitLabel(cat.max_choices) }}</span>
-                                    <label v-else class="d-inline-flex align-items-center gap-1 mb-0">
-                                        <span class="visually-hidden">Pick limit</span>
-                                        <select class="form-select form-select-sm limit-select" :value="cat.max_choices ?? ''"
-                                            :aria-label="`Pick limit for ${cat.name}`" :disabled="busy" @change="setLimit(cat, $event)">
+                                    <span v-if="locked || !canEdit">{{ methodName(cat) }}</span>
+                                    <label v-else class="d-inline-flex align-items-center gap-1 mb-0" :title="METHOD_HELP">
+                                        <span class="visually-hidden">Voting method</span>
+                                        <select class="form-select form-select-sm limit-select" :value="cat.method === 'ranked' ? 'ranked' : (cat.max_choices ?? '')"
+                                            :aria-label="`Voting method for ${cat.name}`" :disabled="busy" @change="setLimit(cat, $event)">
                                             <option :value="1">Choose one</option>
                                             <option v-for="n in limitOptions(cat)" :key="n" :value="n">Pick up to {{ n }}</option>
-                                            <option value="">Pick any number</option>
+                                            <option value="">Approval: pick any number</option>
+                                            <option value="ranked">Ranked choice</option>
                                         </select>
                                     </label>
                                 </template>
@@ -177,7 +178,8 @@ const locked = computed(() => props.event.ballot_locked);
 const candidatesOf = (catId: number): Candidate[] =>
     (props.event.candidates ?? []).filter(c => c.category_id === catId && !hidden.value.has(c.id));
 
-const limitLabel = (n?: number | null) => (n === 1 ? 'Choose one' : n ? `Pick up to ${n}` : 'Pick any number');
+const METHOD_HELP = 'Choose one: most votes wins. Pick up to N: voters pick several. Approval: voters tick everyone they approve of. '
+    + 'Ranked choice: voters rank candidates; the last is eliminated each round until someone has more than half.';
 
 async function run(action: () => Promise<unknown>, success: string) {
     busy.value = true;
@@ -219,9 +221,11 @@ async function toggleShuffle(cat: Category) {
 
 async function setLimit(cat: Category, e: Event) {
     const raw = (e.target as HTMLSelectElement).value;
-    const max_choices = raw ? Number(raw) : null;
-    if (max_choices === (cat.max_choices ?? null)) return;
-    await run(() => adminApi.updateCategory(props.event.id, cat.id, { max_choices }), `“${cat.name}”: ${limitLabel(max_choices).toLowerCase()}`);
+    const method = raw === 'ranked' ? 'ranked' : 'plurality';
+    const max_choices = raw && raw !== 'ranked' ? Number(raw) : null;
+    if (method === (cat.method ?? 'plurality') && max_choices === (cat.max_choices ?? null)) return;
+    const label = methodName({ method, max_choices });
+    await run(() => adminApi.updateCategory(props.event.id, cat.id, { method, max_choices }), `“${cat.name}”: ${label.charAt(0).toLowerCase()}${label.slice(1)}`);
 }
 
 function onImported(result: CandidateImportResult) {

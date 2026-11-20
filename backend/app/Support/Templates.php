@@ -92,6 +92,7 @@ class Templates
                 'name' => $c['name'],
                 'max_choices' => $c['max_choices'] ?? 1,
                 'shuffle_candidates' => $c['shuffle_candidates'] ?? false,
+                'method' => $c['method'] ?? Category::PLURALITY,
             ]);
             foreach ($c['candidates'] ?? [] as $name) {
                 Candidate::create(['event_id' => $event->id, 'category_id' => $category->id, 'name' => $name]);

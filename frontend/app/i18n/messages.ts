@@ -202,6 +202,17 @@ const en = {
     'nom.organiserDecides': 'The organiser decides who goes on the final ballot.',
     'nom.cantLoad': 'Couldn’t load the page',
     'nom.notSent': 'Nomination not sent',
+    'ballot.rankHint': 'Rank in order: tap your 1st choice, then your 2nd, and so on.',
+    'ballot.rankUpTo': 'Rank up to {n} · {picked} ranked',
+    'ballot.ranked': '{n} ranked',
+    'res.rankedNote': 'Ranked choice: the votes shown are first choices. The count runs in rounds: the last-placed candidate is eliminated and their ballots move to each voter’s next choice, until someone has more than half.',
+    'res.rounds': 'How the count went',
+    'res.round': 'Round {n}',
+    'res.out': 'out',
+    'res.exhausted': 'No choices left',
+    'res.wonInRound': 'Won in round {round} with {votes} of {total} votes ({pct}%)',
+    'res.firstChoices': 'first choices',
+    'res.approvalNote': 'Approval vote: each voter could pick several. Percentages are of voters, so they can add up to more than 100%.',
 } as const;
 
 export type MessageKey = keyof typeof en;
@@ -395,6 +406,17 @@ const fr: Dictionary = {
     'nom.organiserDecides': 'L’organisateur décide qui figurera sur le bulletin final.',
     'nom.cantLoad': 'Impossible de charger la page',
     'nom.notSent': 'Nomination non envoyée',
+    'ballot.rankHint': 'Classez par ordre de préférence : touchez votre 1er choix, puis votre 2e, etc.',
+    'ballot.rankUpTo': 'Classez jusqu’à {n} · {picked} classé(s)',
+    'ballot.ranked': '{n} classé(s)',
+    'res.rankedNote': 'Vote par classement : les voix affichées sont les premiers choix. Le dépouillement se fait par tours : le dernier est éliminé et ses bulletins passent au choix suivant de chaque électeur, jusqu’à ce qu’un candidat obtienne plus de la moitié.',
+    'res.rounds': 'Déroulement du dépouillement',
+    'res.round': 'Tour {n}',
+    'res.out': 'éliminé',
+    'res.exhausted': 'Plus aucun choix',
+    'res.wonInRound': 'Gagné au tour {round} avec {votes} voix sur {total} ({pct} %)',
+    'res.firstChoices': 'premiers choix',
+    'res.approvalNote': 'Vote par approbation : chaque électeur pouvait en choisir plusieurs. Les pourcentages portent sur les électeurs, leur total peut donc dépasser 100 %.',
 };
 
 const yo: Dictionary = {
@@ -585,6 +607,17 @@ const yo: Dictionary = {
     'nom.organiserDecides': 'Olùṣètò ló máa pinnu ẹni tí yóò wà lórí ìwé ìdìbò ìkẹyìn.',
     'nom.cantLoad': 'A kò lè ṣí ojú-ìwé náà',
     'nom.notSent': 'A kò fi ìdábàá ránṣẹ́',
+    'ballot.rankHint': 'Tò wọ́n ní ìtẹ̀léra: tẹ àṣàyàn àkọ́kọ́ rẹ, lẹ́yìn náà èkejì, bẹ́ẹ̀ bẹ́ẹ̀ lọ.',
+    'ballot.rankUpTo': 'Tò tó {n} · o ti tò {picked}',
+    'ballot.ranked': 'O ti tò {n}',
+    'res.rankedNote': 'Ìdìbò onítẹ̀léra: ìbò tí a fi hàn ni àṣàyàn àkọ́kọ́. A ka á ní ìpele-ìpele: a yọ ẹni tó kẹ́yìn kúrò, ìwé ìdìbò wọn sì lọ sí àṣàyàn tó tẹ̀lé e, títí ẹnìkan yóò fi ní ju ìdajì lọ.',
+    'res.rounds': 'Bí a ṣe ka ìbò náà',
+    'res.round': 'Ìpele {n}',
+    'res.out': 'jáde',
+    'res.exhausted': 'Kò sí àṣàyàn mọ́',
+    'res.wonInRound': 'Ó borí ní ìpele {round} pẹ̀lú ìbò {votes} nínú {total} ({pct}%)',
+    'res.firstChoices': 'àṣàyàn àkọ́kọ́',
+    'res.approvalNote': 'Ìdìbò ìfọwọ́sí: olùdìbò kọ̀ọ̀kan lè yan ọ̀pọ̀. Ìdá-ọgọ́rùn-ún jẹ́ ti àwọn olùdìbò, nítorí náà àpapọ̀ lè ju 100% lọ.',
 };
 
 const ha: Dictionary = {
@@ -775,6 +808,17 @@ const ha: Dictionary = {
     'nom.organiserDecides': 'Mai shirya taron ne zai yanke wanda zai kasance a takardar zaɓe ta ƙarshe.',
     'nom.cantLoad': 'Ba a iya buɗe shafin ba',
     'nom.notSent': 'Ba a aika da sunan ba',
+    'ballot.rankHint': 'Jera su bisa fifiko: taɓa zaɓinka na farko, sannan na biyu, da sauransu.',
+    'ballot.rankUpTo': 'Jera har {n} · ka jera {picked}',
+    'ballot.ranked': 'Ka jera {n}',
+    'res.rankedNote': 'Zaɓe na jeri: ƙuri’un da aka nuna su ne zaɓi na farko. Ana ƙirgawa zagaye-zagaye: ana cire na ƙarshe, kuma takardunsu suna komawa ga zaɓi na gaba na kowane mai zaɓe, har sai wani ya sami fiye da rabi.',
+    'res.rounds': 'Yadda aka ƙirga',
+    'res.round': 'Zagaye na {n}',
+    'res.out': 'an cire',
+    'res.exhausted': 'Babu sauran zaɓi',
+    'res.wonInRound': 'Ya yi nasara a zagaye na {round} da ƙuri’u {votes} cikin {total} ({pct}%)',
+    'res.firstChoices': 'zaɓi na farko',
+    'res.approvalNote': 'Zaɓe na amincewa: kowane mai zaɓe zai iya zaɓar da yawa. Kashi-kashi na masu zaɓe ne, don haka jimilla na iya wuce 100%.',
 };
 
 const ig: Dictionary = {
@@ -965,6 +1009,17 @@ const ig: Dictionary = {
     'nom.organiserDecides': 'Onye nhazi ga-ekpebi onye ga-anọ n’akwụkwọ ntuli aka ikpeazụ.',
     'nom.cantLoad': 'Enweghị ike imeghe peeji ahụ',
     'nom.notSent': 'Ezigaghị nhọpụta',
+    'ballot.rankHint': 'Hazie ha n’usoro: pịa nhọrọ mbụ gị, mgbe ahụ nke abụọ, wee gaa n’ihu.',
+    'ballot.rankUpTo': 'Hazie ruo {n} · ị haziela {picked}',
+    'ballot.ranked': 'Ị haziela {n}',
+    'res.rankedNote': 'Ntuli aka n’usoro: votu e gosiri bụ nhọrọ mbụ. A na-agụ ya n’agba n’agba: a na-ewepụ onye nke ikpeazụ, akwụkwọ ntuli aka ha na-agakwa na nhọrọ ọzọ nke onye ọ bụla, ruo mgbe mmadụ nwetara ihe karịrị ọkara.',
+    'res.rounds': 'Otú e si gụọ votu',
+    'res.round': 'Agba {n}',
+    'res.out': 'ewepụrụ',
+    'res.exhausted': 'Enweghị nhọrọ fọdụrụ',
+    'res.wonInRound': 'O meriri n’agba {round} jiri votu {votes} n’ime {total} ({pct}%)',
+    'res.firstChoices': 'nhọrọ mbụ',
+    'res.approvalNote': 'Ntuli aka nkwado: onye ọ bụla nwere ike ịhọrọ ọtụtụ. Pasent bụ nke ndị ntuli aka, ya mere ngụkọta nwere ike karịa 100%.',
 };
 
 export const messages: Record<'en' | 'yo' | 'ha' | 'ig' | 'fr', Dictionary> = { en, yo, ha, ig, fr };

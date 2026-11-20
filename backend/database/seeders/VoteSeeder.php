@@ -30,11 +30,23 @@ class VoteSeeder extends Seeder
             $voters = Voter::where('event_id', $event->id)->orderBy('id')->get();
             $turnout = $voters->take((int) round($voters->count() * 0.35));
             $totals = [];
+            $ballots = [];
+            $rankedRows = [];
 
             foreach ($turnout as $voter) {
                 foreach ($event->categories as $category) {
                     $candidates = $category->candidates->values();
                     if ($candidates->isEmpty()) {
+                        continue;
+                    }
+                    $ballots[$category->id] = ($ballots[$category->id] ?? 0) + 1;
+                    if ($category->isRanked()) {
+                        // A first choice weighted like the others, then a random order for the rest.
+                        $first = $this->weightedPick($candidates->all());
+                        $rest = $candidates->reject(fn ($c) => $c->id === $first->id)->shuffle()->take(random_int(0, $candidates->count() - 1));
+                        $ranking = collect([$first])->concat($rest)->pluck('id')->all();
+                        $rankedRows[] = ['id' => (string) \Illuminate\Support\Str::uuid(), 'category_id' => $category->id, 'ranking' => json_encode($ranking)];
+                        $totals[$first->id] = ($totals[$first->id] ?? 0) + 1;
                         continue;
                     }
                     $limit = $category->max_choices ?? $candidates->count();
@@ -50,6 +62,12 @@ class VoteSeeder extends Seeder
 
             foreach ($totals as $candidateId => $votes) {
                 Candidate::whereKey($candidateId)->increment('votes', $votes);
+            }
+            foreach ($ballots as $categoryId => $n) {
+                \App\Models\Category::whereKey($categoryId)->increment('ballots', $n);
+            }
+            foreach (array_chunk($rankedRows, 500) as $chunk) {
+                \App\Models\RankedBallot::insert($chunk);
             }
             $from = $event->starts_at ?? now()->subHours(6);
             $to = min(now(), $event->ends_at ?? now());

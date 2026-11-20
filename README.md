@@ -16,7 +16,7 @@
 | ------------------------------------------------------------------ | -------------------------------------- |
 | Create events with categories and candidates (photos, short descriptions) | Open one link on any phone or laptop   |
 | Start from a template (student union, award night, AGM, board) or a blank ballot | Enter a personal one-time code         |
-| Per category: choose one, pick up to N, or any number; shuffle candidates | Progress bar, review screen, then submit |
+| Per category: choose one, pick up to N, **approval** (any number) or **ranked choice** (instant runoff); shuffle candidates | Progress bar, review screen, then submit |
 | Schedule when voting opens and closes, or close it early           | Pick candidates, review, submit        |
 | Generate thousands of voter codes, or import a name list           | A **receipt** to check the ballot was counted |
 | Export codes to CSV, or print voter slips with a QR code           |                                        |
@@ -42,6 +42,7 @@
 - **The ballot locks at the first vote.** Categories and candidates can't be added, removed or moved. Name and photo fixes are still allowed, but each is recorded in the event's activity log, and the public results page shows how many changes were made during voting.
 - Ballots outside the voting window are rejected.
 - Pick limits are checked server side per category, and candidates must belong to the category and event.
+- Ranked choice is counted in rounds (instant runoff). The rankings are kept to count them, with no voter id, no time and random ids, so they can't be traced to anyone.
 - **Ballot receipts.** Each counted ballot gets a receipt code. Only a keyed hash is stored, with no link to the voter or the choices, so a voter can prove their ballot was counted without revealing how they voted.
 - Code guessing is rate-limited per network and event.
 - **Results visibility** is per event: live, after voting closes (the default), or organiser only.
@@ -217,7 +218,7 @@ Until a key is set, nothing breaks: organisers see "Contact us to upgrade" (usin
 ## Testing
 
 ```bash
-cd backend  && php artisan test                                    # 122 feature tests
+cd backend  && php artisan test                                    # 129 feature tests
 cd frontend && npx nuxi prepare && npx vue-tsc --noEmit -p .nuxt/tsconfig.app.json   # type check
 cd frontend && npm run build                                       # production build
 ```

@@ -19,7 +19,9 @@ use Illuminate\Support\Str;
  * Africa's Talking sends every keypress so far in `text`, joined with "*". The
  * menu is rebuilt from that on each request (no server-side session), and the
  * ballot goes through the same BallotBox as the web, so the rules are identical.
- * Voters pick one candidate per category here (a keypad can't do multi-select).
+ * Voters pick one candidate per category here (a keypad can't do multi-select),
+ * except in ranked-choice categories, where they pick their 1st choice, then
+ * their 2nd from the names left, and so on, pressing 0 when they're done.
  */
 class UssdController extends Controller
 {
@@ -69,7 +71,8 @@ class UssdController extends Controller
         if ($categories->isEmpty()) {
             return 'END This ballot isn’t ready yet. Please try again later.';
         }
-        $picks = [];
+        $picks = [];      // category id => Candidate, or Candidate[] (ranked, in order)
+        $ranking = [];    // the ranked category being filled in
         $catIndex = 0;
         $page = 0;
         $invalid = false;
@@ -88,20 +91,37 @@ class UssdController extends Controller
                 $invalid = $isLast;
                 continue;
             }
-            $candidates = $categories[$catIndex]->candidates->values();
+            $cat = $categories[$catIndex];
+            $candidates = $this->choicesLeft($cat, $ranking);
             $pages = (int) ceil($candidates->count() / self::PER_PAGE);
             if ($key === self::NEXT && $page < $pages - 1) {
                 $page++;
                 $invalid = false;
             } elseif ($key === self::SKIP) {
+                // Ranked: 0 = "done" once there's a 1st choice; otherwise skip the category.
+                if ($ranking) {
+                    $picks[$cat->id] = $ranking;
+                }
+                $ranking = [];
                 $catIndex++;
                 $page = 0;
                 $invalid = false;
             } elseif (ctype_digit($key) && (int) $key >= 1 && (int) $key <= $candidates->count()) {
-                $picks[$categories[$catIndex]->id] = $candidates[(int) $key - 1];
-                $catIndex++;
+                $chosen = $candidates[(int) $key - 1];
                 $page = 0;
                 $invalid = false;
+                if ($cat->isRanked()) {
+                    $ranking[] = $chosen;
+                    $full = $cat->max_choices && count($ranking) >= $cat->max_choices;
+                    if ($full || $this->choicesLeft($cat, $ranking)->isEmpty()) {
+                        $picks[$cat->id] = $ranking;
+                        $ranking = [];
+                        $catIndex++;
+                    }
+                } else {
+                    $picks[$cat->id] = $chosen;
+                    $catIndex++;
+                }
             } else {
                 $invalid = $isLast;
             }
@@ -114,30 +134,54 @@ class UssdController extends Controller
                 return 'END You skipped every category, so no vote was cast. Dial again to vote.';
             }
             $lines = $categories->filter(fn ($c) => isset($picks[$c->id]))
-                ->map(fn ($c) => Str::limit($c->name, 14, '') . ': ' . Str::limit($picks[$c->id]->name, 16, '…'))
+                ->map(fn ($c) => Str::limit($c->name, 14, '') . ': ' . (is_array($picks[$c->id])
+                    ? Str::limit(collect($picks[$c->id])->map(fn ($x) => Str::limit($x->name, 10, ''))->implode('>'), 24, '…')
+                    : Str::limit($picks[$c->id]->name, 16, '…')))
                 ->take(5)->implode("\n");
             return "CON {$prefix}Confirm your vote:\n{$lines}\n1. Submit\n2. Cancel";
         }
 
         $cat = $categories[$catIndex];
-        $candidates = $cat->candidates->values();
+        $candidates = $this->choicesLeft($cat, $ranking);
         $pages = (int) ceil($candidates->count() / self::PER_PAGE);
         $lines = [];
         foreach ($candidates->slice($page * self::PER_PAGE, self::PER_PAGE) as $i => $c) {
             $lines[] = ($i + 1) . '. ' . Str::limit($c->name, 22, '…');
         }
         if ($page < $pages - 1) $lines[] = self::NEXT . '. More';
-        $lines[] = self::SKIP . '. Skip';
+        $lines[] = self::SKIP . ($ranking ? '. Done' : '. Skip');
         $step = ($catIndex + 1) . '/' . $categories->count();
+        $heading = Str::limit($cat->name, 28) . " ({$step})";
+        if ($cat->isRanked()) {
+            $heading .= "\nYour " . $this->ordinal(count($ranking) + 1) . ' choice:';
+        }
 
-        return "CON {$prefix}" . Str::limit($cat->name, 28) . " ({$step})\n" . implode("\n", $lines);
+        return "CON {$prefix}{$heading}\n" . implode("\n", $lines);
+    }
+
+    /** Candidates still to choose from (ranked: the ones not ranked yet). */
+    private function choicesLeft($category, array $ranking)
+    {
+        $taken = array_map(fn ($c) => $c->id, $ranking);
+        return $category->candidates->reject(fn ($c) => in_array($c->id, $taken, true))->values();
+    }
+
+    private function ordinal(int $n): string
+    {
+        $suffix = in_array($n % 100, [11, 12, 13], true) ? 'th' : (['th', 'st', 'nd', 'rd'][$n % 10] ?? 'th');
+        return $n . $suffix;
     }
 
     private function submit(Event $event, string $code, array $picks): string
     {
+        $choices = [];
+        foreach ($picks as $catId => $pick) {
+            foreach (is_array($pick) ? $pick : [$pick] as $i => $cand) {
+                $choices[] = ['category_id' => $catId, 'candidate_id' => $cand->id, 'rank' => $i + 1];
+            }
+        }
         try {
-            $receipt = BallotBox::cast($event, $code, collect($picks)
-                ->map(fn ($cand, $catId) => ['category_id' => $catId, 'candidate_id' => $cand->id])->values()->all());
+            $receipt = BallotBox::cast($event, $code, $choices);
         } catch (BallotRejected $e) {
             return 'END ' . Str::limit($e->getMessage(), 150);
         }

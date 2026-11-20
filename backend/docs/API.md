@@ -78,8 +78,8 @@ Public endpoints answer in the voter's language when the request has `X-Locale: 
 | Method | Path | Body |
 |---|---|---|
 | GET | `/events/{id}/categories` | |
-| POST | `/events/{id}/categories` | `name` (unique per event), `max_choices?` (1 = choose one, the default; up to 1000; `null` = no limit), `shuffle_candidates?`. Returns `409` when the ballot is locked. |
-| PATCH | `/events/{id}/categories/{categoryId}` | `name?`, `max_choices?`, `shuffle_candidates?`. Renaming and shuffling are allowed while locked (and logged); changing `max_choices` returns `409` when locked. |
+| POST | `/events/{id}/categories` | `name` (unique per event), `max_choices?` (1 = choose one, the default; up to 1000; `null` = no limit), `method?` (`plurality` default, or `ranked`; ranked isn't allowed on paid events), `shuffle_candidates?`. Returns `409` when the ballot is locked. |
+| PATCH | `/events/{id}/categories/{categoryId}` | `name?`, `max_choices?`, `method?`, `shuffle_candidates?`. Renaming and shuffling are allowed while locked (and logged); changing `max_choices` or `method` returns `409` when locked. A ranked category's `max_choices` is the most candidates a voter may rank (`null` = all). |
 
 `max_choices` only applies to `multiple` events: it's the most candidates a voter may pick in that category. Categories and candidates are always returned in the order they were added.
 | DELETE | `/events/{id}/categories/{categoryId}` | Also deletes its candidates. Returns `409` when locked. |
@@ -187,12 +187,15 @@ How codes behave:
 
 **Bot check.** When `TURNSTILE_SECRET_KEY` is set, sign-up, paid-vote checkout, nominations and self-registration need a `captcha_token` from the Cloudflare Turnstile widget; otherwise they return `422 { errors: { captcha_token } }`.
 
-**USSD (Africa's Talking).** `POST /ussd/{USSD_WEBHOOK_SECRET}` receives `sessionId, serviceCode, phoneNumber, text` and answers `text/plain` starting with `CON` (more input) or `END`. Menu: event number, voting code, one screen per category (`0` skip, `98` more), confirm. Ballots go through the same checks as `/vote`.
+**USSD (Africa's Talking).** `POST /ussd/{USSD_WEBHOOK_SECRET}` receives `sessionId, serviceCode, phoneNumber, text` and answers `text/plain` starting with `CON` (more input) or `END`. Menu: event number, voting code, one screen per category (`0` skip, `98` more), confirm. Ranked-choice categories ask for the 1st choice, then the 2nd from the names left, and so on (`0` = done). Ballots go through the same checks as `/vote`.
 
 **How a ballot is processed:** the server checks each of these before recording anything.
 - The event is inside its voting window.
 - Every candidate belongs to the event and to the stated category.
 - No more picks in a category than its `max_choices` (1 = choose one; null = no limit).
+- Ranked-choice categories: send each pick with `rank` (1 = first choice), or list them in order. Only the first choice adds to the candidate's `votes`; the ranking is stored without anything that identifies the voter.
+
+**Results per category** also include `method`, `ballots` (voters who answered it: the base for percentages), `winners` (candidate ids, by the method; several = a tie) and, for ranked choice, `rounds`: `[{ counts: [{id, votes}], eliminated: [ids], exhausted, continuing }]`. Candidates are listed in finishing order.
 - The code exists and is unused. The check runs under a row lock in the same transaction.
 
 **What gets stored (secret ballot):** each chosen candidate's total goes up by one, and the code is marked as used. No ballot row, choice, timestamp or IP is stored that could link the vote to the voter.

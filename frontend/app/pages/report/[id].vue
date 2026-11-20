@@ -62,8 +62,8 @@
                                     <span v-if="winnersOf(cat).length > 1" class="tie">tie</span>
                                 </template>
                             </td>
-                            <td class="num">{{ winnersOf(cat).length ? formatNumber(winnersOf(cat)[0]!.votes) : '–' }}</td>
-                            <td class="num">{{ winnersOf(cat).length ? share(winnersOf(cat)[0]!.votes, cat) + '%' : '–' }}</td>
+                            <td class="num">{{ winnersOf(cat).length ? formatNumber(decidingVotes(cat, winnersOf(cat)[0]!)) : '–' }}</td>
+                            <td class="num">{{ winnersOf(cat).length ? decidingShare(cat, winnersOf(cat)[0]!) + '%' : '–' }}</td>
                             <td class="num">{{ margin(cat) }}</td>
                         </tr>
                     </tbody>
@@ -101,7 +101,7 @@
             <section v-for="cat in results.categories" :key="cat.id" class="cat">
                 <div class="cat-head">
                     <h3>{{ cat.name }}</h3>
-                    <span class="cat-total">{{ formatNumber(categoryTotal(cat)) }} vote{{ categoryTotal(cat) === 1 ? '' : 's' }} · {{ cat.candidates.length }} candidate{{ cat.candidates.length === 1 ? '' : 's' }}</span>
+                    <span class="cat-total">{{ methodName(cat) }} · {{ formatNumber(categoryTotal(cat)) }} {{ isRanked(cat) ? 'first choices' : `vote${categoryTotal(cat) === 1 ? '' : 's'}` }} · {{ cat.candidates.length }} candidate{{ cat.candidates.length === 1 ? '' : 's' }}</span>
                 </div>
                 <table class="tally">
                     <thead><tr><th class="rank">#</th><th>Candidate</th><th class="bar-col">Share</th><th class="num">Votes</th><th class="num">%</th></tr></thead>
@@ -119,6 +119,8 @@
                         <tr v-if="!cat.candidates.length"><td colspan="5" class="muted">No candidates</td></tr>
                     </tbody>
                 </table>
+                <RoundsTable v-if="isRanked(cat)" :category="cat" class="report-rounds" />
+                <p v-else-if="isApproval(cat) && !paid && categoryTotal(cat)" class="muted small mt-1 mb-0">Approval vote: each voter could pick several, so shares are of voters and can add up to more than 100%.</p>
             </section>
 
             <section class="statement">
@@ -227,19 +229,17 @@ const canSeeRegister = computed(() => (paid.value ? !!earnings.value : voters.va
 
 const categoryTotal = (cat: ResultCategory) => cat.candidates.reduce((s, c) => s + c.votes, 0);
 const totalVotes = computed(() => (results.value?.categories ?? []).reduce((s, c) => s + categoryTotal(c), 0));
-const share = (votes: number, cat: ResultCategory) => {
-    const t = categoryTotal(cat);
-    return t ? Math.round((votes / t) * 1000) / 10 : 0;
-};
-function winnersOf(cat: ResultCategory): ResultCandidate[] {
-    const top = Math.max(0, ...cat.candidates.map(c => c.votes));
-    return top > 0 ? cat.candidates.filter(c => c.votes === top) : [];
-}
+const share = (votes: number, cat: ResultCategory) => categoryShare(votes, cat);
+const winnersOf = (cat: ResultCategory): ResultCandidate[] => categoryWinners(cat);
+/** Ranked choice is decided by the final round; other methods by the votes. */
+const decidingVotes = (cat: ResultCategory, c: ResultCandidate) => (isRanked(cat) ? finalVotes(cat, c.id) : c.votes);
+const decidingShare = (cat: ResultCategory, c: ResultCandidate) =>
+    (isRanked(cat) ? percent(finalVotes(cat, c.id), finalRound(cat)?.continuing ?? 0) : share(c.votes, cat));
 function margin(cat: ResultCategory): string {
     const w = winnersOf(cat);
     if (w.length !== 1) return '–';
-    const runnerUp = cat.candidates.filter(c => c !== w[0]).reduce((m, c) => Math.max(m, c.votes), 0);
-    return `+${formatNumber(w[0]!.votes - runnerUp)}`;
+    const runnerUp = cat.candidates.filter(c => c !== w[0]).reduce((m, c) => Math.max(m, decidingVotes(cat, c)), 0);
+    return `+${formatNumber(decidingVotes(cat, w[0]!) - runnerUp)}`;
 }
 const turnout = computed(() => {
     const s = results.value?.stats;
@@ -299,6 +299,8 @@ function print() {
 </script>
 
 <style scoped>
+.report-rounds { margin-top: .5rem; }
+.report-rounds :deep(.table-rounds) { font-size: .8rem; }
 /* A printed document: always light, whatever the app theme. */
 .report-shell {
     min-height: 100vh; background: #eef2f6; color: #0f172a; padding: 1.5rem 1rem 3rem;
