@@ -38,7 +38,11 @@
             <section v-for="c in p.categories" :key="c.name" class="cat">
                 <div class="d-flex justify-content-between align-items-baseline gap-2">
                     <h2 class="h6 fw-800 mb-2">{{ c.name }}</h2>
-                    <span v-if="c.winners.length" class="small fw-bold winner"><i class="bi bi-trophy-fill"></i> {{ c.winners.join(' & ') }}{{ c.winners.length > 1 ? ' (tie)' : '' }}</span>
+                    <span v-if="c.method === 'motion' && c.motion" class="small fw-bold" :class="c.motion.passed ? 'winner' : 'text-danger'">
+                        <i class="bi" :class="c.motion.passed ? 'bi-check-circle-fill' : 'bi-x-circle-fill'"></i>
+                        {{ !c.motion.decided ? 'No Yes or No votes' : c.motion.passed ? 'Passed' : 'Not passed' }}
+                    </span>
+                    <span v-else-if="c.winners.length" class="small fw-bold winner"><i class="bi bi-trophy-fill"></i> {{ c.winners.join(' & ') }}{{ c.winners.length > 1 ? ' (tie)' : '' }}</span>
                 </div>
                 <table class="w-100 lines">
                     <tbody>

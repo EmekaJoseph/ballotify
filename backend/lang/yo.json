@@ -39,5 +39,6 @@
     "The payment was not completed, so no votes were added.": "Ìsanwó náà kò parí, nítorí náà a kò fi ìbò kankan kún un.",
     "Your payment is still being processed.": "A ṣì ń ṣiṣẹ́ lórí ìsanwó rẹ.",
     "Paid after voting closed": "A sanwó lẹ́yìn tí ìdìbò ti parí",
-    "Amount or currency did not match. Contact the organiser.": "Iye owó tàbí irú owó kò bá ara mu. Kàn sí olùṣètò."
+    "Amount or currency did not match. Contact the organiser.": "Iye owó tàbí irú owó kò bá ara mu. Kàn sí olùṣètò.",
+    "You can’t vote in “:category”.": "O kò lè dìbò nínú “:category”."
 }

@@ -22,7 +22,7 @@
 
         <div v-if="rows.length" class="table-responsive mt-3 border rounded-3">
             <table class="table-b small">
-                <thead><tr><th>#</th><th>Name</th><th>Email</th><th>Phone</th><th v-if="withId">ID</th></tr></thead>
+                <thead><tr><th>#</th><th>Name</th><th>Email</th><th>Phone</th><th v-if="withId">ID</th><th v-if="withGroups">Groups</th></tr></thead>
                 <tbody>
                     <tr v-for="(r, i) in rows.slice(0, 5)" :key="i">
                         <td class="text-muted">{{ i + 1 }}</td>
@@ -30,6 +30,7 @@
                         <td :class="{ 'text-danger': r.email && !emailOk(r.email) }">{{ r.email || '—' }}</td>
                         <td>{{ r.phone || '—' }}</td>
                         <td v-if="withId" class="mono">{{ r.member_id || '—' }}</td>
+                        <td v-if="withGroups">{{ r.groups || '—' }}</td>
                     </tr>
                 </tbody>
             </table>
@@ -76,10 +77,13 @@ const rows = computed<VoterContact[]>(() => {
         email: header.findIndex(h => /e-?mail/.test(h)),
         member_id: header.findIndex(h => /matric|member|staff|student|reg(istration)?\.? ?(no|num)|\bid\b|identification/.test(h)),
         phone: -1,
+        // "Group", "Groups", "Faculty", "Department", "Level", "Branch"…: all go into groups.
+        groups: [] as number[],
     };
+    header.forEach((h, i) => { if (/^groups?$|faculty|department|dept|level|branch|chapter|unit|class\b|house|zone|ward/.test(h)) idx.groups.push(i); });
     // Phone: a phone-like column that isn't the ID column ("Member number" is an ID, not a phone).
     idx.phone = header.findIndex((h, i) => i !== idx.member_id && /phone|mobile|tel|whatsapp|^number/.test(h));
-    const hasHeader = idx.name >= 0 || idx.email >= 0 || idx.phone >= 0 || idx.member_id >= 0;
+    const hasHeader = idx.name >= 0 || idx.email >= 0 || idx.phone >= 0 || idx.member_id >= 0 || idx.groups.length > 0;
 
     return (hasHeader ? table.slice(1) : table).map((cells) => {
         if (hasHeader) {
@@ -88,6 +92,7 @@ const rows = computed<VoterContact[]>(() => {
                 email: idx.email >= 0 ? cells[idx.email] || null : null,
                 phone: idx.phone >= 0 ? cells[idx.phone] || null : null,
                 member_id: idx.member_id >= 0 ? cells[idx.member_id] || null : null,
+                groups: idx.groups.map(i => (cells[i] ?? '').trim()).filter(Boolean).join('; ') || null,
             };
         }
         const row: VoterContact = { name: null, email: null, phone: null };
@@ -104,6 +109,7 @@ const rows = computed<VoterContact[]>(() => {
 const withEmail = computed(() => rows.value.filter(r => r.email).length);
 const withPhone = computed(() => rows.value.filter(r => r.phone).length);
 const withId = computed(() => rows.value.some(r => r.member_id));
+const withGroups = computed(() => rows.value.some(r => r.groups));
 
 async function loadFile(e: Event) {
     const input = e.target as HTMLInputElement;

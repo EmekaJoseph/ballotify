@@ -15,6 +15,8 @@
                         <input v-model="query" type="search" class="form-control form-control-sm py-2" placeholder="Search name, email, phone or code" aria-label="Search voters" />
                     </div>
                     <AppSelect v-model="statusFilter" :options="STATUS_FILTERS" size="sm" :block="false" icon="bi-funnel" class="status-filter" aria-label="Filter by status" />
+                    <AppSelect v-if="groupNames.length" v-model="groupFilter" :options="groupFilterOptions" size="sm" :block="false" icon="bi-people"
+                        class="status-filter" aria-label="Filter by group" :menu-min-width="200" />
                 </div>
                 <div class="d-flex flex-wrap gap-2">
                     <button class="btn btn-primary btn-sm" @click="onSendCodes">
@@ -110,6 +112,9 @@
                                 </td>
                                 <td style="min-width: 200px">
                                     <div class="fw-semibold text-ink">{{ v.name || 'Anonymous' }}</div>
+                                    <div v-if="v.groups?.length" class="d-flex flex-wrap gap-1 my-1">
+                                        <span v-for="g in v.groups" :key="g" class="group-chip">{{ g }}</span>
+                                    </div>
                                     <div v-if="v.email || v.phone || v.member_id" class="small text-muted d-flex flex-wrap column-gap-3">
                                         <span v-if="v.email" class="text-break"><i class="bi bi-envelope me-1"></i>{{ v.email }}</span>
                                         <span v-if="v.phone" class="text-nowrap"><i class="bi bi-phone me-1"></i>{{ v.phone }}</span>
@@ -157,7 +162,7 @@
         </div>
 
         <!-- Dialogs -->
-        <EventVoterFormModal :open="dialog === 'form'" :event-id="event.id" :voter="editing" :member-label="event.member_id_label || 'Member ID'" @close="dialog = null" @saved="onSaved" @limit="onLimit" />
+        <EventVoterFormModal :open="dialog === 'form'" :event-id="event.id" :voter="editing" :member-label="event.member_id_label || 'Member ID'" :group-options="groupNames" @close="dialog = null" @saved="onSaved" @limit="onLimit" />
         <EventVoterImportModal :open="dialog === 'import'" :event-id="event.id" @close="dialog = null" @created="afterCreate" @limit="onLimit" />
         <EventWhatsAppModal :open="dialog === 'whatsapp'" :event="event" :voters="voters" :vote-url="voteUrl" @close="dialog = null" @shared="onShared" />
         <EventRemindModal :open="dialog === 'remind'" :event="event" :pending="pendingVoters.length" :reachable="reachableCount"
@@ -218,6 +223,14 @@ const busy = ref(false);
 const voters = ref<Voter[]>([]);
 const query = ref('');
 const statusFilter = ref<'all' | 'voted' | 'pending' | 'not_invited' | 'failed'>('all');
+/** Voter groups in use (for the filter and the voter form's suggestions). */
+const groupNames = computed(() => {
+    const seen = new Map<string, string>();
+    for (const v of voters.value) for (const g of v.groups ?? []) if (!seen.has(g.toLowerCase())) seen.set(g.toLowerCase(), g);
+    return [...seen.values()].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+});
+const groupFilter = ref('');
+const groupFilterOptions = computed(() => [{ value: '', label: 'All groups' }, ...groupNames.value.map(g => ({ value: g, label: g }))]);
 const STATUS_FILTERS: { value: typeof statusFilter.value; label: string }[] = [
     { value: 'all', label: 'All voters' },
     { value: 'pending', label: 'Not voted' },
@@ -280,13 +293,14 @@ const filtered = computed(() => {
         if (s === 'pending' && v.used_at) return false;
         if (s === 'not_invited' && (v.invited_at || v.used_at)) return false;
         if (s === 'failed' && !v.invite_error) return false;
+        if (groupFilter.value && !(v.groups ?? []).some(g => g.toLowerCase() === groupFilter.value.toLowerCase())) return false;
         if (!q) return true;
         return [v.code, v.name, v.email, v.phone, v.member_id].some(f => (f ?? '').toLowerCase().includes(q));
     });
 });
 const pages = computed(() => Math.max(1, Math.ceil(filtered.value.length / PER_PAGE)));
 const paged = computed(() => filtered.value.slice((page.value - 1) * PER_PAGE, page.value * PER_PAGE));
-watch([query, statusFilter], () => { page.value = 1; });
+watch([query, statusFilter, groupFilter], () => { page.value = 1; });
 watch(pages, (p) => { if (page.value > p) page.value = p; });
 
 // --- Data --------------------------------------------------------------------
@@ -485,6 +499,7 @@ function printSlips(list: (Voter | GeneratedCode)[]) {
 </script>
 
 <style scoped>
+.group-chip { font-size: .7rem; font-weight: 700; padding: .05rem .45rem; border-radius: 6px; background: var(--violet-50, rgba(124, 92, 255, .1)); color: var(--violet-600, #6d4ce8); }
 .status-filter { flex-shrink: 0; min-width: 160px; }
 .status-filter :deep(.as-trigger) { padding-top: .5rem; padding-bottom: .5rem; }
 .codes-grid { display: grid; gap: .5rem; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }

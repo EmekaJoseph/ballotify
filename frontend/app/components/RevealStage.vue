@@ -7,7 +7,7 @@
 
         <Transition name="cat" mode="out-in">
             <div v-if="cat" :key="cat.id" class="cat">
-                <div class="eyebrow-r">{{ revealed ? (tie ? 'It’s a tie!' : 'And the winner is…') : 'The nominees are' }}</div>
+                <div class="eyebrow-r">{{ motionCat ? (revealed ? (cat.motion?.passed ? 'The motion is passed' : 'The motion is not passed') : 'The motion') : revealed ? (tie ? 'It’s a tie!' : 'And the winner is…') : 'The nominees are' }}</div>
                 <h2 class="cat-name">{{ cat.name }}</h2>
 
                 <ul class="list-unstyled nominees">
@@ -17,7 +17,7 @@
                         <div class="flex-grow-1 min-w-0">
                             <div class="d-flex justify-content-between align-items-baseline gap-2">
                                 <span class="name text-truncate">
-                                    <i v-if="revealed && isWinner(c)" class="bi bi-trophy-fill trophy"></i>{{ c.name }}
+                                    <i v-if="revealed && isWinner(c)" class="bi bi-trophy-fill trophy"></i>{{ c.motion_choice ? t(`motion.${c.motion_choice}`) : c.name }}
                                 </span>
                                 <span class="votes" :class="{ show: revealed }">{{ outIn(c) ? `Eliminated in round ${outIn(c)}` : `${formatNumber(votesOf(c))} · ${pct(votesOf(c))}%` }}</span>
                             </div>
@@ -51,6 +51,7 @@ const cat = computed(() => props.categories[index.value] ?? null);
 
 /** Nominees in a fixed, neutral order (by name) until the reveal. */
 /** Ranked choice shows the deciding round; other categories their votes. */
+const motionCat = computed(() => !!cat.value && isMotion(cat.value));
 const votesOf = (c: { id: number; votes: number }) => (cat.value && isRanked(cat.value) ? finalVotes(cat.value, c.id) : c.votes);
 /** Ranked choice: the round a candidate was eliminated in (0 = still in at the end). */
 const outIn = (c: { id: number }) => {
@@ -69,7 +70,9 @@ const total = computed(() => {
 });
 const winnerIds = computed(() => (cat.value ? categoryWinners(cat.value).map(c => c.id) : []));
 const tie = computed(() => winnerIds.value.length > 1);
-const isWinner = (c: { id: number }) => winnerIds.value.includes(c.id);
+const isWinner = (c: { id: number; motion_choice?: string | null }) => (motionCat.value
+    ? !!cat.value?.motion?.decided && c.motion_choice === (cat.value.motion.passed ? 'yes' : 'no')
+    : winnerIds.value.includes(c.id));
 const pct = (v: number) => (total.value ? Math.round((v / total.value) * 1000) / 10 : 0);
 
 function forward() {

@@ -79,7 +79,8 @@ Public endpoints answer in the voter's language when the request has `X-Locale: 
 |---|---|---|
 | GET | `/events/{id}/categories` | |
 | POST | `/events/{id}/categories` | `name` (unique per event), `max_choices?` (1 = choose one, the default; up to 1000; `null` = no limit), `method?` (`plurality` default, or `ranked`; ranked isn't allowed on paid events), `shuffle_candidates?`. Returns `409` when the ballot is locked. |
-| PATCH | `/events/{id}/categories/{categoryId}` | `name?`, `max_choices?`, `method?`, `shuffle_candidates?`. Renaming and shuffling are allowed while locked (and logged); changing `max_choices` or `method` returns `409` when locked. A ranked category's `max_choices` is the most candidates a voter may rank (`null` = all). |
+| GET | `/events/{id}/voter-groups` | `[{ name, voters }]`: groups in use (on voters or categories). |
+| PATCH | `/events/{id}/categories/{categoryId}` | `name?`, `max_choices?`, `method?`, `shuffle_candidates?`, `groups?` (voter groups allowed; `[]` = everyone; locks with the ballot), `description?`, `pass_rule?` (motions; locks with the ballot). Renaming and shuffling are allowed while locked (and logged); changing `max_choices` or `method` returns `409` when locked. A ranked category's `max_choices` is the most candidates a voter may rank (`null` = all). |
 
 `max_choices` only applies to `multiple` events: it's the most candidates a voter may pick in that category. Categories and candidates are always returned in the order they were added.
 | DELETE | `/events/{id}/categories/{categoryId}` | Also deletes its candidates. Returns `409` when locked. |
@@ -193,6 +194,9 @@ How codes behave:
 - The event is inside its voting window.
 - Every candidate belongs to the event and to the stated category.
 - No more picks in a category than its `max_choices` (1 = choose one; null = no limit).
+- Voter groups: a choice in a category the voter's groups aren't allowed in is refused (`422`). `POST /public/events/{token}/code/validate` returns `categories`: the ids this code may vote in.
+- Motions (`method: motion`, created with `pass_rule` simple | two_thirds | three_quarters and optional `description`) get fixed Yes / No / Abstain candidates (`motion_choice`), which can't be edited, removed or added to. Results carry `motion: { yes, no, abstain, rule, decided, passed }`.
+- `GET /public/events/{token}/candidates/{id}/photo`: the candidate's photo through the API (for campaign cards).
 - Ranked-choice categories: send each pick with `rank` (1 = first choice), or list them in order. Only the first choice adds to the candidate's `votes`; the ranking is stored without anything that identifies the voter.
 
 **Results per category** also include `method`, `ballots` (voters who answered it: the base for percentages), `winners` (candidate ids, by the method; several = a tie) and, for ranked choice, `rounds`: `[{ counts: [{id, votes}], eliminated: [ids], exhausted, continuing }]`. Candidates are listed in finishing order.

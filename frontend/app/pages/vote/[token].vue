@@ -59,7 +59,8 @@
             </div>
 
             <PaidBallot v-if="isPaid" :token="token" :categories="event.categories" :candidates="event.candidates"
-                :price="event.vote_price_naira ?? 0" :min-payment="event.min_payment_naira ?? 50" :payments-ready="!!event.payments_enabled" />
+                :price="event.vote_price_naira ?? 0" :min-payment="event.min_payment_naira ?? 50" :payments-ready="!!event.payments_enabled"
+                :event-name="event.name" :brand-color="event.brand?.color" />
             <p v-if="isPaid && event.results_visibility === 'live'" class="text-center mt-2">
                 <NuxtLink :to="`/event/${token}/results`" class="btn btn-ghost btn-sm"><i class="bi bi-bar-chart-line"></i> {{ t('vote.leaderboard') }}</NuxtLink>
             </p>
@@ -126,7 +127,8 @@
                 <span class="code-chip d-none d-sm-inline">{{ maskedCode }}</span>
                 <button class="btn btn-link btn-sm text-muted p-0 flex-shrink-0" @click="changeCode">{{ t('vote.notYou') }}</button>
             </div>
-            <BallotForm ref="ballot" :categories="event.categories" :candidates="event.candidates"
+            <div v-if="!myCategories.length" class="card-b pad text-center text-muted">{{ t('vote.nothingForYou') }}</div>
+            <BallotForm v-else ref="ballot" :categories="myCategories" :candidates="myCandidates"
                 :submitting="submitting" :error="submitError" @submit="castVote" />
         </div>
 
@@ -200,6 +202,9 @@ const paidResult = ref<{ message: string; reference: string } | null>(null);
 const paidNotice = ref<{ ok: boolean; text: string } | null>(null);
 
 const isPaid = computed(() => event.value?.voting_mode === 'paid');
+const allowedCategories = ref<number[] | null>(null);
+const myCategories = computed(() => (event.value?.categories ?? []).filter(c => !allowedCategories.value || allowedCategories.value.includes(c.id)));
+const myCandidates = computed(() => (event.value?.candidates ?? []).filter(c => myCategories.value.some(cat => cat.id === c.category_id)));
 
 // ----- Idle timeout: a ballot left open (shared phone, polling-booth tablet) closes by itself.
 // Nothing is submitted, so the code still works; the voter just enters it again.
@@ -292,6 +297,8 @@ async function checkCode() {
     try {
         const { data } = await publicApi.validateCode(token, normalized.value);
         voterName.value = data.name?.trim() || null;
+        // Voter groups: the categories this code may vote in (all when the API doesn't say).
+        allowedCategories.value = data.categories ?? null;
         stage.value = 'ballot';
         window.scrollTo({ top: 0 });
     } catch (e) {

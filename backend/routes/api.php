@@ -104,6 +104,7 @@ Route::middleware(['auth:sanctum', 'active'])->scopeBindings()->group(function (
     Route::patch('events/{event}/voters/{voter}', [VoterController::class, 'update']);
     Route::delete('events/{event}/voters/{voter}', [VoterController::class, 'destroy']);
     Route::post('events/{event}/voters/import', [VoterController::class, 'import']);
+    Route::get('events/{event}/voter-groups', [VoterController::class, 'groups']);
     Route::post('events/{event}/voters/generate', [VoterController::class, 'generate']);
     Route::post('events/{event}/voters/erase-contacts', [VoterController::class, 'eraseContacts']);
     Route::post('events/{event}/voters/{voter}/shared', [VoterController::class, 'markShared']);
@@ -157,6 +158,7 @@ Route::prefix('public')->group(function () {
     Route::get('events/{token}/results', [EventController::class, 'results'])->middleware('throttle:public');
     // Code guessing endpoints are tightly limited per IP to stop brute forcing.
     Route::post('events/{token}/code/validate', [VoterController::class, 'validateCode'])->middleware('throttle:voting');
+    Route::get('events/{token}/candidates/{candidate}/photo', [EventController::class, 'candidatePhoto'])->whereNumber('candidate')->middleware('throttle:public');
     Route::post('events/{token}/vote', [VoteController::class, 'store'])->middleware('throttle:voting');
     Route::post('events/{token}/receipt', [EventController::class, 'checkReceipt'])->middleware('throttle:voting');
     // Paid public voting

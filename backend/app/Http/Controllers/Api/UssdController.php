@@ -60,14 +60,14 @@ class UssdController extends Controller
         }
 
         $code = VoterController::normalizeCode($in[1]);
-        $voterOk = Voter::where('event_id', $event->id)->where('code', $code)->whereNull('used_at')->exists();
-        if (! $voterOk) {
+        $voter = Voter::where('event_id', $event->id)->where('code', $code)->whereNull('used_at')->first(['id', 'groups']);
+        if (! $voter) {
             return 'END That code is not valid or has already voted.';
         }
 
         // Replay the keypresses through the category screens.
         $categories = $event->categories()->with('candidates:id,category_id,name')->get()
-            ->filter(fn ($c) => $c->candidates->isNotEmpty())->values();
+            ->filter(fn ($c) => $c->candidates->isNotEmpty() && $c->allows($voter->groups))->values();
         if ($categories->isEmpty()) {
             return 'END This ballot isn’t ready yet. Please try again later.';
         }

@@ -24,10 +24,13 @@
                         <div class="p-3 d-flex flex-column flex-grow-1">
                             <div class="fw-800 text-ink text-break lh-sm">{{ cand.name }}</div>
                             <div v-if="cand.description" class="small text-muted mt-1 desc">{{ cand.description }}</div>
-                            <button type="button" class="btn btn-primary btn-sm w-100 mt-auto pt-2" style="margin-top: .75rem !important"
-                                :disabled="!paymentsReady" @click="openBuy(cand, cat.name)">
-                                <i class="bi bi-heart-fill"></i> {{ t('paid.vote') }}
-                            </button>
+                            <div class="d-flex gap-2 mt-auto" style="margin-top: .75rem !important">
+                                <button type="button" class="btn btn-primary btn-sm flex-grow-1" :disabled="!paymentsReady" @click="openBuy(cand, cat.name)">
+                                    <i class="bi bi-heart-fill"></i> {{ t('paid.vote') }}
+                                </button>
+                                <button type="button" class="btn btn-ghost btn-icon btn-sm" :title="t('card.title')" :aria-label="`${t('card.title')}: ${cand.name}`"
+                                    @click="cardFor = { cand, category: cat.name }"><i class="bi bi-share"></i></button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -78,6 +81,8 @@
                 </div>
             </template>
         </BaseModal>
+        <CampaignCardModal :open="!!cardFor" :candidate="cardFor?.cand ?? null" :category-name="cardFor?.category ?? ''" :event-name="eventName ?? ''"
+            :token="token" :brand-color="brandColor" @close="cardFor = null" />
         <IdleWarning :show="idle.warning.value" :seconds="idle.secondsLeft.value" :total="30" @stay="idle.stay" />
     </div>
 </template>
@@ -93,7 +98,10 @@ const props = defineProps<{
     price: number;
     minPayment: number;
     paymentsReady: boolean;
+    eventName?: string;
+    brandColor?: string | null;
 }>();
+const cardFor = ref<{ cand: Candidate; category: string } | null>(null);
 
 const byCategory = computed(() => {
     const map: Record<number, Candidate[]> = {};

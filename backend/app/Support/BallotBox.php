@@ -98,7 +98,7 @@ class BallotBox
         }
         $categoryIds = array_values(array_unique(array_column($clean, 'category_id')));
 
-        $receipt = DB::transaction(function () use ($event, $code, $candidateIds, $rankings, $categoryIds) {
+        $receipt = DB::transaction(function () use ($event, $code, $candidateIds, $rankings, $categoryIds, $categories) {
             // The row lock must be taken inside the transaction, otherwise two
             // concurrent requests with the same code could both cast a ballot.
             $voter = Voter::where('event_id', $event->id)
@@ -108,6 +108,12 @@ class BallotBox
 
             if (! $voter || $voter->used_at !== null) {
                 return null;
+            }
+            // Voter groups: only the categories this voter is allowed to vote in.
+            foreach ($categoryIds as $categoryId) {
+                if (! $categories[$categoryId]->allows($voter->groups)) {
+                    throw new BallotRejected(__('You can’t vote in “:category”.', ['category' => $categories[$categoryId]->name]), 422);
+                }
             }
 
             // SECRET BALLOT: only the running totals change. No row records which

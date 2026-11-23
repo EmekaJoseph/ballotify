@@ -16,7 +16,10 @@
 | ------------------------------------------------------------------ | -------------------------------------- |
 | Create events with categories and candidates (photos, short descriptions) | Open one link on any phone or laptop   |
 | Start from a template (student union, award night, AGM, board) or a blank ballot | Enter a personal one-time code         |
-| Per category: choose one, pick up to N, **approval** (any number) or **ranked choice** (instant runoff); shuffle candidates | Progress bar, review screen, then submit |
+| Per category: choose one, pick up to N, **approval** (any number) or **ranked choice** (instant runoff); shuffle candidates |
+| **Motions** (Yes / No / Abstain) with simple, two-thirds or three-quarters majority |
+| **Voter groups**: categories only some voters see (e.g. a Law Faculty Rep only Law students vote for) |
+| **Campaign cards**: a shareable image per candidate with a QR code to the ballot | Progress bar, review screen, then submit |
 | Schedule when voting opens and closes, or close it early           | Pick candidates, review, submit        |
 | Generate thousands of voter codes, or import a name list           | A **receipt** to check the ballot was counted |
 | Export codes to CSV, or print voter slips with a QR code           |                                        |
@@ -219,7 +222,7 @@ Until a key is set, nothing breaks: organisers see "Contact us to upgrade" (usin
 ## Testing
 
 ```bash
-cd backend  && php artisan test                                    # 129 feature tests
+cd backend  && php artisan test                                    # 133 feature tests
 cd frontend && npx nuxi prepare && npx vue-tsc --noEmit -p .nuxt/tsconfig.app.json   # type check
 cd frontend && npm run build                                       # production build
 ```

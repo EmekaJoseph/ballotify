@@ -74,7 +74,13 @@ return new class extends Migration
             $table->boolean('shuffle_candidates')->default(false);
             // plurality = most votes wins (choose one, pick up to N, or approval when max_choices is null)
             // ranked    = voters rank candidates; counted in instant-runoff rounds
+            // motion    = Yes / No / Abstain on a proposal; passes by pass_rule
             $table->string('method', 10)->default('plurality');
+            // Motions: the full text, and simple | two_thirds | three_quarters (of Yes + No).
+            $table->text('description')->nullable();
+            $table->string('pass_rule', 16)->nullable();
+            // Voter groups allowed to vote in this category (null = everyone).
+            $table->json('groups')->nullable();
             // Ballots that answered this category (the base for "% of voters").
             $table->unsignedInteger('ballots')->default(0);
             $table->timestamps();
@@ -100,6 +106,8 @@ return new class extends Migration
             $table->string('image_path')->nullable();
             // Private link for the candidate to edit their own photo and description.
             $table->string('profile_token', 64)->nullable()->unique();
+            // Motions only: which fixed option this is (yes | no | abstain).
+            $table->string('motion_choice', 8)->nullable();
             $table->unsignedInteger('votes')->default(0);
             $table->timestamps();
             $table->unique(['category_id', 'name']);
@@ -113,6 +121,8 @@ return new class extends Migration
             $table->string('phone', 32)->nullable();
             // Eligibility ID for self-registration (matric number, member number...).
             $table->string('member_id', 64)->nullable();
+            // Groups (faculty, level, branch...) deciding which categories this voter sees.
+            $table->json('groups')->nullable();
             $table->string('code', 64);
             $table->timestamp('used_at')->nullable()->index();
             // Outcome of the most recent email / SMS / WhatsApp invitation.

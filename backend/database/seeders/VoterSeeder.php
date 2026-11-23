@@ -27,6 +27,8 @@ class VoterSeeder extends Seeder
                     // example.com is reserved for documentation: it never reaches a real inbox.
                     // No demo phone numbers: made-up numbers could belong to real people.
                     'email' => "voter{$i}.event{$event->id}@example.com",
+                    // Voter groups (faculty + level) for the "only some groups" demo.
+                    'groups' => [['Law', 'Engineering', 'Science', 'Arts'][$i % 4], (100 * (1 + $i % 4)) . 'L'],
                     'code' => $code,
                 ]);
                 $plain[] = ['name' => 'Voter '.$i, 'code' => $code];

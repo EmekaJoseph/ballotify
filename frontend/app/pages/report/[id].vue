@@ -55,16 +55,25 @@
                     <tbody>
                         <tr v-for="cat in results.categories" :key="cat.id">
                             <td class="cat-name">{{ cat.name }}</td>
-                            <td>
+                            <td v-if="isMotion(cat)"><b :class="cat.motion?.passed ? 'pass' : 'fail'">{{ cat.motion?.decided ? (cat.motion.passed ? '✓ Passed' : '✗ Not passed') : 'No votes' }}</b>
+                                <span class="muted small"> · {{ passRuleLabel(cat.pass_rule) }}</span></td>
+                            <td v-else>
                                 <template v-if="!winnersOf(cat).length"><span class="muted">No votes</span></template>
                                 <template v-else>
                                     <span class="trophy">★</span> <b>{{ winnersOf(cat).map(c => c.name).join(' & ') }}</b>
                                     <span v-if="winnersOf(cat).length > 1" class="tie">tie</span>
                                 </template>
                             </td>
-                            <td class="num">{{ winnersOf(cat).length ? formatNumber(decidingVotes(cat, winnersOf(cat)[0]!)) : '–' }}</td>
-                            <td class="num">{{ winnersOf(cat).length ? decidingShare(cat, winnersOf(cat)[0]!) + '%' : '–' }}</td>
-                            <td class="num">{{ margin(cat) }}</td>
+                            <template v-if="isMotion(cat) && cat.motion">
+                                <td class="num">Yes {{ formatNumber(cat.motion.yes) }}</td>
+                                <td class="num">{{ percent(cat.motion.yes, cat.motion.yes + cat.motion.no) }}%</td>
+                                <td class="num">{{ cat.motion.yes - cat.motion.no >= 0 ? '+' : '' }}{{ formatNumber(cat.motion.yes - cat.motion.no) }}</td>
+                            </template>
+                            <template v-else>
+                                <td class="num">{{ winnersOf(cat).length ? formatNumber(decidingVotes(cat, winnersOf(cat)[0]!)) : '–' }}</td>
+                                <td class="num">{{ winnersOf(cat).length ? decidingShare(cat, winnersOf(cat)[0]!) + '%' : '–' }}</td>
+                                <td class="num">{{ margin(cat) }}</td>
+                            </template>
                         </tr>
                     </tbody>
                 </table>
@@ -120,6 +129,11 @@
                     </tbody>
                 </table>
                 <RoundsTable v-if="isRanked(cat)" :category="cat" class="report-rounds" />
+                <div v-else-if="isMotion(cat) && cat.motion" class="small mt-2">
+                    <p v-if="cat.description" class="muted mb-1" style="white-space: pre-line">{{ cat.description }}</p>
+                    <b :class="cat.motion.passed ? 'pass' : 'fail'">{{ motionSummary(cat) }}</b>
+                    <span class="muted"> · {{ passRuleLabel(cat.pass_rule) }} of Yes + No; abstentions ({{ formatNumber(cat.motion.abstain) }}) don’t count.</span>
+                </div>
                 <p v-else-if="isApproval(cat) && !paid && categoryTotal(cat)" class="muted small mt-1 mb-0">Approval vote: each voter could pick several, so shares are of voters and can add up to more than 100%.</p>
             </section>
 
@@ -299,6 +313,8 @@ function print() {
 </script>
 
 <style scoped>
+.pass { color: #15803d; }
+.fail { color: #b42318; }
 .report-rounds { margin-top: .5rem; }
 .report-rounds :deep(.table-rounds) { font-size: .8rem; }
 /* A printed document: always light, whatever the app theme. */

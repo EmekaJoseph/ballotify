@@ -61,6 +61,7 @@ class VoterController extends Controller
             'email' => ['nullable', 'string', 'email:rfc', 'max:255'],
             'phone' => ['nullable', 'string', 'max:32', $this->phoneRule()],
             'member_id' => ['nullable', 'string', 'max:64', Rule::unique('voters', 'member_id')->where('event_id', $event->id)],
+            'groups' => ['nullable', 'array', 'max:10'],
             'code' => ['nullable', 'string', 'min:4', 'max:64', Rule::unique('voters', 'code')->where('event_id', $event->id), ...($event->ussd_enabled ? ['regex:/^\d+$/'] : [])],
         ], ['member_id.unique' => 'Another voter already has this ID.', 'code.regex' => 'This event uses USSD voting, so codes must be numbers only.']);
         Plans::ensureVoterCapacity($event, 1);
@@ -71,6 +72,7 @@ class VoterController extends Controller
             'email' => $data['email'] ?? null,
             'phone' => $data['phone'] ?? null,
             'member_id' => $data['member_id'] ?? null,
+            'groups' => $data['groups'] ?? null,
             'code' => $data['code'] ?? $this->uniqueCodes($event, 1)[0],
         ]);
         Audit::log($event, 'voters.added', 'Voter added: ' . ($voter->name ?: 'anonymous code'));
@@ -93,10 +95,11 @@ class VoterController extends Controller
             'email' => ['sometimes', 'nullable', 'string', 'email:rfc', 'max:255'],
             'phone' => ['sometimes', 'nullable', 'string', 'max:32', $this->phoneRule()],
             'member_id' => ['sometimes', 'nullable', 'string', 'max:64', Rule::unique('voters', 'member_id')->where('event_id', $event->id)->ignore($voter->id)],
+            'groups' => ['sometimes', 'nullable', 'array', 'max:10'],
             'code' => ['sometimes', 'string', 'min:4', 'max:64', Rule::unique('voters', 'code')->where('event_id', $event->id)->ignore($voter->id), ...($event->ussd_enabled ? ['regex:/^\d+$/'] : [])],
         ], ['member_id.unique' => 'Another voter already has this ID.', 'code.regex' => 'This event uses USSD voting, so codes must be numbers only.']);
 
-        foreach (['name', 'email', 'phone', 'member_id', 'code'] as $field) {
+        foreach (['name', 'email', 'phone', 'member_id', 'groups', 'code'] as $field) {
             if (array_key_exists($field, $data)) {
                 $voter->{$field} = $data[$field];
             }
@@ -194,6 +197,7 @@ class VoterController extends Controller
             'voters.*.email' => ['nullable', 'string', 'max:255'],
             'voters.*.phone' => ['nullable', 'string', 'max:32'],
             'voters.*.member_id' => ['nullable', 'string', 'max:64'],
+            'voters.*.groups' => ['nullable'],
         ]);
 
         // Validate contacts row by row so the organiser gets the exact line to fix.
@@ -218,7 +222,7 @@ class VoterController extends Controller
             if ($rawPhone !== '' && ! PhoneNumber::isValid($phone)) {
                 $errors["voters.{$i}.phone"] = ['Row ' . ($i + 1) . ': "' . $row['phone'] . '" ' . PhoneNumber::problem($phone)];
             }
-            $rows[] = ['name' => $row['name'] ?? null, 'email' => $email ?: null, 'phone' => $phone, 'member_id' => $memberId];
+            $rows[] = ['name' => $row['name'] ?? null, 'email' => $email ?: null, 'phone' => $phone, 'member_id' => $memberId, 'groups' => Voter::normalizeGroups($row['groups'] ?? null)];
         }
         if ($errors) {
             throw ValidationException::withMessages(array_slice($errors, 0, 20, true));
@@ -354,13 +358,36 @@ class VoterController extends Controller
         $voter = Voter::where('event_id', $event->id)
             ->whereNull('used_at')
             ->where('code', self::normalizeCode($data['code']))
-            ->first(['id', 'name']);
+            ->first(['id', 'name', 'groups']);
 
         // The voter's own name (from the organiser's import) lets them confirm the
         // code is theirs. Only returned for a valid, unused code (rate-limited).
+        // `categories`: the ones this voter may vote in (voter groups).
         return $voter
-            ? response()->json(['valid' => true, 'name' => $voter->name])
+            ? response()->json(['valid' => true, 'name' => $voter->name, 'categories' => $event->categories()->get(['id', 'groups'])
+                ->filter(fn ($c) => $c->allows($voter->groups))->pluck('id')->values()])
             : response()->json(['valid' => false, 'message' => 'Invalid or used voting code.'], 422);
+    }
+
+    /** The voter groups in use on this event, with how many voters are in each. */
+    public function groups(Event $event)
+    {
+        Gate::authorize('view', $event);
+        $counts = [];
+        foreach (Voter::where('event_id', $event->id)->whereNotNull('groups')->pluck('groups') as $groups) {
+            foreach ((array) $groups as $g) {
+                $key = mb_strtolower($g);
+                $counts[$key] ??= ['name' => $g, 'voters' => 0];
+                $counts[$key]['voters']++;
+            }
+        }
+        // Groups a category is limited to, even if no voter has them yet.
+        foreach ($event->categories()->whereNotNull('groups')->pluck('groups') as $groups) {
+            foreach ((array) $groups as $g) {
+                $counts[mb_strtolower($g)] ??= ['name' => $g, 'voters' => 0];
+            }
+        }
+        return response()->json(collect($counts)->sortBy(fn ($g) => mb_strtolower($g['name']))->values());
     }
 
     // ------------------------------------------------------------------ helpers
@@ -370,6 +397,7 @@ class VoterController extends Controller
     {
         $merge = [];
         if ($request->has('member_id')) $merge['member_id'] = self::normalizeMemberId($request->input('member_id'));
+        if ($request->has('groups')) $merge['groups'] = Voter::normalizeGroups($request->input('groups'));
         if ($request->filled('code')) $merge['code'] = self::normalizeCode((string) $request->input('code'));
         elseif ($request->has('code')) $merge['code'] = null;
         if ($request->has('email')) $merge['email'] = $request->filled('email') ? strtolower(trim((string) $request->input('email'))) : null;
@@ -403,9 +431,10 @@ class VoterController extends Controller
             $insert = [];
             foreach (array_values($rows) as $i => $row) {
                 $name = isset($row['name']) && trim((string) $row['name']) !== '' ? trim((string) $row['name']) : null;
+                $groups = $row['groups'] ?? null;
                 $voter = ['name' => $name, 'email' => $row['email'] ?? null, 'phone' => $row['phone'] ?? null, 'member_id' => $row['member_id'] ?? null, 'code' => $codes[$i]];
-                $out[] = $voter;
-                $insert[] = $voter + ['event_id' => $event->id, 'created_at' => $now, 'updated_at' => $now];
+                $out[] = $voter + ['groups' => $groups];
+                $insert[] = $voter + ['groups' => $groups ? json_encode($groups) : null, 'event_id' => $event->id, 'created_at' => $now, 'updated_at' => $now];
             }
             foreach (array_chunk($insert, 500) as $chunk) {
                 Voter::insert($chunk);

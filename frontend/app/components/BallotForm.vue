@@ -17,7 +17,8 @@
                     <div class="small-caps">{{ t('ballot.category', { n: idx + 1 }) }}</div>
                     <h3 class="h5 fw-800 mb-0 text-break">{{ cat.name }}</h3>
                     <div class="small mt-1" :class="isFull(cat) && !single(cat) ? 'text-brand fw-semibold' : 'text-muted'">
-                        <template v-if="ranked(cat)">
+                        <template v-if="motion(cat)">{{ t('motion.hint') }}</template>
+                        <template v-else-if="ranked(cat)">
                             {{ limitFor(cat) ? t('ballot.rankUpTo', { n: limitFor(cat)!, picked: countFor(cat.id) }) : t('ballot.rankHint') }}<template v-if="!limitFor(cat) && countFor(cat.id)"> · {{ t('ballot.ranked', { n: countFor(cat.id) }) }}</template>
                         </template>
                         <template v-else-if="single(cat)">{{ t('ballot.chooseOne') }}</template>
@@ -28,6 +29,7 @@
                 <i v-if="countFor(cat.id) > 0" class="bi bi-check-circle-fill text-brand fs-5" :aria-label="t('ballot.answered')"></i>
             </header>
 
+            <p v-if="motion(cat) && cat.description" class="motion-text px-3 px-sm-4 mb-2">{{ cat.description }}</p>
             <div class="px-2 px-sm-3 pb-3">
                 <div v-if="!(byCategory[cat.id]?.length)" class="text-muted small px-2 py-3">{{ t('ballot.noCandidates') }}</div>
                 <div class="row g-2" role="group" :aria-label="cat.name">
@@ -36,9 +38,10 @@
                             :aria-pressed="isSelected(cat.id, cand.id)" :disabled="disabled || (!single(cat) && isFull(cat) && !isSelected(cat.id, cand.id))"
                             :title="!single(cat) && isFull(cat) && !isSelected(cat.id, cand.id) ? t('ballot.limitTitle', { n: limitFor(cat) ?? 0 }) : undefined"
                             @click="toggle(cat.id, cand.id)">
-                            <CandidateAvatar :name="cand.name" :src="cand.image_url" />
+                            <span v-if="cand.motion_choice" class="motion-ic" :class="cand.motion_choice" aria-hidden="true"><i class="bi" :class="MOTION_ICON[cand.motion_choice]"></i></span>
+                            <CandidateAvatar v-else :name="cand.name" :src="cand.image_url" />
                             <span class="flex-grow-1 text-start min-w-0">
-                                <span class="d-block fw-semibold text-ink text-break">{{ cand.name }}</span>
+                                <span class="d-block fw-semibold text-ink text-break">{{ optionLabel(cand) }}</span>
                                 <span v-if="cand.description" class="d-block small text-muted text-break opt-desc">{{ cand.description }}</span>
                             </span>
                             <span v-if="ranked(cat)" class="sel-mark round rank" :aria-label="rankOf(cat.id, cand.id) ? `#${rankOf(cat.id, cand.id)}` : undefined">
@@ -72,9 +75,9 @@
                     <div v-if="selectedIn(cat.id).length" class="d-flex flex-wrap gap-2">
                         <span v-for="(c, ci) in selectedIn(cat.id)" :key="c.id" class="d-inline-flex align-items-center gap-2 min-w-0">
                             <span v-if="ranked(cat)" class="rank-no">{{ ci + 1 }}</span>
-                            <CandidateAvatar :name="c.name" :src="c.image_url" size="sm" />
+                            <CandidateAvatar v-if="!c.motion_choice" :name="c.name" :src="c.image_url" size="sm" />
                             <span class="min-w-0">
-                                <span class="d-block fw-semibold text-break">{{ c.name }}</span>
+                                <span class="d-block fw-semibold text-break">{{ optionLabel(c) }}</span>
                                 <span v-if="c.description" class="d-block small text-muted text-break review-desc">{{ c.description }}</span>
                             </span>
                         </span>
@@ -96,8 +99,8 @@
 <script setup lang="ts">
 import type { Choice } from '~/types';
 
-interface BallotCategory { id: number; name: string; max_choices?: number | null; method?: string }
-interface BallotCandidate { id: number; category_id: number; name: string; description?: string | null; image_url: string | null }
+interface BallotCategory { id: number; name: string; max_choices?: number | null; method?: string; description?: string | null }
+interface BallotCandidate { id: number; category_id: number; name: string; description?: string | null; image_url: string | null; motion_choice?: 'yes' | 'no' | 'abstain' | null }
 
 const props = withDefaults(defineProps<{
     categories: BallotCategory[];
@@ -121,6 +124,10 @@ const byCategory = computed(() => {
 const countFor = (catId: number) => picks.value[catId]?.length ?? 0;
 /** Choose-one category (the default). */
 const single = (cat: BallotCategory) => !ranked(cat) && (cat.max_choices === 1 || cat.max_choices === undefined);
+const motion = (cat: BallotCategory) => cat.method === 'motion';
+const MOTION_ICON = { yes: 'bi-check-lg', no: 'bi-x-lg', abstain: 'bi-dash-lg' } as const;
+/** Motion options read in the voter's language. */
+const optionLabel = (c: BallotCandidate) => (c.motion_choice ? t(`motion.${c.motion_choice}`) : c.name);
 /** Ranked choice: picks are kept in order of preference (tap order). */
 const ranked = (cat: BallotCategory) => cat.method === 'ranked';
 const rankOf = (catId: number, candId: number) => (picks.value[catId]?.indexOf(candId) ?? -1) + 1;
@@ -176,6 +183,11 @@ defineExpose({ closeReview: () => { reviewOpen.value = false; } });
 </script>
 
 <style scoped>
+.motion-text { white-space: pre-line; color: var(--ink-2, var(--ink)); font-size: .92rem; line-height: 1.55; }
+.motion-ic { width: 40px; height: 40px; border-radius: 50%; display: inline-grid; place-items: center; flex-shrink: 0; font-size: 1.2rem; }
+.motion-ic.yes { background: #ecfdf3; color: #15803d; }
+.motion-ic.no { background: #fef3f2; color: #b42318; }
+.motion-ic.abstain { background: var(--surface-2); color: var(--muted); }
 .sel-mark.rank { font-size: .85rem; font-weight: 800; font-variant-numeric: tabular-nums; }
 .option.selected .sel-mark.rank { color: #fff; }
 .rank-no { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--brand-600); color: #fff; font-size: .75rem; font-weight: 800; flex-shrink: 0; }

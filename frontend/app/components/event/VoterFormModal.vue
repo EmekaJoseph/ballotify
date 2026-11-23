@@ -35,6 +35,14 @@
                 <div v-if="errors.member_id" class="field-error">{{ errors.member_id }}</div>
                 <div v-else class="form-text">Lets this voter request their own code, if you switch on self-registration.</div>
             </div>
+            <div class="mb-3">
+                <label for="vf-groups" class="form-label">Groups <span class="text-muted fw-normal">(optional)</span></label>
+                <input id="vf-groups" v-model="form.groups" class="form-control" maxlength="300" placeholder="e.g. Law, 300L" autocomplete="off"
+                    :list="groupOptions.length ? 'vf-group-list' : undefined" :class="{ 'is-invalid': errors.groups }" />
+                <datalist v-if="groupOptions.length" id="vf-group-list"><option v-for="g in groupOptions" :key="g" :value="g" /></datalist>
+                <div v-if="errors.groups" class="field-error">{{ errors.groups }}</div>
+                <div v-else class="form-text">Separate with commas. Categories limited to a group only show to its voters.</div>
+            </div>
             <div>
                 <label for="vf-code" class="form-label">Voting code <span class="text-muted fw-normal">{{ voter ? '' : '(optional)' }}</span></label>
                 <input id="vf-code" v-model.trim="form.code" class="form-control mono text-uppercase" maxlength="64"
@@ -58,10 +66,10 @@
 import { adminApi } from '~/api/endpoints/admin';
 import type { Voter } from '~/types';
 
-const props = withDefaults(defineProps<{ open: boolean; eventId: number; voter: Voter | null; memberLabel?: string }>(), { memberLabel: 'Member ID' });
+const props = withDefaults(defineProps<{ open: boolean; eventId: number; voter: Voter | null; memberLabel?: string; groupOptions?: string[] }>(), { memberLabel: 'Member ID', groupOptions: () => [] });
 const emit = defineEmits<{ close: []; saved: [voter: Voter, created: boolean]; limit: [] }>();
 
-const form = reactive({ name: '', email: '', phone: '', member_id: '', code: '' });
+const form = reactive({ name: '', email: '', phone: '', member_id: '', code: '', groups: '' });
 const errors = ref<Record<string, string>>({});
 const generalError = ref('');
 const busy = ref(false);
@@ -73,6 +81,7 @@ watch(() => props.open, (open) => {
     form.phone = props.voter?.phone ?? '';
     form.member_id = props.voter?.member_id ?? '';
     form.code = props.voter?.code ?? '';
+    form.groups = (props.voter?.groups ?? []).join(', ');
     errors.value = {};
     generalError.value = '';
 });
@@ -85,7 +94,8 @@ async function submit() {
 
     busy.value = true;
     try {
-        const payload = { name: form.name || null, email: form.email || null, phone: form.phone || null, member_id: form.member_id || null };
+        const groups = form.groups.split(/[,;|]/).map(g => g.trim()).filter(Boolean);
+        const payload = { name: form.name || null, email: form.email || null, phone: form.phone || null, member_id: form.member_id || null, groups };
         const { data } = props.voter
             ? await adminApi.updateVoter(props.eventId, props.voter.id, { ...payload, code: form.code })
             : await adminApi.createVoter(props.eventId, { ...payload, code: form.code || null });

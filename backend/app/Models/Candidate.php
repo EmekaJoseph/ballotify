@@ -10,7 +10,7 @@ class Candidate extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['event_id', 'category_id', 'name', 'description', 'image_path'];
+    protected $fillable = ['event_id', 'category_id', 'name', 'description', 'image_path', 'motion_choice'];
 
     /**
      * The running vote total is never serialised by default: ballots and admin

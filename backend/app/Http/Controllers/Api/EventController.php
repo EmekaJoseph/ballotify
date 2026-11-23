@@ -309,6 +309,9 @@ class EventController extends Controller
                     'max_choices' => $category->max_choices,
                     'shuffle_candidates' => $category->shuffle_candidates,
                     'method' => $category->method,
+                    'description' => $category->description,
+                    'pass_rule' => $category->pass_rule,
+                    'groups' => $category->groups,
                 ])->id;
             }
             foreach ($event->candidates as $candidate) {
@@ -321,6 +324,7 @@ class EventController extends Controller
                     'name' => $candidate->name,
                     'description' => $candidate->description,
                     'image_path' => CandidateController::copyImage($candidate->image_path),
+                    'motion_choice' => $candidate->motion_choice,
                 ]);
             }
 
@@ -423,8 +427,8 @@ class EventController extends Controller
         }
 
         $event->load([
-            'categories:id,event_id,name,max_choices,shuffle_candidates,method',
-            'candidates:id,event_id,category_id,name,description,image_path',
+            'categories:id,event_id,name,max_choices,shuffle_candidates,method,description,pass_rule',
+            'candidates:id,event_id,category_id,name,description,image_path,motion_choice',
         ]);
 
         // Shuffled categories: a fresh random order for every ballot that is opened.
@@ -454,7 +458,7 @@ class EventController extends Controller
             'self_registration' => $event->self_registration && ! $event->isPaid() && Plans::isPro($event),
             'member_id_label' => $event->member_id_label ?: 'ID',
             'language' => $event->language,
-            'categories' => $event->categories->map->only(['id', 'event_id', 'name', 'max_choices', 'method']),
+            'categories' => $event->categories->map->only(['id', 'event_id', 'name', 'max_choices', 'method', 'description', 'pass_rule']),
             'candidates' => $candidates,
         ]);
     }
@@ -482,6 +486,20 @@ class EventController extends Controller
         }
 
         return response()->json($this->buildResults($event));
+    }
+
+    /**
+     * A candidate's photo through the API (with CORS headers), so campaign
+     * cards can draw it onto a canvas and the image can still be downloaded.
+     */
+    public function candidatePhoto(string $token, int $candidate)
+    {
+        $event = Event::publicToken($token)->firstOrFail();
+        $c = \App\Models\Candidate::where('event_id', $event->id)->findOrFail($candidate);
+        $path = $c->image_path ? realpath(public_path($c->image_path)) : false;
+        abort_unless($path && str_starts_with($path, realpath(public_path())) && is_file($path), 404);
+
+        return response()->file($path, ['Cache-Control' => 'public, max-age=3600']);
     }
 
     /** Voters check that their ballot was counted, using the receipt shown after voting. */
@@ -546,12 +564,15 @@ class EventController extends Controller
     private function buildResults(Event $event): array
     {
         $categories = $event->categories()
-            ->with(['candidates' => fn ($q) => $q->select(['id', 'category_id', 'name', 'description', 'image_path', 'votes'])])
+            ->with(['candidates' => fn ($q) => $q->select(['id', 'category_id', 'name', 'description', 'image_path', 'votes', 'motion_choice'])])
             ->orderBy('id')
             ->get();
 
+        // Voter groups: how many voters may vote in each category (for "x of y eligible").
+        $voterGroups = $event->isPaid() ? collect() : $event->voters()->pluck('groups')
+            ->map(fn ($g) => is_string($g) ? json_decode($g, true) : $g);
         $totalVotes = 0;
-        $results = $categories->map(function ($category) use (&$totalVotes) {
+        $results = $categories->map(function ($category) use (&$totalVotes, $voterGroups) {
             $tally = \App\Support\Tally::category($category, $category->candidates);
             $position = array_flip($tally['order']);
             $candidates = $category->candidates
@@ -562,6 +583,7 @@ class EventController extends Controller
                     'image_url' => $c->image_url,
                     // Ranked categories: first-choice votes (the rounds show the rest).
                     'votes' => (int) $c->votes,
+                    'motion_choice' => $c->motion_choice,
                 ])
                 ->sortBy(fn ($c) => $position[$c['id']] ?? PHP_INT_MAX)
                 ->values();
@@ -573,8 +595,14 @@ class EventController extends Controller
                 'name' => $category->name,
                 'max_choices' => $category->max_choices,
                 'method' => $category->method,
+                'description' => $category->description,
+                'pass_rule' => $category->pass_rule,
+                'motion' => $tally['motion'] ?? null,
                 // Ballots that answered this category: the base for "% of voters".
                 'ballots' => (int) $category->ballots,
+                // Limited to some voter groups: how many voters may vote in it.
+                'groups' => $category->groups,
+                'eligible' => $category->groups ? $voterGroups->filter(fn ($g) => $category->allows($g))->count() : null,
                 'winners' => $tally['winners'],
                 'rounds' => $tally['rounds'],
                 'candidates' => $candidates,

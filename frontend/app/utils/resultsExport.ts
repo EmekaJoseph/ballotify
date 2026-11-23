@@ -20,6 +20,16 @@ export const categoryBase = (cat: ResultCategory) => (cat.ballots ? cat.ballots 
 export const categoryShare = (votes: number, cat: ResultCategory) => percent(votes, categoryBase(cat));
 
 export const isRanked = (cat: { method?: string }) => cat.method === 'ranked';
+export const isMotion = (cat: { method?: string }) => cat.method === 'motion';
+/** A motion's result line: "Passed (Yes 62.5% of Yes + No)". */
+export function motionSummary(cat: ResultCategory): string {
+    const m = cat.motion;
+    if (!m) return '';
+    if (!m.decided) return 'No Yes or No votes yet';
+    return `${m.passed ? 'Passed' : 'Not passed'} · Yes ${percent(m.yes, m.yes + m.no)}% of Yes + No`;
+}
+export const passRuleLabel = (rule?: string | null) =>
+    ({ two_thirds: 'Two-thirds majority', three_quarters: 'Three-quarters majority' } as Record<string, string>)[rule ?? ''] ?? 'Simple majority';
 /** "Approval": a plurality category where voters may pick any number. */
 export const isApproval = (cat: { method?: string; max_choices?: number | null }) => !isRanked(cat) && cat.max_choices === null;
 
@@ -32,7 +42,8 @@ export function finalVotes(cat: ResultCategory, candidateId: number): number {
 }
 
 /** How voters fill the category in, in words (organiser-facing, English). */
-export function methodName(cat: { method?: string; max_choices?: number | null }): string {
+export function methodName(cat: { method?: string; max_choices?: number | null; pass_rule?: string | null }): string {
+    if (isMotion(cat)) return `Motion · ${passRuleLabel(cat.pass_rule)}`;
     if (isRanked(cat)) return cat.max_choices ? `Ranked choice (up to ${cat.max_choices})` : 'Ranked choice';
     if (cat.max_choices === null) return 'Approval (pick any number)';
     return cat.max_choices === 1 || cat.max_choices === undefined ? 'Choose one' : `Pick up to ${cat.max_choices}`;
@@ -67,7 +78,7 @@ export function resultsCsv(results: EventResults, event?: BallotEvent | null): s
             const isTop = winners.includes(c);
             rows.push([
                 cat.name, method, i + 1, c.name, c.description ?? '', c.votes, categoryBase(cat) ? `${categoryShare(c.votes, cat)}%` : '0%',
-                isTop ? (tie ? 'Tied' : final ? 'Winner' : 'Leading') : '',
+                isMotion(cat) ? (i === 0 ? motionSummary(cat) : '') : isTop ? (tie ? 'Tied' : final ? 'Winner' : 'Leading') : '',
             ]);
         });
         if (!cat.candidates.length) rows.push([cat.name, method, '', '(no candidates)', '', '', '', '']);

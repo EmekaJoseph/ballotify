@@ -46,11 +46,22 @@ export interface Category {
     max_choices?: number | null;
     /** Candidates shown in random order on each ballot. */
     shuffle_candidates?: boolean;
-    /** plurality = most votes wins (choose one / up to N / approval); ranked = ranked choice. */
+    /** plurality = most votes wins (choose one / up to N / approval); ranked = ranked choice; motion = Yes/No/Abstain. */
     method?: VotingMethod;
+    /** Motions: the full text. */
+    description?: string | null;
+    /** Motions: simple | two_thirds | three_quarters (of Yes + No). */
+    pass_rule?: PassRule | null;
+    /** Voter groups allowed to vote in this category (null/empty = everyone). */
+    groups?: string[] | null;
 }
 
-export type VotingMethod = 'plurality' | 'ranked';
+export type VotingMethod = 'plurality' | 'ranked' | 'motion';
+export type PassRule = 'simple' | 'two_thirds' | 'three_quarters';
+export type MotionChoice = 'yes' | 'no' | 'abstain';
+
+/** Outcome of a motion: abstentions don't count towards the majority. */
+export interface MotionResult { yes: number; no: number; abstain: number; rule: PassRule; decided: boolean; passed: boolean }
 
 /** One round of a ranked-choice count. */
 export interface RankedRound {
@@ -69,6 +80,8 @@ export interface Candidate {
     description?: string | null;
     image_path: string | null;
     image_url: string | null;
+    /** Motions only: the fixed option this is. */
+    motion_choice?: MotionChoice | null;
 }
 
 export interface Voter {
@@ -78,6 +91,8 @@ export interface Voter {
     email: string | null;
     phone: string | null;
     member_id?: string | null;
+    /** Voter groups (faculty, level...): decide which categories they see. */
+    groups?: string[] | null;
     code: string;
     used_at: string | null;
     /** When the code was last delivered (email, SMS or shared on WhatsApp). */
@@ -162,7 +177,7 @@ export interface PublicEvent {
     brand?: Brand | null;
     self_registration?: boolean;
     member_id_label?: string;
-    categories: Pick<Category, 'id' | 'name' | 'max_choices' | 'method'>[];
+    categories: Pick<Category, 'id' | 'name' | 'max_choices' | 'method' | 'description' | 'pass_rule'>[];
     candidates: Candidate[];
 }
 
@@ -179,6 +194,7 @@ export interface ResultCandidate {
     description?: string | null;
     image_url: string | null;
     votes: number;
+    motion_choice?: MotionChoice | null;
 }
 
 export interface Brand {
@@ -197,6 +213,13 @@ export interface ResultCategory {
     winners?: number[];
     /** Ranked choice: the rounds of the count. */
     rounds?: RankedRound[] | null;
+    /** Motions: text, pass rule and outcome. */
+    description?: string | null;
+    pass_rule?: PassRule | null;
+    motion?: MotionResult | null;
+    /** Limited to some voter groups: the groups, and how many voters may vote in it. */
+    groups?: string[] | null;
+    eligible?: number | null;
     candidates: ResultCandidate[];
     leader: ResultCandidate | null;
 }
@@ -238,7 +261,11 @@ export interface VoterContact {
     email?: string | null;
     phone?: string | null;
     member_id?: string | null;
+    /** Groups, e.g. ["Law", "300L"] (or "Law; 300L"). */
+    groups?: string[] | string | null;
 }
+
+export interface VoterGroup { name: string; voters: number }
 
 export type InviteChannel = "email" | "sms" | "both";
 
@@ -511,7 +538,8 @@ export interface CertificatePayload {
     categories: {
         name: string; candidates: { name: string; votes: number }[]; winners: string[];
         /** Ranked choice: candidate votes are first choices; the final round decided it. */
-        method?: 'ranked'; rounds?: number; final_round?: { name: string; votes: number }[];
+        method?: 'ranked' | 'motion'; rounds?: number; final_round?: { name: string; votes: number }[];
+        motion?: MotionResult;
     }[];
     issued_at: string;
 }
@@ -530,11 +558,12 @@ export interface ResultCertificateInfo {
 }
 
 export interface CandidateProfile {
+    id: number;
     name: string;
     description: string | null;
     image_url: string | null;
     category: string | null;
-    event: { name: string; status: EventStatus };
+    event: { name: string; status: EventStatus; link_token: string; brand_color?: string | null };
     editable: boolean;
 }
 

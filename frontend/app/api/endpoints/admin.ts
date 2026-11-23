@@ -1,10 +1,5 @@
 import api from '../index';
-import type {
-    AuditEntry, BallotEvent, Candidate, CandidateImportResult, CandidateImportRow, Category, Earnings, EventResults, EventTemplate,
-    GeneratedCode, InviteChannel, MemberRole, MessagingStatus, MyPayment, Paginated, PaymentReceiptInfo, PlanInfo, PlanSettings,
-    PlatformEvent, PlatformOverview, PlatformPayment, PlatformPayout, PlatformUser, ResultsVisibility, SystemHealth, TeamInfo,
-    TeamMember, User, Voter, VoterContact, VotingMode, NominationSummary, ResultCertificateInfo, Bank,
-} from '~/types';
+import type { AuditEntry, BallotEvent, Candidate, CandidateImportResult, CandidateImportRow, Category, Earnings, EventResults, EventTemplate, GeneratedCode, InviteChannel, MemberRole, MessagingStatus, MyPayment, Paginated, PaymentReceiptInfo, PlanInfo, PlanSettings, PlatformEvent, PlatformOverview, PlatformPayment, PlatformPayout, PlatformUser, ResultsVisibility, SystemHealth, TeamInfo, TeamMember, User, Voter, VoterContact, VotingMode, NominationSummary, ResultCertificateInfo, Bank, VotingMethod, PassRule, VoterGroup } from '~/types';
 
 type Id = number | string;
 
@@ -103,9 +98,9 @@ export const adminApi = {
 
     // Categories
     getCategories: (eventId: Id) => api.get<Category[]>(`/events/${eventId}/categories`),
-    createCategory: (eventId: Id, data: { name: string; max_choices?: number | null; shuffle_candidates?: boolean; method?: 'plurality' | 'ranked' }) =>
+    createCategory: (eventId: Id, data: { name: string; max_choices?: number | null; shuffle_candidates?: boolean; method?: VotingMethod; description?: string | null; pass_rule?: PassRule; groups?: string[] }) =>
         api.post<Category>(`/events/${eventId}/categories`, data),
-    updateCategory: (eventId: Id, categoryId: Id, data: { name?: string; max_choices?: number | null; shuffle_candidates?: boolean; method?: 'plurality' | 'ranked' }) =>
+    updateCategory: (eventId: Id, categoryId: Id, data: { name?: string; max_choices?: number | null; shuffle_candidates?: boolean; method?: VotingMethod; description?: string | null; pass_rule?: PassRule; groups?: string[] }) =>
         api.patch<Category>(`/events/${eventId}/categories/${categoryId}`, data),
     deleteCategory: (eventId: Id, categoryId: Id) => api.delete(`/events/${eventId}/categories/${categoryId}`),
 
@@ -130,6 +125,7 @@ export const adminApi = {
     deleteVoter: (eventId: Id, voterId: Id) => api.delete(`/events/${eventId}/voters/${voterId}`),
     generateVoters: (eventId: Id, data: { count: number }) =>
         api.post<{ voters: GeneratedCode[] }>(`/events/${eventId}/voters/generate`, data),
+    voterGroups: (eventId: Id) => api.get<VoterGroup[]>(`/events/${eventId}/voter-groups`),
     importVoters: (eventId: Id, data: { voters: VoterContact[] }) =>
         api.post<{ voters: GeneratedCode[] }>(`/events/${eventId}/voters/import`, data),
 

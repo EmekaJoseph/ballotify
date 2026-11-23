@@ -24,6 +24,9 @@
             <button type="submit" class="btn btn-primary" :disabled="busy || !newCategory">
                 <i class="bi bi-plus-lg"></i> Add category
             </button>
+            <button v-if="!paid" type="button" class="btn btn-ghost" :disabled="busy" @click="openMotion(null)">
+                <i class="bi bi-hand-thumbs-up"></i> Add motion
+            </button>
             <button type="button" class="btn btn-ghost" :disabled="busy" @click="importOpen = true">
                 <i class="bi bi-upload"></i> Import candidates
             </button>
@@ -42,10 +45,21 @@
                     </form>
                     <template v-else>
                         <div class="min-w-0">
-                            <h3 class="h6 fw-800 mb-0 text-break">{{ cat.name }}</h3>
+                            <h3 class="h6 fw-800 mb-0 text-break"><span v-if="cat.method === 'motion'" class="pill pill-violet me-1"><i class="bi bi-hand-thumbs-up"></i> Motion</span>{{ cat.name }}</h3>
+                            <p v-if="cat.method === 'motion' && cat.description" class="small text-muted mb-1 motion-text">{{ cat.description }}</p>
                             <div class="small text-muted d-flex flex-wrap align-items-center gap-1">
-                                <span>{{ candidatesOf(cat.id).length }} candidate{{ candidatesOf(cat.id).length === 1 ? '' : 's' }}</span>
+                                <template v-if="cat.method === 'motion'">
+                                    <span>Yes / No / Abstain · {{ passRuleName(cat.pass_rule) }}</span>
+                                </template>
+                                <span v-else>{{ candidatesOf(cat.id).length }} candidate{{ candidatesOf(cat.id).length === 1 ? '' : 's' }}</span>
                                 <template v-if="!paid">
+                                    <span aria-hidden="true">·</span>
+                                    <button type="button" class="who-pill" :class="{ limited: cat.groups?.length }" :disabled="locked || !canEdit || busy"
+                                        :title="locked ? 'Locked while voting is under way' : 'Choose which voter groups can vote in this category'" @click="groupsFor = cat">
+                                        <i class="bi bi-people"></i> {{ cat.groups?.length ? cat.groups.join(', ') : 'Everyone' }}
+                                    </button>
+                                </template>
+                                <template v-if="!paid && cat.method !== 'motion'">
                                     <span aria-hidden="true">·</span>
                                     <span v-if="locked || !canEdit">{{ methodName(cat) }}</span>
                                     <AppSelect v-else :model-value="methodValue(cat)" :options="methodOptions(cat)" size="sm" :block="false" :menu-min-width="280"
@@ -55,11 +69,12 @@
                             </div>
                         </div>
                         <div v-if="canEdit" class="d-flex gap-1">
-                            <button class="btn btn-ghost btn-icon btn-sm" :class="{ 'shuffle-on': cat.shuffle_candidates }" :disabled="busy"
+                            <button v-if="cat.method !== 'motion'" class="btn btn-ghost btn-icon btn-sm" :class="{ 'shuffle-on': cat.shuffle_candidates }" :disabled="busy"
                                 :title="cat.shuffle_candidates ? 'Candidates appear in random order. Click for a fixed order.' : 'Show candidates in random order on each ballot'"
                                 :aria-pressed="!!cat.shuffle_candidates" aria-label="Random candidate order" @click="toggleShuffle(cat)"><i class="bi bi-shuffle"></i></button>
-                            <button v-if="!locked" class="btn btn-soft btn-sm" @click="openCandidate(null, cat.id)"><i class="bi bi-person-plus"></i> <span class="d-none d-sm-inline">Candidate</span></button>
-                            <button class="btn btn-ghost btn-icon btn-sm" title="Rename" aria-label="Rename category" @click="editingCat = cat.id; catDraft = cat.name"><i class="bi bi-pencil"></i></button>
+                            <button v-if="!locked && cat.method !== 'motion'" class="btn btn-soft btn-sm" @click="openCandidate(null, cat.id)"><i class="bi bi-person-plus"></i> <span class="d-none d-sm-inline">Candidate</span></button>
+                            <button v-if="cat.method === 'motion'" class="btn btn-ghost btn-icon btn-sm" title="Edit motion" aria-label="Edit motion" @click="openMotion(cat)"><i class="bi bi-pencil"></i></button>
+                            <button v-else class="btn btn-ghost btn-icon btn-sm" title="Rename" aria-label="Rename category" @click="editingCat = cat.id; catDraft = cat.name"><i class="bi bi-pencil"></i></button>
                             <button v-if="!locked" class="btn btn-ghost btn-icon btn-sm text-danger" title="Delete" aria-label="Delete category" @click="removeCategory(cat)"><i class="bi bi-trash"></i></button>
                         </div>
                     </template>
@@ -69,15 +84,19 @@
                     No candidates<template v-if="!locked && canEdit"> yet. <button class="btn btn-link btn-sm p-0 align-baseline" @click="openCandidate(null, cat.id)">Add the first one</button></template>.
                 </div>
                 <ul v-else class="list-unstyled mb-0">
-                    <li v-for="cand in candidatesOf(cat.id)" :key="cand.id" class="cand-row">
-                        <CandidateAvatar :name="cand.name" :src="cand.image_url" />
+                    <li v-for="cand in candidatesOf(cat.id)" :key="cand.id" class="cand-row" :class="{ motion: cand.motion_choice }">
+                        <span v-if="cand.motion_choice" class="motion-ic" :class="cand.motion_choice" aria-hidden="true"><i class="bi" :class="MOTION_ICON[cand.motion_choice]"></i></span>
+                        <CandidateAvatar v-else :name="cand.name" :src="cand.image_url" />
                         <span class="flex-grow-1 min-w-0">
                             <span class="d-block fw-semibold text-ink text-break">{{ cand.name }}</span>
                             <span v-if="cand.description" class="small text-muted text-break cand-desc">{{ cand.description }}</span>
                         </span>
-                        <button v-if="canEdit" class="btn btn-ghost btn-icon btn-sm" title="Profile link: the candidate adds their own photo and description" aria-label="Candidate profile link" @click="openProfileLink(cand)"><i class="bi bi-link-45deg"></i></button>
-                        <button v-if="canEdit" class="btn btn-ghost btn-icon btn-sm" title="Edit" aria-label="Edit candidate" @click="openCandidate(cand)"><i class="bi bi-pencil"></i></button>
-                        <button v-if="!locked && canEdit" class="btn btn-ghost btn-icon btn-sm text-danger" title="Delete" aria-label="Delete candidate" @click="removeCandidate(cand)"><i class="bi bi-trash"></i></button>
+                        <template v-if="!cand.motion_choice">
+                            <button class="btn btn-ghost btn-icon btn-sm" title="Campaign card: an image to share on WhatsApp and social media" aria-label="Campaign card" @click="cardFor = { cand, category: cat.name }"><i class="bi bi-image"></i></button>
+                            <button v-if="canEdit" class="btn btn-ghost btn-icon btn-sm" title="Profile link: the candidate adds their own photo and description" aria-label="Candidate profile link" @click="openProfileLink(cand)"><i class="bi bi-link-45deg"></i></button>
+                            <button v-if="canEdit" class="btn btn-ghost btn-icon btn-sm" title="Edit" aria-label="Edit candidate" @click="openCandidate(cand)"><i class="bi bi-pencil"></i></button>
+                            <button v-if="!locked && canEdit" class="btn btn-ghost btn-icon btn-sm text-danger" title="Delete" aria-label="Delete candidate" @click="removeCandidate(cand)"><i class="bi bi-trash"></i></button>
+                        </template>
                     </li>
                 </ul>
             </section>
@@ -98,6 +117,10 @@
         </BaseModal>
 
         <EventCandidateImportModal :open="importOpen" :event-id="event.id" @close="importOpen = false" @imported="onImported" />
+        <EventMotionModal :open="motionOpen" :event-id="event.id" :category="motionCat" :locked="locked" @close="motionOpen = false" @saved="motionOpen = false; emit('changed')" />
+        <EventCategoryGroupsModal :open="!!groupsFor" :event-id="event.id" :category="groupsFor" @close="groupsFor = null" @saved="groupsFor = null; emit('changed')" />
+        <CampaignCardModal :open="!!cardFor" :candidate="cardFor?.cand ?? null" :category-name="cardFor?.category ?? ''" :event-name="event.name"
+            :token="event.link_token" :brand-color="event.brand_color" @close="cardFor = null" />
 
         <!-- Candidate modal -->
         <BaseModal :open="modal.open" :title="modal.id ? 'Edit candidate' : 'Add candidate'" @close="modal.open = false">
@@ -159,6 +182,13 @@ const editingCat = ref<number | null>(null);
 const catDraft = ref('');
 
 const DESC_MAX = 280;
+const MOTION_ICON = { yes: 'bi-check-lg', no: 'bi-x-lg', abstain: 'bi-dash-lg' } as const;
+const passRuleName = (r?: string | null) => ({ two_thirds: 'two-thirds majority', three_quarters: 'three-quarters majority' } as Record<string, string>)[r ?? ''] ?? 'simple majority';
+const motionOpen = ref(false);
+const motionCat = ref<Category | null>(null);
+function openMotion(cat: Category | null) { motionCat.value = cat; motionOpen.value = true; }
+const groupsFor = ref<Category | null>(null);
+const cardFor = ref<{ cand: Candidate; category: string } | null>(null);
 const importOpen = ref(false);
 const paid = computed(() => props.event.voting_mode === 'paid');
 const canEdit = computed(() => props.event.abilities?.includes('manage') ?? true);
@@ -356,6 +386,16 @@ async function revokeProfileLink() {
 </script>
 
 <style scoped>
+.who-pill { border: 1px dashed var(--line-strong); background: none; border-radius: 999px; padding: .05rem .55rem; font-size: .78rem; color: var(--muted); display: inline-flex; gap: .3rem; align-items: center; max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.who-pill:hover:not(:disabled) { border-color: var(--brand-500); color: var(--brand-600); }
+.who-pill.limited { border-style: solid; border-color: var(--violet-200, #d9cffe); background: var(--violet-50, rgba(124, 92, 255, .08)); color: var(--violet-600, #6d4ce8); font-weight: 700; }
+.who-pill:disabled { cursor: default; opacity: .85; }
+.motion-text { white-space: pre-line; max-width: 640px; }
+.cand-row.motion { padding-top: .55rem; padding-bottom: .55rem; }
+.motion-ic { width: 34px; height: 34px; border-radius: 50%; display: inline-grid; place-items: center; flex-shrink: 0; font-size: 1.05rem; }
+.motion-ic.yes { background: #ecfdf3; color: #15803d; }
+.motion-ic.no { background: #fef3f2; color: #b42318; }
+.motion-ic.abstain { background: var(--surface-2); color: var(--muted); }
 .lock-banner { display: flex; gap: .7rem; align-items: flex-start; padding: .9rem 1.1rem; border-radius: var(--radius); background: var(--surface-2); border: 1px solid var(--line); color: var(--ink-2); font-size: .9rem; }
 .lock-banner > .bi { color: var(--muted); margin-top: 2px; }
 .cand-row { display: flex; align-items: center; gap: .85rem; padding: .75rem 1.25rem; border-bottom: 1px solid var(--line); }

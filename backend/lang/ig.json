@@ -39,5 +39,6 @@
     "The payment was not completed, so no votes were added.": "Ịkwụ ụgwọ ahụ emezughị, ya mere etinyeghị votu ọ bụla.",
     "Your payment is still being processed.": "A ka na-ahazi ịkwụ ụgwọ gị.",
     "Paid after voting closed": "Akwụrụ ụgwọ mgbe ntuli aka gwụchara",
-    "Amount or currency did not match. Contact the organiser.": "Ego ma ọ bụ ụdị ego ahụ adabaghị. Kpọtụrụ onye nhazi."
+    "Amount or currency did not match. Contact the organiser.": "Ego ma ọ bụ ụdị ego ahụ adabaghị. Kpọtụrụ onye nhazi.",
+    "You can’t vote in “:category”.": "Ị nweghị ike ịtụ votu na “:category”."
 }

@@ -36,7 +36,8 @@ class VoteSeeder extends Seeder
             foreach ($turnout as $voter) {
                 foreach ($event->categories as $category) {
                     $candidates = $category->candidates->values();
-                    if ($candidates->isEmpty()) {
+                    // Only categories open to this voter's groups.
+                    if ($candidates->isEmpty() || ! $category->allows($voter->groups)) {
                         continue;
                     }
                     $ballots[$category->id] = ($ballots[$category->id] ?? 0) + 1;

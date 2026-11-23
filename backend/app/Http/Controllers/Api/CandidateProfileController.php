@@ -26,6 +26,7 @@ class CandidateProfileController extends Controller
     public function show(Event $event, Candidate $candidate)
     {
         Gate::authorize('manage', $event);
+        abort_if((bool) $candidate->motion_choice, 422, 'Motion options don’t have profiles.');
         if (! $candidate->profile_token) {
             $candidate->forceFill(['profile_token' => Str::random(40)])->save();
             Audit::log($event, 'candidate.link', "Profile link created for “{$candidate->name}”");
@@ -54,11 +55,14 @@ class CandidateProfileController extends Controller
     {
         $c = $this->byToken($token);
         return response()->json([
+            'id' => $c->id,
             'name' => $c->name,
             'description' => $c->description,
             'image_url' => $c->image_url,
             'category' => $c->category?->name,
-            'event' => ['name' => $c->event->name, 'status' => $c->event->status],
+            // The public voting link (for the campaign card's QR code) and brand colour.
+            'event' => ['name' => $c->event->name, 'status' => $c->event->status, 'link_token' => $c->event->link_token,
+                'brand_color' => \App\Support\Plans::isPro($c->event) ? $c->event->brand_color : null],
             'editable' => $c->event->status !== Event::STATUS_COMPLETED,
         ]);
     }

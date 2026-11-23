@@ -42,6 +42,17 @@
                 </div>
                 <div v-else class="alert alert-secondary border-0 rounded-4 small mt-3 mb-0"><i class="bi bi-lock"></i> Voting has closed, so the profile can’t change any more.</div>
             </div>
+            <div class="card-b pad mt-3 d-flex align-items-center gap-3 flex-wrap">
+                <span class="icon-tile violet flex-shrink-0"><i class="bi bi-image"></i></span>
+                <div class="flex-grow-1 min-w-0">
+                    <div class="fw-bold text-ink">Your campaign card</div>
+                    <div class="small text-muted">An image with your photo and a QR code to the voting page, ready for WhatsApp, Instagram and X.</div>
+                </div>
+                <button class="btn btn-primary" @click="cardOpen = true"><i class="bi bi-magic"></i> Make my card</button>
+            </div>
+            <CampaignCardModal :open="cardOpen" :candidate="{ id: profile.id, name: profile.name, image_url: profile.image_url }"
+                :category-name="profile.category ?? ''" :event-name="profile.event.name" :token="profile.event.link_token" :brand-color="profile.event.brand_color"
+                @close="cardOpen = false" />
             <p class="small text-muted text-center mt-3"><i class="bi bi-shield-check"></i> Your name and category are set by the organiser. Changes you make are recorded in the event’s activity log.</p>
         </template>
     </div>
@@ -50,6 +61,7 @@
 <script setup lang="ts">
 import { publicApi } from '~/api/endpoints/public';
 import type { CandidateProfile } from '~/types';
+const cardOpen = ref(false);
 
 definePageMeta({ layout: 'ballot' });
 useBallotModeFor('other');

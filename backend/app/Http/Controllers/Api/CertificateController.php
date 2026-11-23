@@ -49,6 +49,10 @@ class CertificateController extends Controller
                     'candidates' => $cands->map(fn ($c) => ['name' => $c->name, 'votes' => (int) $c->votes])->all(),
                     'winners' => collect($tally['winners'])->map(fn ($id) => $byId[$id]->name ?? null)->filter()->values()->all(),
                 ];
+                if (! empty($tally['motion'])) {
+                    $row['method'] = 'motion';
+                    $row['motion'] = $tally['motion'];
+                }
                 if ($tally['rounds']) {
                     // Ranked choice: the votes shown are first choices; the final round decided it.
                     $last = end($tally['rounds']);

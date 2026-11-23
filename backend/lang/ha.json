@@ -39,5 +39,6 @@
     "The payment was not completed, so no votes were added.": "Ba a kammala biyan kuɗin ba, don haka ba a ƙara wata ƙuri’a ba.",
     "Your payment is still being processed.": "Ana ci gaba da sarrafa biyan kuɗinka.",
     "Paid after voting closed": "An biya bayan zaɓe ya ƙare",
-    "Amount or currency did not match. Contact the organiser.": "Adadin kuɗi ko nau’in kuɗi bai dace ba. Tuntuɓi mai shirya taron."
+    "Amount or currency did not match. Contact the organiser.": "Adadin kuɗi ko nau’in kuɗi bai dace ba. Tuntuɓi mai shirya taron.",
+    "You can’t vote in “:category”.": "Ba za ka iya jefa ƙuri’a a “:category” ba."
 }

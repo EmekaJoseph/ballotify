@@ -136,6 +136,23 @@ VOTERS take part from any phone or laptop using a one-time code.
            A tie for last is broken by the earlier rounds; if everyone
            left is tied, they share the win.
 
+         "Motion" (Add motion)    a proposal voters answer Yes / No /
+                                  Abstain. Passes by simple majority (more
+                                  Yes than No), two-thirds or three-quarters
+                                  of the Yes + No votes; abstentions don't
+                                  count towards the majority.
+
+       WHO CAN VOTE (per category, Ballot tab): "Everyone" or only some voter
+       groups. Voters get groups from a Group / Faculty / Level column when
+       importing, or the Groups field. A voter only sees, and can only vote
+       in, the categories for their groups (checked by the server, on the web
+       and USSD). Results show "x of y eligible voters" for those categories.
+
+       CAMPAIGN CARDS: the image icon next to a candidate (Ballot tab), the
+       candidate's own profile page, and a share button on paid-voting
+       nominees make a picture with the photo, name, category and a QR code
+       to the voting page. Square for posts, tall for WhatsApp status.
+
          Results show "How the count went" round by round; the report,
          CSV, live reveal and certificates use the same count. On USSD,
          voters rank by picking their 1st choice, then 2nd... (0 = done).

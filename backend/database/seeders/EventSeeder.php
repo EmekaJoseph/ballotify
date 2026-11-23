@@ -66,6 +66,23 @@ class EventSeeder extends Seeder
             }
         }
 
+        // Campus Election extras: a category only Law students see, and a motion.
+        $campus = Event::where('name', 'Campus Election')->first();
+        if ($campus) {
+            $lawRep = Category::create(['event_id' => $campus->id, 'name' => 'Law Faculty Rep', 'groups' => ['Law']]);
+            foreach (['Ngozi Eze', 'Tunde Bakare'] as $name) {
+                Candidate::create(['event_id' => $campus->id, 'category_id' => $lawRep->id, 'name' => $name]);
+            }
+            $motion = Category::create([
+                'event_id' => $campus->id, 'name' => 'Adopt the amended constitution', 'method' => Category::MOTION,
+                'pass_rule' => 'two_thirds', 'max_choices' => 1,
+                'description' => "That the Student Union constitution, as amended at the congress of 14 October 2026, be adopted.",
+            ]);
+            foreach (['yes' => 'Yes', 'no' => 'No', 'abstain' => 'Abstain'] as $choice => $label) {
+                Candidate::create(['event_id' => $campus->id, 'category_id' => $motion->id, 'name' => $label, 'motion_choice' => $choice]);
+            }
+        }
+
         // Paid public voting demo (award night): fans pay ₦50 per vote.
         $awards = Event::create([
             'user_id' => $user->id,
