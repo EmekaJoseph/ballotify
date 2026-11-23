@@ -116,7 +116,7 @@ VOTERS take part from any phone or laptop using a one-time code.
    Step by step:
 
    (1) CREATE EVENT
-       Pick a template (Student union, Award night, AGM, Board) or a blank
+       Pick a template (Church, AGM, Board, Award night, School) or a blank
        event, then: name, description, how people vote (secret ballot or
        paid voting + price), who sees results, opening/closing time.
        The voting method is set per category on the Ballot tab:
@@ -143,7 +143,7 @@ VOTERS take part from any phone or laptop using a one-time code.
                                   count towards the majority.
 
        WHO CAN VOTE (per category, Ballot tab): "Everyone" or only some voter
-       groups. Voters get groups from a Group / Faculty / Level column when
+       groups. Voters get groups from a Group / Branch / Unit column when
        importing, or the Groups field. A voter only sees, and can only vote
        in, the categories for their groups (checked by the server, on the web
        and USSD). Results show "x of y eligible voters" for those categories.
@@ -180,10 +180,10 @@ VOTERS take part from any phone or laptop using a one-time code.
 
    (2) BUILD THE BALLOT  (Ballot tab)
 
-         Event: Student Union Elections
+         Event: Annual Elections 2026  
            |
            +-- Category: President
-           |      +-- Candidate: Ada Obi      [photo]  "Final-year Law student"
+           |      +-- Candidate: Ada Obi      [photo]  "Member since 2015"     
            |      +-- Candidate: Bola Ade     [photo]   (description is optional)
            |
            +-- Category: Treasurer
@@ -203,7 +203,7 @@ VOTERS take part from any phone or laptop using a one-time code.
 
          Option A: "Generate 500"  -> 500 anonymous codes
          Option B: "Import"        -> paste/upload a list (name, email, phone,
-                                    optional ID such as matric number),
+                                    optional ID such as membership no.),
                                     1 code per person
          Option C: "Add"           -> one voter: name, email, phone, ID, code
 
@@ -220,7 +220,7 @@ VOTERS take part from any phone or laptop using a one-time code.
                  code sent ONLY to the email/phone YOU have on file
                  ("Sent to ad••@gmail.com"), max once every 2 minutes
 
-         Knowing someone's matric number is not enough to vote as them.
+         Knowing someone's membership number is not enough to vote as them.
 
          Then:  [Send codes]  -> by Email / SMS / Both (link + personal code)
                 [Download CSV]  or  [Print slips]
@@ -230,7 +230,7 @@ VOTERS take part from any phone or laptop using a one-time code.
          Codes are hidden as ******** in the list; click the eye to reveal.
 
          +---------------------------------------------------+
-         |  [QR]   Student Union Elections                   |
+         |  [QR]   Annual Elections 2026                     |
          |  [QR]   Ada Obi                                   |
          |  [QR]   YOUR VOTING CODE:  K7M2QX9P               |
          |         https://yoursite.com/vote/3f2c...          |
@@ -315,9 +315,9 @@ VOTERS take part from any phone or laptop using a one-time code.
 
    Opens link            Enters code            Picks candidates
    +------------+        +------------+         +----------------+
-   | Student    |        | Enter your |         | PRESIDENT      |
-   | Union      |  --->  | code       |  --->   | (o) Ada Obi    |
-   | Elections  |        | [K7M2QX9P] |         | ( ) Bola Ade   |
+   | Annual     |        | Enter your |         | PRESIDENT      |
+   | Elections  |  --->  | code       |  --->   | (o) Ada Obi    |
+   | 2026       |        | [K7M2QX9P] |         | ( ) Bola Ade   |
    | LIVE       |        | [Continue] |         | TREASURER      |
    | closes in  |        +------------+         | ( ) Chidi Eze  |
    | 3h 12m     |              |                | (o) Dayo Musa  |
@@ -345,7 +345,7 @@ VOTERS take part from any phone or laptop using a one-time code.
 
      Dial *384*1234#
        CON Welcome to Ballotify          -> types event number 476235
-       CON Campus Election
+       CON Annual Elections 2026
            Enter your voting code:       -> types 4831907265
        CON President (1/4)
            1. Ada Obi  2. Bola Ade
@@ -421,7 +421,7 @@ VOTERS take part from any phone or laptop using a one-time code.
 --------------------------------------------------------------------------------
 
    +---------------------------------------------------------------+
-   |  * LIVE RESULTS   Student Union Elections   [Refresh][Present]|
+   |  * LIVE RESULTS   Annual Elections 2026     [Refresh][Present]|
    |  Voting closes in 3h 12m                                      |
    +---------------------------------------------------------------+
    | Votes cast 1,284 | Turnout 62% | Categories 2 | Candidates 4  |

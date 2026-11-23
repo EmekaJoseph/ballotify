@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Cache;
 
 /**
  * Optional per event: voters get their own code by entering an ID that is on
- * the organiser's list (matric number, member number...). The code is only
+ * the organiser's list (membership number, staff ID...). The code is only
  * ever sent to the email/phone the ORGANISER has on file for that ID, so
  * knowing someone's ID is not enough to vote as them.
  */

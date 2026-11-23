@@ -5,7 +5,7 @@
             <div class="hm-board">
                 <div class="d-flex align-items-center justify-content-between mb-3">
                     <span class="hm-live"><span class="hm-dot"></span> Live results</span>
-                    <span class="hm-muted">Student Union 2026</span>
+                    <span class="hm-muted">Annual Elections 2026</span>
                 </div>
                 <div class="d-flex align-items-center gap-3 mb-3">
                     <svg class="hm-donut" viewBox="0 0 42 42">
@@ -37,7 +37,7 @@
                     <div class="hm-notch"></div>
                     <div class="hm-head">
                         <div class="hm-brand"><span class="hm-logo"><i class="bi bi-check2-square"></i></span> Ballotify</div>
-                        <div class="hm-title">Student Union Elections</div>
+                        <div class="hm-title">Annual Elections 2026</div>
                         <div class="hm-open"><span class="hm-dot sm"></span> Open · closes in 3h 12m</div>
                     </div>
                     <div class="hm-voter"><i class="bi bi-person-check"></i> Voting as <b>Tolu A.</b></div>

@@ -23,7 +23,7 @@
                 <div class="flex-grow-1 min-w-0">
                     <h3 class="h6 fw-800 mb-1">Voter self-registration <span class="pill pill-violet ms-1"><i class="bi bi-gem"></i> Pro</span></h3>
                     <p class="small text-muted mb-0">
-                        Optional. Voters enter an ID from your list (e.g. matric number) and their code is sent to the
+                        Optional. Voters enter an ID from your list (e.g. membership number) and their code is sent to the
                         email or phone <b>you</b> have on file, so knowing someone’s ID isn’t enough to vote as them.
                         You can still add voters and send codes yourself.
                     </p>
@@ -36,7 +36,7 @@
             <div v-if="event.self_registration" class="opt-body">
                 <label for="opt-label" class="form-label">What do you call the ID?</label>
                 <div class="d-flex gap-2 flex-wrap">
-                    <input id="opt-label" v-model.trim="label" class="form-control" style="max-width: 280px" maxlength="40" placeholder="Matric number" />
+                    <input id="opt-label" v-model.trim="label" class="form-control" style="max-width: 280px" maxlength="40" placeholder="Membership number" />
                     <button class="btn btn-soft" :disabled="busy === 'label' || label === (event.member_id_label || '')" @click="saveLabel">Save</button>
                 </div>
                 <div class="d-flex flex-wrap gap-2 mt-2">
@@ -140,7 +140,7 @@ const emit = defineEmits<{ changed: []; upgrade: []; go: [tab: string] }>();
 const toast = useToast();
 const { confirm } = useConfirm();
 
-const LABELS = ['Matric number', 'Member number', 'Staff ID', 'Registration number'];
+const LABELS = ['Membership number', 'Staff ID', 'Registration number', 'Matric number'];
 
 async function saveLanguage(code: string) {
     const name = LANGUAGES.find(l => l.code === code)?.name ?? code;
@@ -181,7 +181,7 @@ async function patch(key: string, data: EventPayload, success: string) {
 /** Switches: if the change is refused, put the switch back. */
 async function toggleSelfReg(el: HTMLInputElement) {
     const on = el.checked;
-    const ok = await patch('selfreg', { self_registration: on, ...(on && !props.event.member_id_label ? { member_id_label: 'Matric number' } : {}) },
+    const ok = await patch('selfreg', { self_registration: on, ...(on && !props.event.member_id_label ? { member_id_label: 'Membership number' } : {}) },
         on ? 'Voters can now request their own code' : 'Self-registration switched off');
     if (!ok) el.checked = !on;
 }

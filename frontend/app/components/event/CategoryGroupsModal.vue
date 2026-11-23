@@ -7,7 +7,7 @@
             </label>
             <label class="choice" :class="{ selected: mode === 'some' }">
                 <input v-model="mode" type="radio" value="some" class="form-check-input mt-0" />
-                <span><b>Only some groups</b><span class="d-block small text-muted">E.g. only Law students vote for the Law Faculty Rep.</span></span>
+                <span><b>Only some groups</b><span class="d-block small text-muted">E.g. only members of the Lagos branch vote for the Lagos Branch Rep.</span></span>
             </label>
         </div>
 
@@ -23,7 +23,7 @@
                 </div>
                 <p v-else class="small text-muted">No voter has a group yet. Add groups to voters (a <b>Group</b> column when importing, or the Groups field), or type one below.</p>
                 <form class="d-flex gap-2" @submit.prevent="addNew">
-                    <input v-model.trim="newGroup" class="form-control form-control-sm" maxlength="40" placeholder="Add a group, e.g. 300L" aria-label="New group" />
+                    <input v-model.trim="newGroup" class="form-control form-control-sm" maxlength="40" placeholder="Add a group, e.g. Youth" aria-label="New group" />
                     <button class="btn btn-soft btn-sm" :disabled="!newGroup">Add</button>
                 </form>
                 <p class="small text-muted mt-3 mb-0"><i class="bi bi-info-circle"></i> Voters in <b>any</b> of the ticked groups can vote here.</p>

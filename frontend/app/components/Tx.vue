@@ -1,6 +1,6 @@
 <template>
     <!-- A translated sentence whose {placeholders} can be filled with markup via named slots,
-         e.g. <Tx k="vote.noCode"><template #label><b>Student ID</b></template></Tx> -->
+         e.g. <Tx k="vote.noCode"><template #label><b>Membership number</b></template></Tx> -->
     <span><template v-for="(part, i) in parts" :key="i"><slot v-if="part.slot" :name="part.slot" /><template v-else>{{ part.text }}</template></template></span>
 </template>
 

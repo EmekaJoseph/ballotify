@@ -41,11 +41,11 @@
         <section class="border-bottom bg-surface">
             <div class="container py-4">
                 <div class="d-flex flex-wrap justify-content-center gap-3 gap-md-5 use-cases">
-                    <span><i class="bi bi-mortarboard"></i> Student unions</span>
-                    <span><i class="bi bi-trophy"></i> Award nights</span>
+                    <span><i class="bi bi-people"></i> Associations &amp; cooperatives</span>
+                    <span><i class="bi bi-house-heart"></i> Churches &amp; ministries</span>
                     <span><i class="bi bi-building"></i> Staff &amp; board votes</span>
-                    <span><i class="bi bi-people"></i> Clubs &amp; associations</span>
-                    <span><i class="bi bi-house-heart"></i> Community polls</span>
+                    <span><i class="bi bi-trophy"></i> Award nights</span>
+                    <span><i class="bi bi-mortarboard"></i> Schools &amp; unions</span>
                 </div>
             </div>
         </section>

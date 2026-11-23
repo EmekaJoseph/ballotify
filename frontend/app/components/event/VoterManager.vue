@@ -163,7 +163,7 @@
 
         <!-- Dialogs -->
         <EventVoterFormModal :open="dialog === 'form'" :event-id="event.id" :voter="editing" :member-label="event.member_id_label || 'Member ID'" :group-options="groupNames" @close="dialog = null" @saved="onSaved" @limit="onLimit" />
-        <EventVoterImportModal :open="dialog === 'import'" :event-id="event.id" @close="dialog = null" @created="afterCreate" @limit="onLimit" />
+        <EventVoterImportModal :open="dialog === 'import'" :event-id="event.id" :member-label="event.member_id_label || 'Member ID'" @close="dialog = null" @created="afterCreate" @limit="onLimit" />
         <EventWhatsAppModal :open="dialog === 'whatsapp'" :event="event" :voters="voters" :vote-url="voteUrl" @close="dialog = null" @shared="onShared" />
         <EventRemindModal :open="dialog === 'remind'" :event="event" :pending="pendingVoters.length" :reachable="reachableCount"
             @close="dialog = null" @done="afterRemind" />

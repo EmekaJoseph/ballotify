@@ -16,8 +16,20 @@ class Templates
     public static function all(): array
     {
         return [
+            'church' => [
+                'name' => 'Church / ministry',
+                'summary' => 'Council or elders (pick several), officers, and a motion.',
+                'icon' => 'bi-house-heart',
+                'results_visibility' => Event::RESULTS_AFTER_CLOSE,
+                'voting_mode' => Event::MODE_CODES,
+                'categories' => [
+                    ['name' => 'Church Council', 'max_choices' => 5, 'shuffle_candidates' => true],
+                    ['name' => 'Secretary'], ['name' => 'Treasurer'],
+                    ['name' => 'Approve the building fund budget', 'method' => Category::MOTION, 'pass_rule' => 'simple'],
+                ],
+            ],
             'student_union' => [
-                'name' => 'Student union election',
+                'name' => 'School / student union',
                 'summary' => 'Executive posts, one choice each. Results after voting closes.',
                 'icon' => 'bi-mortarboard',
                 'results_visibility' => Event::RESULTS_AFTER_CLOSE,
@@ -48,8 +60,8 @@ class Templates
                 'voting_mode' => Event::MODE_CODES,
                 'categories' => [
                     ['name' => 'Chairperson'], ['name' => 'Secretary'], ['name' => 'Treasurer'],
-                    ['name' => 'Motion: Approve the annual report', 'candidates' => ['Yes', 'No', 'Abstain']],
-                    ['name' => 'Motion: Approve the new dues', 'candidates' => ['Yes', 'No', 'Abstain']],
+                    ['name' => 'Approve the annual report', 'method' => Category::MOTION, 'pass_rule' => 'simple'],
+                    ['name' => 'Approve the new dues', 'method' => Category::MOTION, 'pass_rule' => 'two_thirds'],
                 ],
             ],
             'board' => [
@@ -93,7 +105,15 @@ class Templates
                 'max_choices' => $c['max_choices'] ?? 1,
                 'shuffle_candidates' => $c['shuffle_candidates'] ?? false,
                 'method' => $c['method'] ?? Category::PLURALITY,
+                'pass_rule' => $c['pass_rule'] ?? null,
             ]);
+            // Motions get their fixed Yes / No / Abstain options.
+            if ($category->isMotion()) {
+                $category->update(['max_choices' => 1]);
+                foreach (['yes' => 'Yes', 'no' => 'No', 'abstain' => 'Abstain'] as $choice => $label) {
+                    Candidate::create(['event_id' => $event->id, 'category_id' => $category->id, 'name' => $label, 'motion_choice' => $choice]);
+                }
+            }
             foreach ($c['candidates'] ?? [] as $name) {
                 Candidate::create(['event_id' => $event->id, 'category_id' => $category->id, 'name' => $name]);
             }

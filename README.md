@@ -15,10 +15,10 @@
 | For organisers                                                     | For voters                             |
 | ------------------------------------------------------------------ | -------------------------------------- |
 | Create events with categories and candidates (photos, short descriptions) | Open one link on any phone or laptop   |
-| Start from a template (student union, award night, AGM, board) or a blank ballot | Enter a personal one-time code         |
+| Start from a template (church / ministry, AGM / association, board, award night, school / student union) or a blank ballot | Enter a personal one-time code         |
 | Per category: choose one, pick up to N, **approval** (any number) or **ranked choice** (instant runoff); shuffle candidates |
 | **Motions** (Yes / No / Abstain) with simple, two-thirds or three-quarters majority |
-| **Voter groups**: categories only some voters see (e.g. a Law Faculty Rep only Law students vote for) |
+| **Voter groups**: categories only some voters see (e.g. a branch rep only that branch votes for) |
 | **Campaign cards**: a shareable image per candidate with a QR code to the ballot | Progress bar, review screen, then submit |
 | Schedule when voting opens and closes, or close it early           | Pick candidates, review, submit        |
 | Generate thousands of voter codes, or import a name list           | A **receipt** to check the ballot was counted |
@@ -28,7 +28,7 @@
 | Import candidates from a spreadsheet; duplicate an event            |                                        |
 | Results as CSV, a printable report, a turnout chart, and **Present / Reveal** on a projector | **Paid voting:** pick a nominee, pay per vote |
 | **Paid public voting** for award nights: fans pay per vote via Paystack (Flutterwave as automatic backup) | Payment reference doubles as a receipt |
-| **Co-organisers** with roles (editor, voter manager, viewer)       | **Self-registration:** request your code with your matric/member ID |
+| **Co-organisers** with roles (editor, voter manager, viewer)       | **Self-registration:** request your code with your membership number / ID |
 | Optional: voter self-registration, USSD voting, public nominations, candidate profile links | **USSD voting** on any phone, no data needed |
 | **Certified results** with a QR code anyone can verify             | Check a results certificate at /verify |
 | Automatic payouts for paid voting (Paystack split payments)        |                                        |
@@ -123,7 +123,7 @@ npm run dev                       # http://localhost:3000
 ### 3. Try it
 
 1. Open http://localhost:3000 and sign in.
-2. Open **Campus Election**, go to the **Share** tab and open the voting link.
+2. Open **Annual Elections 2026**, go to the **Share** tab and open the voting link.
 3. Vote with a code from the **Voters** tab, then watch the results update.
 
 ## Configuration

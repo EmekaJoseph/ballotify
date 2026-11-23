@@ -3,7 +3,7 @@
         subtitle="One candidate per line: category, name, description. The description is optional."
         size="lg" @close="emit('close')">
         <textarea v-model="text" class="form-control mono small" rows="7"
-            placeholder="President, Ada Obi, Final-year Law student&#10;President, Bola Ade&#10;Treasurer, Chidi Eze, Runs the finance society"></textarea>
+            placeholder="President, Ada Obi, Member since 2015&#10;President, Bola Ade&#10;Treasurer, Chidi Eze, Chartered accountant"></textarea>
 
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-2">
             <div class="d-flex flex-wrap gap-2">
@@ -11,7 +11,8 @@
                     <i class="bi bi-filetype-csv"></i> Load a .csv file
                     <input type="file" accept=".csv,.txt,text/csv,text/plain" class="visually-hidden" @change="loadFile" />
                 </label>
-                <button type="button" class="btn btn-ghost btn-sm" @click="downloadTemplate"><i class="bi bi-download"></i> Template</button>
+                <button type="button" class="btn btn-ghost btn-sm" title="A spreadsheet with the right columns and example rows. Fill it in, save as CSV, then load it here."
+                    @click="downloadTemplate"><i class="bi bi-download"></i> Download template</button>
             </div>
             <span class="small text-muted">
                 {{ rows.length }} candidate{{ rows.length === 1 ? '' : 's' }} in {{ categoryCount }} categor{{ categoryCount === 1 ? 'y' : 'ies' }}
@@ -116,9 +117,9 @@ async function loadFile(e: Event) {
 function downloadTemplate() {
     downloadFile('candidates-template.csv', toCsv([
         ['Category', 'Name', 'Description'],
-        ['President', 'Ada Obi', 'Final-year Law student'],
+        ['President', 'Ada Obi', 'Member since 2015'],
         ['President', 'Bola Ade', ''],
-        ['Treasurer', 'Chidi Eze', 'Runs the finance society'],
+        ['Treasurer', 'Chidi Eze', 'Chartered accountant'],
     ]));
 }
 

@@ -143,7 +143,7 @@
                 <div class="mb-3">
                     <label for="cand-desc" class="form-label">Short description <span class="text-muted fw-normal">(optional)</span></label>
                     <textarea id="cand-desc" v-model="modal.description" class="form-control" rows="2" :maxlength="DESC_MAX"
-                        placeholder="e.g. Final-year Law student · campaigning for longer library hours"></textarea>
+                        placeholder="e.g. Member since 2015 · focused on transparent finances"></textarea>
                     <div class="form-text d-flex justify-content-between gap-2">
                         <span>Shown under the name on the ballot and the results.</span>
                         <span :class="{ 'text-warning-emphasis': modal.description.length > DESC_MAX - 20 }">{{ modal.description.length }}/{{ DESC_MAX }}</span>

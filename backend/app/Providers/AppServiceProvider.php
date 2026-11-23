@@ -29,7 +29,7 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('auth', fn (Request $request) => Limit::perMinute(10)->by($request->ip()));
 
         // Code validation and vote submission: limit guesses per IP per event.
-        // Kept generous enough for many voters behind one shared network (e.g. a campus lab).
+        // Kept generous enough for many voters behind one shared network (e.g. a church hall or office Wi-Fi).
         RateLimiter::for('voting', fn (Request $request) => Limit::perMinute(30)
             ->by($request->ip() . '|' . $request->route('token')));
 

@@ -5,17 +5,22 @@
             placeholder="Ada Obi, ada@example.com, 08012345678&#10;Bola Ade, bola@example.com&#10;Chidi Eze, , +2348098765432"></textarea>
 
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-2">
-            <label class="btn btn-ghost btn-sm mb-0">
-                <i class="bi bi-filetype-csv"></i> Load a .csv file
-                <input type="file" accept=".csv,.txt,text/csv,text/plain" class="visually-hidden" @change="loadFile" />
-            </label>
+            <div class="d-flex flex-wrap gap-2">
+                <label class="btn btn-ghost btn-sm mb-0">
+                    <i class="bi bi-filetype-csv"></i> Load a .csv file
+                    <input type="file" accept=".csv,.txt,text/csv,text/plain" class="visually-hidden" @change="loadFile" />
+                </label>
+                <button type="button" class="btn btn-ghost btn-sm" title="A spreadsheet with the right columns and example rows. Fill it in, save as CSV, then load it here."
+                    @click="downloadTemplate"><i class="bi bi-download"></i> Download template</button>
+            </div>
             <span class="small text-muted">
                 {{ rows.length }} voter{{ rows.length === 1 ? '' : 's' }} ·
                 <i class="bi bi-envelope"></i> {{ withEmail }} · <i class="bi bi-phone"></i> {{ withPhone }}
             </span>
         </div>
         <div class="form-text">
-            Spreadsheet exports work too. Columns named <b>Name</b>, <b>Email</b>, <b>Phone</b> and an <b>ID</b> column (e.g. Matric number, Member no.) are matched in any order.
+            Spreadsheet exports work too. Columns named <b>Name</b>, <b>Email</b>, <b>Phone</b>, an <b>ID</b> column (e.g. Membership number, Staff ID)
+            and a <b>Group</b> column (e.g. branch or unit; several separated by “;”) are matched in any order.
             The ID lets voters request their own code if you switch on self-registration.
             Local numbers like 0801… are converted using your country code.
         </div>
@@ -52,7 +57,19 @@
 import { adminApi } from '~/api/endpoints/admin';
 import type { GeneratedCode, VoterContact } from '~/types';
 
-const props = defineProps<{ open: boolean; eventId: number }>();
+const props = withDefaults(defineProps<{ open: boolean; eventId: number; memberLabel?: string }>(), { memberLabel: 'Member ID' });
+
+/** A ready-to-fill spreadsheet: the columns this import recognises, with example rows. */
+function downloadTemplate() {
+    // The ID column keeps the event's own label when the import will recognise it.
+    const idHeader = /matric|member|staff|student|reg(istration)?\.? ?(no|num)|id|identification/i.test(props.memberLabel) ? props.memberLabel : 'Member ID';
+    downloadFile('voters-template.csv', toCsv([
+        ['Name', 'Email', 'Phone', idHeader, 'Group'],
+        ['Ada Obi', 'ada@example.com', '0801 234 5678', 'MEM-0001', 'Lagos; Youth'],
+        ['Bola Ade', 'bola@example.com', '', 'MEM-0002', 'Abuja'],
+        ['Chidi Eze', '', '0809 876 5432', 'MEM-0003', ''],
+    ]));
+}
 const emit = defineEmits<{ close: []; created: [codes: GeneratedCode[]]; limit: [] }>();
 
 const text = ref('');
@@ -77,10 +94,10 @@ const rows = computed<VoterContact[]>(() => {
         email: header.findIndex(h => /e-?mail/.test(h)),
         member_id: header.findIndex(h => /matric|member|staff|student|reg(istration)?\.? ?(no|num)|\bid\b|identification/.test(h)),
         phone: -1,
-        // "Group", "Groups", "Faculty", "Department", "Level", "Branch"…: all go into groups.
+        // "Group", "Branch", "Unit", "Department", "Zone", "Level"…: all go into groups.
         groups: [] as number[],
     };
-    header.forEach((h, i) => { if (/^groups?$|faculty|department|dept|level|branch|chapter|unit|class\b|house|zone|ward/.test(h)) idx.groups.push(i); });
+    header.forEach((h, i) => { if (/^groups?$|branch|chapter|unit|department|dept|zone|district|region|parish|assembly|fellowship|ministry|cell|ward|faculty|level|class\b|house/.test(h)) idx.groups.push(i); });
     // Phone: a phone-like column that isn't the ID column ("Member number" is an ID, not a phone).
     idx.phone = header.findIndex((h, i) => i !== idx.member_id && /phone|mobile|tel|whatsapp|^number/.test(h));
     const hasHeader = idx.name >= 0 || idx.email >= 0 || idx.phone >= 0 || idx.member_id >= 0 || idx.groups.length > 0;

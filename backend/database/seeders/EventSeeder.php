@@ -22,11 +22,11 @@ class EventSeeder extends Seeder
         $now = now();
         // 0: open now (choose one per post) · 1: closed (board picks up to 2) · 2: opens tomorrow
         $events = [
-            ['name' => 'Campus Election', 'visibility' => 'live', 'max' => 1,
+            ['name' => 'Annual Elections 2026', 'visibility' => 'live', 'max' => 1,
                 'starts_at' => $now->copy()->subHours(1), 'ends_at' => $now->copy()->addDays(1)],
-            ['name' => 'Faculty Awards', 'visibility' => 'after_close', 'max' => 2,
+            ['name' => 'Leadership Awards', 'visibility' => 'after_close', 'max' => 2,
                 'starts_at' => $now->copy()->subDays(3), 'ends_at' => $now->copy()->subDay()],
-            ['name' => 'Tech Fest Poll', 'visibility' => 'after_close', 'max' => 2,
+            ['name' => 'Community Poll', 'visibility' => 'after_close', 'max' => 2,
                 'starts_at' => $now->copy()->addDay(), 'ends_at' => $now->copy()->addDays(3)],
         ];
 
@@ -50,8 +50,8 @@ class EventSeeder extends Seeder
                 ]))->values();
             // Some candidates get a short description, some don't (it's optional).
             $blurbs = [
-                'A' => 'Final-year Law · campaigning for longer library hours',
-                'B' => 'Second-year Engineering · wants a stronger student voice',
+                'A' => 'Member since 2012 · campaigning for open accounts',
+                'B' => 'Youth leader · wants a stronger voice for young members',
                 'C' => null,
             ];
             foreach ($categories as $category) {
@@ -66,27 +66,27 @@ class EventSeeder extends Seeder
             }
         }
 
-        // Campus Election extras: a category only Law students see, and a motion.
-        $campus = Event::where('name', 'Campus Election')->first();
-        if ($campus) {
-            $lawRep = Category::create(['event_id' => $campus->id, 'name' => 'Law Faculty Rep', 'groups' => ['Law']]);
+        // Annual Elections extras: a category only the Lagos branch sees, and a motion.
+        $annual = Event::where('name', 'Annual Elections 2026')->first();
+        if ($annual) {
+            $branchRep = Category::create(['event_id' => $annual->id, 'name' => 'Lagos Branch Rep', 'groups' => ['Lagos']]);
             foreach (['Ngozi Eze', 'Tunde Bakare'] as $name) {
-                Candidate::create(['event_id' => $campus->id, 'category_id' => $lawRep->id, 'name' => $name]);
+                Candidate::create(['event_id' => $annual->id, 'category_id' => $branchRep->id, 'name' => $name]);
             }
             $motion = Category::create([
-                'event_id' => $campus->id, 'name' => 'Adopt the amended constitution', 'method' => Category::MOTION,
+                'event_id' => $annual->id, 'name' => 'Adopt the amended constitution', 'method' => Category::MOTION,
                 'pass_rule' => 'two_thirds', 'max_choices' => 1,
-                'description' => "That the Student Union constitution, as amended at the congress of 14 October 2026, be adopted.",
+                'description' => "That the constitution, as amended at the general meeting of 14 October 2026, be adopted.",
             ]);
             foreach (['yes' => 'Yes', 'no' => 'No', 'abstain' => 'Abstain'] as $choice => $label) {
-                Candidate::create(['event_id' => $campus->id, 'category_id' => $motion->id, 'name' => $label, 'motion_choice' => $choice]);
+                Candidate::create(['event_id' => $annual->id, 'category_id' => $motion->id, 'name' => $label, 'motion_choice' => $choice]);
             }
         }
 
         // Paid public voting demo (award night): fans pay ₦50 per vote.
         $awards = Event::create([
             'user_id' => $user->id,
-            'name' => 'Campus Awards Night',
+            'name' => 'Excellence Awards Night',
             'description' => 'Vote for your favourites. ₦50 per vote, as many votes as you like.',
             'link_token' => Str::uuid()->toString(),
             'results_visibility' => 'live',

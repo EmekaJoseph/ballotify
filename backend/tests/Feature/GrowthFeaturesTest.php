@@ -110,8 +110,14 @@ it('creates an event from a template', function () {
 
     $id = $this->actingAs($user)->postJson('/api/events', ['name' => 'Club AGM', 'template' => 'agm'])
         ->assertCreated()->assertJsonPath('categories_count', 5)->json('id');
-    $motion = Category::where('event_id', $id)->where('name', 'like', 'Motion%')->first();
-    expect($motion->candidates()->pluck('name')->all())->toBe(['Yes', 'No', 'Abstain']);
+    $motion = Category::where('event_id', $id)->where('method', 'motion')->first();
+    expect($motion->candidates()->pluck('motion_choice')->all())->toBe(['yes', 'no', 'abstain'])
+        ->and(Category::where('event_id', $id)->where('method', 'motion')->count())->toBe(2);
+
+    // Church template: council (pick up to 5) and a motion.
+    $church = $this->actingAs($user)->postJson('/api/events', ['name' => 'Parish elections', 'template' => 'church'])->assertCreated()->json('id');
+    expect(Category::where('event_id', $church)->where('name', 'Church Council')->value('max_choices'))->toBe(5)
+        ->and(Category::where('event_id', $church)->where('method', 'motion')->count())->toBe(1);
 
     $this->actingAs($user)->postJson('/api/events', ['name' => 'Awards', 'template' => 'award_night'])
         ->assertCreated()->assertJsonPath('voting_mode', 'paid')->assertJsonPath('vote_price_naira', 50);

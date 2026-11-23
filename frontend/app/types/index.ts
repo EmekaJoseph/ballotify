@@ -91,7 +91,7 @@ export interface Voter {
     email: string | null;
     phone: string | null;
     member_id?: string | null;
-    /** Voter groups (faculty, level...): decide which categories they see. */
+    /** Voter groups (branch, unit, department...): decide which categories they see. */
     groups?: string[] | null;
     code: string;
     used_at: string | null;
@@ -261,7 +261,7 @@ export interface VoterContact {
     email?: string | null;
     phone?: string | null;
     member_id?: string | null;
-    /** Groups, e.g. ["Law", "300L"] (or "Law; 300L"). */
+    /** Groups, e.g. ["Lagos", "Youth"] (or "Lagos; Youth"). */
     groups?: string[] | string | null;
 }
 

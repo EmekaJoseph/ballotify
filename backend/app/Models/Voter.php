@@ -33,7 +33,7 @@ class Voter extends Model
     ];
 
     /**
-     * Clean a group list: "Law; 300L" or ["Law", "300L"] -> ["Law", "300L"].
+     * Clean a group list: "Lagos; Youth" or ["Lagos", "Youth"] -> ["Lagos", "Youth"].
      * Trimmed, duplicates removed (ignoring case), at most 10 of 40 characters.
      */
     public static function normalizeGroups(mixed $input): ?array

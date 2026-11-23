@@ -32,7 +32,7 @@
 
                 <label for="cp-desc" class="form-label">Short description</label>
                 <textarea id="cp-desc" v-model="description" class="form-control" rows="3" maxlength="280" :disabled="!profile.editable"
-                    placeholder="e.g. Final-year Law · campaigning for longer library hours"></textarea>
+                    placeholder="e.g. Member since 2015 · focused on transparent finances"></textarea>
                 <div class="form-text d-flex justify-content-between"><span>Shown under your name on the ballot and the results.</span><span>{{ description.length }}/280</span></div>
 
                 <div v-if="profile.editable" class="d-flex justify-content-end mt-4">

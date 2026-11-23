@@ -31,13 +31,13 @@
             <div class="mb-3">
                 <label for="vf-member" class="form-label">{{ memberLabel }} <span class="text-muted fw-normal">(optional)</span></label>
                 <input id="vf-member" v-model.trim="form.member_id" class="form-control mono text-uppercase" maxlength="64"
-                    placeholder="e.g. CSC/19/001" autocomplete="off" :class="{ 'is-invalid': errors.member_id }" />
+                    placeholder="e.g. MEM-0042" autocomplete="off" :class="{ 'is-invalid': errors.member_id }" />
                 <div v-if="errors.member_id" class="field-error">{{ errors.member_id }}</div>
                 <div v-else class="form-text">Lets this voter request their own code, if you switch on self-registration.</div>
             </div>
             <div class="mb-3">
                 <label for="vf-groups" class="form-label">Groups <span class="text-muted fw-normal">(optional)</span></label>
-                <input id="vf-groups" v-model="form.groups" class="form-control" maxlength="300" placeholder="e.g. Law, 300L" autocomplete="off"
+                <input id="vf-groups" v-model="form.groups" class="form-control" maxlength="300" placeholder="e.g. Lagos branch, Youth" autocomplete="off"
                     :list="groupOptions.length ? 'vf-group-list' : undefined" :class="{ 'is-invalid': errors.groups }" />
                 <datalist v-if="groupOptions.length" id="vf-group-list"><option v-for="g in groupOptions" :key="g" :value="g" /></datalist>
                 <div v-if="errors.groups" class="field-error">{{ errors.groups }}</div>

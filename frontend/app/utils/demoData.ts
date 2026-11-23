@@ -2,8 +2,8 @@ import type { Candidate, EventResults } from '~/types';
 
 /** Sample data for the public demo pages. No API calls involved. */
 export const DEMO_EVENT = {
-    name: 'Riverside Student Union Elections',
-    description: 'Choose the students who will lead the union next year.',
+    name: 'Riverside Community Association Elections',
+    description: 'Choose the members who will lead the association next year.',
     categories: [
         { id: 1, name: 'President' },
         { id: 2, name: 'Vice President' },
@@ -12,14 +12,14 @@ export const DEMO_EVENT = {
 };
 
 const people: [number, number, string, string | null][] = [
-    [1, 1, 'Amara Okafor', 'Final-year Law · longer library hours and fairer exam timetables'],
-    [2, 1, 'Daniel Mensah', 'Third-year Economics · cheaper campus food'],
+    [1, 1, 'Amara Okafor', 'Member for 12 years · open accounts and monthly updates'],
+    [2, 1, 'Daniel Mensah', 'Small-business owner · more events for families'],
     [3, 1, 'Sofia Lindqvist', null],
-    [4, 2, 'Kwame Asante', 'Sports Club captain · better facilities for every society'],
-    [5, 2, 'Priya Raman', 'Second-year Medicine · mental-health first'],
+    [4, 2, 'Kwame Asante', 'Youth leader · a stronger voice for young members'],
+    [5, 2, 'Priya Raman', 'Nurse · a health and welfare desk'],
     [6, 3, 'Lucas Moreau', null],
-    [7, 3, 'Zainab Bello', 'Peer mentor · a 24/7 welfare line'],
-    [8, 3, 'Ethan Park', 'First-year rep · more support for new students'],
+    [7, 3, 'Zainab Bello', 'Volunteer coordinator · a 24/7 welfare line'],
+    [8, 3, 'Ethan Park', 'New member · a warmer welcome for newcomers'],
 ];
 
 export const DEMO_CANDIDATES: Candidate[] = people.map(([id, category_id, name, description]) => ({

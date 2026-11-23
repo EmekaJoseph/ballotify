@@ -3,7 +3,7 @@
         <div class="mb-4">
             <label for="ev-name" class="form-label">Event name</label>
             <input id="ev-name" v-model.trim="form.name" type="text" class="form-control form-control-lg"
-                :class="{ 'is-invalid': errors.name }" placeholder="e.g. Student Union Elections 2026" maxlength="255"
+                :class="{ 'is-invalid': errors.name }" placeholder="e.g. 2026 Annual General Meeting" maxlength="255"
                 :disabled="busy" />
             <div v-if="errors.name" class="field-error">{{ errors.name }}</div>
         </div>

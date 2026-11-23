@@ -59,7 +59,7 @@ Public endpoints answer in the voter's language when the request has `X-Locale: 
 - `description` (string, nullable)
 - `voting_mode`: `codes` (secret ballot, default) or `paid` (public paid voting)
 - `vote_price_naira`: required for `paid` (10–100000)
-- `template` (create only): `student_union`, `award_night`, `agm` or `board`; adds its categories and defaults
+- `template` (create only): `church`, `agm`, `board`, `award_night` or `student_union`; adds its categories and defaults
 - `reminder_at`, `reminder_channel` (`email|sms|both`) (update only, Pro): a scheduled reminder to everyone who hasn't voted; must be in the future and before `ends_at`. `null` cancels it.
 - `results_visibility`: `live`, `after_close` (default) or `private`
 - `starts_at`, `ends_at` (ISO dates, nullable; `ends_at` must not be before `starts_at`)

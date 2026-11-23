@@ -23,7 +23,7 @@ class VoterController extends Controller
     private const CODE_LENGTH = 8;
     private const MAX_BATCH = 10000;
 
-    /** Member IDs (matric numbers...) match case-insensitively, ignoring spaces. */
+    /** Member IDs (membership numbers...) match case-insensitively, ignoring spaces. */
     public static function normalizeMemberId(?string $id): ?string
     {
         $id = strtoupper(preg_replace('/\s+/', '', (string) $id) ?? '');
