@@ -13,7 +13,7 @@
         </div>
 
         <section v-for="cat in categories" :id="`cat-${cat.id}`" :key="cat.id" class="mb-4 cat-section">
-            <h2 class="h5 fw-800 mb-3">{{ cat.name }}</h2>
+            <h2 class="h5 fw-800 mb-3 text-break">{{ cat.name }}</h2>
             <div class="row g-3">
                 <div v-for="cand in byCategory[cat.id]" :key="cand.id" class="col-6 col-md-4">
                     <div class="nominee card-b h-100">
@@ -23,7 +23,7 @@
                         </div>
                         <div class="p-3 d-flex flex-column flex-grow-1">
                             <div class="fw-800 text-ink text-break lh-sm">{{ cand.name }}</div>
-                            <div v-if="cand.description" class="small text-muted mt-1 desc">{{ cand.description }}</div>
+                            <div v-if="cand.description" class="small text-muted mt-1 desc" :title="cand.description">{{ cand.description }}</div>
                             <div class="d-flex gap-2 mt-auto" style="margin-top: .75rem !important">
                                 <button type="button" class="btn btn-primary btn-sm flex-grow-1" :disabled="!paymentsReady" @click="openBuy(cand, cat.name)">
                                     <i class="bi bi-heart-fill"></i> {{ t('paid.vote') }}

@@ -159,7 +159,7 @@ a { text-decoration: none; }
     --bs-btn-color: #fff; --bs-btn-border-color: rgba(255, 255, 255, .28);
     --bs-btn-hover-bg: rgba(255, 255, 255, .08); --bs-btn-hover-color: #fff; --bs-btn-hover-border-color: rgba(255, 255, 255, .5);
 }
-.btn-icon { --bs-btn-padding-x: 0; --bs-btn-padding-y: 0; width: 38px; height: 38px; }
+.btn-icon { --bs-btn-padding-x: 0; --bs-btn-padding-y: 0; width: 38px; height: 38px; flex-shrink: 0; }
 .btn-icon.btn-sm { width: 32px; height: 32px; }
 
 /* ---------- Cards / surfaces ---------- */
@@ -241,6 +241,9 @@ a { text-decoration: none; }
     padding: .3rem .65rem; border-radius: 999px; white-space: nowrap; line-height: 1.2;
 }
 .pill .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+/* Pills holding user text (winner names...): wrap rather than overflow on small screens. */
+.pill.pill-wrap { white-space: normal; max-width: 100%; overflow-wrap: anywhere; align-items: flex-start; line-height: 1.35; }
+.pill.pill-wrap > .bi { margin-top: .1em; flex-shrink: 0; }
 .pill-active { background: var(--success-50); color: var(--success); }
 .pill-upcoming { background: var(--warning-50); color: var(--warning); }
 .pill-completed { background: var(--neutral-50); color: var(--muted); }

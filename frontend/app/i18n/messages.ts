@@ -240,6 +240,8 @@ const en = {
     'card.share': 'Share',
     'card.making': 'Making the card…',
     'card.hint': 'Share it on WhatsApp, Instagram or X. The QR code opens the voting page.',
+    'ballot.more': 'More',
+    'ballot.less': 'Less',
 } as const;
 
 export type MessageKey = keyof typeof en;
@@ -471,6 +473,8 @@ const fr: Dictionary = {
     'card.share': 'Partager',
     'card.making': 'Création de la carte…',
     'card.hint': 'Partagez-la sur WhatsApp, Instagram ou X. Le QR code ouvre la page de vote.',
+    'ballot.more': 'Plus',
+    'ballot.less': 'Moins',
 };
 
 const yo: Dictionary = {
@@ -699,6 +703,8 @@ const yo: Dictionary = {
     'card.share': 'Pín in',
     'card.making': 'À ń ṣe káàdì náà…',
     'card.hint': 'Pín in lórí WhatsApp, Instagram tàbí X. Kóòdù QR náà ṣí ojú-ìwé ìdìbò.',
+    'ballot.more': 'Sí i',
+    'ballot.less': 'Dín kù',
 };
 
 const ha: Dictionary = {
@@ -927,6 +933,8 @@ const ha: Dictionary = {
     'card.share': 'Raba',
     'card.making': 'Ana yin katin…',
     'card.hint': 'Raba shi a WhatsApp, Instagram ko X. Lambar QR tana buɗe shafin zaɓe.',
+    'ballot.more': 'Ƙari',
+    'ballot.less': 'Rage',
 };
 
 const ig: Dictionary = {
@@ -1155,6 +1163,8 @@ const ig: Dictionary = {
     'card.share': 'Kesaa',
     'card.making': 'Anyị na-eme kaadị ahụ…',
     'card.hint': 'Kesaa ya na WhatsApp, Instagram ma ọ bụ X. Koodu QR na-emeghe peeji ntuli aka.',
+    'ballot.more': 'Ọzọ',
+    'ballot.less': 'Belata',
 };
 
 export const messages: Record<'en' | 'yo' | 'ha' | 'ig' | 'fr', Dictionary> = { en, yo, ha, ig, fr };

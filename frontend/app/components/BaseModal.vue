@@ -5,8 +5,8 @@
                 <div class="modal-panel" :class="size" role="dialog" aria-modal="true" :aria-label="title">
                     <div class="d-flex align-items-start justify-content-between gap-3 px-4 pt-4 pb-2">
                         <div class="min-w-0">
-                            <h5 class="mb-1 fw-800">{{ title }}</h5>
-                            <p v-if="subtitle" class="text-muted small mb-0">{{ subtitle }}</p>
+                            <h5 class="mb-1 fw-800 text-break">{{ title }}</h5>
+                            <p v-if="subtitle" class="text-muted small mb-0 text-break">{{ subtitle }}</p>
                         </div>
                         <button type="button" class="btn btn-ghost btn-icon btn-sm flex-shrink-0" :aria-label="t('common.close')"
                             @click="emit('close')">

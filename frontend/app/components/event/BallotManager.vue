@@ -68,7 +68,7 @@
                                 <span v-if="cat.shuffle_candidates" class="pill pill-violet shuffle-pill"><i class="bi bi-shuffle"></i> Random order</span>
                             </div>
                         </div>
-                        <div v-if="canEdit" class="d-flex gap-1">
+                        <div v-if="canEdit" class="d-flex gap-1 flex-shrink-0">
                             <button v-if="cat.method !== 'motion'" class="btn btn-ghost btn-icon btn-sm" :class="{ 'shuffle-on': cat.shuffle_candidates }" :disabled="busy"
                                 :title="cat.shuffle_candidates ? 'Candidates appear in random order. Click for a fixed order.' : 'Show candidates in random order on each ballot'"
                                 :aria-pressed="!!cat.shuffle_candidates" aria-label="Random candidate order" @click="toggleShuffle(cat)"><i class="bi bi-shuffle"></i></button>
@@ -89,7 +89,7 @@
                         <CandidateAvatar v-else :name="cand.name" :src="cand.image_url" />
                         <span class="flex-grow-1 min-w-0">
                             <span class="d-block fw-semibold text-ink text-break">{{ cand.name }}</span>
-                            <span v-if="cand.description" class="small text-muted text-break cand-desc">{{ cand.description }}</span>
+                            <span v-if="cand.description" class="small text-muted text-break cand-desc" :title="cand.description">{{ cand.description }}</span>
                         </span>
                         <template v-if="!cand.motion_choice">
                             <button class="btn btn-ghost btn-icon btn-sm" title="Campaign card: an image to share on WhatsApp and social media" aria-label="Campaign card" @click="cardFor = { cand, category: cat.name }"><i class="bi bi-image"></i></button>
@@ -390,7 +390,7 @@ async function revokeProfileLink() {
 .who-pill:hover:not(:disabled) { border-color: var(--brand-500); color: var(--brand-600); }
 .who-pill.limited { border-style: solid; border-color: var(--violet-200, #d9cffe); background: var(--violet-50, rgba(124, 92, 255, .08)); color: var(--violet-600, #6d4ce8); font-weight: 700; }
 .who-pill:disabled { cursor: default; opacity: .85; }
-.motion-text { white-space: pre-line; max-width: 640px; }
+.motion-text { white-space: pre-line; max-width: 640px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .cand-row.motion { padding-top: .55rem; padding-bottom: .55rem; }
 .motion-ic { width: 34px; height: 34px; border-radius: 50%; display: inline-grid; place-items: center; flex-shrink: 0; font-size: 1.05rem; }
 .motion-ic.yes { background: #ecfdf3; color: #15803d; }

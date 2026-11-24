@@ -42,7 +42,11 @@
                             <CandidateAvatar v-else :name="cand.name" :src="cand.image_url" />
                             <span class="flex-grow-1 text-start min-w-0">
                                 <span class="d-block fw-semibold text-ink text-break">{{ optionLabel(cand) }}</span>
-                                <span v-if="cand.description" class="d-block small text-muted text-break opt-desc">{{ cand.description }}</span>
+                                <span v-if="cand.description" class="d-block small text-muted text-break opt-desc" :class="{ clamped: !expanded.has(cand.id) }">{{ cand.description }}</span>
+                                <span v-if="cand.description && cand.description.length > 110" role="button" tabindex="0" class="more-link"
+                                    @click.stop="toggleMore(cand.id)" @keydown.enter.stop.prevent="toggleMore(cand.id)" @keydown.space.stop.prevent="toggleMore(cand.id)">
+                                    {{ expanded.has(cand.id) ? t('ballot.less') : t('ballot.more') }}
+                                </span>
                             </span>
                             <span v-if="ranked(cat)" class="sel-mark round rank" :aria-label="rankOf(cat.id, cand.id) ? `#${rankOf(cat.id, cand.id)}` : undefined">
                                 {{ rankOf(cat.id, cand.id) || '' }}
@@ -113,6 +117,13 @@ const props = withDefaults(defineProps<{
 const emit = defineEmits<{ submit: [choices: Choice[]] }>();
 
 const reviewOpen = ref(false);
+/** Candidates whose long description is shown in full ("More"). */
+const expanded = ref(new Set<number>());
+function toggleMore(id: number) {
+    const next = new Set(expanded.value);
+    next.has(id) ? next.delete(id) : next.add(id);
+    expanded.value = next;
+}
 const picks = ref<Record<number, number[]>>({});
 
 const byCategory = computed(() => {
@@ -201,7 +212,10 @@ defineExpose({ closeReview: () => { reviewOpen.value = false; } });
 .option:disabled:not(.selected) { opacity: .5; cursor: not-allowed; }
 .option.selected { border-color: var(--brand-500); background: var(--brand-50); }
 .opt-desc { line-height: 1.4; margin-top: .15rem; font-weight: 400; }
-.review-desc { line-height: 1.35; }
+.opt-desc.clamped { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.more-link { display: inline-block; margin-top: .15rem; font-size: .78rem; font-weight: 700; color: var(--brand-600); cursor: pointer; }
+.more-link:hover { text-decoration: underline; }
+.review-desc { line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .sel-mark {
     width: 26px; height: 26px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center;
     border: 2px solid var(--line-strong); color: transparent; font-size: .95rem; transition: all .15s var(--ease);

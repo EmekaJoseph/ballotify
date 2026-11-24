@@ -313,6 +313,7 @@ function print() {
 </script>
 
 <style scoped>
+h1, h3, .cname, .cat-name, .cdesc, td { overflow-wrap: anywhere; }
 .pass { color: #15803d; }
 .fail { color: #b42318; }
 .report-rounds { margin-top: .5rem; }

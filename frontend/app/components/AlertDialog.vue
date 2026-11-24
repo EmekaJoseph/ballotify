@@ -4,7 +4,7 @@
             <div v-if="open" class="alert-backdrop" @mousedown.self="emit('close')">
                 <div ref="panel" class="alert-panel" role="alertdialog" aria-modal="true" :aria-labelledby="titleId" :aria-describedby="textId" tabindex="-1">
                     <div class="alert-icon" :class="tone"><i class="bi" :class="icon"></i></div>
-                    <h2 :id="titleId" class="h5 fw-800 mb-2">{{ title }}</h2>
+                    <h2 :id="titleId" class="h5 fw-800 mb-2 text-break">{{ title }}</h2>
                     <p :id="textId" class="text-muted mb-4 alert-text">{{ message }}</p>
                     <div class="d-grid gap-2">
                         <button v-if="actionText" ref="actionBtn" type="button" class="btn btn-lg" :class="actionVariant === 'danger' ? 'btn-danger' : 'btn-primary'" @click="emit('action')">{{ actionText }}</button>

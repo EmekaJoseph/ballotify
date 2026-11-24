@@ -47,7 +47,7 @@
                     <dd class="col-sm-8 mb-0 text-ink">{{ formatDate(event.created_at, true) }}</dd>
                     <template v-if="event.description">
                         <dt class="col-sm-4 text-muted fw-semibold">Description</dt>
-                        <dd class="col-sm-8 mb-0 text-ink" style="white-space: pre-line">{{ event.description }}</dd>
+                        <dd class="col-sm-8 mb-0 text-ink text-break" style="white-space: pre-line">{{ event.description }}</dd>
                     </template>
                 </dl>
             </div>

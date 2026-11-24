@@ -8,7 +8,7 @@
         <Transition name="cat" mode="out-in">
             <div v-if="cat" :key="cat.id" class="cat">
                 <div class="eyebrow-r">{{ motionCat ? (revealed ? (cat.motion?.passed ? 'The motion is passed' : 'The motion is not passed') : 'The motion') : revealed ? (tie ? 'It’s a tie!' : 'And the winner is…') : 'The nominees are' }}</div>
-                <h2 class="cat-name">{{ cat.name }}</h2>
+                <h2 class="cat-name text-break">{{ cat.name }}</h2>
 
                 <ul class="list-unstyled nominees">
                     <li v-for="(c, i) in ordered" :key="c.id" class="nominee" :class="{ winner: revealed && isWinner(c), dim: revealed && !isWinner(c) }"

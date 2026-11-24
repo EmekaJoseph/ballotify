@@ -24,7 +24,7 @@
             <div class="card-b pad">
                 <div class="d-flex justify-content-between align-items-start gap-2 flex-wrap mb-3">
                     <div>
-                        <h2 class="h5 fw-800 mb-1">{{ cert.payload.event.name }}</h2>
+                        <h2 class="h5 fw-800 mb-1 text-break">{{ cert.payload.event.name }}</h2>
                         <div class="small text-muted">Certificate <span class="mono">{{ cert.serial }}</span> · issued {{ formatDate(cert.issued_at, true) }}</div>
                     </div>
                     <NuxtLink :to="`/certificate/${cert.serial}`" class="btn btn-ghost btn-sm"><i class="bi bi-file-earmark-text"></i> View certificate</NuxtLink>

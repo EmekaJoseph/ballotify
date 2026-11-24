@@ -17,7 +17,7 @@
                 </div>
             </header>
 
-            <h1 class="h2 fw-800 mb-1">{{ p.event.name }}</h1>
+            <h1 class="h2 fw-800 mb-1 text-break">{{ p.event.name }}</h1>
             <p class="text-muted mb-4">
                 <template v-if="p.event.organiser">Organised by {{ p.event.organiser }} · </template>
                 Voting {{ formatWindow(p.event.starts_at, p.event.ends_at) }}
@@ -36,13 +36,13 @@
             </div>
 
             <section v-for="c in p.categories" :key="c.name" class="cat">
-                <div class="d-flex justify-content-between align-items-baseline gap-2">
-                    <h2 class="h6 fw-800 mb-2">{{ c.name }}</h2>
+                <div class="d-flex flex-wrap justify-content-between align-items-baseline column-gap-3">
+                    <h2 class="h6 fw-800 mb-2 text-break">{{ c.name }}</h2>
                     <span v-if="c.method === 'motion' && c.motion" class="small fw-bold" :class="c.motion.passed ? 'winner' : 'text-danger'">
                         <i class="bi" :class="c.motion.passed ? 'bi-check-circle-fill' : 'bi-x-circle-fill'"></i>
                         {{ !c.motion.decided ? 'No Yes or No votes' : c.motion.passed ? 'Passed' : 'Not passed' }}
                     </span>
-                    <span v-else-if="c.winners.length" class="small fw-bold winner"><i class="bi bi-trophy-fill"></i> {{ c.winners.join(' & ') }}{{ c.winners.length > 1 ? ' (tie)' : '' }}</span>
+                    <span v-else-if="c.winners.length" class="small fw-bold winner text-break mb-2"><i class="bi bi-trophy-fill"></i> {{ c.winners.join(' & ') }}{{ c.winners.length > 1 ? ' (tie)' : '' }}</span>
                 </div>
                 <table class="w-100 lines">
                     <tbody>

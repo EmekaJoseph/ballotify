@@ -16,7 +16,7 @@
         <div v-else-if="data" class="d-grid gap-4">
             <section v-for="cat in data.categories" :key="cat.id" class="card-b overflow-hidden">
                 <header class="card-header-b">
-                    <h3 class="h6 fw-800 mb-0">{{ cat.name }}</h3>
+                    <h3 class="h6 fw-800 mb-0 text-break">{{ cat.name }}</h3>
                     <span class="small text-muted">{{ cat.nominees.length }} nominee{{ cat.nominees.length === 1 ? '' : 's' }}</span>
                 </header>
                 <div v-if="!cat.nominees.length" class="p-4 small text-muted text-center">No nominations yet.</div>
@@ -25,7 +25,7 @@
                         <span class="rank" :class="{ top: i < 3 }">{{ i + 1 }}</span>
                         <div class="flex-grow-1 min-w-0">
                             <div class="fw-semibold text-ink text-break">{{ n.name }}</div>
-                            <div v-if="n.reasons.length" class="small text-muted reason">“{{ n.reasons[0] }}”</div>
+                            <div v-if="n.reasons.length" class="small text-muted reason" :title="n.reasons[0]">“{{ n.reasons[0] }}”</div>
                         </div>
                         <span class="votes-pill">{{ formatNumber(n.count) }}</span>
                         <span v-if="n.on_ballot" class="pill pill-active flex-shrink-0"><i class="bi bi-check2"></i> On ballot</span>
@@ -85,6 +85,6 @@ async function promote(categoryId: number, name: string) {
 .nom-row:last-child { border-bottom: 0; }
 .rank { width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center; font-weight: 800; font-size: .8rem; background: var(--surface-2); color: var(--muted); flex-shrink: 0; }
 .rank.top { background: var(--brand-50); color: var(--brand-700); }
-.votes-pill { font-weight: 800; color: var(--ink); min-width: 2.5rem; text-align: right; }
+.votes-pill { font-weight: 800; color: var(--ink); min-width: 2.5rem; text-align: right; flex-shrink: 0; }
 .reason { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
 </style>

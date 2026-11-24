@@ -3,7 +3,7 @@
         <TransitionGroup name="toast">
             <div v-for="t in toasts" :key="t.id" class="toast-b" :class="t.kind" role="status">
                 <i class="bi" :class="icon[t.kind]"></i>
-                <span class="flex-grow-1">{{ t.message }}</span>
+                <span class="flex-grow-1 toast-msg">{{ t.message }}</span>
                 <button v-if="t.action" type="button" class="toast-action" @click="t.action.run()">{{ t.action.label }}</button>
                 <button type="button" class="toast-close" aria-label="Dismiss" @click="dismiss(t.id)">
                     <i class="bi bi-x-lg"></i>
@@ -21,6 +21,8 @@ const icon = { success: 'bi-check-circle-fill', error: 'bi-exclamation-octagon-f
 </script>
 
 <style scoped>
+.toast-msg { min-width: 0; overflow-wrap: anywhere; }
+.toast-action, .toast-close { flex-shrink: 0; }
 .toast-stack {
     position: fixed; z-index: 2000; right: 16px; bottom: 16px; left: 16px;
     display: flex; flex-direction: column; align-items: flex-end; gap: 10px; pointer-events: none;

@@ -3,7 +3,7 @@
         <div class="check-wrap mx-auto mb-4" aria-hidden="true">
             <svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="24" /><path d="M15 27l7 7 15-15" /></svg>
         </div>
-        <h1 class="h3 fw-800 mb-2">{{ title || (voterName ? t('done.thanksName', { name: firstName }) : t('done.recorded')) }}</h1>
+        <h1 class="h3 fw-800 mb-2 text-break">{{ title || (voterName ? t('done.thanksName', { name: firstName }) : t('done.recorded')) }}</h1>
         <p class="text-muted mx-auto mb-4" style="max-width: 440px">
             <template v-if="message">{{ message }}</template>
             <Tx v-else :k="voterName ? 'done.bodyNamed' : 'done.bodyAnon'"><template #event><b class="text-ink">{{ eventName }}</b></template></Tx>
