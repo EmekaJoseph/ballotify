@@ -62,6 +62,10 @@ export default defineNuxtConfig({
       // Shown on the Privacy / Terms pages.
       companyName: 'Ballotify',
       contactEmail: '',
+      // Organiser support on WhatsApp, international format without + (e.g. 2348012345678). Empty = no button.
+      supportWhatsapp: '',
+      // YouTube or Vimeo link to a short tour, shown on the Help centre. Empty = hidden.
+      helpVideoUrl: '',
       // Cloudflare Turnstile site key (bot protection). Empty = off.
       turnstileSiteKey: '',
     },

@@ -46,7 +46,7 @@
             </ul>
 
             <div class="tips small text-muted d-grid gap-2">
-                <div v-if="plans"><i class="bi bi-gem text-brand"></i> Pro is a one-off <b class="text-ink">{{ priceLabel }}</b> per event and doesn’t count towards your free limit.</div>
+                <div v-if="plans"><span class="pill pill-pro me-1"><i class="bi bi-lightning-charge-fill"></i> Pro</span> Pro is a one-off <b class="text-ink">{{ priceLabel }}</b> per event and doesn’t count towards your free limit.</div>
                 <div><i class="bi bi-stop-circle"></i> Closed events don’t count either. Close voting from the event’s <b class="text-ink">Settings</b> tab.</div>
             </div>
         </template>

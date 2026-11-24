@@ -62,7 +62,7 @@ const links = [
     { to: '/#how', label: 'How it works' },
     { to: '/#awards', label: 'Award nights' },
     { to: '/#pricing', label: 'Pricing' },
-    { to: '/#faq', label: 'FAQ' },
+    { to: '/help', label: 'Help' },
     { to: '/demo/vote', label: 'Live demo' },
 ];
 

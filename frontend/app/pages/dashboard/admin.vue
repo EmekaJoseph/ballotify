@@ -136,7 +136,7 @@
                                     <div class="fw-semibold text-ink text-break">
                                         {{ u.name }}
                                         <span v-if="u.is_admin" class="pill pill-violet ms-1">Admin</span>
-                                        <span v-else-if="u.pro_account_at" class="pill pill-violet ms-1"><i class="bi bi-gem"></i> Pro account</span>
+                                        <span v-else-if="u.pro_account_at" class="pill pill-pro ms-1" title="Every event of this account is Pro"><i class="bi bi-lightning-charge-fill"></i> Pro account</span>
                                     </div>
                                     <div class="small text-muted text-break">{{ u.email }}</div>
                                 </td>
@@ -151,7 +151,7 @@
                                 <td class="text-end text-nowrap">
                                     <template v-if="!u.is_admin">
                                         <button class="btn btn-ghost btn-sm me-1" :disabled="acting === u.id" @click="toggleAccountPro(u)">
-                                            <i class="bi" :class="u.pro_account_at ? 'bi-x-lg' : 'bi-gem'"></i> {{ u.pro_account_at ? 'Remove Pro' : 'Give Pro' }}
+                                            <i class="bi" :class="u.pro_account_at ? 'bi-x-lg' : 'bi-lightning-charge'"></i> {{ u.pro_account_at ? 'Remove Pro' : 'Give Pro' }}
                                         </button>
                                         <template v-if="u.id !== auth.user?.id">
                                             <button v-if="u.suspended_at" class="btn btn-soft btn-sm" :disabled="acting === u.id" @click="unsuspend(u)">
@@ -188,7 +188,7 @@
                                 </td>
                                 <td><StatusBadge :status="ev.status" :draft="isDraft(ev)" /></td>
                                 <td class="text-nowrap small">
-                                    <span v-if="ev.plan === 'pro'" class="pill pill-violet"><i class="bi bi-gem"></i> Pro</span>
+                                    <span v-if="ev.plan === 'pro'" class="pill pill-pro"><i class="bi bi-lightning-charge-fill"></i> Pro</span>
                                     <span v-else-if="ev.user?.pro_account_at || ev.user?.is_admin" class="pill pill-violet" title="Pro through the account">Pro (account)</span>
                                     <span v-else class="pill pill-completed">Free</span>
                                     <div v-if="ev.upgraded_via" class="text-muted mt-1">{{ ev.upgraded_via === 'payment' ? 'Paid' : 'By admin' }}</div>
@@ -199,7 +199,7 @@
                                 </td>
                                 <td class="text-end text-nowrap">
                                     <button v-if="ev.plan === 'pro'" class="btn btn-ghost btn-sm" :disabled="acting === ev.id" @click="setPlan(ev, 'free')">Make Free</button>
-                                    <button v-else-if="!ev.user?.pro_account_at && !ev.user?.is_admin" class="btn btn-soft btn-sm" :disabled="acting === ev.id" @click="setPlan(ev, 'pro')"><i class="bi bi-gem"></i> Make Pro</button>
+                                    <button v-else-if="!ev.user?.pro_account_at && !ev.user?.is_admin" class="btn btn-soft btn-sm" :disabled="acting === ev.id" @click="setPlan(ev, 'pro')"><i class="bi bi-lightning-charge"></i> Make Pro</button>
                                 </td>
                             </tr>
                         </tbody>

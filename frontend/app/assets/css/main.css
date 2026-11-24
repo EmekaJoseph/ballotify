@@ -5,6 +5,10 @@
    ========================================================================== */
 
 :root {
+    --pro-bg: #fff6dc;
+    --pro-text: #9a5b00;
+    --pro-icon: #e09400;
+    --pro-ring: rgba(224, 148, 0, .25);
     /* Brand (from the logo) */
     --brand-50: #ecf8f7;
     --brand-100: #d2efed;
@@ -244,6 +248,10 @@ a { text-decoration: none; }
 .pill-violet { background: var(--accent-50); color: var(--accent); }
 .pill-danger { background: var(--danger-50); color: var(--danger); }
 .pill-amber { background: var(--warning-50); color: var(--warning-text, var(--warning)); }
+/* Pro: gold. */
+.pill-pro { background: var(--pro-bg); color: var(--pro-text); box-shadow: inset 0 0 0 1px var(--pro-ring); }
+.pill-pro .bi { color: var(--pro-icon); }
+.icon-tile.pro { background: var(--pro-bg); color: var(--pro-icon); box-shadow: inset 0 0 0 1px var(--pro-ring); }
 .pill-live .dot { animation: pulse-dot 1.6s infinite; }
 @keyframes pulse-dot { 0% { box-shadow: 0 0 0 0 rgba(22, 163, 74, .5); } 70% { box-shadow: 0 0 0 7px rgba(22, 163, 74, 0); } 100% { box-shadow: 0 0 0 0 rgba(22, 163, 74, 0); } }
 
@@ -323,6 +331,10 @@ a { text-decoration: none; }
    (html[data-theme="light"|"dark"], set by useTheme()).
    ========================================================================== */
 :root[data-theme="dark"] {
+    --pro-bg: rgba(245, 180, 58, .14);
+    --pro-text: #f6c453;
+    --pro-icon: #f5b43a;
+    --pro-ring: rgba(245, 180, 58, .28);
     --brand-50: rgba(45, 212, 191, .12);
     --brand-100: rgba(45, 212, 191, .2);
     --brand-200: rgba(45, 212, 191, .35);
@@ -388,3 +400,27 @@ html.theme-switching *, html.theme-switching *::before, html.theme-switching *::
 .bg-surface { background: var(--surface); }
 /* WhatsApp green (share buttons) */
 .btn-wa { --bs-btn-color: #fff; --bs-btn-bg: #1da851; --bs-btn-border-color: #1da851; --bs-btn-hover-color: #fff; --bs-btn-hover-bg: #178a43; --bs-btn-hover-border-color: #178a43; --bs-btn-active-bg: #146f37; --bs-btn-disabled-bg: #1da851; --bs-btn-disabled-border-color: #1da851; --bs-btn-disabled-color: #fff; font-weight: 700; }
+
+
+/* ==========================================================================
+   Scrollbars: thin, rounded and quiet; brand colour on hover.
+   Chrome / Edge / Safari use the ::-webkit-scrollbar rules. Firefox only
+   supports the standard properties (setting those in Chromium would switch
+   off the custom shape, so they're limited to browsers without the pseudo).
+   ========================================================================== */
+:root {
+    --scroll-thumb: color-mix(in srgb, var(--muted) 38%, transparent);
+    --scroll-thumb-hover: var(--brand-500);
+}
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track, ::-webkit-scrollbar-corner { background: transparent; }
+::-webkit-scrollbar-thumb {
+    background: var(--scroll-thumb); border-radius: 999px;
+    border: 3px solid transparent; background-clip: padding-box; min-height: 40px;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--scroll-thumb-hover); border-width: 2px; background-clip: padding-box; }
+::-webkit-scrollbar-thumb:active { background: var(--brand-600); border-width: 2px; background-clip: padding-box; }
+::-webkit-scrollbar-button { display: none; }
+@supports not selector(::-webkit-scrollbar) {
+    * { scrollbar-width: thin; scrollbar-color: var(--scroll-thumb) transparent; }
+}

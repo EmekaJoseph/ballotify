@@ -3,7 +3,7 @@
         <!-- Pro -->
         <template v-if="isPro">
             <div class="d-flex align-items-center gap-3">
-                <span class="icon-tile violet"><i class="bi bi-gem"></i></span>
+                <span class="icon-tile pro"><i class="bi bi-lightning-charge-fill"></i></span>
                 <div class="min-w-0">
                     <div class="fw-800 text-ink">Pro event</div>
                     <div class="small text-muted">{{ proNote }}</div>

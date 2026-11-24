@@ -68,6 +68,7 @@
                 <slot />
             </main>
             <EventLimitModal />
+            <SupportButton :context="`Dashboard ${route.path}`" />
         </div>
     </div>
 </template>
@@ -85,6 +86,7 @@ const nav = [
     { to: '/dashboard/events', label: 'Events', icon: 'bi-calendar2-check', exact: false },
     { to: '/dashboard/voters', label: 'Voters', icon: 'bi-people', exact: false },
     { to: '/dashboard/profile', label: 'Account', icon: 'bi-person-gear', exact: false },
+    { to: '/help', label: 'Help', icon: 'bi-question-circle', exact: false },
 ];
 
 const isActive = (item: { to: string; exact: boolean }) =>
@@ -127,6 +129,17 @@ async function logout() {
     width: 264px; flex-shrink: 0; background: var(--surface); border-right: 1px solid var(--line);
     display: flex; flex-direction: column; position: fixed; inset: 0 auto 0 0; z-index: 1200;
     transform: translateX(-100%); transition: transform .25s var(--ease);
+    /* Short screens (laptops, landscape phones): scroll so Theme and Sign out stay reachable. */
+    overflow-y: auto; overscroll-behavior: contain;
+}
+/* The sidebar's scrollbar only shows while the pointer is over it. */
+.sidebar::-webkit-scrollbar { width: 8px; }
+.sidebar::-webkit-scrollbar-thumb { background: transparent; background-clip: padding-box; transition: background-color .2s; }
+.sidebar:hover::-webkit-scrollbar-thumb { background: var(--scroll-thumb); background-clip: padding-box; }
+.sidebar:hover::-webkit-scrollbar-thumb:hover { background: var(--scroll-thumb-hover); background-clip: padding-box; }
+@supports not selector(::-webkit-scrollbar) {
+    .sidebar { scrollbar-color: transparent transparent; }
+    .sidebar:hover { scrollbar-color: var(--scroll-thumb) transparent; }
 }
 .sidebar.open { transform: none; box-shadow: var(--shadow-lg); }
 .scrim { position: fixed; inset: 0; background: rgba(10, 18, 34, .45); z-index: 1100; }
@@ -138,7 +151,7 @@ async function logout() {
 .content { padding: 1.5rem 1rem 3rem; width: 100%; max-width: 1240px; margin: 0 auto; }
 @media (min-width: 768px) { .content { padding: 2rem 2rem 4rem; } }
 @media (min-width: 992px) {
-    .sidebar { position: sticky; top: 0; height: 100vh; transform: none; }
+    .sidebar { position: sticky; top: 0; height: 100vh; height: 100dvh; transform: none; }
     .content { padding: 2.25rem 2.5rem 4rem; }
 }
 .side-link {

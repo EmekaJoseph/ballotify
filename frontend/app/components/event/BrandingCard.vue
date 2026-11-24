@@ -2,7 +2,7 @@
     <div class="card-b pad">
         <div class="d-flex justify-content-between align-items-center mb-2">
             <h3 class="h6 fw-800 mb-0">Ballot branding</h3>
-            <span class="pill pill-violet"><i class="bi bi-gem"></i> Pro</span>
+            <span class="pill pill-pro"><i class="bi bi-lightning-charge-fill"></i> Pro</span>
         </div>
         <p class="small text-muted mb-3">Your logo and colour on the voting and results pages.</p>
 

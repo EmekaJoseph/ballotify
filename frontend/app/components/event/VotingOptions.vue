@@ -21,7 +21,7 @@
             <div class="opt-head">
                 <span class="icon-tile"><i class="bi bi-person-vcard"></i></span>
                 <div class="flex-grow-1 min-w-0">
-                    <h3 class="h6 fw-800 mb-1">Voter self-registration <span class="pill pill-violet ms-1"><i class="bi bi-gem"></i> Pro</span></h3>
+                    <h3 class="h6 fw-800 mb-1">Voter self-registration <span class="pill pill-pro ms-1"><i class="bi bi-lightning-charge-fill"></i> Pro</span></h3>
                     <p class="small text-muted mb-0">
                         Optional. Voters enter an ID from your list (e.g. membership number) and their code is sent to the
                         email or phone <b>you</b> have on file, so knowing someone’s ID isn’t enough to vote as them.
@@ -54,7 +54,7 @@
             <div class="opt-head">
                 <span class="icon-tile amber"><i class="bi bi-telephone"></i></span>
                 <div class="flex-grow-1 min-w-0">
-                    <h3 class="h6 fw-800 mb-1">USSD voting <span class="pill pill-violet ms-1"><i class="bi bi-gem"></i> Pro</span></h3>
+                    <h3 class="h6 fw-800 mb-1">USSD voting <span class="pill pill-pro ms-1"><i class="bi bi-lightning-charge-fill"></i> Pro</span></h3>
                     <p class="small text-muted mb-0">For voters without a smartphone or data: they dial a short code and vote with their keypad.</p>
                 </div>
                 <div class="form-check form-switch m-0">

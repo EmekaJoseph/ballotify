@@ -25,9 +25,10 @@
                 <template #meta>
                     <div class="d-flex flex-wrap align-items-center gap-2 mt-2">
                         <StatusBadge :status="event.status" :draft="isDraft(event)" />
-                        <span v-if="event.limits && event.limits.max_voters !== null" class="pill" :class="event.limits.plan === 'pro' ? 'pill-violet' : 'pill-completed'">
-                            <i class="bi" :class="event.limits.plan === 'pro' ? 'bi-gem' : 'bi-box'"></i> {{ event.limits.plan === 'pro' ? 'Pro' : 'Free' }}
-                        </span>
+                        <template v-if="event.limits && event.limits.max_voters !== null">
+                            <span v-if="event.limits.plan === 'pro'" class="pill pill-pro"><i class="bi bi-lightning-charge-fill"></i> Pro</span>
+                            <span v-else class="pill pill-completed"><i class="bi bi-box"></i> Free</span>
+                        </template>
                         <span v-if="event.voting_mode === 'paid'" class="pill pill-amber"><i class="bi bi-cash-coin"></i> Paid voting</span>
                         <span v-if="event.my_role && event.my_role !== 'owner'" class="pill pill-completed" :title="ROLE_INFO[event.my_role].text"><i class="bi bi-people"></i> Shared with you · {{ roleLabel(event.my_role) }}</span>
                         <span class="small text-muted"><i class="bi bi-calendar3"></i> {{ formatWindow(event.starts_at, event.ends_at) }}</span>

@@ -28,7 +28,7 @@
                     <div class="plan card-b h-100 featured">
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <span class="small-caps text-brand">Pro</span>
-                            <span class="pill pill-violet"><i class="bi bi-gem"></i> Per event</span>
+                            <span class="pill pill-violet">Per event</span>
                         </div>
                         <div class="amount">{{ formatNaira(info.pro_price_naira) }}<span>/event</span></div>
                         <p class="text-muted small mb-4">For elections and award nights that matter.</p>

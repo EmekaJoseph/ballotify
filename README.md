@@ -216,7 +216,9 @@ Until a key is set, nothing breaks: organisers see "Contact us to upgrade" (usin
 | `NUXT_PUBLIC_API_BASE`       | API base URL, e.g. `https://api.example.com/api`                             |
 | `NUXT_PUBLIC_REVERB_KEY` | Same as `REVERB_APP_KEY`. Leave empty to use 15-second polling. |
 | `NUXT_PUBLIC_REVERB_HOST` / `_PORT` / `_SCHEME` | Where browsers reach Reverb, e.g. `ws.example.com` / `443` / `https`. |
-| `NUXT_PUBLIC_COMPANY_NAME`, `NUXT_PUBLIC_CONTACT_EMAIL` | Shown on the Privacy and Terms pages. |
+| `NUXT_PUBLIC_COMPANY_NAME`, `NUXT_PUBLIC_CONTACT_EMAIL` | Shown on the Privacy and Terms pages (the email also on the Help centre). |
+| `NUXT_PUBLIC_SUPPORT_WHATSAPP` | Your support WhatsApp number, international format without + (e.g. `2348012345678`). Shows the green Help chat button on the dashboard and Help centre. Empty = hidden. |
+| `NUXT_PUBLIC_HELP_VIDEO_URL` | A YouTube or Vimeo link to your tour video, shown at the top of the Help centre. Script: `docs/VIDEO_SCRIPT.md`. |
 | `NUXT_PUBLIC_TURNSTILE_SITE_KEY` | Cloudflare Turnstile site key. Empty = no bot check shown. |
 
 ## Testing

@@ -64,7 +64,7 @@
                     </form>
                 </template>
                 <div v-else class="pro-lock">
-                    <i class="bi bi-gem text-brand"></i>
+                    <span class="pill pill-pro"><i class="bi bi-lightning-charge-fill"></i> Pro</span>
                     <span class="small">Co-organisers are a <b>Pro</b> feature. Upgrade this event to invite up to {{ maxMembers }} people.</span>
                     <button class="btn btn-soft btn-sm" @click="emit('upgrade')">Upgrade</button>
                 </div>

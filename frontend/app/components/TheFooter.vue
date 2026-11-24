@@ -14,6 +14,7 @@
                     <NuxtLink to="/#how">How it works</NuxtLink>
                     <NuxtLink to="/demo/vote">Demo ballot</NuxtLink>
                     <NuxtLink to="/demo/results">Demo results</NuxtLink>
+                    <NuxtLink to="/help">Help centre</NuxtLink>
                 </div>
                 <div class="col-6 col-lg-2">
                     <div class="footer-h">Account</div>
