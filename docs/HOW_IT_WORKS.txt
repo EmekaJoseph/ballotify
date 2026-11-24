@@ -159,6 +159,29 @@ VOTERS take part from any phone or laptop using a one-time code.
        in, the categories for their groups (checked by the server, on the web
        and USSD). Results show "x of y eligible voters" for those categories.
 
+       MEETING RULES (Settings -> Voting options, Pro, all off by default).
+       For AGMs, cooperatives and associations whose constitution asks:
+         Weighted votes .. each ballot counts by the voter's weight (shares,
+                           units). Weight column on import, or the voter
+                           form. Blank = 1. Ignored while switched off.
+         Proxy voting .... on the Voters tab, edit a member and choose who
+                           votes for them. The holder's one ballot counts for
+                           both; the member's own code is refused ("your
+                           proxy is voting for you"). Rules: not yourself, no
+                           chains (a holder can't give theirs away), at most
+                           N per holder (2 by default), only before either
+                           has voted. Removing the holder, or switching
+                           proxies off, frees the members again.
+         Quorum .......... least turnout for the result to count: % of
+                           members or a number (by weight when weighted).
+                           Results tab and public results show live progress;
+                           after closing, results, PDF report, CSV and
+                           certificate say "Quorum NOT reached: not valid".
+       All three are fixed once the first vote is in (the proxy limit and
+       proxy assignments can still change). Each change is in the Activity
+       log. A proxy holder's ballot counts, per category, only the members
+       allowed in it (voter groups). USSD follows the same rules.
+
        CAMPAIGN CARDS: the image icon next to a candidate (Ballot tab), the
        candidate's own profile page, and a share button on paid-voting
        nominees make a picture with the photo, name, category and a QR code

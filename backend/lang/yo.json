@@ -41,5 +41,8 @@
     "Paid after voting closed": "A sanwó lẹ́yìn tí ìdìbò ti parí",
     "Amount or currency did not match. Contact the organiser.": "Iye owó tàbí irú owó kò bá ara mu. Kàn sí olùṣètò.",
     "You can’t vote in “:category”.": "O kò lè dìbò nínú “:category”.",
-    "Your code can’t be sent by SMS right now. Please contact the organiser for your code.": "A kò lè fi kóòdù rẹ ránṣẹ́ nípasẹ̀ SMS báyìí. Jọ̀wọ́ kàn sí olùṣètò fún kóòdù rẹ."
+    "Your code can’t be sent by SMS right now. Please contact the organiser for your code.": "A kò lè fi kóòdù rẹ ránṣẹ́ nípasẹ̀ SMS báyìí. Jọ̀wọ́ kàn sí olùṣètò fún kóòdù rẹ.",
+    "Your vote is being cast by your proxy, :name. Ask the organiser if this is wrong.": "Aṣojú rẹ, :name, ni yóò dìbò fún ọ. Kàn sí olùṣètò bí èyí kò bá tọ́.",
+    "Your vote is being cast by your proxy. Ask the organiser if this is wrong.": "Aṣojú rẹ ni yóò dìbò fún ọ. Kàn sí olùṣètò bí èyí kò bá tọ́.",
+    "a member": "ọmọ ẹgbẹ́ kan"
 }

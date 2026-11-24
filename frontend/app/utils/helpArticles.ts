@@ -101,6 +101,24 @@ export const HELP_ARTICLES: HelpArticle[] = [
         tips: ['A voter can be in several groups, e.g. “Lagos; Youth”.'],
     },
     {
+        id: 'meeting-rules', section: 'more', title: 'AGMs: weighted votes, proxies and quorum',
+        summary: 'Optional rules for cooperatives, associations and companies. All are off unless you switch them on (Pro).',
+        steps: [
+            'Go to Settings → Voting options → Meeting rules. Switch on only what your constitution needs.',
+            'Weighted votes: each member’s ballot counts by their weight, e.g. shares or units. Add a Weight column when you import, or set it when you edit a voter. Blank means 1.',
+            'Proxy voting: on the Voters tab, click the pencil on a member who can’t vote and choose who votes for them. The holder’s one ballot then counts for both, and the absent member’s own code stops working.',
+            'Quorum: set the least turnout, as a percentage of members or a number. The Results tab shows live progress towards it.',
+            'If the quorum isn’t reached, the results page, PDF report and certificate say clearly that the result is not valid under the rules.',
+        ],
+        tips: [
+            'Rules are fixed once the first vote is in, so set them up before voting opens. Proxies can still be given until that member votes.',
+            'No proxy chains: someone holding proxies can’t give their own vote away, and one person can hold only up to the limit you set (2 by default).',
+            'A proxy holder votes in a category only for the members allowed in it (voter groups still apply).',
+            'Every weight and proxy change is in the Activity log.',
+            'With weighted votes, a member with a very large weight may be recognisable from the live totals. Choose “Results after voting closes” if that matters.',
+        ],
+    },
+    {
         id: 'self-registration', section: 'voters', title: 'Let voters get their own code (self-registration)',
         summary: 'Voters enter their membership number; the code goes to the contact you have on file.',
         steps: [

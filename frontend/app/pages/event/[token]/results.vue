@@ -47,6 +47,8 @@
                     : t('res.integrityOk') }}</span>
             </div>
 
+            <RulesBanner v-if="results.rules" :rules="results.rules" :status="results.event.status" class="mb-4" />
+
             <img v-if="results.event.brand?.logo_url" :src="results.event.brand.logo_url" alt="" class="brand-logo mb-3" />
             <ResultsBoard :results="results" />
 

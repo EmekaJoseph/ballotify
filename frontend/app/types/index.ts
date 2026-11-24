@@ -95,6 +95,10 @@ export interface Voter {
     member_id?: string | null;
     /** Voter groups (branch, unit, department...): decide which categories they see. */
     groups?: string[] | null;
+    /** Weighted votes: how many votes this voter's ballot counts as (1 unless set). */
+    weight?: number;
+    /** Proxy: the voter who votes for this member (who then can't vote themselves). */
+    proxy_voter_id?: number | null;
     code: string;
     used_at: string | null;
     /** When the code was last delivered (email, SMS or shared on WhatsApp). */
@@ -135,6 +139,12 @@ export interface BallotEvent {
     ussd_service_code?: string | null;
     nominations_enabled?: boolean;
     nominations_ends_at?: string | null;
+    /** Meeting rules (Pro, all off by default). */
+    weighted_votes?: boolean;
+    proxies_enabled?: boolean;
+    max_proxies?: number;
+    quorum_type?: QuorumType | null;
+    quorum_value?: number | null;
     /** This user's role and what it allows. */
     my_role?: EventRole;
     abilities?: EventAbility[];
@@ -246,9 +256,35 @@ export interface EventResults {
         total_candidates: number;
     };
     integrity?: { changes_during_voting: number };
+    /** Weighted votes / proxies / quorum in force (null when none are on). */
+    rules?: MeetingRulesSummary | null;
     /** Votes over time (turnout chart). */
     timeline?: { bucket_minutes: number; points: { t: string; votes: number }[] };
     categories: ResultCategory[];
+}
+
+export type QuorumType = 'percent' | 'count';
+
+/** Quorum progress: `basis` is members ("voters") or their total weight. */
+export interface QuorumStatus {
+    type: QuorumType;
+    value: number;
+    basis: 'voters' | 'weight';
+    total: number;
+    required: number;
+    achieved: number;
+    met: boolean;
+}
+
+export interface MeetingRulesSummary {
+    weighted: boolean;
+    proxies: boolean;
+    max_proxies: number | null;
+    quorum: QuorumStatus | null;
+    /** Members whose vote was cast by their proxy. */
+    proxy_votes?: number;
+    total_weight?: number;
+    voted_weight?: number;
 }
 
 export interface GeneratedCode {
@@ -265,6 +301,8 @@ export interface VoterContact {
     member_id?: string | null;
     /** Groups, e.g. ["Lagos", "Youth"] (or "Lagos; Youth"). */
     groups?: string[] | string | null;
+    /** Weighted votes: shares / units (empty = 1). */
+    weight?: number | string | null;
 }
 
 export interface VoterGroup { name: string; voters: number }
@@ -359,6 +397,8 @@ export interface EventLimits {
     custom_branding: boolean;
     /** Co-organisers (Pro). */
     team: boolean;
+    /** Weighted votes, proxies and quorum. */
+    meeting_rules?: boolean;
     max_members: number;
     /** Pro because the whole account was upgraded by the admin. */
     via_account: boolean;
@@ -561,6 +601,8 @@ export interface NominationForm {
 export interface CertificatePayload {
     event: { id: number; name: string; organiser: string | null; voting_mode: VotingMode; starts_at: string | null; ends_at: string | null };
     stats: { voters?: number; ballots?: number; receipts?: number; votes?: number; payments?: number };
+    /** Weighted votes / proxies / quorum, when used. */
+    rules?: MeetingRulesSummary | null;
     categories: {
         name: string; candidates: { name: string; votes: number }[]; winners: string[];
         /** Ranked choice: candidate votes are first choices; the final round decided it. */

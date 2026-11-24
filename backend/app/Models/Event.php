@@ -46,6 +46,11 @@ class Event extends Model
         'language',
         'nominations_enabled',
         'nominations_ends_at',
+        'weighted_votes',
+        'proxies_enabled',
+        'max_proxies',
+        'quorum_type',
+        'quorum_value',
     ];
 
     protected $casts = [
@@ -59,7 +64,13 @@ class Event extends Model
         'ussd_enabled' => 'boolean',
         'nominations_enabled' => 'boolean',
         'nominations_ends_at' => 'datetime',
+        'weighted_votes' => 'boolean',
+        'proxies_enabled' => 'boolean',
+        'max_proxies' => 'integer',
+        'quorum_value' => 'integer',
     ];
+
+    public const QUORUM_TYPES = ['percent', 'count'];
 
     protected $attributes = [
         'results_visibility' => self::RESULTS_AFTER_CLOSE,

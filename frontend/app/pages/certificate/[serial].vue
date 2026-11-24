@@ -35,6 +35,14 @@
                 </template>
             </div>
 
+            <div v-if="certRules.length" class="cert-rules mb-4" :class="{ bad: certVerdict && !certVerdict.ok }">
+                <div class="small-caps mb-1">Meeting rules</div>
+                <ul class="mb-1"><li v-for="l in certRules" :key="l">{{ l }}</li></ul>
+                <div v-if="certVerdict" class="fw-800" :class="certVerdict.ok ? 'text-success' : 'text-danger'">
+                    <i class="bi" :class="certVerdict.ok ? 'bi-check-circle-fill' : 'bi-x-octagon-fill'"></i> {{ certVerdict.text }}
+                </div>
+            </div>
+
             <section v-for="c in p.categories" :key="c.name" class="cat">
                 <div class="d-flex flex-wrap justify-content-between align-items-baseline column-gap-3">
                     <h2 class="h6 fw-800 mb-2 text-break">{{ c.name }}</h2>
@@ -83,6 +91,9 @@ const loading = ref(true);
 const qr = ref('');
 const p = computed(() => cert.value!.payload);
 
+const certRules = computed(() => describeRules(cert.value?.payload.rules));
+// Certificates are issued after voting closed: the quorum result is final.
+const certVerdict = computed(() => (cert.value?.payload.rules?.quorum ? quorumVerdict(cert.value.payload.rules.quorum, true) : null));
 useHead({ title: computed(() => (cert.value ? `Certificate · ${cert.value.payload.event.name}` : 'Certificate · Ballotify')) });
 
 onMounted(async () => {
@@ -102,6 +113,9 @@ function finalOf(c: CertificatePayload['categories'][number], name: string): str
 </script>
 
 <style scoped>
+.cert-rules { padding: .9rem 1.1rem; border-radius: 14px; background: var(--surface-2); font-size: .9rem; color: var(--ink-2); overflow-wrap: anywhere; }
+.cert-rules ul { padding-left: 1.1rem; }
+.cert-rules.bad { background: var(--danger-50); box-shadow: inset 0 0 0 1px var(--danger); }
 .ranked-head td { font-size: .68rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); font-weight: 700; padding-bottom: .2rem; }
 .cert-page { min-height: 100vh; background: var(--bg); padding: 1.5rem 1rem 3rem; }
 .toolbar { max-width: 780px; margin: 0 auto 1rem; display: flex; justify-content: space-between; gap: .5rem; }

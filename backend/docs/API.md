@@ -106,8 +106,8 @@ Names are unique within a category. Candidate objects include `image_url` (an ab
 | GET | `/events/{id}/voters` | | `[ { id, name, email, phone, code, used_at, invited_at, invite_error } ]` |
 | POST | `/events/{id}/voters` | `name?, email?, phone?, code?` (generated if omitted) | voter |
 | POST | `/events/{id}/voters/generate` | `count (1–10000)` | `201 { voters: [ { name, email, phone, code } ] }` |
-| POST | `/events/{id}/voters/import` | `voters: [ { name?, email?, phone? } ]` (max 10000; legacy `names: string[]` also accepted) | `201 { voters: [...] }` |
-| PATCH | `/events/{id}/voters/{voterId}` | `name?, email?, phone?, code?` | voter. Sending `used_at` returns `422`, because votes are secret and a used code can't be reset. |
+| POST | `/events/{id}/voters/import` | `voters: [ { name?, email?, phone?, member_id?, groups?, weight? } ]` (max 10000; legacy `names: string[]` also accepted) | `201 { voters: [...] }` |
+| PATCH | `/events/{id}/voters/{voterId}` | `name?, email?, phone?, code?, groups?, weight?` (1–10,000,000; `422` once voting started), `proxy_voter_id?` (another voter on this event who votes for this one, `null` to cancel; see Meeting rules) | voter. Sending `used_at` returns `422`, because votes are secret and a used code can't be reset. |
 | DELETE | `/events/{id}/voters/{voterId}` | | `204`. If they already voted, the vote stays counted. |
 | POST | `/events/{id}/voters/erase-contacts` | | `{ erased }`: removes every voter's email and phone |
 | POST | `/events/{id}/voters/invite` | `channel: email\|sms\|both, audience: not_invited\|pending\|selected, voter_ids?` | `{ queued, email, sms, failed, queue }`. Requires a confirmed email, otherwise `403`. |
@@ -177,7 +177,7 @@ How codes behave:
 | GET / POST | `/public/events/{token}/nominations` | GET: the nomination form `{ name, open, ends_at, voting_starts_at, brand, categories }`. POST: `{ category_id, nominee_name, reason?, email?, captcha_token? }` (max 3 per person per category). |
 | GET / POST | `/public/candidate-profile/{token}` | The candidate's private link. POST (multipart): `description?, image?, remove_image?`. Name and category can't change. |
 | GET | `/public/certificates/{serial}` | Verify a results certificate: `{ serial, payload, signature, valid, matches_current, message, verify_url, certificate_url }`. |
-| POST | `/public/events/{token}/code/validate` | `{ code }` returns `{ valid: true, name }`, or `422` if invalid/used, or `403` if not open |
+| POST | `/public/events/{token}/code/validate` | `{ code }` returns `{ valid: true, name, categories, weight, own_weight, proxy_for: [names] }`, or `422` if invalid/used (`{ proxy: true, message }` when another member holds this voter's proxy), or `403` if not open |
 | POST | `/public/events/{token}/vote` | `{ code, choices: [ { category_id, candidate_id } ] }` returns `{ message, receipt }` |
 | POST | `/public/events/{token}/receipt` | `{ receipt }` (ballot receipt, or a paid-vote reference) returns `{ valid, message, counted_at }` or `404` |
 | POST | `/public/events/{token}/paid-votes` | `{ candidate_id, quantity (1–10000), email, name?, captcha_token? }` returns `{ authorization_url, reference }` (Paystack). `503` if payments aren't set up; `422` below the minimum payment. |
@@ -198,6 +198,11 @@ How codes behave:
 - Motions (`method: motion`, created with `pass_rule` simple | two_thirds | three_quarters and optional `description`) get fixed Yes / No / Abstain candidates (`motion_choice`), which can't be edited, removed or added to. Results carry `motion: { yes, no, abstain, rule, decided, passed }`.
 - `GET /public/events/{token}/candidates/{id}/photo`: the candidate's photo through the API (for campaign cards).
 - Ranked-choice categories: send each pick with `rank` (1 = first choice), or list them in order. Only the first choice adds to the candidate's `votes`; the ranking is stored without anything that identifies the voter.
+
+**Meeting rules** (Pro; all off by default). `PATCH /events/{id}` takes `weighted_votes` (bool), `proxies_enabled` (bool), `max_proxies` (1–50, default 2), `quorum_type` (`percent` | `count` | `null`) and `quorum_value`. Switching any of them on needs Pro (`402`, `plan_limit: meeting_rules`); they work with codes voting only, and return `422 { errors.meeting_rules }` once the ballot is locked (`max_proxies` may still change). Switching proxies off cancels the proxies given.
+- Weighted: a ballot adds the voter's `weight` to each picked candidate and to the category's `ballots` (ranked ballots store `weight`).
+- Proxies: a ballot cast by a holder also carries the unused members who gave them their proxy; per category, only members allowed in it count. Those members are marked as voted. A member whose proxy is held can't vote (`422`). Proxy rules: same event, not yourself, no chains, at most `max_proxies` per holder, neither has voted.
+- Results include `rules: { weighted, proxies, max_proxies, quorum: { type, value, basis: voters|weight, total, required, achieved, met }, proxy_votes?, total_weight?, voted_weight? }` (`null` when no rule is on). Certificates record `rules` too.
 
 **Results per category** also include `method`, `ballots` (voters who answered it: the base for percentages), `winners` (candidate ids, by the method; several = a tie) and, for ranked choice, `rounds`: `[{ counts: [{id, votes}], eliminated: [ids], exhausted, continuing }]`. Candidates are listed in finishing order.
 - The code exists and is unused. The check runs under a row lock in the same transaction.

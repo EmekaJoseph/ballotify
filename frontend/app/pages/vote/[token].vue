@@ -127,6 +127,14 @@
                 <span class="code-chip d-none d-sm-inline">{{ maskedCode }}</span>
                 <button class="btn btn-link btn-sm text-muted p-0 flex-shrink-0" @click="changeCode">{{ t('vote.notYou') }}</button>
             </div>
+            <!-- Weighted votes / proxies: what this ballot carries -->
+            <div v-if="proxyFor.length || ballotWeight > 1" class="carry-note mb-3">
+                <i class="bi bi-people-fill"></i>
+                <div class="min-w-0">
+                    <div v-if="proxyFor.length">{{ t('vote.proxyNote', { names: listNames(proxyFor) }) }}</div>
+                    <div v-if="ballotWeight > 1" class="fw-bold">{{ t('vote.weightNote', { n: formatNumber(ballotWeight) }) }}</div>
+                </div>
+            </div>
             <div v-if="!myCategories.length" class="card-b pad text-center text-muted">{{ t('vote.nothingForYou') }}</div>
             <BallotForm v-else ref="ballot" :categories="myCategories" :candidates="myCandidates"
                 :submitting="submitting" :error="submitError" @submit="castVote" />
@@ -203,6 +211,12 @@ const paidNotice = ref<{ ok: boolean; text: string } | null>(null);
 
 const isPaid = computed(() => event.value?.voting_mode === 'paid');
 const allowedCategories = ref<number[] | null>(null);
+/** Weighted votes / proxies: votes this ballot counts as, and whose votes it also carries. */
+const ballotWeight = ref(1);
+const proxyFor = ref<string[]>([]);
+function listNames(names: string[]): string {
+    return names.length < 2 ? (names[0] ?? '') : `${names.slice(0, -1).join(', ')} ${t('common.and')} ${names[names.length - 1]}`;
+}
 const myCategories = computed(() => (event.value?.categories ?? []).filter(c => !allowedCategories.value || allowedCategories.value.includes(c.id)));
 const myCandidates = computed(() => (event.value?.candidates ?? []).filter(c => myCategories.value.some(cat => cat.id === c.category_id)));
 
@@ -299,11 +313,15 @@ async function checkCode() {
         voterName.value = data.name?.trim() || null;
         // Voter groups: the categories this code may vote in (all when the API doesn't say).
         allowedCategories.value = data.categories ?? null;
+        ballotWeight.value = data.weight ?? 1;
+        proxyFor.value = data.proxy_for ?? [];
         stage.value = 'ballot';
         window.scrollTo({ top: 0 });
     } catch (e) {
         const status = apiStatus(e);
-        if (status === 422) codeError.value = t('vote.badCode');
+        // Someone holds this member's proxy: the server explains (in the voter's language).
+        if (status === 422 && (e as { response?: { data?: { proxy?: boolean } } }).response?.data?.proxy) codeError.value = apiErrorMessage(e);
+        else if (status === 422) codeError.value = t('vote.badCode');
         else if (status === 403) await load();
         else codeError.value = apiErrorMessage(e);
     } finally {
@@ -373,6 +391,8 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.carry-note { display: flex; gap: .7rem; align-items: flex-start; padding: .8rem 1rem; border-radius: var(--radius); background: var(--brand-50); color: var(--ink); font-size: .92rem; overflow-wrap: anywhere; }
+.carry-note > .bi { color: var(--brand-600); font-size: 1.15rem; line-height: 1.3; }
 .voter-bar { display: flex; align-items: center; gap: .75rem; padding: .7rem 1rem; }
 .brand-logo { display: block; max-height: 48px; max-width: 180px; object-fit: contain; border-radius: 8px; background: rgba(255, 255, 255, .92); padding: 4px 8px; }
 .intro-band {

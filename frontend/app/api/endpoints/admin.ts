@@ -21,6 +21,11 @@ export interface EventPayload {
     ussd_enabled?: boolean;
     nominations_enabled?: boolean;
     nominations_ends_at?: string | null;
+    weighted_votes?: boolean;
+    proxies_enabled?: boolean;
+    max_proxies?: number;
+    quorum_type?: 'percent' | 'count' | null;
+    quorum_value?: number | null;
 }
 
 /** Sign-in either completes, or asks for the authenticator code. */
@@ -120,7 +125,7 @@ export const adminApi = {
     createVoter: (eventId: Id, data: VoterContact & { code?: string | null }) =>
         api.post<Voter>(`/events/${eventId}/voters`, data),
     eraseVoterContacts: (eventId: Id) => api.post<{ erased: number }>(`/events/${eventId}/voters/erase-contacts`),
-    updateVoter: (eventId: Id, voterId: Id, data: VoterContact & { code?: string }) =>
+    updateVoter: (eventId: Id, voterId: Id, data: VoterContact & { code?: string; proxy_voter_id?: number | null }) =>
         api.patch<Voter>(`/events/${eventId}/voters/${voterId}`, data),
     deleteVoter: (eventId: Id, voterId: Id) => api.delete(`/events/${eventId}/voters/${voterId}`),
     generateVoters: (eventId: Id, data: { count: number }) =>

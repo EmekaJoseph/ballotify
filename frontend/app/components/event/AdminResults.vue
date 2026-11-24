@@ -45,6 +45,9 @@
             </button>
         </div>
 
+        <!-- Weighted votes / proxies / quorum (live quorum progress) -->
+        <RulesBanner v-if="results?.rules" :rules="results.rules" :status="event.status" class="mb-4" />
+
         <div v-if="loading && !results" class="d-grid gap-3">
             <div class="row g-3"><div v-for="i in 4" :key="i" class="col-6 col-lg-3"><div class="skeleton" style="height: 92px"></div></div></div>
             <div class="skeleton" style="height: 240px"></div>

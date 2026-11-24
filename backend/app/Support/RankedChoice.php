@@ -19,11 +19,13 @@ class RankedChoice
     /**
      * @param  int[]  $candidateIds
      * @param  iterable<int[]>  $rankings  candidate ids, first choice first
+     * @param  int[]|null  $weights  votes each ranking carries (weighted votes / proxies); 1 each when null
      * @return array{winners: int[], rounds: array<int, array{counts: array<int, int>, eliminated: int[], exhausted: int, continuing: int}>, order: int[]}
      */
-    public static function count(array $candidateIds, iterable $rankings): array
+    public static function count(array $candidateIds, iterable $rankings, ?array $weights = null): array
     {
-        $rankings = is_array($rankings) ? $rankings : iterator_to_array($rankings, false);
+        $rankings = array_values(is_array($rankings) ? $rankings : iterator_to_array($rankings, false));
+        $weights = $weights === null ? array_fill(0, count($rankings), 1) : array_map('intval', array_values($weights));
         $active = array_values(array_unique(array_map('intval', $candidateIds)));
         $rounds = [];
         $eliminatedOrder = [];
@@ -32,7 +34,8 @@ class RankedChoice
         while ($active) {
             $counts = array_fill_keys($active, 0);
             $exhausted = 0;
-            foreach ($rankings as $ranking) {
+            foreach ($rankings as $i => $ranking) {
+                $weight = $weights[$i] ?? 1;
                 $choice = null;
                 foreach ($ranking as $id) {
                     if (isset($counts[(int) $id])) {
@@ -40,7 +43,11 @@ class RankedChoice
                         break;
                     }
                 }
-                $choice === null ? $exhausted++ : $counts[$choice]++;
+                if ($choice === null) {
+                    $exhausted += $weight;
+                } else {
+                    $counts[$choice] += $weight;
+                }
             }
             $continuing = array_sum($counts);
             arsort($counts);

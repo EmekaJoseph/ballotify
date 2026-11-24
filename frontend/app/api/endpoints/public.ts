@@ -6,7 +6,15 @@ export const publicApi = {
     getEvent: (token: string) => api.get<PublicEvent>(`/public/events/${token}`),
 
     validateCode: (token: string, code: string) =>
-        api.post<{ valid: boolean; name?: string | null; message?: string; categories?: number[] }>(`/public/events/${token}/code/validate`, { code }),
+        api.post<{
+            valid: boolean; name?: string | null; message?: string; categories?: number[];
+            /** Votes this ballot counts as (own weight + proxies). */
+            weight?: number; own_weight?: number;
+            /** Members this voter also votes for (proxy). */
+            proxy_for?: string[];
+            /** Refused because someone holds this member's proxy. */
+            proxy?: boolean;
+        }>(`/public/events/${token}/code/validate`, { code }),
 
     /** A candidate's photo (through the API, so campaign cards can draw it). */
     candidatePhotoUrl: (token: string, candidateId: number) => `${String(api.defaults.baseURL ?? '').replace(/\/+$/, '')}/public/events/${token}/candidates/${candidateId}/photo`,

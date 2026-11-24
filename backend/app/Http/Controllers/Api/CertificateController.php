@@ -40,6 +40,8 @@ class CertificateController extends Controller
                 : ['voters' => $event->voters()->count(),
                    'ballots' => $event->voters()->whereNotNull('used_at')->count(),
                    'receipts' => BallotReceipt::where('event_id', $event->id)->count()],
+            // Weighted votes / proxies / quorum, when used.
+            'rules' => \App\Support\MeetingRules::summary($event),
             'categories' => $categories->map(function ($cat) {
                 $tally = \App\Support\Tally::category($cat, $cat->candidates);
                 $byId = $cat->candidates->keyBy('id');

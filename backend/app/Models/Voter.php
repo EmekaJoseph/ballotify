@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Voter extends Model
 {
@@ -17,6 +18,8 @@ class Voter extends Model
         'phone',
         'member_id',
         'groups',
+        'weight',
+        'proxy_voter_id',
         'code',
         'used_at',
         'invited_at',
@@ -27,6 +30,8 @@ class Voter extends Model
 
     protected $casts = [
         'groups' => 'array',
+        'weight' => 'integer',
+        'proxy_voter_id' => 'integer',
         'used_at' => 'datetime',
         'invited_at' => 'datetime',
         'reminded_at' => 'datetime',
@@ -52,5 +57,17 @@ class Voter extends Model
     public function event(): BelongsTo
     {
         return $this->belongsTo(Event::class);
+    }
+
+    /** The member who votes for this voter (proxy). */
+    public function proxy(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'proxy_voter_id');
+    }
+
+    /** Members this voter holds a proxy for. */
+    public function principals(): HasMany
+    {
+        return $this->hasMany(self::class, 'proxy_voter_id');
     }
 }

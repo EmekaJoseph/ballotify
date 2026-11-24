@@ -42,8 +42,8 @@ class Tally
         }
         if ($category->isRanked()) {
             $ids = $candidates->pluck('id')->map(fn ($id) => (int) $id)->all();
-            $rankings = RankedBallot::where('category_id', $category->id)->pluck('ranking')->all();
-            $count = RankedChoice::count($ids, $rankings);
+            $ballots = RankedBallot::where('category_id', $category->id)->get(['ranking', 'weight']);
+            $count = RankedChoice::count($ids, $ballots->pluck('ranking')->all(), $ballots->pluck('weight')->all());
             // Candidates without a place (no candidates at all in the count) keep their first-choice order.
             $order = array_values(array_unique(array_merge($count['order'], $candidates->sortByDesc('votes')->pluck('id')->all())));
 

@@ -47,6 +47,13 @@
                 <div v-if="!paid"><span>Votes counted</span><b>{{ formatNumber(totalVotes) }}</b></div>
             </div>
 
+            <!-- Meeting rules: weighted votes, proxies, quorum (and whether the quorum was reached) -->
+            <section v-if="ruleLines.length" class="rules-box" :class="{ failed: verdict && !verdict.ok && final }">
+                <h2>Meeting rules</h2>
+                <ul><li v-for="l in ruleLines" :key="l">{{ l }}</li></ul>
+                <p v-if="verdict" class="verdict" :class="verdict.ok ? 'ok' : 'bad'">{{ verdict.text }}</p>
+            </section>
+
             <!-- Winners at a glance -->
             <section class="block">
                 <h2>{{ final ? 'Winners' : 'Currently leading' }}</h2>
@@ -237,6 +244,8 @@ const opts = reactive({ register: true, signatures: true });
 const paid = computed(() => event.value?.voting_mode === 'paid');
 const final = computed(() => results.value?.event.status === 'completed');
 const changes = computed(() => results.value?.integrity?.changes_during_voting ?? 0);
+const ruleLines = computed(() => describeRules(results.value?.rules));
+const verdict = computed(() => (results.value?.rules?.quorum ? quorumVerdict(results.value.rules.quorum, final.value) : null));
 const organiser = ref('');
 /** The register needs voter access (paid: earnings need manage access). */
 const canSeeRegister = computed(() => (paid.value ? !!earnings.value : voters.value.length > 0));
@@ -414,6 +423,13 @@ h3 { font-size: 1.05rem; font-weight: 800; margin: 0; }
 .status.no { background: #f1f5f9; color: #64748b; }
 
 .statement { margin: 2rem 0; padding: 1rem 1.2rem; background: #f8fafc; border-left: 4px solid #0e7c77; border-radius: 8px; break-inside: avoid; }
+.rules-box { border: 1px solid var(--line, #e5e7eb); border-radius: 12px; padding: .8rem 1rem; margin-bottom: 1.25rem; break-inside: avoid; }
+.rules-box h2 { font-size: 1rem; margin-bottom: .4rem; }
+.rules-box ul { margin: 0 0 .4rem; padding-left: 1.1rem; font-size: .9rem; }
+.rules-box .verdict { margin: 0; font-weight: 800; font-size: .95rem; }
+.rules-box .verdict.ok { color: #15803d; }
+.rules-box .verdict.bad { color: #b91c1c; }
+.rules-box.failed { border: 2px solid #b91c1c; background: #fef2f2; }
 .statement h2 { margin-bottom: .4rem; font-size: 1rem; }
 .statement p { margin: 0 0 .4rem; font-size: .86rem; line-height: 1.6; color: #334155; }
 

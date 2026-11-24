@@ -56,6 +56,16 @@ return new class extends Migration
             // Public nomination phase before voting (award nights).
             $table->boolean('nominations_enabled')->default(false);
             $table->timestamp('nominations_ends_at')->nullable();
+            // Meeting rules (Pro, all off by default):
+            //   weighted_votes  = each voter's ballot counts as their `weight` (shares, units...)
+            //   proxies_enabled = a member can let another member vote for them (at most max_proxies each)
+            //   quorum          = the result is only valid if enough voted: percent of members or a fixed number
+            //                     (counted by weight when votes are weighted)
+            $table->boolean('weighted_votes')->default(false);
+            $table->boolean('proxies_enabled')->default(false);
+            $table->unsignedTinyInteger('max_proxies')->default(2);
+            $table->string('quorum_type', 8)->nullable(); // percent | count
+            $table->unsignedInteger('quorum_value')->nullable();
             // Billing: 'free' or 'pro' (unlocked by a Paystack payment or by the admin).
             $table->string('plan', 10)->default('free');
             // Pro size: small | standard | large (null on Free).
@@ -99,6 +109,8 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->foreignId('category_id')->constrained()->cascadeOnDelete();
             $table->json('ranking'); // candidate ids, first choice first
+            // Weighted votes / proxies: how many votes this ranking carries.
+            $table->unsignedInteger('weight')->default(1);
         });
 
         Schema::create('candidates', function (Blueprint $table) {
@@ -128,6 +140,10 @@ return new class extends Migration
             $table->string('member_id', 64)->nullable();
             // Groups (faculty, level, branch...) deciding which categories this voter sees.
             $table->json('groups')->nullable();
+            // Weighted votes: how many votes this voter's ballot counts as (1 unless set).
+            $table->unsignedInteger('weight')->default(1);
+            // Proxy: the member who votes for this voter (who then can't vote themselves).
+            $table->foreignId('proxy_voter_id')->nullable()->constrained('voters')->nullOnDelete();
             $table->string('code', 64);
             $table->timestamp('used_at')->nullable()->index();
             // Outcome of the most recent email / SMS / WhatsApp invitation.

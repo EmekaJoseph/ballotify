@@ -41,5 +41,8 @@
     "Paid after voting closed": "Payé après la clôture du vote",
     "Amount or currency did not match. Contact the organiser.": "Le montant ou la devise ne correspond pas. Contactez l’organisateur.",
     "You can’t vote in “:category”.": "Vous ne pouvez pas voter dans « :category ».",
-    "Your code can’t be sent by SMS right now. Please contact the organiser for your code.": "Votre code ne peut pas être envoyé par SMS pour le moment. Veuillez contacter l’organisateur pour obtenir votre code."
+    "Your code can’t be sent by SMS right now. Please contact the organiser for your code.": "Votre code ne peut pas être envoyé par SMS pour le moment. Veuillez contacter l’organisateur pour obtenir votre code.",
+    "Your vote is being cast by your proxy, :name. Ask the organiser if this is wrong.": "Votre vote est exprimé par votre mandataire, :name. Contactez l’organisateur en cas d’erreur.",
+    "Your vote is being cast by your proxy. Ask the organiser if this is wrong.": "Votre vote est exprimé par votre mandataire. Contactez l’organisateur en cas d’erreur.",
+    "a member": "un membre"
 }

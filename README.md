@@ -19,6 +19,7 @@
 | Per category: choose one, pick up to N, **approval** (any number) or **ranked choice** (instant runoff); shuffle candidates |
 | **Motions** (Yes / No / Abstain) with simple, two-thirds or three-quarters majority |
 | **Voter groups**: categories only some voters see (e.g. a branch rep only that branch votes for) |
+| **Meeting rules** (Pro, optional, off by default): weighted votes (shares/units), proxy voting, and a quorum with live progress; results, report and certificate say if the quorum wasn't reached |
 | **Campaign cards**: a shareable image per candidate with a QR code to the ballot | Progress bar, review screen, then submit |
 | Schedule when voting opens and closes, or close it early           | Pick candidates, review, submit        |
 | Generate thousands of voter codes, or import a name list           | A **receipt** to check the ballot was counted |

@@ -112,8 +112,8 @@ it('runs a ranked-choice category end to end, keeping ballots anonymous', functi
         ->and($res['rounds'][0]['eliminated'])->toBe([$c['C']->id])
         ->and($res['ballots'])->toBe(9);
 
-    // The stored rankings say nothing about who voted or when.
-    expect(Schema::getColumnListing('ranked_ballots'))->toEqualCanonicalizing(['id', 'category_id', 'ranking'])
+    // The stored rankings say nothing about who voted or when (weight = votes carried, 1 unless weighted/proxy).
+    expect(Schema::getColumnListing('ranked_ballots'))->toEqualCanonicalizing(['id', 'category_id', 'ranking', 'weight'])
         ->and(RankedBallot::count())->toBe(9)
         ->and(RankedBallot::pluck('id')->every(fn ($id) => Str::isUuid($id) && $id[14] === '4'))->toBeTrue(); // v4: random, not time-ordered
 });

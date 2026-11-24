@@ -229,6 +229,7 @@ class Plans
             'branding' => ! $pro,          // "Powered by Ballotify" shown
             'custom_branding' => $pro,     // own logo and colour
             'team' => $pro,                // co-organisers
+            'meeting_rules' => $pro,       // weighted votes, proxies, quorum
             'max_members' => $pro ? self::MAX_MEMBERS : 0,
             // Pro through the account (admin grant) rather than a payment on this event.
             'via_account' => $pro && $event->plan !== 'pro',
@@ -338,6 +339,14 @@ class Plans
     {
         if (! self::isPro($event)) {
             self::deny('Sending codes and reminders by email or SMS is a Pro feature. Upgrade this event, or share codes yourself (WhatsApp, CSV or printed slips).', 'messaging');
+        }
+    }
+
+    /** Weighted votes, proxies and quorum (AGM-style meeting rules). */
+    public static function ensureMeetingRules(Event $event): void
+    {
+        if (! self::isPro($event)) {
+            self::deny('Weighted votes, proxies and quorum are Pro features. Upgrade this event to use them.', 'meeting_rules');
         }
     }
 

@@ -84,21 +84,20 @@ class BallotBox
 
         // Plurality categories add to every pick's total. Ranked categories add only to the
         // first choice's total (the "first preferences"), and keep the ranking for the rounds.
-        $candidateIds = [];
-        $rankings = [];
+        $picks = [];     // category id => candidate ids that gain votes
+        $rankings = [];  // ranked category id => full ranking
         foreach ($clean as $choice) {
             if ($categories[$choice['category_id']]->isRanked()) {
                 $rankings[$choice['category_id']][] = $choice['candidate_id'];
             } else {
-                $candidateIds[] = $choice['candidate_id'];
+                $picks[$choice['category_id']][] = $choice['candidate_id'];
             }
         }
-        foreach ($rankings as $ranking) {
-            $candidateIds[] = $ranking[0];
+        foreach ($rankings as $categoryId => $ranking) {
+            $picks[$categoryId] = [$ranking[0]];
         }
-        $categoryIds = array_values(array_unique(array_column($clean, 'category_id')));
 
-        $receipt = DB::transaction(function () use ($event, $code, $candidateIds, $rankings, $categoryIds, $categories) {
+        $receipt = DB::transaction(function () use ($event, $code, $picks, $rankings, $categories) {
             // The row lock must be taken inside the transaction, otherwise two
             // concurrent requests with the same code could both cast a ballot.
             $voter = Voter::where('event_id', $event->id)
@@ -109,9 +108,23 @@ class BallotBox
             if (! $voter || $voter->used_at !== null) {
                 return null;
             }
-            // Voter groups: only the categories this voter is allowed to vote in.
-            foreach ($categoryIds as $categoryId) {
-                if (! $categories[$categoryId]->allows($voter->groups)) {
+            // Proxy: someone else votes for this member, so they can't vote twice.
+            if ($voter->proxy_voter_id !== null) {
+                $holder = Voter::where('id', $voter->proxy_voter_id)->value('name');
+                throw new BallotRejected($holder
+                    ? __('Your vote is being cast by your proxy, :name. Ask the organiser if this is wrong.', ['name' => $holder])
+                    : __('Your vote is being cast by your proxy. Ask the organiser if this is wrong.'), 422);
+            }
+            // The holder, plus the members who gave them their proxy (locked, so a vote and
+            // a proxy change can't cross). Weights count only when weighted votes are on.
+            $members = MeetingRules::members($event, $voter, lock: true);
+
+            // Voter groups: only categories at least one of these members may vote in, and
+            // each category counts only the members allowed in it.
+            $weights = [];
+            foreach (array_keys($picks) as $categoryId) {
+                $weights[$categoryId] = MeetingRules::categoryWeight($event, $members, $categories[$categoryId]);
+                if ($weights[$categoryId] < 1) {
                     throw new BallotRejected(__('You can’t vote in “:category”.', ['category' => $categories[$categoryId]->name]), 422);
                 }
             }
@@ -119,19 +132,22 @@ class BallotBox
             // SECRET BALLOT: only the running totals change. No row records which
             // voter chose what, so a ballot can never be traced back to a code,
             // not even by the organiser or a DBA.
-            Candidate::whereIn('id', $candidateIds)->where('event_id', $event->id)->increment('votes');
-            Category::whereIn('id', $categoryIds)->increment('ballots');
+            foreach ($picks as $categoryId => $candidateIds) {
+                Candidate::whereIn('id', $candidateIds)->where('event_id', $event->id)->increment('votes', $weights[$categoryId]);
+                Category::where('id', $categoryId)->increment('ballots', $weights[$categoryId]);
+            }
             if ($rankings) {
                 // No voter id and no time, and random ids (see RankedBallot).
                 RankedBallot::insert(array_map(fn ($ranking, $categoryId) => [
                     'id' => (string) Str::uuid(),
                     'category_id' => $categoryId,
                     'ranking' => json_encode(array_values($ranking)),
+                    'weight' => $weights[$categoryId],
                 ], $rankings, array_keys($rankings)));
             }
 
-            $voter->used_at = now();
-            $voter->save();
+            // Everyone this ballot spoke for has now voted.
+            Voter::whereIn('id', $members->pluck('id'))->update(['used_at' => now()]);
 
             // Receipt: proves this ballot was counted, without saying who cast it or how.
             return BallotReceipt::issue($event->id);

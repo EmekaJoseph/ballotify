@@ -65,6 +65,8 @@ export function resultsCsv(results: EventResults, event?: BallotEvent | null): s
         ['Registered voters', stats.total_voters],
         ['Turnout', stats.total_voters ? `${percent(stats.voted, stats.total_voters)}%` : ''],
         ['Changes after voting began', results.integrity?.changes_during_voting ?? 0],
+        ...describeRules(results.rules).map(l => ['Meeting rule', l]),
+        ...(results.rules?.quorum ? [['Quorum result', quorumVerdict(results.rules.quorum, results.event.status === 'completed').text]] : []),
         ['Exported', new Date().toLocaleString()],
         [],
         ['Category', 'Method', 'Rank', 'Candidate', 'Description', 'Votes', 'Share of voters', 'Result'],

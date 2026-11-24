@@ -60,14 +60,19 @@ class UssdController extends Controller
         }
 
         $code = VoterController::normalizeCode($in[1]);
-        $voter = Voter::where('event_id', $event->id)->where('code', $code)->whereNull('used_at')->first(['id', 'groups']);
+        $voter = Voter::where('event_id', $event->id)->where('code', $code)->whereNull('used_at')->first(['id', 'groups', 'weight', 'proxy_voter_id']);
         if (! $voter) {
             return 'END That code is not valid or has already voted.';
         }
+        if ($voter->proxy_voter_id !== null) {
+            return 'END Your vote is being cast by your proxy. Ask the organiser if this is wrong.';
+        }
+        // A proxy holder also sees the categories of the members they vote for.
+        $members = \App\Support\MeetingRules::members($event, $voter);
 
         // Replay the keypresses through the category screens.
         $categories = $event->categories()->with('candidates:id,category_id,name')->get()
-            ->filter(fn ($c) => $c->candidates->isNotEmpty() && $c->allows($voter->groups))->values();
+            ->filter(fn ($c) => $c->candidates->isNotEmpty() && $members->contains(fn ($m) => $c->allows($m->groups)))->values();
         if ($categories->isEmpty()) {
             return 'END This ballot isn’t ready yet. Please try again later.';
         }

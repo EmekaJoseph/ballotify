@@ -38,7 +38,8 @@ class SendScheduledReminders extends Command
             }
             $counts = VoterController::sendMessages(
                 $event,
-                Voter::where('event_id', $event->id)->whereNull('used_at'),
+                // Not members whose proxy votes for them.
+                Voter::where('event_id', $event->id)->whereNull('used_at')->whereNull('proxy_voter_id'),
                 $event->reminder_channel ?: 'email',
                 'reminder',
                 false, // not enough SMS left: remind by email only

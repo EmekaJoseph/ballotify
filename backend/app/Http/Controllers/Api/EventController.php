@@ -14,6 +14,8 @@ use App\Policies\EventPolicy;
 use App\Support\Audit;
 use App\Support\Paystack;
 use App\Support\Plans;
+use App\Models\Voter;
+use App\Support\MeetingRules;
 use App\Support\Templates;
 use App\Support\Timeline;
 use Illuminate\Http\Request;
@@ -172,13 +174,20 @@ class EventController extends Controller
             'ussd_enabled' => ['sometimes', 'boolean'],
             'nominations_enabled' => ['sometimes', 'boolean'],
             'nominations_ends_at' => ['sometimes', 'nullable', 'date'],
+            // Meeting rules (Pro).
+            'weighted_votes' => ['sometimes', 'boolean'],
+            'proxies_enabled' => ['sometimes', 'boolean'],
+            'max_proxies' => ['sometimes', 'integer', 'min:1', 'max:50'],
+            'quorum_type' => ['sometimes', 'nullable', Rule::in(Event::QUORUM_TYPES)],
+            'quorum_value' => ['sometimes', 'nullable', 'integer', 'min:1', 'max:100000000'],
         ]);
         // Compare against the stored value for whichever bound was not sent.
         $start = array_key_exists('starts_at', $data) ? $data['starts_at'] : $event->starts_at;
         $end = array_key_exists('ends_at', $data) ? $data['ends_at'] : $event->ends_at;
         $this->ensureValidWindow($start, $end);
 
-        $before = $event->only(['name', 'voting_mode', 'vote_price_naira', 'results_visibility', 'starts_at', 'ends_at', 'reminder_at', 'self_registration', 'ussd_enabled', 'nominations_enabled']) + ['status' => $event->status];
+        $before = $event->only(['name', 'voting_mode', 'vote_price_naira', 'results_visibility', 'starts_at', 'ends_at', 'reminder_at', 'self_registration', 'ussd_enabled', 'nominations_enabled',
+            'weighted_votes', 'proxies_enabled', 'max_proxies', 'quorum_type', 'quorum_value']) + ['status' => $event->status];
 
         if (array_key_exists('voting_mode', $data) && $data['voting_mode'] !== $event->voting_mode) {
             if ($event->ballot_locked) {
@@ -237,6 +246,8 @@ class EventController extends Controller
         if (! empty($data['nominations_ends_at']) && $start && Carbon::parse($data['nominations_ends_at'])->gt(Carbon::parse($start))) {
             throw ValidationException::withMessages(['nominations_ends_at' => ['Nominations must close before voting opens.']]);
         }
+
+        $data = $this->checkMeetingRules($event, $data);
 
         $event->fill($data)->save();
         $event = $event->fresh();
@@ -297,6 +308,11 @@ class EventController extends Controller
                 'voting_mode' => $event->voting_mode,
                 'vote_price_naira' => $event->vote_price_naira,
                 'brand_color' => $event->brand_color,
+                'weighted_votes' => $event->weighted_votes,
+                'proxies_enabled' => $event->proxies_enabled,
+                'max_proxies' => $event->max_proxies,
+                'quorum_type' => $event->quorum_type,
+                'quorum_value' => $event->quorum_value,
                 'starts_at' => null,
                 'ends_at' => null,
             ]);
@@ -640,6 +656,8 @@ class EventController extends Controller
                     ->count(),
             ],
             'timeline' => Timeline::for($event),
+            // Weighted votes / proxies / quorum (null when none are on).
+            'rules' => MeetingRules::summary($event),
             'categories' => $results,
         ];
     }
@@ -676,11 +694,70 @@ class EventController extends Controller
                 Audit::log($event, 'event.feature', $label . ($event->{$field} ? ' switched on' : ' switched off'));
             }
         }
+        foreach (['weighted_votes' => 'Weighted votes', 'proxies_enabled' => 'Proxy voting'] as $field => $label) {
+            if ((bool) $before[$field] !== (bool) $event->{$field}) {
+                Audit::log($event, 'event.rules', $label . ($event->{$field} ? ' switched on' : ' switched off'));
+            }
+        }
+        if ($event->proxies_enabled && (int) $before['max_proxies'] !== (int) $event->max_proxies) {
+            Audit::log($event, 'event.rules', "Proxies one member may hold: {$event->max_proxies}");
+        }
+        if ($before['quorum_type'] !== $event->quorum_type || (int) $before['quorum_value'] !== (int) $event->quorum_value) {
+            Audit::log($event, 'event.rules', $event->quorum_type ? 'Quorum set: ' . MeetingRules::describeQuorum($event) : 'Quorum removed');
+        }
         if ((string) $before['reminder_at'] !== (string) $event->reminder_at) {
             Audit::log($event, 'event.reminder', $event->reminder_at
                 ? "Reminder scheduled for {$fmt($event->reminder_at)}"
                 : 'Scheduled reminder cancelled');
         }
+    }
+
+    /**
+     * Weighted votes, proxies and quorum: Pro, codes voting only, and fixed once voting
+     * starts (changing them mid-vote would change how votes already cast count).
+     * The proxy limit can still change: it only affects proxies given from then on.
+     */
+    private function checkMeetingRules(Event $event, array $data): array
+    {
+        if (array_key_exists('quorum_type', $data) && ! $data['quorum_type']) {
+            $data['quorum_type'] = null;
+            $data['quorum_value'] = null;
+        }
+        $changed = fn (string $key) => array_key_exists($key, $data) && $data[$key] != $event->{$key};
+        $ruleKeys = ['weighted_votes', 'proxies_enabled', 'quorum_type', 'quorum_value'];
+        if (! collect($ruleKeys)->contains($changed)) {
+            return $data;
+        }
+        $turningOn = (! empty($data['weighted_votes']) && ! $event->weighted_votes)
+            || (! empty($data['proxies_enabled']) && ! $event->proxies_enabled)
+            || (! empty($data['quorum_type']) && ! $event->quorum_type);
+        if ($turningOn) {
+            Plans::ensureMeetingRules($event);
+        }
+        if ($event->ballot_locked) {
+            throw ValidationException::withMessages(['meeting_rules' => ['Weighted votes, proxies and quorum can’t be changed after voting has started.']]);
+        }
+        if ($event->isPaid()) {
+            throw ValidationException::withMessages(['meeting_rules' => ['Weighted votes, proxies and quorum work with voter codes, not paid voting.']]);
+        }
+
+        $type = array_key_exists('quorum_type', $data) ? $data['quorum_type'] : $event->quorum_type;
+        $value = array_key_exists('quorum_value', $data) ? $data['quorum_value'] : $event->quorum_value;
+        if ($type && ! $value) {
+            throw ValidationException::withMessages(['quorum_value' => ['Enter the quorum: a percentage or a number.']]);
+        }
+        if ($type === 'percent' && $value > 100) {
+            throw ValidationException::withMessages(['quorum_value' => ['A quorum percentage must be between 1 and 100.']]);
+        }
+
+        // Switching proxies off cancels the proxies already given (nobody has voted yet).
+        if (array_key_exists('proxies_enabled', $data) && ! $data['proxies_enabled'] && $event->proxies_enabled) {
+            $n = Voter::where('event_id', $event->id)->whereNotNull('proxy_voter_id')->update(['proxy_voter_id' => null]);
+            if ($n) {
+                Audit::log($event, 'voters.proxy', "{$n} prox" . ($n === 1 ? 'y' : 'ies') . ' cancelled (proxy voting switched off)');
+            }
+        }
+        return $data;
     }
 
     /** A 6-digit event number for USSD (no leading zero, unique). */

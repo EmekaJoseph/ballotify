@@ -42,6 +42,21 @@
                 <button class="btn btn-soft btn-sm flex-shrink-0" @click="dialog = 'remind'">Change</button>
             </div>
 
+            <div v-if="event.weighted_votes || event.proxies_enabled" class="hint">
+                <i class="bi bi-bank"></i>
+                <span class="flex-grow-1">
+                    <template v-if="event.weighted_votes">
+                        <b>Weighted votes are on:</b> {{ formatNumber(totalWeight) }} votes in total across {{ formatNumber(voters.length) }} members.
+                        Set weights with <i class="bi bi-pencil"></i> or a <b>Weight</b> column when you import.
+                    </template>
+                    <template v-if="event.proxies_enabled">
+                        <b>Proxy voting is on:</b> click <i class="bi bi-pencil"></i> on a member to choose who votes for them
+                        (up to {{ event.max_proxies ?? 2 }} per holder).
+                        <template v-if="proxyCount"> {{ formatNumber(proxyCount) }} prox{{ proxyCount === 1 ? 'y' : 'ies' }} assigned.</template>
+                    </template>
+                </span>
+            </div>
+
             <div v-if="isFree" class="hint plan-hint">
                 <i class="bi bi-box"></i>
                 <span class="flex-grow-1">
@@ -112,8 +127,17 @@
                                 </td>
                                 <td style="min-width: 200px">
                                     <div class="fw-semibold text-ink">{{ v.name || 'Anonymous' }}</div>
-                                    <div v-if="v.groups?.length" class="d-flex flex-wrap gap-1 my-1">
+                                    <div v-if="v.groups?.length || (event.weighted_votes && (v.weight ?? 1) !== 1) || proxyLabel(v) || heldBy.get(v.id)" class="d-flex flex-wrap gap-1 my-1">
                                         <span v-for="g in v.groups" :key="g" class="group-chip">{{ g }}</span>
+                                        <span v-if="event.weighted_votes && (v.weight ?? 1) !== 1" class="rule-chip" title="Weight: this ballot counts as this many votes">
+                                            <i class="bi bi-bar-chart-steps"></i> {{ formatNumber(v.weight ?? 1) }} votes
+                                        </span>
+                                        <span v-if="proxyLabel(v)" class="rule-chip proxy text-truncate" :title="proxyLabel(v)">
+                                            <i class="bi bi-arrow-right-circle"></i> {{ proxyLabel(v) }}
+                                        </span>
+                                        <span v-if="heldBy.get(v.id)" class="rule-chip proxy" :title="`Votes for: ${heldBy.get(v.id)!.join(', ')}`">
+                                            <i class="bi bi-person-check"></i> Holds {{ heldBy.get(v.id)!.length }} prox{{ heldBy.get(v.id)!.length === 1 ? 'y' : 'ies' }}
+                                        </span>
                                     </div>
                                     <div v-if="v.email || v.phone || v.member_id" class="small text-muted d-flex flex-wrap column-gap-3">
                                         <span v-if="v.email" class="text-break"><i class="bi bi-envelope me-1"></i>{{ v.email }}</span>
@@ -130,7 +154,9 @@
                                     <button class="btn btn-link btn-sm text-muted p-1" title="Copy code" aria-label="Copy code" @click="copyText(v.code, 'Code copied')"><i class="bi bi-copy"></i></button>
                                 </td>
                                 <td class="text-nowrap">
-                                    <span v-if="v.used_at" class="pill pill-active" :title="'Voted ' + formatDate(v.used_at, true)"><i class="bi bi-check2"></i> Voted</span>
+                                    <span v-if="v.used_at && v.proxy_voter_id" class="pill pill-active" :title="'Voted by proxy ' + formatDate(v.used_at, true)"><i class="bi bi-check2"></i> Voted by proxy</span>
+                                    <span v-else-if="v.used_at" class="pill pill-active" :title="'Voted ' + formatDate(v.used_at, true)"><i class="bi bi-check2"></i> Voted</span>
+                                    <span v-else-if="v.proxy_voter_id" class="pill pill-violet" title="Their proxy votes for them; their own code doesn’t work"><i class="bi bi-arrow-right-circle"></i> Proxy given</span>
                                     <span v-else-if="v.invite_error" class="pill pill-failed" :title="v.invite_error"><i class="bi bi-exclamation-triangle"></i> Not delivered</span>
                                     <span v-else-if="v.invited_at && v.invited_via === 'whatsapp'" class="pill pill-wa" :title="'Shared on WhatsApp ' + formatDate(v.invited_at, true)"><i class="bi bi-whatsapp"></i> Shared</span>
                                     <span v-else-if="v.invited_at" class="pill pill-violet" :title="'Sent ' + formatDate(v.invited_at, true)"><i class="bi bi-send-check"></i> Invited</span>
@@ -162,8 +188,8 @@
         </div>
 
         <!-- Dialogs -->
-        <EventVoterFormModal :open="dialog === 'form'" :event-id="event.id" :voter="editing" :member-label="event.member_id_label || 'Member ID'" :group-options="groupNames" @close="dialog = null" @saved="onSaved" @limit="onLimit" />
-        <EventVoterImportModal :open="dialog === 'import'" :event-id="event.id" :member-label="event.member_id_label || 'Member ID'" @close="dialog = null" @created="afterCreate" @limit="onLimit" />
+        <EventVoterFormModal :open="dialog === 'form'" :event-id="event.id" :voter="editing" :member-label="event.member_id_label || 'Member ID'" :group-options="groupNames" :rules="formRules" @close="dialog = null" @saved="onSaved" @limit="onLimit" />
+        <EventVoterImportModal :open="dialog === 'import'" :event-id="event.id" :member-label="event.member_id_label || 'Member ID'" :weighted="!!event.weighted_votes" @close="dialog = null" @created="afterCreate" @limit="onLimit" />
         <EventWhatsAppModal :open="dialog === 'whatsapp'" :event="event" :voters="voters" :vote-url="voteUrl" @close="dialog = null" @shared="onShared" />
         <EventRemindModal :open="dialog === 'remind'" :event="event" :pending="pendingVoters.length" :reachable="reachableCount" :phone-pending="pendingVoters.filter(v => v.phone).length"
             @close="dialog = null" @done="afterRemind" />
@@ -384,6 +410,27 @@ function onSendCodes() {
     }
 }
 
+// ------------------------------------------------------------------ meeting rules
+const totalWeight = computed(() => voters.value.reduce((n, v) => n + (v.weight ?? 1), 0));
+const proxyCount = computed(() => voters.value.filter(v => v.proxy_voter_id).length);
+/** Holder id => names of the members they vote for. */
+const heldBy = computed(() => {
+    const map = new Map<number, string[]>();
+    if (!props.event.proxies_enabled) return map;
+    for (const v of voters.value) {
+        if (v.proxy_voter_id) map.set(v.proxy_voter_id, [...(map.get(v.proxy_voter_id) ?? []), v.name || 'a member']);
+    }
+    return map;
+});
+function proxyLabel(v: Voter): string {
+    if (!v.proxy_voter_id) return '';
+    const holder = voters.value.find(x => x.id === v.proxy_voter_id);
+    return `Proxy: ${holder?.name || 'a member'}`;
+}
+const formRules = computed(() => (props.event.weighted_votes || props.event.proxies_enabled
+    ? { weighted: !!props.event.weighted_votes, proxies: !!props.event.proxies_enabled, maxProxies: props.event.max_proxies ?? 2, locked: props.event.ballot_locked, voters: voters.value }
+    : null));
+
 async function onSaved(_v: Voter, isNew: boolean) {
     dialog.value = null;
     toast.success(isNew ? 'Voter added' : 'Voter updated');
@@ -473,13 +520,18 @@ function onLimit() {
 }
 
 function exportCsv(list: (Voter | GeneratedCode)[]) {
-    const rows: (string | null | undefined)[][] = [['Name', 'Email', 'Phone', 'Code', 'Voting link', 'Status', 'Invited']];
+    const weighted = !!props.event.weighted_votes;
+    const proxies = !!props.event.proxies_enabled;
+    const rows: (string | null | undefined)[][] = [['Name', 'Email', 'Phone', 'Code', 'Voting link', 'Status', 'Invited',
+        ...(weighted ? ['Weight'] : []), ...(proxies ? ['Proxy (votes for them)'] : [])]];
     for (const v of list) {
         const voter = 'id' in v ? v : null;
         rows.push([
             v.name ?? '', v.email ?? '', v.phone ?? '', v.code, voteUrl.value,
-            voter?.used_at ? 'Voted' : 'Not voted',
+            voter?.used_at ? (voter.proxy_voter_id ? 'Voted by proxy' : 'Voted') : 'Not voted',
             voter?.invited_at ? formatDate(voter.invited_at, true) : '',
+            ...(weighted ? [String(voter?.weight ?? 1)] : []),
+            ...(proxies ? [voter ? proxyLabel(voter).replace(/^Proxy: /, '') : ''] : []),
         ]);
     }
     downloadFile(`${slugify(props.event.name)}-voters.csv`, toCsv(rows));
@@ -491,6 +543,10 @@ function printSlips(list: (Voter | GeneratedCode)[]) {
 </script>
 
 <style scoped>
+.rule-chip { display: inline-flex; align-items: center; gap: .25rem; max-width: 220px; font-size: .7rem; font-weight: 700; padding: .05rem .45rem; border-radius: 6px; background: var(--pro-bg); color: var(--ink); box-shadow: inset 0 0 0 1px var(--pro-ring); }
+.rule-chip .bi { color: var(--pro-icon); }
+.rule-chip.proxy { background: var(--brand-50); box-shadow: none; }
+.rule-chip.proxy .bi { color: var(--brand-600); }
 .group-chip { font-size: .7rem; font-weight: 700; padding: .05rem .45rem; border-radius: 6px; background: var(--violet-50, rgba(124, 92, 255, .1)); color: var(--violet-600, #6d4ce8); }
 .status-filter { flex-shrink: 0; min-width: 160px; }
 .status-filter :deep(.as-trigger) { padding-top: .5rem; padding-bottom: .5rem; }
