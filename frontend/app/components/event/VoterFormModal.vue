@@ -72,13 +72,18 @@
                 <div v-if="errors.code" class="field-error">{{ errors.code }}</div>
                 <div v-else-if="voter?.invited_at" class="form-text">Changing the code means the invitation already sent will no longer work.</div>
             </div>
+            <div v-if="dupWarning.length" class="dup-warn mt-3" role="alert">
+                <div class="fw-bold mb-1"><i class="bi bi-files"></i> This may be someone already on the list</div>
+                <ul class="mb-1"><li v-for="m in dupWarning.slice(0, 4)" :key="m.with + m.kind">{{ describeMatch(m) }}</li></ul>
+                <div class="small">Someone listed twice gets two codes and could vote twice. If this is a different person, {{ voter ? 'save' : 'add' }} anyway.</div>
+            </div>
             <div v-if="generalError" class="field-error mt-3">{{ generalError }}</div>
         </form>
         <template #footer>
             <button type="button" class="btn btn-ghost" @click="emit('close')">Cancel</button>
             <button type="submit" form="voter-form" class="btn btn-primary" :disabled="busy">
                 <span v-if="busy" class="spinner-border spinner-border-sm"></span>
-                {{ voter ? 'Save changes' : 'Add voter' }}
+                {{ dupWarning.length ? (voter ? 'Save anyway' : 'Add anyway') : (voter ? 'Save changes' : 'Add voter') }}
             </button>
         </template>
     </BaseModal>
@@ -87,14 +92,24 @@
 <script setup lang="ts">
 import { adminApi } from '~/api/endpoints/admin';
 import type { Voter } from '~/types';
+import type { DuplicateMatch } from '~/utils/duplicates';
 
 /** Meeting rules switched on for this event (weighted votes, proxies). */
 export interface VoterFormRules { weighted: boolean; proxies: boolean; maxProxies: number; locked: boolean; voters: Voter[] }
 
-const props = withDefaults(defineProps<{ open: boolean; eventId: number; voter: Voter | null; memberLabel?: string; groupOptions?: string[]; rules?: VoterFormRules | null }>(), { memberLabel: 'Member ID', groupOptions: () => [], rules: null });
+const props = withDefaults(defineProps<{ open: boolean; eventId: number; voter: Voter | null; memberLabel?: string; groupOptions?: string[]; rules?: VoterFormRules | null; existing?: Voter[] }>(),
+    { memberLabel: 'Member ID', groupOptions: () => [], rules: null, existing: () => [] });
+
 const emit = defineEmits<{ close: []; saved: [voter: Voter, created: boolean]; limit: [] }>();
 
 const form = reactive({ name: '', email: '', phone: '', member_id: '', code: '', groups: '', weight: 1 as number | '', proxy: '' as string });
+/** Possible duplicates shown after the first click; a second click saves anyway. */
+const dupWarning = ref<DuplicateMatch[]>([]);
+watch(() => [form.name, form.email, form.phone], () => { dupWarning.value = []; });
+function contactChanged(): boolean {
+    const v = props.voter;
+    return !v || (v.name ?? '') !== form.name || (v.email ?? '') !== form.email || (v.phone ?? '') !== form.phone;
+}
 const errors = ref<Record<string, string>>({});
 const generalError = ref('');
 const busy = ref(false);
@@ -107,6 +122,7 @@ watch(() => props.open, (open) => {
     form.member_id = props.voter?.member_id ?? '';
     form.code = props.voter?.code ?? '';
     form.groups = (props.voter?.groups ?? []).join(', ');
+    nextTick(() => { dupWarning.value = []; });
     form.weight = props.voter?.weight ?? 1;
     form.proxy = props.voter?.proxy_voter_id ? String(props.voter.proxy_voter_id) : '';
     errors.value = {};
@@ -118,6 +134,12 @@ async function submit() {
     generalError.value = '';
     if (form.email && !/^\S+@\S+\.\S+$/.test(form.email)) { errors.value.email = 'Enter a valid email address.'; return; }
     if (props.voter && form.code.length < 4) { errors.value.code = 'Codes need at least 4 characters.'; return; }
+    // Same name / email / phone as someone else: warn once, then let them carry on.
+    if (!dupWarning.value.length && contactChanged()) {
+        const others = props.existing.filter(v => v.id !== props.voter?.id);
+        const found = matchesIn({ name: form.name, email: form.email, phone: form.phone }, others, v => v.name || v.email || v.phone || `code ${v.code}`);
+        if (found.length) { dupWarning.value = found; return; }
+    }
 
     busy.value = true;
     try {
@@ -160,5 +182,7 @@ const proxyOptions = computed(() => {
 </script>
 
 <style scoped>
+.dup-warn { padding: .7rem .9rem; border-radius: 12px; background: var(--warning-50); color: var(--warning-text); font-size: .875rem; overflow-wrap: anywhere; }
+.dup-warn ul { padding-left: 1.1rem; }
 .proxy-note { padding: .6rem .8rem; border-radius: 12px; background: var(--surface-2); font-size: .875rem; color: var(--ink-2); overflow-wrap: anywhere; }
 </style>

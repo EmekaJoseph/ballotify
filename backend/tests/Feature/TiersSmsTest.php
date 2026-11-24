@@ -105,7 +105,7 @@ it('caps voters by size and points to the next size up', function () {
 
     $this->actingAs($event->user)->postJson("/api/events/{$event->id}/voters", ['name' => 'One more'])
         ->assertStatus(402)->assertJsonPath('plan_limit', 'voters')->assertJsonPath('upgrade', true)
-        ->assertJsonFragment(['message' => 'Pro Small events can have up to 200 voters and this event is full. Upgrade this event to Pro for up to 1,000 voters.']);
+        ->assertJsonFragment(['message' => 'Pro Small events can have up to 200 voters and this event is full. Upgrade this event to Pro Medium for up to 1,000 voters.']);
 });
 
 it('sells SMS credits for the account', function () {

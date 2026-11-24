@@ -353,8 +353,15 @@ async function saveCandidate() {
     }
 }
 
-/** Removed straight away, with a few seconds to undo (no confirm dialog). */
-function removeCandidate(cand: Candidate) {
+/** Asks first, then removes with a few seconds to undo. */
+async function removeCandidate(cand: Candidate) {
+    const ok = await confirm({
+        title: `Remove ${cand.name}?`,
+        message: 'They come off the ballot, with their photo and description. You can add them again before voting starts.',
+        confirmText: 'Remove candidate',
+        danger: true,
+    });
+    if (!ok) return;
     toast.undoable(`${cand.name} removed`, {
         hide: () => { hidden.value = new Set(hidden.value).add(cand.id); },
         restore: () => { const next = new Set(hidden.value); next.delete(cand.id); hidden.value = next; },

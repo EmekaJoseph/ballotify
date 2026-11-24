@@ -57,6 +57,15 @@
                 </span>
             </div>
 
+            <div v-if="strongDuplicates && statusFilter !== 'duplicates'" class="hint dup-hint">
+                <i class="bi bi-people"></i>
+                <span class="flex-grow-1">
+                    <b>{{ strongDuplicates }} voter{{ strongDuplicates === 1 ? '' : 's' }} may be on the list twice</b> (same name and contact, or same email).
+                    Someone listed twice gets two codes, so check before you send them.
+                </span>
+                <button class="btn btn-soft btn-sm flex-shrink-0" @click="statusFilter = 'duplicates'">Review</button>
+            </div>
+
             <div v-if="isFree" class="hint plan-hint">
                 <i class="bi bi-box"></i>
                 <span class="flex-grow-1">
@@ -126,7 +135,13 @@
                                         :aria-label="`Select ${v.name || 'voter'}`" @change="toggleSelect(v.id)" />
                                 </td>
                                 <td style="min-width: 200px">
-                                    <div class="fw-semibold text-ink">{{ v.name || 'Anonymous' }}</div>
+                                    <div class="fw-semibold text-ink">
+                                        {{ v.name || 'Anonymous' }}
+                                        <span v-if="duplicates.get(v.id)" class="dup-chip" :class="duplicates.get(v.id)![0]!.kind"
+                                            :title="duplicates.get(v.id)!.map(describeMatch).join('\n')">
+                                            <i class="bi bi-files"></i> {{ dupLabel(duplicates.get(v.id)!) }}
+                                        </span>
+                                    </div>
                                     <div v-if="v.groups?.length || (event.weighted_votes && (v.weight ?? 1) !== 1) || proxyLabel(v) || heldBy.get(v.id)" class="d-flex flex-wrap gap-1 my-1">
                                         <span v-for="g in v.groups" :key="g" class="group-chip">{{ g }}</span>
                                         <span v-if="event.weighted_votes && (v.weight ?? 1) !== 1" class="rule-chip" title="Weight: this ballot counts as this many votes">
@@ -188,8 +203,8 @@
         </div>
 
         <!-- Dialogs -->
-        <EventVoterFormModal :open="dialog === 'form'" :event-id="event.id" :voter="editing" :member-label="event.member_id_label || 'Member ID'" :group-options="groupNames" :rules="formRules" @close="dialog = null" @saved="onSaved" @limit="onLimit" />
-        <EventVoterImportModal :open="dialog === 'import'" :event-id="event.id" :member-label="event.member_id_label || 'Member ID'" :weighted="!!event.weighted_votes" @close="dialog = null" @created="afterCreate" @limit="onLimit" />
+        <EventVoterFormModal :open="dialog === 'form'" :event-id="event.id" :voter="editing" :existing="voters" :member-label="event.member_id_label || 'Member ID'" :group-options="groupNames" :rules="formRules" @close="dialog = null" @saved="onSaved" @limit="onLimit" />
+        <EventVoterImportModal :open="dialog === 'import'" :event-id="event.id" :existing="voters" :member-label="event.member_id_label || 'Member ID'" :weighted="!!event.weighted_votes" @close="dialog = null" @created="afterCreate" @limit="onLimit" />
         <EventWhatsAppModal :open="dialog === 'whatsapp'" :event="event" :voters="voters" :vote-url="voteUrl" @close="dialog = null" @shared="onShared" />
         <EventRemindModal :open="dialog === 'remind'" :event="event" :pending="pendingVoters.length" :reachable="reachableCount" :phone-pending="pendingVoters.filter(v => v.phone).length"
             @close="dialog = null" @done="afterRemind" />
@@ -235,6 +250,7 @@
 <script setup lang="ts">
 import { adminApi } from '~/api/endpoints/admin';
 import type { BallotEvent, GeneratedCode, Voter } from '~/types';
+import type { DuplicateMatch } from '~/utils/duplicates';
 
 const props = defineProps<{ event: BallotEvent }>();
 const emit = defineEmits<{ changed: [] }>();
@@ -248,7 +264,7 @@ const loading = ref(true);
 const busy = ref(false);
 const voters = ref<Voter[]>([]);
 const query = ref('');
-const statusFilter = ref<'all' | 'voted' | 'pending' | 'not_invited' | 'failed'>('all');
+const statusFilter = ref<'all' | 'voted' | 'pending' | 'not_invited' | 'failed' | 'duplicates'>('all');
 /** Voter groups in use (for the filter and the voter form's suggestions). */
 const groupNames = computed(() => {
     const seen = new Map<string, string>();
@@ -263,7 +279,19 @@ const STATUS_FILTERS: { value: typeof statusFilter.value; label: string }[] = [
     { value: 'voted', label: 'Voted' },
     { value: 'not_invited', label: 'Not invited' },
     { value: 'failed', label: 'Delivery failed' },
+    { value: 'duplicates', label: 'Possible duplicates' },
 ];
+
+// --- Possible duplicates: same name, email or phone as another voter (warned, never blocked).
+const voterLabel = (v: Voter) => v.name || v.email || v.phone || `code ${v.code}`;
+const duplicates = computed(() => {
+    const byIndex = findDuplicates(voters.value, voterLabel);
+    const byId = new Map<number, DuplicateMatch[]>();
+    byIndex.forEach((m, i) => byId.set(voters.value[i]!.id, m));
+    return byId;
+});
+/** Strong matches only (same person, same email): the ones worth checking first. */
+const strongDuplicates = computed(() => [...duplicates.value.values()].filter(m => m[0]!.kind === 'same' || m[0]!.kind === 'email').length);
 const page = ref(1);
 
 const dialog = ref<null | 'form' | 'import' | 'generate' | 'created' | 'invite' | 'whatsapp' | 'remind'>(null);
@@ -319,6 +347,7 @@ const filtered = computed(() => {
         if (s === 'pending' && v.used_at) return false;
         if (s === 'not_invited' && (v.invited_at || v.used_at)) return false;
         if (s === 'failed' && !v.invite_error) return false;
+        if (s === 'duplicates' && !duplicates.value.has(v.id)) return false;
         if (groupFilter.value && !(v.groups ?? []).some(g => g.toLowerCase() === groupFilter.value.toLowerCase())) return false;
         if (!q) return true;
         return [v.code, v.name, v.email, v.phone, v.member_id].some(f => (f ?? '').toLowerCase().includes(q));
@@ -467,9 +496,30 @@ async function generate() {
 
 
 /** Removed straight away, with a few seconds to undo (no confirm dialog). */
-function removeVoter(v: Voter) {
-    const index = voters.value.findIndex(x => x.id === v.id);
+/** Short chip text for the strongest match. */
+function dupLabel(m: DuplicateMatch[]): string {
+    const k = m[0]!.kind;
+    const more = m.length > 1 ? ` +${m.length - 1}` : '';
+    return (k === 'same' ? 'Possible duplicate' : k === 'email' ? 'Same email' : k === 'phone' ? 'Same phone' : 'Same name') + more;
+}
+
+async function removeVoter(v: Voter) {
     const who = v.name ? `“${v.name}”` : 'voter';
+    const held = heldBy.value.get(v.id)?.length ?? 0;
+    const ok = await confirm({
+        title: `Delete ${v.name ? v.name : 'this voter'}?`,
+        message: [
+            v.used_at
+                ? 'They have already voted. Their vote stays counted (it’s secret, so it can’t be removed), but they leave the voter list.'
+                : 'Their voting code stops working at once, even if you already sent it.',
+            held ? `They hold ${held} prox${held === 1 ? 'y' : 'ies'}; ${held === 1 ? 'that member' : 'those members'} will vote for themselves again.` : '',
+            'This is recorded in the Activity log.',
+        ].filter(Boolean).join(' '),
+        confirmText: 'Delete voter',
+        danger: true,
+    });
+    if (!ok) return;
+    const index = voters.value.findIndex(x => x.id === v.id);
     toast.undoable(`Deleted ${who}` + (v.used_at ? ' (their secret vote stays counted)' : ''), {
         hide: () => { voters.value = voters.value.filter(x => x.id !== v.id); },
         restore: () => {
@@ -543,6 +593,8 @@ function printSlips(list: (Voter | GeneratedCode)[]) {
 </script>
 
 <style scoped>
+.dup-chip { display: inline-flex; align-items: center; gap: .25rem; margin-left: .35rem; vertical-align: middle; font-size: .68rem; font-weight: 700; padding: .05rem .45rem; border-radius: 6px; background: var(--surface-2); color: var(--ink-2); box-shadow: inset 0 0 0 1px var(--line); cursor: help; white-space: nowrap; }
+.dup-chip.same, .dup-chip.email { background: var(--warning-50); color: var(--warning-text); box-shadow: none; }
 .rule-chip { display: inline-flex; align-items: center; gap: .25rem; max-width: 220px; font-size: .7rem; font-weight: 700; padding: .05rem .45rem; border-radius: 6px; background: var(--pro-bg); color: var(--ink); box-shadow: inset 0 0 0 1px var(--pro-ring); }
 .rule-chip .bi { color: var(--pro-icon); }
 .rule-chip.proxy { background: var(--brand-50); box-shadow: none; }

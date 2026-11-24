@@ -99,7 +99,7 @@ VOTERS take part from any phone or laptop using a one-time code.
    codes shared on WhatsApp / CSV / printed slips, "Powered by Ballotify".
    Upgrading ONE event to PRO is a one-off payment, in three sizes:
        Pro Small  ₦10,000   200 voters     200 SMS included
-       Pro        ₦25,000   1,000 voters   1,000 SMS included
+       Pro Medium ₦25,000   1,000 voters   1,000 SMS included
        Pro Large  ₦60,000   5,000 voters   5,000 SMS included
    (move up a size any time by paying the difference). Pro adds email & SMS
    invitations and reminders, own logo and colour, co-organisers, USSD and

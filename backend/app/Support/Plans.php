@@ -90,7 +90,7 @@ class Plans
         ];
         return [
             'small' => $tier('small', 'Pro Small', $s['pro_small_price_naira'], $s['pro_small_max_voters']),
-            'standard' => $tier('standard', 'Pro', $s['pro_price_naira'], $s['pro_max_voters']),
+            'standard' => $tier('standard', 'Pro Medium', $s['pro_price_naira'], $s['pro_max_voters']),
             'large' => $tier('large', 'Pro Large', $s['pro_large_price_naira'], $s['pro_large_max_voters']),
         ];
     }

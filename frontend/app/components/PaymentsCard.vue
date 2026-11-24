@@ -37,7 +37,7 @@ onMounted(async () => {
 /** "Pro Small: Annual Elections" or "500 SMS credits". */
 function label(p: MyPayment): string {
     if (p.kind === 'sms') return `${formatNumber(p.sms_credits ?? 0)} SMS credits`;
-    const size = ({ small: 'Pro Small', standard: 'Pro', large: 'Pro Large' } as Record<string, string>)[p.tier ?? ''] ?? 'Pro';
+    const size = ({ small: 'Pro Small', standard: 'Pro Medium', large: 'Pro Large' } as Record<string, string>)[p.tier ?? ''] ?? 'Pro';
     return p.event_name ? `${size}: ${p.event_name}` : `${size} upgrade`;
 }
 </script>

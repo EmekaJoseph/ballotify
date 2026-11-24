@@ -428,7 +428,7 @@ const pricing = reactive({
 type PricingKey = keyof typeof pricing;
 const SIZE_FIELDS: { label: string; price: PricingKey; voters: PricingKey }[] = [
     { label: 'Pro Small', price: 'pro_small_price_naira', voters: 'pro_small_max_voters' },
-    { label: 'Pro', price: 'pro_price_naira', voters: 'pro_max_voters' },
+    { label: 'Pro Medium', price: 'pro_price_naira', voters: 'pro_max_voters' },
     { label: 'Pro Large', price: 'pro_large_price_naira', voters: 'pro_large_max_voters' },
 ];
 const pricingStatus = ref<PlanSettings | null>(null);
