@@ -168,7 +168,7 @@ Billing is **pay per event**:
 
 | | Free | Pro Small | Pro Medium | Pro Large |
 |---|---|---|---|---|
-| Price (one-off, per event) | ₦0 | ₦10,000 | ₦25,000 | ₦60,000 |
+| Price (one-off, per event) | ₦0 | ₦20,000 | ₦45,000 | ₦105,000 |
 | Voters per event | 30 | 200 | 1,000 | 5,000 |
 | SMS included (1 per voter) | none | 200 | 1,000 | 5,000 |
 | Events | Unlimited drafts; **1 live** at a time | Doesn't count towards the free limit | ← | ← |
@@ -176,9 +176,9 @@ Billing is **pay per event**:
 | Ballot branding | "Powered by Ballotify" | Your own logo and colour | ← | ← |
 | Co-organisers, USSD, self-registration | No | Yes | Yes | Yes |
 
-An event can move up a size any time by paying the difference (e.g. Pro Small → Pro Medium costs ₦15,000).
+An event can move up a size any time by paying the difference (e.g. Pro Small → Pro Medium costs ₦25,000).
 
-**SMS:** each Pro event includes 1 SMS per voter it allows, so one invitation to everyone is covered. More SMS (reminders, re-sends) come from **SMS credits**: a prepaid balance on the organiser's account (₦8 per SMS by default), bought from the event's Overview, the send dialogs or **Account → SMS credits**. The app checks before sending: if there aren't enough, nothing is sent and the organiser is offered credits or email instead. Undelivered SMS go back to the event's allowance. Every SMS is kept to one message (160 characters), since a second part costs double. Email and WhatsApp are always free. The platform owner's own events are never charged.
+**SMS:** each Pro event includes 1 SMS per voter it allows, so one invitation to everyone is covered. More SMS (reminders, re-sends) come from **SMS credits**: a prepaid balance on the organiser's account (₦10 per SMS by default), bought from the event's Overview, the send dialogs or **Account → SMS credits**. The app checks before sending: if there aren't enough, nothing is sent and the organiser is offered credits or email instead. Undelivered SMS go back to the event's allowance. Every SMS is kept to one message (160 characters), since a second part costs double. Email and WhatsApp are always free. The platform owner's own events are never charged.
 
 These are the starting values. Change prices and limits any time in **Admin → Pricing**; changes apply straight away.
 

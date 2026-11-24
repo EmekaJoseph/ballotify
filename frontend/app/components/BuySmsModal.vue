@@ -33,7 +33,7 @@
 const { plans, smsTarget: target, buySms, redirecting } = useBilling();
 const packs = [100, 500, 1000, 5000];
 const qty = ref(500);
-const price = computed(() => plans.value?.sms_price_naira ?? 8);
+const price = computed(() => plans.value?.sms_price_naira ?? 10);
 const total = computed(() => Math.max(0, Math.floor(qty.value || 0)) * price.value);
 
 // Pre-select the smallest pack that covers what's missing.

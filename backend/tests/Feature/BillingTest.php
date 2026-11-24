@@ -140,8 +140,8 @@ it('starts a Paystack checkout for the configured price', function () {
         ->assertOk()->assertJsonPath('authorization_url', 'https://checkout.paystack.com/abc');
 
     $payment = Payment::first();
-    expect($payment->status)->toBe('pending')->and($payment->amount_kobo)->toBe(2_500_000);
-    Http::assertSent(fn ($req) => $req['amount'] === 2_500_000 && $req['reference'] === $payment->reference
+    expect($payment->status)->toBe('pending')->and($payment->amount_kobo)->toBe(4_500_000);
+    Http::assertSent(fn ($req) => $req['amount'] === 4_500_000 && $req['reference'] === $payment->reference
         && $req->hasHeader('Authorization', 'Bearer sk_test_secret'));
 });
 

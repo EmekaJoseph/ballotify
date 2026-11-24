@@ -69,26 +69,26 @@ it('sells Pro in three sizes, and bigger sizes for the difference', function () 
     $event = tsEvent();
     $as = $this->actingAs($event->user);
     $as->getJson('/api/billing/plans')->assertOk()
-        ->assertJsonPath('tiers.0.key', 'small')->assertJsonPath('tiers.0.price_naira', 10000)->assertJsonPath('tiers.0.max_voters', 200)
-        ->assertJsonPath('tiers.1.price_naira', 25000)->assertJsonPath('tiers.1.max_voters', 1000)
-        ->assertJsonPath('tiers.2.price_naira', 60000)->assertJsonPath('tiers.2.max_voters', 5000)
-        ->assertJsonPath('sms_price_naira', 8);
+        ->assertJsonPath('tiers.0.key', 'small')->assertJsonPath('tiers.0.price_naira', 20000)->assertJsonPath('tiers.0.max_voters', 200)
+        ->assertJsonPath('tiers.1.price_naira', 45000)->assertJsonPath('tiers.1.max_voters', 1000)
+        ->assertJsonPath('tiers.2.price_naira', 105000)->assertJsonPath('tiers.2.max_voters', 5000)
+        ->assertJsonPath('sms_price_naira', 10);
 
-    // Small: ₦10,000.
+    // Small: ₦20,000.
     $as->postJson("/api/events/{$event->id}/upgrade", ['tier' => 'small'])->assertOk();
     $small = Payment::latest('id')->first();
-    expect($small->amount_kobo)->toBe(1_000_000)->and($small->tier)->toBe('small');
+    expect($small->amount_kobo)->toBe(2_000_000)->and($small->tier)->toBe('small');
     tsPay($this, $small);
     $event->refresh();
     expect($event->plan)->toBe('pro')->and($event->pro_tier)->toBe('small')->and($event->sms_included)->toBe(200);
     $as->getJson("/api/events/{$event->id}")->assertJsonPath('limits.tier', 'small')->assertJsonPath('limits.max_voters', 200)
         ->assertJsonPath('limits.sms.included', 200)->assertJsonPath('limits.sms.left', 200);
 
-    // Same size or smaller: refused. Bigger: pay the difference (₦25,000 - ₦10,000).
+    // Same size or smaller: refused. Bigger: pay the difference (₦45,000 - ₦20,000).
     $as->postJson("/api/events/{$event->id}/upgrade", ['tier' => 'small'])->assertStatus(409);
     $as->postJson("/api/events/{$event->id}/upgrade", ['tier' => 'standard'])->assertOk();
     $up = Payment::latest('id')->first();
-    expect($up->amount_kobo)->toBe(1_500_000);
+    expect($up->amount_kobo)->toBe(2_500_000);
     tsPay($this, $up);
     expect($event->fresh()->pro_tier)->toBe('standard')->and($event->fresh()->sms_included)->toBe(1000);
 
@@ -116,7 +116,7 @@ it('sells SMS credits for the account', function () {
     Http::assertSent(fn ($r) => str_contains($r->url(), 'initialize') && str_contains($r['callback_url'], "/dashboard/events/{$event->id}?tab=voters&payment=1"));
 
     $p = Payment::latest('id')->first();
-    expect($p->kind)->toBe('sms')->and($p->sms_credits)->toBe(500)->and($p->amount_kobo)->toBe(500 * 8 * 100);
+    expect($p->kind)->toBe('sms')->and($p->sms_credits)->toBe(500)->and($p->amount_kobo)->toBe(500 * 10 * 100);
     tsPay($this, $p);
     expect($event->user->fresh()->sms_credits)->toBe(500);
     // Verifying again (or the webhook) never adds them twice.
