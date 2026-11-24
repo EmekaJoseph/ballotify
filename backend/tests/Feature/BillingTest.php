@@ -42,7 +42,7 @@ function paystackTx(Payment $p, array $over = []): array
 it('allows unlimited drafts but only one live free event at a time', function () {
     $user = User::factory()->create();
     $first = $this->actingAs($user)->postJson('/api/events', ['name' => 'First'])->assertCreated()
-        ->assertJsonPath('limits.plan', 'free')->assertJsonPath('limits.max_voters', 50)->json('id');
+        ->assertJsonPath('limits.plan', 'free')->assertJsonPath('limits.max_voters', 30)->json('id');
     // Drafts (no voters yet) are always allowed.
     $second = $this->actingAs($user)->postJson('/api/events', ['name' => 'Second'])->assertCreated()->json('id');
     $this->actingAs($user)->postJson('/api/events', ['name' => 'Third'])->assertCreated();
@@ -95,9 +95,9 @@ it('caps voters on free events and lifts the cap on Pro', function () {
     $event = billingEvent();
     $user = $event->user;
 
-    $this->actingAs($user)->postJson("/api/events/{$event->id}/voters/generate", ['count' => 51])
+    $this->actingAs($user)->postJson("/api/events/{$event->id}/voters/generate", ['count' => 31])
         ->assertStatus(402)->assertJsonPath('plan_limit', 'voters')->assertJsonPath('upgrade', true);
-    $this->actingAs($user)->postJson("/api/events/{$event->id}/voters/generate", ['count' => 50])->assertCreated();
+    $this->actingAs($user)->postJson("/api/events/{$event->id}/voters/generate", ['count' => 30])->assertCreated();
     $this->actingAs($user)->postJson("/api/events/{$event->id}/voters", ['name' => 'One more'])->assertStatus(402);
     $this->actingAs($user)->postJson("/api/events/{$event->id}/voters/import", ['voters' => [['name' => 'X']]])->assertStatus(402);
 
@@ -140,8 +140,8 @@ it('starts a Paystack checkout for the configured price', function () {
         ->assertOk()->assertJsonPath('authorization_url', 'https://checkout.paystack.com/abc');
 
     $payment = Payment::first();
-    expect($payment->status)->toBe('pending')->and($payment->amount_kobo)->toBe(1_000_000);
-    Http::assertSent(fn ($req) => $req['amount'] === 1_000_000 && $req['reference'] === $payment->reference
+    expect($payment->status)->toBe('pending')->and($payment->amount_kobo)->toBe(2_500_000);
+    Http::assertSent(fn ($req) => $req['amount'] === 2_500_000 && $req['reference'] === $payment->reference
         && $req->hasHeader('Authorization', 'Bearer sk_test_secret'));
 });
 

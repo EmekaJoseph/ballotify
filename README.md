@@ -168,11 +168,11 @@ Billing is **pay per event**:
 | | Free | Pro (one-off, per event) |
 |---|---|---|
 | Events | Unlimited drafts; **1 live** at a time (an event goes live when it gets its first voters) | Doesn't count towards the free limit |
-| Voters per event | 50 | 5,000 |
+| Voters per event | 30 | 5,000 |
 | Email & SMS invitations and reminders | No (share codes on WhatsApp, CSV or printed slips) | Yes |
 | Ballot branding | "Powered by Ballotify" | None, plus your own logo and colour |
 | Co-organisers | No | Up to 10 |
-| Price | ₦0 | ₦10,000 |
+| Price | ₦0 | ₦25,000 |
 
 These are the starting values. Change prices and limits any time in **Admin → Pricing**; changes apply straight away.
 

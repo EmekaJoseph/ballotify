@@ -95,7 +95,7 @@ VOTERS take part from any phone or laptop using a one-time code.
 --------------------------------------------------------------------------------
 
    Plans: every event starts FREE. Drafts are unlimited; 1 LIVE event at a
-   time (an event goes live when it gets its first voters), 50 voters,
+   time (an event goes live when it gets its first voters), 30 voters,
    codes shared on WhatsApp / CSV / printed slips, "Powered by Ballotify".
    Upgrading ONE event to PRO is a one-off Paystack payment: 5,000 voters,
    email & SMS invitations and reminders, own logo and colour, up to 10

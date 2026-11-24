@@ -196,6 +196,7 @@
 </template>
 
 <script setup lang="ts">
+import { publicApi } from '~/api/endpoints/public';
 import { useAuthStore } from '~/stores/auth';
 
 definePageMeta({ layout: 'public' });
@@ -238,15 +239,20 @@ const awardMock = [
     { name: 'Zainab Musa', votes: 960, color: '#e08a1e' },
 ];
 
-const faqs = [
+/** The Free plan's voter limit, as set on Admin → Pricing (the FAQ quotes it). */
+const freeVoters = ref(30);
+onMounted(async () => {
+    try { freeVoters.value = (await publicApi.plans()).data.free.max_voters ?? freeVoters.value; } catch { /* keep the default */ }
+});
+const faqs = computed(() => [
     { q: 'Can the organiser see how I voted?', a: 'No. With code voting Ballotify stores only the running totals. There is no record linking a code (or a person) to their choices, so nobody can look it up: not the organiser, not us.' },
     { q: 'How do voters get their codes?', a: 'Import your list and send codes by email or SMS (Pro), share each code on WhatsApp from your own phone (free), or print slips to hand out. Every code works once.' },
     { q: 'What stops someone voting twice?', a: 'Each code is locked the moment it is used, even if two people submit it at the same instant. Code guessing is rate-limited, and the ballot freezes at the first vote.' },
     { q: 'How do voters know their vote counted?', a: 'After voting they get a receipt code. They can enter it on the results page to confirm their ballot was received and counted. The receipt says nothing about who they chose.' },
     { q: 'How does paid voting work for award nights?', a: 'Fans pick a nominee and pay per vote through Paystack (card, transfer or USSD). Votes are added once the payment is confirmed. Ballotify keeps a small percentage and pays the rest to your bank account.' },
-    { q: 'Do I have to pay to try it?', a: 'No. Build as many draft events as you like for free and run one live event with up to 50 voters. Upgrade a single event to Pro only when you need more.' },
+    { q: 'Do I have to pay to try it?', a: `No. Build as many draft events as you like for free and run one live event with up to ${freeVoters.value} voters. Upgrade a single event to Pro only when you need more.` },
     { q: 'Can my committee help run the election?', a: 'Yes. On Pro events, invite co-organisers as editors, voter managers or viewers. Every change anyone makes is recorded in the activity log.' },
-];
+]);
 </script>
 
 <style scoped>
