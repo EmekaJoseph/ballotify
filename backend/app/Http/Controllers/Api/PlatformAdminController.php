@@ -204,6 +204,11 @@ class PlatformAdminController extends Controller
             'free_max_voters' => ['sometimes', 'integer', 'min:1', 'max:1000000'],
             'pro_max_voters' => ['sometimes', 'integer', 'min:1', 'max:1000000'],
             'paid_vote_fee_percent' => ['sometimes', 'integer', 'min:0', 'max:50'],
+            'pro_small_price_naira' => ['sometimes', 'integer', 'min:100', 'max:100000000'],
+            'pro_small_max_voters' => ['sometimes', 'integer', 'min:1', 'max:1000000'],
+            'pro_large_price_naira' => ['sometimes', 'integer', 'min:100', 'max:100000000'],
+            'pro_large_max_voters' => ['sometimes', 'integer', 'min:1', 'max:1000000'],
+            'sms_price_naira' => ['sometimes', 'integer', 'min:1', 'max:1000'],
         ]);
         Plans::update($data);
 
@@ -222,17 +227,24 @@ class PlatformAdminController extends Controller
     /** Upgrade or downgrade a single event without payment. */
     public function setEventPlan(Request $request, Event $event)
     {
-        $data = $request->validate(['plan' => ['required', Rule::in(['free', 'pro'])]]);
-        if ($event->plan !== $data['plan']) {
-            $event->forceFill($data['plan'] === 'pro'
-                ? ['plan' => 'pro', 'upgraded_at' => now(), 'upgraded_via' => 'admin']
-                : ['plan' => 'free', 'upgraded_at' => null, 'upgraded_via' => null])->save();
-            Audit::log($event, 'event.plan', $data['plan'] === 'pro'
-                ? 'Upgraded to Pro by the platform admin'
-                : 'Set back to Free by the platform admin');
+        $data = $request->validate([
+            'plan' => ['required', Rule::in(['free', 'pro'])],
+            'tier' => ['sometimes', Rule::in(Plans::TIERS)],
+        ]);
+        $tier = $data['tier'] ?? 'large';
+        if ($data['plan'] === 'pro' && ($event->plan !== 'pro' || $event->pro_tier !== $tier)) {
+            $size = Plans::tiers()[$tier];
+            $event->forceFill([
+                'plan' => 'pro', 'pro_tier' => $tier, 'upgraded_at' => now(), 'upgraded_via' => 'admin',
+                'sms_included' => max((int) $event->sms_included, $size['sms_included']),
+            ])->save();
+            Audit::log($event, 'event.plan', "Upgraded to {$size['name']} by the platform admin");
+        } elseif ($data['plan'] === 'free' && $event->plan !== 'free') {
+            $event->forceFill(['plan' => 'free', 'pro_tier' => null, 'upgraded_at' => null, 'upgraded_via' => null])->save();
+            Audit::log($event, 'event.plan', 'Set back to Free by the platform admin');
         }
 
-        return response()->json(['id' => $event->id, 'plan' => $event->plan, 'upgraded_via' => $event->upgraded_via]);
+        return response()->json(['id' => $event->id, 'plan' => $event->plan, 'pro_tier' => $event->pro_tier, 'upgraded_via' => $event->upgraded_via]);
     }
 
     public function payments(Request $request)

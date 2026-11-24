@@ -40,5 +40,6 @@
     "Your payment is still being processed.": "Votre paiement est encore en cours de traitement.",
     "Paid after voting closed": "Payé après la clôture du vote",
     "Amount or currency did not match. Contact the organiser.": "Le montant ou la devise ne correspond pas. Contactez l’organisateur.",
-    "You can’t vote in “:category”.": "Vous ne pouvez pas voter dans « :category »."
+    "You can’t vote in “:category”.": "Vous ne pouvez pas voter dans « :category ».",
+    "Your code can’t be sent by SMS right now. Please contact the organiser for your code.": "Votre code ne peut pas être envoyé par SMS pour le moment. Veuillez contacter l’organisateur pour obtenir votre code."
 }

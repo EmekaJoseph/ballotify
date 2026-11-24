@@ -8,12 +8,15 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /** A Paystack payment that upgrades one event to Pro. */
 class Payment extends Model
 {
+    public const KIND_UPGRADE = 'upgrade';
+    public const KIND_SMS = 'sms';
+
     public const PENDING = 'pending';
     public const SUCCESS = 'success';
     public const FAILED = 'failed';
 
     protected $fillable = [
-        'user_id', 'event_id', 'event_name', 'reference', 'provider', 'amount_kobo', 'currency',
+        'user_id', 'event_id', 'event_name', 'reference', 'provider', 'kind', 'tier', 'sms_credits', 'amount_kobo', 'currency',
         'status', 'channel', 'failure_reason', 'paid_at',
     ];
 

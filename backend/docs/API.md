@@ -8,7 +8,7 @@
   - `401` not signed in, or login expired
   - `403` event not open / results not published / email not confirmed / account suspended (`{ message, suspended: true }`)
   - `404` not found, or not your event
-  - `402` the event's plan doesn't allow it (Free limits): `{ message, plan_limit: 'events' | 'voters' | 'messaging', upgrade }`
+  - `402` the event's plan doesn't allow it: `{ message, plan_limit: 'events' | 'voters' | 'messaging' | 'branding' | 'team' | 'sms', upgrade }`. For `sms` (not enough SMS for a send): also `sms_needed`, `sms_available`, `sms_short`.
   - `409` the ballot is locked (voting has started): `{ message, locked: true }`
   - `429` rate limited
 
@@ -214,7 +214,8 @@ Pay per event. Free events: a limited number of open events per account, a voter
 |---|---|---|
 | GET | `/public/plans` | Public pricing: `{ billing_enabled, payments_enabled, currency, pro_price_naira, free: {...}, pro: {...} }` |
 | GET | `/billing/plans` | The same, plus `account_pro` for the signed-in organiser |
-| POST | `/events/{id}/upgrade` | Starts a Paystack checkout: `{ authorization_url, reference }`. Returns `409` if already Pro, `422` if voting has closed, and `503 { payments_enabled: false }` if no Paystack key is set. |
+| POST | `/events/{id}/upgrade` | `tier?` (`small` \| `standard` \| `large`, default `standard`). Starts a checkout: `{ authorization_url, reference }`. A Pro event can only move up a size and pays the difference. Returns `409` if already that size or bigger, `422` if the size is too small for its voters or voting has closed, `503 { payments_enabled: false }` if no payment provider is set. |
+| POST | `/billing/sms-credits` | `quantity` (50–100,000), `event_id?` (where to come back to). Starts a checkout for prepaid SMS credits (`sms_price_naira` each); added to `user.sms_credits` once paid. |
 | POST | `/billing/verify` | `{ reference }` (the organiser's own payment). Asks Paystack, then upgrades the event: `{ status: success\|pending\|failed, message, event_id }`. A receipt is emailed. |
 | GET | `/billing/payments` | The organiser's own payments |
 | GET | `/billing/payments/{reference}` | One successful payment, for the printable receipt |

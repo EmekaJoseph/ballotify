@@ -27,10 +27,17 @@ return [
         // Payment providers in order of preference; the next is used when one is down.
         'providers' => env('PAYMENT_PROVIDERS', 'paystack,flutterwave'),
         'defaults' => [
+            // Pro, by size (per event). Each Pro event includes 1 SMS per voter it allows.
+            'pro_small_price_naira' => 10000,
+            'pro_small_max_voters' => 200,
             'pro_price_naira' => 25000,
             'free_max_active_events' => 1,
             'free_max_voters' => 30,
-            'pro_max_voters' => 5000,
+            'pro_max_voters' => 1000,
+            'pro_large_price_naira' => 60000,
+            'pro_large_max_voters' => 5000,
+            // Extra SMS beyond what an event includes: prepaid credits, per SMS.
+            'sms_price_naira' => 8,
             // Paid public voting: the platform's share of each vote payment.
             'paid_vote_fee_percent' => 10,
         ],

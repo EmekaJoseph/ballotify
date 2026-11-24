@@ -151,8 +151,8 @@ export const platformApi = {
     unsuspend: (userId: Id) => api.post<PlatformUser>(`/admin/users/${userId}/unsuspend`),
     events: (params: { search?: string; status?: string; page?: number }) =>
         api.get<Paginated<PlatformEvent>>('/admin/events', { params }),
-    setEventPlan: (eventId: Id, plan: 'free' | 'pro') =>
-        api.post<{ id: number; plan: 'free' | 'pro'; upgraded_via: 'payment' | 'admin' | null }>(`/admin/events/${eventId}/plan`, { plan }),
+    setEventPlan: (eventId: Id, plan: 'free' | 'pro', tier?: 'small' | 'standard' | 'large') =>
+        api.post<{ id: number; plan: 'free' | 'pro'; upgraded_via: 'payment' | 'admin' | null }>(`/admin/events/${eventId}/plan`, { plan, tier }),
     setAccountPro: (userId: Id, enabled: boolean) => api.post<PlatformUser>(`/admin/users/${userId}/pro`, { enabled }),
     plans: () => api.get<PlanSettings>('/admin/plans'),
     updatePlans: (data: Partial<Omit<PlanSettings, 'billing_enabled' | 'payments_enabled'>>) => api.put<PlanSettings>('/admin/plans', data),
@@ -170,7 +170,11 @@ export const platformApi = {
 export const billingApi = {
     plans: () => api.get<PlanInfo>('/billing/plans'),
     /** Returns the Paystack checkout URL to send the organiser to. */
-    checkout: (eventId: Id) => api.post<{ authorization_url: string; reference: string }>(`/events/${eventId}/upgrade`),
+    checkout: (eventId: Id, tier: 'small' | 'standard' | 'large' = 'standard') =>
+        api.post<{ authorization_url: string; reference: string }>(`/events/${eventId}/upgrade`, { tier }),
+    /** Prepaid SMS credits; comes back to the event's Voters tab (or the account page). */
+    buySmsCredits: (quantity: number, eventId?: Id) =>
+        api.post<{ authorization_url: string; reference: string }>('/billing/sms-credits', { quantity, event_id: eventId ?? null }),
     verify: (reference: string) =>
         api.post<{ status: 'pending' | 'success' | 'failed'; message: string; event_id: number | null }>('/billing/verify', { reference }),
     myPayments: () => api.get<MyPayment[]>('/billing/payments'),

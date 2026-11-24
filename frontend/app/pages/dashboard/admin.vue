@@ -34,15 +34,21 @@
                     <h3 class="h6 fw-800 mb-1">Plans and prices</h3>
                     <p class="small text-muted mb-4">Changes apply straight away to new limits and new checkouts. Events already upgraded stay Pro.</p>
 
-                    <div class="small-caps mb-2">Pro (one-off, per event)</div>
-                    <div class="row g-3 mb-4">
+                    <div class="small-caps mb-2">Pro sizes (one-off, per event; SMS included = voters)</div>
+                    <div class="row g-3 mb-2 align-items-end">
+                        <div class="col-4 small fw-bold text-muted">Size</div>
+                        <div class="col-4 small fw-bold text-muted">Price (₦)</div>
+                        <div class="col-4 small fw-bold text-muted">Voters</div>
+                    </div>
+                    <div v-for="row in SIZE_FIELDS" :key="row.label" class="row g-3 mb-2 align-items-center">
+                        <div class="col-4 fw-semibold">{{ row.label }}</div>
+                        <div class="col-4"><input v-model.number="pricing[row.price]" type="number" min="100" step="100" class="form-control" :aria-label="`${row.label} price`" required /></div>
+                        <div class="col-4"><input v-model.number="pricing[row.voters]" type="number" min="1" class="form-control" :aria-label="`${row.label} voters`" required /></div>
+                    </div>
+                    <div class="row g-3 mb-4 mt-1">
                         <div class="col-sm-6">
-                            <label class="form-label" for="p-price">Price (₦)</label>
-                            <input id="p-price" v-model.number="pricing.pro_price_naira" type="number" min="100" step="100" class="form-control" required />
-                        </div>
-                        <div class="col-sm-6">
-                            <label class="form-label" for="p-pmax">Voters per Pro event</label>
-                            <input id="p-pmax" v-model.number="pricing.pro_max_voters" type="number" min="1" class="form-control" required />
+                            <label class="form-label" for="p-sms">Extra SMS (₦ per SMS credit)</label>
+                            <input id="p-sms" v-model.number="pricing.sms_price_naira" type="number" min="1" class="form-control" required />
                         </div>
                     </div>
 
@@ -415,7 +421,16 @@ async function act(id: number, fn: () => Promise<void>) {
 }
 
 // ----- Pricing -----
-const pricing = reactive({ pro_price_naira: 0, pro_max_voters: 0, free_max_voters: 0, free_max_active_events: 1, paid_vote_fee_percent: 10 });
+const pricing = reactive({
+    pro_price_naira: 0, pro_max_voters: 0, free_max_voters: 0, free_max_active_events: 1, paid_vote_fee_percent: 10,
+    pro_small_price_naira: 0, pro_small_max_voters: 0, pro_large_price_naira: 0, pro_large_max_voters: 0, sms_price_naira: 8,
+});
+type PricingKey = keyof typeof pricing;
+const SIZE_FIELDS: { label: string; price: PricingKey; voters: PricingKey }[] = [
+    { label: 'Pro Small', price: 'pro_small_price_naira', voters: 'pro_small_max_voters' },
+    { label: 'Pro', price: 'pro_price_naira', voters: 'pro_max_voters' },
+    { label: 'Pro Large', price: 'pro_large_price_naira', voters: 'pro_large_max_voters' },
+];
 const pricingStatus = ref<PlanSettings | null>(null);
 const { loadPlans: refreshPlans } = useBilling();
 const savingPricing = ref(false);
@@ -430,6 +445,11 @@ async function loadPricing() {
             free_max_voters: data.free_max_voters,
             free_max_active_events: data.free_max_active_events,
             paid_vote_fee_percent: data.paid_vote_fee_percent,
+            pro_small_price_naira: data.pro_small_price_naira,
+            pro_small_max_voters: data.pro_small_max_voters,
+            pro_large_price_naira: data.pro_large_price_naira,
+            pro_large_max_voters: data.pro_large_max_voters,
+            sms_price_naira: data.sms_price_naira,
         });
     } catch (e) {
         toast.error(apiErrorMessage(e));

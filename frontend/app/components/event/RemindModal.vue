@@ -32,6 +32,14 @@
             <div class="form-text">Only people who still haven’t voted at that time get it.</div>
         </div>
         <p v-else class="small text-muted mb-0">Everyone who hasn’t voted yet gets a short reminder with their code and the voting link.</p>
+        <div v-if="sms && !sms.unlimited && smsNeeded > 0" class="sms-line mt-3" :class="{ short: smsNeeded > smsAvailable }">
+            <i class="bi bi-chat-dots"></i>
+            <span class="flex-grow-1">
+                Uses <b>{{ formatNumber(smsNeeded) }}</b> SMS · {{ formatNumber(sms.left) }} left with this event + {{ formatNumber(sms.credits) }} credits.
+                <template v-if="smsNeeded > smsAvailable"> <b>{{ formatNumber(smsNeeded - smsAvailable) }} short.</b></template>
+            </span>
+            <button type="button" class="btn btn-ghost btn-sm flex-shrink-0" @click="buyCredits(smsNeeded - smsAvailable)"><i class="bi bi-cart-plus"></i> Buy</button>
+        </div>
         <div v-if="error" class="field-error mt-2">{{ error }}</div>
 
         <template #footer>
@@ -48,7 +56,16 @@
 import { adminApi } from '~/api/endpoints/admin';
 import type { BallotEvent, InviteChannel } from '~/types';
 
-const props = defineProps<{ open: boolean; event: BallotEvent; pending: number; reachable: number }>();
+const props = defineProps<{ open: boolean; event: BallotEvent; pending: number; reachable: number; phonePending?: number }>();
+const { openBuySms } = useBilling();
+const sms = computed(() => props.event.limits?.sms ?? null);
+/** A reminder by SMS goes to everyone pending who has a phone (estimate: the voters still to vote). */
+const smsNeeded = computed(() => (channel.value === 'email' || when.value === 'later' ? 0 : (props.phonePending ?? 0)));
+const smsAvailable = computed(() => (sms.value ? sms.value.left + sms.value.credits : Infinity));
+function buyCredits(short: number) {
+    emit('close');
+    openBuySms({ eventId: props.event.id, suggest: Math.max(0, short) });
+}
 const emit = defineEmits<{ close: []; done: [] }>();
 const toast = useToast();
 
@@ -100,6 +117,12 @@ async function submit() {
         }
         emit('done');
     } catch (e) {
+        if (planLimitReason(e) === 'sms') {
+            const short = (e as { response?: { data?: { sms_short?: number } } }).response?.data?.sms_short ?? 0;
+            toast.error(apiErrorMessage(e));
+            buyCredits(short);
+            return;
+        }
         error.value = apiFieldErrors(e).reminder_at ?? apiErrorMessage(e);
     } finally {
         busy.value = false;
@@ -121,6 +144,9 @@ async function cancelSchedule() {
 </script>
 
 <style scoped>
+.sms-line { display: flex; gap: .6rem; align-items: center; padding: .6rem .8rem; border-radius: 12px; background: var(--pro-bg); color: var(--ink); font-size: .85rem; box-shadow: inset 0 0 0 1px var(--pro-ring); }
+.sms-line > .bi { color: var(--pro-icon); }
+.sms-line.short { background: var(--warning-50); box-shadow: none; }
 .choice.compact { display: inline-flex; align-items: center; gap: .4rem; padding: .45rem .8rem; width: auto; font-weight: 600; }
 .scheduled { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; padding: .7rem .9rem; border-radius: 12px; background: var(--brand-50); color: var(--brand-900); font-size: .9rem; }
 </style>

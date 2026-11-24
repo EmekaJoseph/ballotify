@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Mail\PaymentReceipt;
 use App\Models\Payment;
+use App\Models\User;
 use App\Models\VotePurchase;
 use App\Support\Audit;
 use App\Support\Flutterwave;
@@ -51,9 +52,21 @@ class BillingController extends Controller
     public function checkout(Request $request, Event $event)
     {
         Gate::authorize('manage', $event);
+        $data = $request->validate(['tier' => ['sometimes', \Illuminate\Validation\Rule::in(Plans::TIERS)]]);
+        $tier = $data['tier'] ?? 'standard';
+        $tiers = Plans::tiers();
 
-        if (! Plans::enabled() || Plans::isPro($event)) {
+        if (! Plans::enabled() || Plans::accountIsPro($event->user)) {
             return response()->json(['message' => 'This event is already Pro.'], 409);
+        }
+        // Moving up only: Small -> Pro -> Large, paying the difference.
+        $current = $event->plan === 'pro' ? Plans::tierOf($event) : null;
+        if ($current && array_search($tier, Plans::TIERS, true) <= array_search($current, Plans::TIERS, true)) {
+            return response()->json(['message' => "This event is already {$tiers[$current]['name']}. Choose a bigger size to upgrade."], 409);
+        }
+        $voters = $event->voters()->count();
+        if ($voters > $tiers[$tier]['max_voters']) {
+            return response()->json(['message' => "This event already has " . number_format($voters) . " voters, more than {$tiers[$tier]['name']} allows. Choose a bigger size."], 422);
         }
         if ($event->status === Event::STATUS_COMPLETED) {
             return response()->json(['message' => 'Voting has closed for this event, so it can no longer be upgraded.'], 422);
@@ -70,7 +83,9 @@ class BillingController extends Controller
             'event_id' => $event->id,
             'event_name' => $event->name,
             'reference' => 'BLT-' . $event->id . '-' . Str::upper(Str::random(12)),
-            'amount_kobo' => Plans::priceKobo(),
+            'kind' => Payment::KIND_UPGRADE,
+            'tier' => $tier,
+            'amount_kobo' => Plans::upgradePriceNaira($event, $tier) * 100,
             'currency' => config('ballotify.billing.currency', 'NGN'),
             'status' => Payment::PENDING,
         ]);
@@ -82,7 +97,57 @@ class BillingController extends Controller
                 'event_id' => $event->id,
                 'payment_id' => $payment->id,
                 'custom_fields' => [['display_name' => 'Event', 'variable_name' => 'event', 'value' => $event->name]],
-            ], [], "Pro upgrade: {$event->name}");
+            ], [], "{$tiers[$tier]['name']}: {$event->name}");
+            $payment->update(['provider' => $provider]);
+        } catch (\Throwable $e) {
+            report($e);
+            $payment->update(['status' => Payment::FAILED, 'failure_reason' => 'Could not start checkout']);
+            return response()->json(['message' => 'We couldn’t reach the payment provider. Please try again in a moment.'], 502);
+        }
+
+        return response()->json(['authorization_url' => $url, 'reference' => $payment->reference]);
+    }
+
+    /**
+     * Buy prepaid SMS credits for the account. They're used once an event's
+     * included SMS (1 per voter of its Pro size) run out.
+     */
+    public function smsCheckout(Request $request)
+    {
+        $data = $request->validate([
+            'quantity' => ['required', 'integer', 'min:50', 'max:100000'],
+            // Where to come back to (an event's Voters tab); otherwise the account page.
+            'event_id' => ['nullable', 'integer'],
+        ]);
+        if (! Plans::enabled()) {
+            return response()->json(['message' => 'SMS are not charged on this installation.'], 409);
+        }
+        if (! Payments::available()) {
+            return response()->json(['message' => 'Online payment isn’t available yet. Please contact us to buy SMS credits.', 'payments_enabled' => false], 503);
+        }
+        $user = $request->user();
+        $event = ! empty($data['event_id']) ? Event::accessibleBy($user)->find($data['event_id']) : null;
+        $price = Plans::settings()['sms_price_naira'];
+
+        $payment = Payment::create([
+            'user_id' => $user->id,
+            'event_id' => $event?->id,
+            'event_name' => $event?->name,
+            'reference' => 'SMS-' . Str::upper(Str::random(14)),
+            'kind' => Payment::KIND_SMS,
+            'sms_credits' => $data['quantity'],
+            'amount_kobo' => $data['quantity'] * $price * 100,
+            'currency' => config('ballotify.billing.currency', 'NGN'),
+            'status' => Payment::PENDING,
+        ]);
+        $frontend = rtrim(config('app.frontend_url'), '/');
+        $callback = $event ? "{$frontend}/dashboard/events/{$event->id}?tab=voters&payment=1" : "{$frontend}/dashboard/profile?payment=1";
+
+        try {
+            [$provider, $url] = Payments::checkout($user->email, $user->name, $payment->amount_kobo, $payment->reference, $callback, [
+                'payment_id' => $payment->id,
+                'custom_fields' => [['display_name' => 'SMS credits', 'variable_name' => 'sms', 'value' => (string) $data['quantity']]],
+            ], [], number_format($data['quantity']) . ' SMS credits');
             $payment->update(['provider' => $provider]);
         } catch (\Throwable $e) {
             report($e);
@@ -113,7 +178,9 @@ class BillingController extends Controller
         return response()->json([
             'status' => $payment->status,
             'message' => match ($payment->status) {
-                Payment::SUCCESS => 'Payment received. This event is now Pro.',
+                Payment::SUCCESS => $payment->kind === Payment::KIND_SMS
+                    ? 'Payment received. ' . number_format($payment->sms_credits) . ' SMS credits were added to your account.'
+                    : 'Payment received. This event is now ' . (Plans::tiers()[$payment->tier ?? 'standard']['name'] ?? 'Pro') . '.',
                 Payment::FAILED => $payment->failure_reason ?: 'The payment was not completed.',
                 default => 'The payment is still being processed.',
             },
@@ -228,10 +295,22 @@ class BillingController extends Controller
                     'paid_at' => now(),
                 ]);
 
+                if ($payment->kind === Payment::KIND_SMS) {
+                    // Prepaid SMS credits for the whole account.
+                    User::whereKey($payment->user_id)->increment('sms_credits', $payment->sms_credits);
+                    return $payment;
+                }
+
                 $event = $payment->event_id ? Event::find($payment->event_id) : null;
-                if ($event && $event->plan !== 'pro') {
-                    $event->forceFill(['plan' => 'pro', 'upgraded_at' => now(), 'upgraded_via' => 'payment'])->save();
-                    Audit::log($event, 'event.upgraded', 'Upgraded to Pro (payment ' . $payment->reference . ')');
+                if ($event) {
+                    $tier = in_array($payment->tier, Plans::TIERS, true) ? $payment->tier : 'standard';
+                    $size = Plans::tiers()[$tier];
+                    $event->forceFill([
+                        'plan' => 'pro', 'pro_tier' => $tier, 'upgraded_at' => now(), 'upgraded_via' => 'payment',
+                        // 1 SMS per voter of the new size (a size upgrade tops the allowance up).
+                        'sms_included' => max((int) $event->sms_included, $size['sms_included']),
+                    ])->save();
+                    Audit::log($event, 'event.upgraded', "Upgraded to {$size['name']} (payment {$payment->reference})");
                 }
                 return $payment;
             } elseif (in_array($status, ['failed', 'reversed'], true)) {
@@ -263,7 +342,7 @@ class BillingController extends Controller
     {
         return response()->json(
             Payment::where('user_id', $request->user()->id)->latest()->limit(100)
-                ->get(['reference', 'event_id', 'event_name', 'amount_kobo', 'currency', 'status', 'channel', 'paid_at', 'created_at'])
+                ->get(['reference', 'kind', 'tier', 'sms_credits', 'event_id', 'event_name', 'amount_kobo', 'currency', 'status', 'channel', 'paid_at', 'created_at'])
                 ->map(fn ($p) => $p->toArray() + ['amount_naira' => $p->amount_kobo / 100])
         );
     }
@@ -276,7 +355,9 @@ class BillingController extends Controller
 
         return response()->json([
             'reference' => $payment->reference,
-            'item' => 'Ballotify Pro upgrade',
+            'item' => $payment->kind === Payment::KIND_SMS
+                ? number_format($payment->sms_credits) . ' SMS credits'
+                : 'Ballotify ' . (Plans::tiers()[$payment->tier ?? 'standard']['name'] ?? 'Pro') . ' upgrade',
             'event_name' => $payment->event_name,
             'amount_naira' => $payment->amount_kobo / 100,
             'currency' => $payment->currency,
@@ -296,6 +377,9 @@ class BillingController extends Controller
             'payments_enabled' => Plans::enabled() && Payments::available(),
             'currency' => config('ballotify.billing.currency', 'NGN'),
             'pro_price_naira' => $s['pro_price_naira'],
+            // Pro sizes, smallest first, and the price of extra SMS.
+            'tiers' => array_values(Plans::tiers()),
+            'sms_price_naira' => $s['sms_price_naira'],
             'free' => [
                 'max_active_events' => $s['free_max_active_events'],
                 'max_voters' => $s['free_max_voters'],

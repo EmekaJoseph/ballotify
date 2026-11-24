@@ -15,6 +15,8 @@ export interface User {
     suspended_at?: string | null;
     /** Granted by the platform admin: every event of this account is Pro. */
     pro_account_at?: string | null;
+    /** Prepaid SMS credits, used once an event's included SMS run out. */
+    sms_credits?: number;
     /** Where paid-voting money is sent. */
     payout_bank_name?: string | null;
     payout_account_number?: string | null;
@@ -335,8 +337,20 @@ export interface CandidateImportResult {
 
 // ---------------------------------------------------------------- billing
 
+export type ProTier = 'small' | 'standard' | 'large';
+
+/** A Pro size: price per event, voter cap and SMS included (1 per voter). */
+export interface PlanTier { key: ProTier; name: string; price_naira: number; max_voters: number; sms_included: number }
+
+/** An event's SMS: included with its Pro size, used so far, and the owner's prepaid credits. */
+export interface SmsStatus { included: number; used: number; left: number; credits: number; unlimited: boolean; price_naira: number }
+
 export interface EventLimits {
     plan: 'free' | 'pro';
+    /** Pro size (null on Free). */
+    tier?: ProTier | null;
+    tier_name?: string | null;
+    sms?: SmsStatus | null;
     /** null = no cap (billing switched off). */
     max_voters: number | null;
     messaging: boolean;
@@ -355,6 +369,10 @@ export interface PlanInfo {
     payments_enabled: boolean;
     currency: string;
     pro_price_naira: number;
+    /** Pro sizes, smallest first. */
+    tiers: PlanTier[];
+    /** Price of one extra SMS (credits). */
+    sms_price_naira: number;
     free: { max_active_events: number; max_voters: number; messaging: boolean; branding: boolean };
     pro: { max_voters: number; messaging: boolean; branding: boolean; custom_branding?: boolean; team?: boolean };
     paid_votes?: { fee_percent: number; min_payment_naira: number };
@@ -377,6 +395,11 @@ export interface EventQuota {
 
 export interface PlanSettings {
     pro_price_naira: number;
+    pro_small_price_naira: number;
+    pro_small_max_voters: number;
+    pro_large_price_naira: number;
+    pro_large_max_voters: number;
+    sms_price_naira: number;
     free_max_active_events: number;
     free_max_voters: number;
     pro_max_voters: number;
@@ -459,6 +482,9 @@ export interface ReceiptCheck {
 
 export interface MyPayment {
     reference: string;
+    kind?: 'upgrade' | 'sms';
+    tier?: ProTier | null;
+    sms_credits?: number;
     event_id: number | null;
     event_name: string | null;
     amount_naira: number;

@@ -40,5 +40,6 @@
     "Your payment is still being processed.": "Ana ci gaba da sarrafa biyan kuɗinka.",
     "Paid after voting closed": "An biya bayan zaɓe ya ƙare",
     "Amount or currency did not match. Contact the organiser.": "Adadin kuɗi ko nau’in kuɗi bai dace ba. Tuntuɓi mai shirya taron.",
-    "You can’t vote in “:category”.": "Ba za ka iya jefa ƙuri’a a “:category” ba."
+    "You can’t vote in “:category”.": "Ba za ka iya jefa ƙuri’a a “:category” ba.",
+    "Your code can’t be sent by SMS right now. Please contact the organiser for your code.": "Ba za a iya aika lambarka ta SMS yanzu ba. Da fatan ka tuntuɓi mai shirya taron don samun lambarka."
 }

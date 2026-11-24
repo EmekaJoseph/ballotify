@@ -46,7 +46,7 @@
                 <i class="bi bi-box"></i>
                 <span class="flex-grow-1">
                     <b>Free event:</b> {{ formatNumber(voters.length) }} of {{ formatNumber(event.limits!.max_voters ?? 0) }} voters used.
-                    Share codes free on WhatsApp, by CSV or printed slips. Upgrade to Pro for up to {{ plans ? formatNumber(plans.pro.max_voters) : 'more' }} voters, email/SMS invitations and reminders.
+                    Share codes free on WhatsApp, by CSV or printed slips. Upgrade to Pro ({{ fromPriceLabel }}) for more voters, email/SMS invitations and reminders.
                 </span>
                 <button v-if="event.status !== 'completed'" class="btn btn-soft btn-sm flex-shrink-0" @click="askUpgrade('Upgrade to Pro')">
                     <i class="bi bi-lightning-charge"></i> Upgrade
@@ -165,9 +165,9 @@
         <EventVoterFormModal :open="dialog === 'form'" :event-id="event.id" :voter="editing" :member-label="event.member_id_label || 'Member ID'" :group-options="groupNames" @close="dialog = null" @saved="onSaved" @limit="onLimit" />
         <EventVoterImportModal :open="dialog === 'import'" :event-id="event.id" :member-label="event.member_id_label || 'Member ID'" @close="dialog = null" @created="afterCreate" @limit="onLimit" />
         <EventWhatsAppModal :open="dialog === 'whatsapp'" :event="event" :voters="voters" :vote-url="voteUrl" @close="dialog = null" @shared="onShared" />
-        <EventRemindModal :open="dialog === 'remind'" :event="event" :pending="pendingVoters.length" :reachable="reachableCount"
+        <EventRemindModal :open="dialog === 'remind'" :event="event" :pending="pendingVoters.length" :reachable="reachableCount" :phone-pending="pendingVoters.filter(v => v.phone).length"
             @close="dialog = null" @done="afterRemind" />
-        <EventInviteModal :open="dialog === 'invite'" :event-id="event.id" :voters="voters" :targets="inviting"
+        <EventInviteModal :open="dialog === 'invite'" :event-id="event.id" :voters="voters" :targets="inviting" :sms="event.limits?.sms"
             @close="dialog = null" @sent="afterInvite" />
 
         <BaseModal :open="dialog === 'generate'" title="Generate anonymous codes" subtitle="For handing out on paper. To email or text codes, use Import." size="sm" @close="dialog = null">
@@ -338,22 +338,14 @@ function openInvite(targets: Voter[] | null) {
 }
 
 // ----- Plan (Free / Pro) -----
-const { plans, loadPlans, priceLabel, startUpgrade } = useBilling();
+const { plans, loadPlans, fromPriceLabel, openUpgrade } = useBilling();
 onMounted(() => loadPlans());
 const isFree = computed(() => props.event.limits?.plan === 'free' && props.event.limits.max_voters !== null);
 
-async function askUpgrade(title: string) {
+/** Out of room (or messaging needs Pro): choose a Pro size. */
+async function askUpgrade(_title: string) {
     await loadPlans();
-    if (!plans.value?.payments_enabled) {
-        toast.info('Upgrading to Pro isn’t available online yet. Please contact us to upgrade this event.');
-        return;
-    }
-    const ok = await confirm({
-        title,
-        message: `Upgrade “${props.event.name}” to Pro for a one-off ${priceLabel.value}: up to ${formatNumber(plans.value.pro.max_voters)} voters, email & SMS invitations, and no Ballotify branding. You’ll pay securely online (card, bank transfer or USSD).`,
-        confirmText: 'Upgrade now',
-    });
-    if (ok) await startUpgrade(props.event.id);
+    openUpgrade({ id: props.event.id, name: props.event.name, limits: props.event.limits, voters: voters.value.length });
 }
 
 /** Row "Send": if the voter can't be reached yet, take the organiser to add a contact. */

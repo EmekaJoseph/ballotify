@@ -26,7 +26,7 @@
                     <div class="d-flex flex-wrap align-items-center gap-2 mt-2">
                         <StatusBadge :status="event.status" :draft="isDraft(event)" />
                         <template v-if="event.limits && event.limits.max_voters !== null">
-                            <span v-if="event.limits.plan === 'pro'" class="pill pill-pro"><i class="bi bi-lightning-charge-fill"></i> Pro</span>
+                            <span v-if="event.limits.plan === 'pro'" class="pill pill-pro"><i class="bi bi-lightning-charge-fill"></i> {{ event.limits.tier_name || 'Pro' }}</span>
                             <span v-else class="pill pill-completed"><i class="bi bi-box"></i> Free</span>
                         </template>
                         <span v-if="event.voting_mode === 'paid'" class="pill pill-amber"><i class="bi bi-cash-coin"></i> Paid voting</span>
@@ -191,8 +191,11 @@ watch([tab, settingsTab, loading], async () => {
     document.querySelector('.settings-link.active')?.scrollIntoView({ block: 'nearest', inline: 'center' });
 }, { immediate: true });
 
-const { startUpgrade } = useBilling();
-function upgrade() { startUpgrade(eventId.value); }
+const { openUpgrade } = useBilling();
+function upgrade() {
+    if (event.value) openUpgrade({ id: event.value.id, name: event.value.name, limits: event.value.limits, voters: event.value.voters_count ?? 0 });
+}
+const paymentReturn = usePaymentReturn();
 async function onLeft() {
     toast.success('You left the event');
     await navigateTo('/dashboard/events');
@@ -269,24 +272,11 @@ onMounted(async () => {
     confirmPaymentReturn();
 });
 
-/**
- * Back from checkout: Paystack appends ?reference=… (and trxref), Flutterwave
- * (the backup provider) ?tx_ref=…&status=…&transaction_id=…. Confirm it with
- * the API (which asks the provider), then tidy the URL.
- */
+/** Back from checkout (a Pro upgrade or SMS credits): confirm it, then refresh. */
 async function confirmPaymentReturn() {
-    const reference = String(route.query.reference ?? route.query.trxref ?? route.query.tx_ref ?? '');
-    if (!route.query.payment || !reference) return;
-    const { payment: _p, reference: _r, trxref: _t, tx_ref: _x, status: _s, transaction_id: _i, ...rest } = route.query;
-    router.replace({ query: rest });
-    try {
-        const { data } = await billingApi.verify(reference);
-        if (data.status === 'success') toast.success(data.message);
-        else if (data.status === 'failed') toast.error(data.message);
-        else toast.info(data.message);
+    if (await paymentReturn()) {
         await load(true);
-    } catch (e) {
-        toast.error(apiErrorMessage(e, 'We couldn’t confirm the payment. If you were charged, it will be applied shortly.'));
+        auth.fetchUser?.(); // SMS credit balance
     }
 }
 watch(eventId, () => load());

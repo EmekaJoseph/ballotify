@@ -297,9 +297,25 @@ class VoterController extends Controller
      *
      * @return array{queued: int, email: int, sms: int, failed: int, queue: string}
      */
-    public static function sendMessages(Event $event, $query, string $channel, string $kind): array
+    public static function sendMessages(Event $event, $query, string $channel, string $kind, bool $strict = true): array
     {
         $channels = $channel === 'both' ? ['email', 'sms'] : [$channel];
+
+        // SMS are paid for up front: the event's included SMS first, then prepaid credits.
+        // Strict (organiser clicked Send): not enough -> a 402 with how many are short.
+        // Not strict (scheduled reminder): not enough -> send by email only.
+        $smsCharged = false;
+        if (in_array('sms', $channels, true)) {
+            $needed = (clone $query)->whereNotNull('phone')->count();
+            if (Plans::reserveSms($event, $needed, $strict) < $needed) {
+                $channels = array_values(array_diff($channels, ['sms']));
+                if (! $channels) {
+                    return ['queued' => 0, 'email' => 0, 'sms' => 0, 'failed' => 0, 'sms_skipped' => $needed, 'queue' => config('queue.default')];
+                }
+            } else {
+                $smsCharged = ! Plans::smsUnlimited($event);
+            }
+        }
 
         // Only voters reachable on at least one requested channel.
         $query->where(function ($q) use ($channels) {
@@ -316,16 +332,20 @@ class VoterController extends Controller
         }
 
         $counts = ['queued' => 0, 'email' => 0, 'sms' => 0, 'failed' => 0];
-        $query->select(['id', 'email', 'phone'])->chunkById(500, function ($voters) use ($channels, $kind, &$counts, $noWorker) {
+        $query->select(['id', 'email', 'phone'])->chunkById(500, function ($voters) use ($channels, $kind, &$counts, $noWorker, $smsCharged, $event) {
             foreach ($voters as $voter) {
                 try {
                     // Delivery errors are handled inside the job; this only guards
                     // against the queue itself being unavailable.
+                    $charged = $smsCharged && $voter->phone;
                     $noWorker
-                        ? SendVoterInvitation::dispatchAfterResponse($voter->id, $channels, $kind)
-                        : SendVoterInvitation::dispatch($voter->id, $channels, $kind);
+                        ? SendVoterInvitation::dispatchAfterResponse($voter->id, $channels, $kind, $charged)
+                        : SendVoterInvitation::dispatch($voter->id, $channels, $kind, $charged);
                 } catch (\Throwable $e) {
                     report($e);
+                    if ($smsCharged && $voter->phone) {
+                        Plans::refundSms($event->id);
+                    }
                     $counts['failed']++;
                     Voter::whereKey($voter->id)->update(['invite_error' => 'Could not be queued: ' . Str::limit($e->getMessage(), 200)]);
                     continue;

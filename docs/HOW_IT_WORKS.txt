@@ -97,9 +97,20 @@ VOTERS take part from any phone or laptop using a one-time code.
    Plans: every event starts FREE. Drafts are unlimited; 1 LIVE event at a
    time (an event goes live when it gets its first voters), 30 voters,
    codes shared on WhatsApp / CSV / printed slips, "Powered by Ballotify".
-   Upgrading ONE event to PRO is a one-off Paystack payment: 5,000 voters,
-   email & SMS invitations and reminders, own logo and colour, up to 10
-   co-organisers. (Prices/limits: Admin -> Pricing.)
+   Upgrading ONE event to PRO is a one-off payment, in three sizes:
+       Pro Small  ₦10,000   200 voters     200 SMS included
+       Pro        ₦25,000   1,000 voters   1,000 SMS included
+       Pro Large  ₦60,000   5,000 voters   5,000 SMS included
+   (move up a size any time by paying the difference). Pro adds email & SMS
+   invitations and reminders, own logo and colour, co-organisers, USSD and
+   self-registration. (Prices/limits: Admin -> Pricing.)
+
+   SMS: each Pro event includes 1 SMS per voter of its size. Beyond that,
+   SMS come from prepaid SMS CREDITS on the organiser's account (₦8 each),
+   bought from the event, the send dialogs or Account -> SMS credits.
+   Before sending, Ballotify checks there are enough: if not, nothing is
+   sent and the organiser can buy credits or send by email. Scheduled
+   reminders fall back to email. Undelivered SMS are given back.
 
    Two ways to vote, chosen per event:
      SECRET BALLOT (codes)  one-time code per voter, one vote each, receipt

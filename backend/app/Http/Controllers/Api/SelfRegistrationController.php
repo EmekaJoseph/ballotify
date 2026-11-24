@@ -54,15 +54,28 @@ class SelfRegistrationController extends Controller
         }
 
         $channels = array_values(array_filter([$voter->email ? 'email' : null, $voter->phone ? 'sms' : null]));
+        // The SMS comes out of the event's SMS (or the organiser's credits); none left -> email only.
+        $smsCharged = false;
+        if ($voter->phone) {
+            if (Plans::reserveSms($event, 1, false) === 1) {
+                $smsCharged = ! Plans::smsUnlimited($event);
+            } else {
+                $channels = array_values(array_diff($channels, ['sms']));
+            }
+        }
+        if (! $channels) {
+            Cache::forget("self-reg:{$voter->id}");
+            return response()->json(['message' => __('Your code can’t be sent by SMS right now. Please contact the organiser for your code.')], 503);
+        }
         config('queue.default') === 'sync'
-            ? SendVoterInvitation::dispatchAfterResponse($voter->id, $channels)
-            : SendVoterInvitation::dispatch($voter->id, $channels);
+            ? SendVoterInvitation::dispatchAfterResponse($voter->id, $channels, 'invite', $smsCharged)
+            : SendVoterInvitation::dispatch($voter->id, $channels, 'invite', $smsCharged);
 
         return response()->json([
             'message' => __('Your voting code is on its way.'),
             'sent_to' => array_values(array_filter([
-                $voter->email ? self::maskEmail($voter->email) : null,
-                $voter->phone ? self::maskPhone($voter->phone) : null,
+                in_array('email', $channels, true) ? self::maskEmail($voter->email) : null,
+                in_array('sms', $channels, true) ? self::maskPhone($voter->phone) : null,
             ])),
         ]);
     }

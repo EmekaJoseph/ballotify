@@ -8,7 +8,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Cache;
 
 /**
- * Free vs Pro, per event.
+ * Free vs Pro (in three sizes), per event, plus prepaid SMS credits.
  *
  *  Free: unlimited drafts, but only a few LIVE events per account (an event
  *        goes live when it gets its first voter), a small voter cap, no
@@ -29,7 +29,11 @@ class Plans
 
     public const KEYS = [
         'pro_price_naira', 'free_max_active_events', 'free_max_voters', 'pro_max_voters', 'paid_vote_fee_percent',
+        'pro_small_price_naira', 'pro_small_max_voters', 'pro_large_price_naira', 'pro_large_max_voters', 'sms_price_naira',
     ];
+
+    /** Pro sizes, smallest first. */
+    public const TIERS = ['small', 'standard', 'large'];
 
     /** Co-organisers per Pro event. */
     public const MAX_MEMBERS = 10;
@@ -73,6 +77,122 @@ class Plans
         return self::settings()['pro_price_naira'] * 100;
     }
 
+    /**
+     * The Pro sizes: name, price, voter cap and SMS included (1 per voter).
+     *
+     * @return array<string, array{key: string, name: string, price_naira: int, max_voters: int, sms_included: int}>
+     */
+    public static function tiers(): array
+    {
+        $s = self::settings();
+        $tier = fn (string $key, string $name, int $price, int $voters) => [
+            'key' => $key, 'name' => $name, 'price_naira' => $price, 'max_voters' => $voters, 'sms_included' => $voters,
+        ];
+        return [
+            'small' => $tier('small', 'Pro Small', $s['pro_small_price_naira'], $s['pro_small_max_voters']),
+            'standard' => $tier('standard', 'Pro', $s['pro_price_naira'], $s['pro_max_voters']),
+            'large' => $tier('large', 'Pro Large', $s['pro_large_price_naira'], $s['pro_large_max_voters']),
+        ];
+    }
+
+    /** The event's Pro size, or null on Free. Account-wide Pro (admin grants) counts as Large. */
+    public static function tierOf(Event $event): ?string
+    {
+        if (! self::isPro($event)) {
+            return null;
+        }
+        if ($event->plan !== 'pro' || self::accountIsPro($event->user)) {
+            return 'large';
+        }
+        return in_array($event->pro_tier, self::TIERS, true) ? $event->pro_tier : 'large'; // older Pro events
+    }
+
+    /** Price to move an event to $tier: the full price, or the difference from its current size. */
+    public static function upgradePriceNaira(Event $event, string $tier): int
+    {
+        $tiers = self::tiers();
+        $current = $event->plan === 'pro' ? self::tierOf($event) : null;
+        return max(0, $tiers[$tier]['price_naira'] - ($current ? $tiers[$current]['price_naira'] : 0));
+    }
+
+    // ------------------------------------------------------------------ SMS
+
+    /** SMS are free of charge: billing off, or the platform owner's own events. */
+    public static function smsUnlimited(Event $event): bool
+    {
+        return ! self::enabled() || (bool) $event->user?->is_admin;
+    }
+
+    /** SMS included with this event (paid sizes record it; admin-granted Pro gets its size's allowance). */
+    public static function smsIncluded(Event $event): int
+    {
+        if (! self::isPro($event)) {
+            return 0;
+        }
+        return (int) $event->sms_included > 0 ? (int) $event->sms_included : self::tiers()[self::tierOf($event)]['sms_included'];
+    }
+
+    /** @return array{included: int, used: int, left: int, credits: int, unlimited: bool, price_naira: int} */
+    public static function smsStatus(Event $event): array
+    {
+        $included = self::smsIncluded($event);
+        $used = (int) $event->sms_used;
+        return [
+            'included' => $included,
+            'used' => $used,
+            'left' => max(0, $included - $used),
+            'credits' => (int) ($event->user?->sms_credits ?? 0),
+            'unlimited' => self::smsUnlimited($event),
+            'price_naira' => self::settings()['sms_price_naira'],
+        ];
+    }
+
+    /**
+     * Take $count SMS for this event: first from what the event includes, then from
+     * the owner's prepaid credits. Strict: refuses (402) when there aren't enough.
+     * Not strict: takes nothing and returns 0 instead (scheduled jobs fall back to email).
+     */
+    public static function reserveSms(Event $event, int $count, bool $strict = true): int
+    {
+        if ($count <= 0 || self::smsUnlimited($event)) {
+            return $count;
+        }
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($event, $count, $strict) {
+            $e = Event::whereKey($event->id)->lockForUpdate()->first();
+            $owner = User::whereKey($e->user_id)->lockForUpdate()->first();
+            $e->setRelation('user', $owner);
+            $left = max(0, self::smsIncluded($e) - (int) $e->sms_used);
+            $fromEvent = min($count, $left);
+            $fromCredits = $count - $fromEvent;
+            $credits = (int) $owner->sms_credits;
+            if ($fromCredits > $credits) {
+                if (! $strict) {
+                    return 0;
+                }
+                $short = $fromCredits - $credits;
+                self::deny(
+                    'This needs ' . number_format($count) . ' SMS, but only ' . number_format($left + $credits) . ' are available ('
+                    . number_format($left) . ' left with this event + ' . number_format($credits) . ' SMS credits). '
+                    . 'Buy at least ' . number_format($short) . ' more SMS credits, or send by email only.',
+                    'sms', false, ['sms_needed' => $count, 'sms_available' => $left + $credits, 'sms_short' => $short],
+                );
+            }
+            if ($fromEvent > 0) {
+                $e->increment('sms_used', $fromEvent);
+            }
+            if ($fromCredits > 0) {
+                $owner->decrement('sms_credits', $fromCredits);
+            }
+            return $count;
+        });
+    }
+
+    /** An SMS that was paid for but not delivered goes back to the event's allowance. */
+    public static function refundSms(int $eventId, int $count = 1): void
+    {
+        Event::whereKey($eventId)->where('sms_used', '>=', $count)->decrement('sms_used', $count);
+    }
+
     /** Platform's share of a paid vote, in kobo. */
     public static function voteFeeKobo(int $amountKobo): int
     {
@@ -96,10 +216,15 @@ class Plans
         $s = self::settings();
         $pro = self::isPro($event);
 
+        $tier = self::tierOf($event);
+
         return [
             'plan' => $pro ? 'pro' : 'free',
-            // Billing off = no cap at all; otherwise the plan's cap.
-            'max_voters' => ! self::enabled() ? null : ($pro ? $s['pro_max_voters'] : $s['free_max_voters']),
+            'tier' => $tier,
+            'tier_name' => $tier ? self::tiers()[$tier]['name'] : null,
+            // Billing off = no cap at all; otherwise the plan's (or Pro size's) cap.
+            'max_voters' => ! self::enabled() ? null : ($pro ? self::tiers()[$tier]['max_voters'] : $s['free_max_voters']),
+            'sms' => $pro ? self::smsStatus($event) : null,
             'messaging' => $pro,
             'branding' => ! $pro,          // "Powered by Ballotify" shown
             'custom_branding' => $pro,     // own logo and colour
@@ -193,16 +318,20 @@ class Plans
         }
 
         $room = max(0, $max - $current);
-        $pro = self::isPro($event);
-        $message = $pro
-            ? "Pro events can have up to {$max} voters"
-            : "Free events can have up to {$max} voters";
-        $message .= $room > 0 ? " (room for {$room} more)." : ' and this event is full.';
-        if (! $pro) {
-            $message .= ' Upgrade this event to Pro for up to ' . number_format(self::settings()['pro_max_voters']) . ' voters.';
+        $tier = self::tierOf($event);
+        $tiers = self::tiers();
+        $message = ($tier ? $tiers[$tier]['name'] : 'Free') . ' events can have up to ' . number_format($max) . ' voters';
+        $message .= $room > 0 ? ' (room for ' . number_format($room) . ' more).' : ' and this event is full.';
+        // The next size up that fits, if any.
+        $bigger = collect($tiers)->first(fn ($t) => $t['max_voters'] >= $current + $adding && $t['max_voters'] > $max);
+        $canGrow = $tier !== 'large' && ! ($tier && self::accountIsPro($event->user));
+        if ($canGrow) {
+            $message .= $bigger
+                ? ' Upgrade this event to ' . $bigger['name'] . ' for up to ' . number_format($bigger['max_voters']) . ' voters.'
+                : ' Upgrade this event to Pro Large for up to ' . number_format($tiers['large']['max_voters']) . ' voters.';
         }
 
-        self::deny($message, 'voters', ! $pro);
+        self::deny($message, 'voters', $canGrow);
     }
 
     public static function ensureCanMessage(Event $event): void
@@ -229,12 +358,12 @@ class Plans
         }
     }
 
-    private static function deny(string $message, string $reason, bool $upgrade = true): never
+    private static function deny(string $message, string $reason, bool $upgrade = true, array $extra = []): never
     {
         abort(response()->json([
             'message' => $message,
             'plan_limit' => $reason,
             'upgrade' => $upgrade,
-        ], 402));
+        ] + $extra, 402));
     }
 }

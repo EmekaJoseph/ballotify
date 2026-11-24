@@ -46,7 +46,7 @@
             </ul>
 
             <div class="tips small text-muted d-grid gap-2">
-                <div v-if="plans"><span class="pill pill-pro me-1"><i class="bi bi-lightning-charge-fill"></i> Pro</span> Pro is a one-off <b class="text-ink">{{ priceLabel }}</b> per event and doesn’t count towards your free limit.</div>
+                <div v-if="plans"><span class="pill pill-pro me-1"><i class="bi bi-lightning-charge-fill"></i> Pro</span> Pro is a one-off payment per event, <b class="text-ink">{{ fromPriceLabel }}</b>, and doesn’t count towards your free limit.</div>
                 <div><i class="bi bi-stop-circle"></i> Closed events don’t count either. Close voting from the event’s <b class="text-ink">Settings</b> tab.</div>
             </div>
         </template>
@@ -59,7 +59,7 @@
 
 <script setup lang="ts">
 const { quota, limitOpen, limitEvent } = useNewEvent();
-const { plans, priceLabel, startUpgrade } = useBilling();
+const { plans, fromPriceLabel, openUpgrade } = useBilling();
 const toast = useToast();
 
 const events = computed(() => (quota.value?.open_events ?? []).filter(e => e.id !== limitEvent.value?.id));
@@ -86,9 +86,9 @@ async function upgrade(id: number) {
         toast.info('Online payment isn’t available yet. Please contact us to upgrade.');
         return;
     }
-    upgradingId.value = id;
-    await startUpgrade(id); // leaves for Paystack; on failure it shows a toast
-    upgradingId.value = null;
+    const ev = events.value.find(e => e.id === id);
+    close();
+    openUpgrade({ id, name: ev?.name ?? 'This event' });
 }
 </script>
 

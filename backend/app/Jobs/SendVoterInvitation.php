@@ -25,13 +25,17 @@ class SendVoterInvitation implements ShouldQueue
     public int $tries = 1;
     public int $timeout = 60;
 
-    /** @param  string[]  $channels  'email' and/or 'sms' */
-    public function __construct(public int $voterId, public array $channels, public string $kind = 'invite') {}
+    /**
+     * @param  string[]  $channels  'email' and/or 'sms'
+     * @param  bool  $smsCharged  an SMS was paid for (event allowance / credits): refunded if not delivered
+     */
+    public function __construct(public int $voterId, public array $channels, public string $kind = 'invite', public bool $smsCharged = false) {}
 
     public function handle(SmsSender $sms): void
     {
         $voter = Voter::with('event')->find($this->voterId);
         if (! $voter || $voter->used_at !== null || ! $voter->event) {
+            $this->refundSms($voter?->event_id);
             return; // deleted, or already voted: nothing to send
         }
 
@@ -58,7 +62,10 @@ class SendVoterInvitation implements ShouldQueue
             } catch (\Throwable $e) {
                 report($e);
                 $errors[] = 'SMS: ' . $e->getMessage();
+                $this->refundSms($event->id);
             }
+        } elseif (in_array('sms', $this->channels, true)) {
+            $this->refundSms($event->id); // phone removed since it was queued
         }
 
         $update = ['invite_error' => $errors ? Str::limit(implode(' | ', $errors), 480) : null];
@@ -80,6 +87,7 @@ class SendVoterInvitation implements ShouldQueue
     public function failed(?\Throwable $e): void
     {
         try {
+            $this->refundSms(Voter::whereKey($this->voterId)->value('event_id'));
             Voter::whereKey($this->voterId)->update([
                 'invite_error' => Str::limit('Delivery failed: ' . ($e?->getMessage() ?: 'unknown error'), 480),
             ]);
@@ -88,14 +96,35 @@ class SendVoterInvitation implements ShouldQueue
         }
     }
 
-    /** Kept short so it fits in one or two SMS segments. */
+    /** Give a paid-for SMS back to the event's allowance (only once per job). */
+    private function refundSms(?int $eventId): void
+    {
+        if ($this->smsCharged && $eventId) {
+            $this->smsCharged = false;
+            \App\Support\Plans::refundSms($eventId);
+        }
+    }
+
+    /**
+     * Fits in ONE SMS (160 characters): a second segment would cost double.
+     * Optional parts are dropped, then the event name shortened, until it fits.
+     */
     public static function smsText(string $eventName, string $code, string $voteUrl, bool $reminder = false, $endsAt = null): string
     {
-        $name = Str::limit($eventName, 40);
-        if ($reminder) {
-            $when = $endsAt ? ' Voting closes ' . $endsAt->format('j M, g:ia') . '.' : '';
-            return "Reminder: you haven't voted in {$name} yet.{$when} Code {$code}: {$voteUrl}";
+        $build = function (int $nameLen, bool $extras) use ($eventName, $code, $voteUrl, $reminder, $endsAt) {
+            $name = Str::limit($eventName, $nameLen, '');
+            if ($reminder) {
+                $when = $extras && $endsAt ? ' Closes ' . $endsAt->format('j M g:ia') . '.' : '';
+                return "Reminder: vote in {$name}.{$when} Code {$code}: {$voteUrl}";
+            }
+            return "{$name}: your voting code is {$code}." . ($extras ? ' Vote at' : '') . " {$voteUrl}";
+        };
+        foreach ([[40, true], [40, false], [24, false], [12, false]] as [$len, $extras]) {
+            $text = $build($len, $extras);
+            if (mb_strlen($text) <= 160) {
+                return $text;
+            }
         }
-        return "{$name}: your voting code is {$code}. Vote at {$voteUrl} (code works once).";
+        return $build(0, false);
     }
 }

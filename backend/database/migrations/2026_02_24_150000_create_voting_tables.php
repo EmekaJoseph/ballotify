@@ -58,6 +58,11 @@ return new class extends Migration
             $table->timestamp('nominations_ends_at')->nullable();
             // Billing: 'free' or 'pro' (unlocked by a Paystack payment or by the admin).
             $table->string('plan', 10)->default('free');
+            // Pro size: small | standard | large (null on Free).
+            $table->string('pro_tier', 10)->nullable();
+            // SMS included with this Pro event (1 per voter of its size) and how many were used.
+            $table->unsignedInteger('sms_included')->default(0);
+            $table->unsignedInteger('sms_used')->default(0);
             $table->timestamp('upgraded_at')->nullable();
             $table->string('upgraded_via', 10)->nullable(); // payment | admin
             $table->timestamps();

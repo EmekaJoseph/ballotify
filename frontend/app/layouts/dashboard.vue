@@ -68,6 +68,8 @@
                 <slot />
             </main>
             <EventLimitModal />
+            <UpgradeModal />
+            <BuySmsModal />
             <SupportButton :context="`Dashboard ${route.path}`" />
         </div>
     </div>

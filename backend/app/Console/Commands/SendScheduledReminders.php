@@ -41,6 +41,7 @@ class SendScheduledReminders extends Command
                 Voter::where('event_id', $event->id)->whereNull('used_at'),
                 $event->reminder_channel ?: 'email',
                 'reminder',
+                false, // not enough SMS left: remind by email only
             );
             $this->info("Reminder for “{$event->name}”: {$counts['queued']} queued.");
         }

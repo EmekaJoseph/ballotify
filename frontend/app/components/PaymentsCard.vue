@@ -3,7 +3,7 @@
         <div class="card-header-b">
             <div>
                 <h3 class="h6 fw-800 mb-0">Payments & receipts</h3>
-                <div class="small text-muted">Pro upgrades you’ve paid for.</div>
+                <div class="small text-muted">Pro upgrades and SMS credits you’ve paid for.</div>
             </div>
         </div>
         <div v-if="loading" class="p-4 d-grid gap-2"><div v-for="i in 2" :key="i" class="skeleton" style="height: 38px"></div></div>
@@ -11,7 +11,7 @@
         <ul v-else class="list-unstyled mb-0">
             <li v-for="p in payments" :key="p.reference" class="pay-row">
                 <div class="min-w-0 flex-grow-1">
-                    <div class="fw-semibold text-ink text-truncate">{{ p.event_name || 'Pro upgrade' }}</div>
+                    <div class="fw-semibold text-ink text-truncate">{{ label(p) }}</div>
                     <div class="small text-muted">{{ formatDate(p.paid_at || p.created_at, true) }} · <span class="mono">{{ p.reference }}</span></div>
                 </div>
                 <span class="fw-800 text-ink">{{ formatNaira(p.amount_naira) }}</span>
@@ -33,6 +33,13 @@ const loading = ref(true);
 onMounted(async () => {
     try { payments.value = (await billingApi.myPayments()).data; } catch { /* stays empty */ } finally { loading.value = false; }
 });
+
+/** "Pro Small: Annual Elections" or "500 SMS credits". */
+function label(p: MyPayment): string {
+    if (p.kind === 'sms') return `${formatNumber(p.sms_credits ?? 0)} SMS credits`;
+    const size = ({ small: 'Pro Small', standard: 'Pro', large: 'Pro Large' } as Record<string, string>)[p.tier ?? ''] ?? 'Pro';
+    return p.event_name ? `${size}: ${p.event_name}` : `${size} upgrade`;
+}
 </script>
 
 <style scoped>

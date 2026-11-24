@@ -71,7 +71,8 @@
                 </form>
 
                 <TwoFactorCard />
-                <PaymentsCard />
+                <SmsCreditsCard />
+                <PaymentsCard :key="paymentsKey" />
                 <DataRightsCard />
             </div>
         </div>
@@ -81,6 +82,16 @@
 <script setup lang="ts">
 import { adminApi } from '~/api/endpoints/admin';
 import { useAuthStore } from '~/stores/auth';
+
+// Back from buying SMS credits: confirm the payment and show the new balance.
+const paymentReturn = usePaymentReturn();
+const paymentsKey = ref(0);
+onMounted(async () => {
+    if (await paymentReturn()) {
+        await useAuthStore().fetchUser?.();
+        paymentsKey.value++;
+    }
+});
 
 definePageMeta({ layout: 'dashboard', middleware: ['auth'] });
 useHead({ title: 'Account · Ballotify' });

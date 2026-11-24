@@ -61,6 +61,14 @@
             </div>
         </template>
 
+        <div v-if="sms && !sms.unlimited && smsNeeded > 0" class="sms-line mt-3" :class="{ short: smsNeeded > smsAvailable }">
+            <i class="bi bi-chat-dots"></i>
+            <span class="flex-grow-1">
+                Uses <b>{{ formatNumber(smsNeeded) }}</b> SMS · {{ formatNumber(sms.left) }} left with this event + {{ formatNumber(sms.credits) }} credits.
+                <template v-if="smsNeeded > smsAvailable"> <b>{{ formatNumber(smsNeeded - smsAvailable) }} short.</b></template>
+            </span>
+            <button type="button" class="btn btn-ghost btn-sm flex-shrink-0" @click="buyCredits(smsNeeded - smsAvailable)"><i class="bi bi-cart-plus"></i> Buy</button>
+        </div>
         <p v-if="skipped > 0" class="small text-muted mt-3 mb-0">
             <i class="bi bi-skip-forward"></i> {{ skipped }} selected voter{{ skipped === 1 ? '' : 's' }} will be skipped
             (already voted, or no {{ channel === 'sms' ? 'phone number' : channel === 'email' ? 'email' : 'contact' }}).
@@ -80,13 +88,22 @@
 
 <script setup lang="ts">
 import { adminApi } from '~/api/endpoints/admin';
-import type { InviteChannel, MessagingStatus, Voter } from '~/types';
+import type { InviteChannel, MessagingStatus, SmsStatus, Voter } from '~/types';
 
 /**
  * targets = null  → whole list, organiser picks an audience
  * targets = [...] → exactly these voters (one person, or a checkbox selection)
  */
-const props = defineProps<{ open: boolean; eventId: number; voters: Voter[]; targets: Voter[] | null }>();
+const props = defineProps<{ open: boolean; eventId: number; voters: Voter[]; targets: Voter[] | null; sms?: SmsStatus | null }>();
+const { openBuySms } = useBilling();
+/** SMS this send would use (only voters with a phone) vs what's available. */
+const smsNeeded = computed(() => (channel.value === 'email' ? 0
+    : (props.targets ? pool.value : pool.value.filter(v => audience.value === 'pending' || !v.invited_at)).filter(v => !!v.phone).length));
+const smsAvailable = computed(() => (props.sms ? props.sms.left + props.sms.credits : Infinity));
+function buyCredits(short: number) {
+    emit('close');
+    openBuySms({ eventId: props.eventId, suggest: Math.max(0, short) });
+}
 const emit = defineEmits<{ close: []; sent: [] }>();
 
 const toast = useToast();
@@ -155,6 +172,13 @@ async function send() {
         toast.success(data.queued ? `Sending ${parts.join(' and ')}…` : 'Nobody matched. No messages were sent.');
         emit('sent');
     } catch (e) {
+        // Not enough SMS: offer to buy the difference.
+        if (planLimitReason(e) === 'sms') {
+            const short = (e as { response?: { data?: { sms_short?: number } } }).response?.data?.sms_short ?? 0;
+            toast.error(apiErrorMessage(e));
+            buyCredits(short);
+            return;
+        }
         toast.error(apiErrorMessage(e));
     } finally {
         busy.value = false;
@@ -163,6 +187,9 @@ async function send() {
 </script>
 
 <style scoped>
+.sms-line { display: flex; gap: .6rem; align-items: center; padding: .6rem .8rem; border-radius: 12px; background: var(--pro-bg); color: var(--ink); font-size: .85rem; box-shadow: inset 0 0 0 1px var(--pro-ring); }
+.sms-line > .bi { color: var(--pro-icon); }
+.sms-line.short { background: var(--warning-50); box-shadow: none; }
 .notice { display: flex; gap: .65rem; padding: .8rem 1rem; border-radius: 14px; background: var(--warning-50); color: var(--warning-text); font-size: .875rem; line-height: 1.5; }
 .notice code { color: inherit; background: rgba(146, 64, 14, .08); padding: 0 .3rem; border-radius: 5px; }
 .choice.disabled { opacity: .5; cursor: not-allowed; }

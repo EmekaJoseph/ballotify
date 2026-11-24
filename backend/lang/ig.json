@@ -40,5 +40,6 @@
     "Your payment is still being processed.": "A ka na-ahazi ịkwụ ụgwọ gị.",
     "Paid after voting closed": "Akwụrụ ụgwọ mgbe ntuli aka gwụchara",
     "Amount or currency did not match. Contact the organiser.": "Ego ma ọ bụ ụdị ego ahụ adabaghị. Kpọtụrụ onye nhazi.",
-    "You can’t vote in “:category”.": "Ị nweghị ike ịtụ votu na “:category”."
+    "You can’t vote in “:category”.": "Ị nweghị ike ịtụ votu na “:category”.",
+    "Your code can’t be sent by SMS right now. Please contact the organiser for your code.": "Enweghị ike iziga koodu gị site na SMS ugbu a. Biko kpọtụrụ onye nhazi maka koodu gị."
 }

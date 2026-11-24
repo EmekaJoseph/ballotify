@@ -33,6 +33,8 @@ return new class extends Migration
             // Paystack: bank code from their bank list, and the subaccount that
             // receives the organiser's share automatically (split payments).
             $table->string('payout_bank_code', 16)->nullable();
+            // Prepaid SMS credits (account-wide), used once an event's included SMS run out.
+            $table->unsignedInteger('sms_credits')->default(0);
             $table->string('paystack_subaccount_code', 64)->nullable();
             // First-run tour seen in the dashboard.
             $table->timestamp('onboarded_at')->nullable();

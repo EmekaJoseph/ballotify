@@ -26,6 +26,10 @@ return new class extends Migration
             $table->string('event_name')->nullable();
             $table->string('reference', 64)->unique();
             $table->string('provider', 16)->default('paystack'); // paystack | flutterwave
+            // upgrade (an event to a Pro size) | sms (prepaid SMS credits)
+            $table->string('kind', 10)->default('upgrade');
+            $table->string('tier', 10)->nullable();
+            $table->unsignedInteger('sms_credits')->default(0);
             $table->unsignedBigInteger('amount_kobo');
             $table->string('currency', 3)->default('NGN');
             $table->string('status', 12)->default('pending'); // pending | success | failed
