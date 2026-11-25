@@ -9,12 +9,16 @@ export const tokenStorage = {
         try { return localStorage.getItem(TOKEN_KEY); } catch { return null; }
     },
     set(token: string) {
+        sessionToken = token;
         try { localStorage.setItem(TOKEN_KEY, token); } catch { /* ignore */ }
     },
     clear() {
+        sessionToken = null;
         try { localStorage.removeItem(TOKEN_KEY); } catch { /* ignore */ }
     },
 };
+/** In-memory copy, so a session still works (and still ends) when localStorage is blocked. */
+let sessionToken: string | null = null;
 
 /**
  * Shared axios instance. `baseURL` is set from runtime config by plugins/api.ts,
@@ -34,25 +38,36 @@ export function setUnauthorizedHandler(handler: (reason: SignOutReason) => void)
 }
 
 api.interceptors.request.use((config) => {
-    const token = tokenStorage.get();
+    const token = tokenStorage.get() ?? sessionToken;
     if (token) config.headers.Authorization = `Bearer ${token}`;
     // Voter-facing messages from the API come back in the voting page's language.
     if (config.url?.startsWith('/public/') && ballotLang.value !== 'en') config.headers['X-Locale'] = ballotLang.value;
     return config;
 });
 
+/** Sign-in calls where a 401 means "wrong details", not "your session ended". */
+const CREDENTIAL_CALLS = ['/auth/login', '/auth/register', '/auth/two-factor', '/auth/forgot-password', '/auth/reset-password'];
+
+/** Several requests can fail together: sign out once, not once per request. */
+let signingOut = false;
+function signOut(reason: SignOutReason) {
+    tokenStorage.clear();
+    if (signingOut) return;
+    signingOut = true;
+    try { onUnauthorized?.(reason); } finally { setTimeout(() => { signingOut = false; }, 1000); }
+}
+
 api.interceptors.response.use(
     (response) => response,
     (error) => {
         const url: string = error?.config?.url ?? '';
-        const isAuthCall = url.startsWith('/auth/');
         const status = error?.response?.status;
-        if (status === 401 && !isAuthCall && tokenStorage.get()) {
-            tokenStorage.clear();
-            onUnauthorized?.('expired');
-        } else if (status === 403 && error?.response?.data?.suspended && tokenStorage.get()) {
-            tokenStorage.clear();
-            onUnauthorized?.('suspended');
+        // Only requests sent with a session count (the token may live only in memory if storage is blocked).
+        const hadSession = !!error?.config?.headers?.Authorization;
+        if (status === 401 && hadSession && !CREDENTIAL_CALLS.includes(url)) {
+            signOut('expired');
+        } else if (status === 403 && error?.response?.data?.suspended && hadSession) {
+            signOut('suspended');
         }
         return Promise.reject(error);
     },
