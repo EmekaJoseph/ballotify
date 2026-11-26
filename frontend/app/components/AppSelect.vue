@@ -4,7 +4,7 @@
             :aria-expanded="open" :aria-controls="listId" :aria-label="ariaLabel" :aria-activedescendant="open && active >= 0 ? optionId(active) : undefined"
             :disabled="disabled" :title="title" @click="toggle" @keydown="onTriggerKey">
             <i v-if="icon" class="bi as-icon" :class="icon" aria-hidden="true"></i>
-            <span class="as-value" :class="{ placeholder: !selected }">{{ selected ? selected.label : placeholder }}</span>
+            <span class="as-value" :class="{ 'is-empty': !selected }">{{ selected ? selected.label : placeholder }}</span>
             <i class="bi bi-chevron-down as-caret" aria-hidden="true"></i>
         </button>
 
@@ -233,7 +233,8 @@ defineExpose({ open: openMenu, close });
 .as-trigger:focus-visible, .open .as-trigger { outline: none; border-color: var(--brand-500); box-shadow: 0 0 0 4px rgba(20, 145, 138, .14); }
 .as-trigger:disabled { opacity: .6; cursor: not-allowed; background: var(--surface-2); }
 .as-value { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.as-value.placeholder { color: var(--placeholder, var(--muted)); }
+/* Not ".placeholder": that is Bootstrap's loading-skeleton class (grey pulsing bar). */
+.as-value.is-empty { color: var(--placeholder, var(--muted)); }
 .as-icon { color: var(--muted); }
 .as-caret { font-size: .75rem; color: var(--muted); transition: transform .2s var(--ease, ease); flex-shrink: 0; }
 .open .as-caret { transform: rotate(180deg); color: var(--brand-600); }
