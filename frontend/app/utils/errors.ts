@@ -8,8 +8,9 @@ export function apiErrorMessage(err: unknown, fallback = t('err.generic')): stri
         const data = err.response.data as { message?: string; errors?: Record<string, string[]> } | undefined;
         const firstFieldError = data?.errors ? Object.values(data.errors)[0]?.[0] : undefined;
         if (firstFieldError) return firstFieldError;
-        // A 429 that carries retry_after explains itself (e.g. too many wrong codes); others are generic.
-        if (err.response.status === 429) return (data as { retry_after?: number } | undefined)?.retry_after && data?.message ? data.message : t('err.tooMany');
+        // Our own 429s explain themselves (e.g. "3 nominations per category", "too many wrong codes",
+        // in the voter's language); only the speed limiter's stock "Too Many Attempts." gets the generic text.
+        if (err.response.status === 429) return data?.message && data.message !== 'Too Many Attempts.' ? data.message : t('err.tooMany');
         if (data?.message) return data.message;
     }
     return fallback;
