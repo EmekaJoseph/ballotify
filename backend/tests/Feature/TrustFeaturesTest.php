@@ -119,13 +119,25 @@ it('collects public nominations and lets the organiser add nominees to the ballo
 
     $url = "/api/public/events/{$event->link_token}/nominations";
     $this->getJson($url)->assertOk()->assertJsonPath('open', true)->assertJsonPath('categories.0.name', 'Most Popular');
-    $this->postJson($url, ['category_id' => $cat->id, 'nominee_name' => 'Amaka  Obi', 'reason' => 'Kind'])->assertCreated();
-    $this->postJson($url, ['category_id' => $cat->id, 'nominee_name' => 'amaka obi'])->assertCreated();
-    $this->postJson($url, ['category_id' => $cat->id, 'nominee_name' => 'Tunde'])->assertCreated();
-    $this->postJson($url, ['category_id' => $cat->id, 'nominee_name' => 'Zainab'])->assertStatus(429); // 3 per person per category
+    $a = ['category_id' => $cat->id, 'device_id' => 'phone-a'];
+    $this->postJson($url, $a + ['nominee_name' => 'Amaka  Obi', 'reason' => 'Kind'])->assertCreated();
+    // Same person (same IP and browser), same name in the same category: refused, any spelling.
+    $this->postJson($url, $a + ['nominee_name' => 'amaka obi'])->assertStatus(422)->assertJsonValidationErrors('nominee_name');
+    // Someone else on the same network (shared mobile IP, other browser): counts.
+    $this->postJson($url, ['category_id' => $cat->id, 'device_id' => 'phone-b', 'nominee_name' => 'amaka obi'])->assertCreated();
+    $this->postJson($url, $a + ['nominee_name' => 'Tunde'])->assertCreated();
+    $this->postJson($url, $a + ['nominee_name' => 'Zainab'])->assertCreated();
+    $this->postJson($url, $a + ['nominee_name' => 'Kemi'])->assertStatus(429); // 3 per person per category
+
+    // The same name in another category is fine.
+    $cat2 = Category::create(['event_id' => $event->id, 'name' => 'Best Dressed']);
+    $this->postJson($url, ['category_id' => $cat2->id, 'device_id' => 'phone-a', 'nominee_name' => 'Amaka Obi'])->assertCreated();
+    // No browser ID (storage blocked): the IP alone decides.
+    $this->postJson($url, ['category_id' => $cat2->id, 'nominee_name' => 'Ngozi'])->assertCreated();
+    $this->postJson($url, ['category_id' => $cat2->id, 'nominee_name' => 'NGOZI'])->assertStatus(422);
 
     $this->actingAs($event->user)->getJson("/api/events/{$event->id}/nominations")->assertOk()
-        ->assertJsonPath('total', 3)
+        ->assertJsonPath('total', 6)
         ->assertJsonPath('categories.0.nominees.0.count', 2)
         ->assertJsonPath('categories.0.nominees.0.on_ballot', false);
     $this->actingAs($event->user)->postJson("/api/events/{$event->id}/nominations/promote", ['category_id' => $cat->id, 'name' => 'Amaka Obi'])->assertCreated();
@@ -151,8 +163,8 @@ it('lets the organiser suggest nominee names that the public can pick or ignore'
     $this->getJson($url)->assertJsonPath('categories.0.suggestions', ['Burna Boy', 'Tems']);
 
     // Picking a suggestion and typing your own both work, and count together with other spellings.
-    $this->postJson($url, ['category_id' => $cat->id, 'nominee_name' => 'Burna Boy'])->assertCreated();
-    $this->postJson($url, ['category_id' => $cat->id, 'nominee_name' => 'BURNA BOY'])->assertCreated();
+    $this->postJson($url, ['category_id' => $cat->id, 'device_id' => 'p1', 'nominee_name' => 'Burna Boy'])->assertCreated();
+    $this->postJson($url, ['category_id' => $cat->id, 'device_id' => 'p2', 'nominee_name' => 'BURNA BOY'])->assertCreated();
     $this->postJson($url, ['category_id' => $cat->id, 'nominee_name' => 'Asake'])->assertCreated();
     $this->actingAs($event->user)->getJson("/api/events/{$event->id}/nominations")
         ->assertJsonPath('categories.0.suggestions', ['Burna Boy', 'Tems'])

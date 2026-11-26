@@ -23,6 +23,7 @@
                 <slot />
             </div>
         </div>
+        <SupportButton :context="`Sign-in ${$route.path}`" />
     </div>
 </template>
 

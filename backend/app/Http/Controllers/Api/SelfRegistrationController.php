@@ -34,13 +34,18 @@ class SelfRegistrationController extends Controller
             return response()->json(['message' => __('Voting has ended.')], 403);
         }
 
+        if ($blocked = \App\Support\CodeGuard::blocked($request, $event, 'member_id')) {
+            return $blocked;
+        }
         $voter = Voter::where('event_id', $event->id)
             ->where('member_id', VoterController::normalizeMemberId($data['member_id']))
             ->first();
 
         if (! $voter) {
+            \App\Support\CodeGuard::miss($request, $event, 'member_id');
             return response()->json(['message' => __('That :label isn’t on the voter list. Check it, or contact the organiser.', ['label' => $label])], 404);
         }
+        \App\Support\CodeGuard::ok($request, $event, 'member_id');
         if ($voter->used_at) {
             return response()->json(['message' => __('This voter has already voted.')], 409);
         }

@@ -154,7 +154,7 @@ class BallotBox
         });
 
         if ($receipt === null) {
-            throw new BallotRejected(__('Invalid or used code'), 422);
+            throw new BallotRejected(__('Invalid or used code'), 422, unknownCode: true);
         }
 
         // Live results ping (carries no ballot content). Skipped when results aren't public.

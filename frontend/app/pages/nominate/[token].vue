@@ -109,7 +109,7 @@ async function submit() {
     try {
         const { data } = await publicApi.nominate(token, {
             category_id: categoryId.value, nominee_name: nominee.value.trim(), reason: reason.value.trim() || undefined,
-            email: email.value || undefined, captcha_token: captcha.value || undefined,
+            email: email.value || undefined, captcha_token: captcha.value || undefined, device_id: deviceId(),
         });
         done.value = data.message;
     } catch (e) {

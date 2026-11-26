@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Support\BallotBox;
 use App\Support\BallotRejected;
+use App\Support\CodeGuard;
 use Illuminate\Http\Request;
 
 class VoteController extends Controller
@@ -20,10 +21,16 @@ class VoteController extends Controller
         ]);
 
         $event = Event::publicToken($token)->firstOrFail();
+        if ($blocked = CodeGuard::blocked($request, $event)) {
+            return $blocked;
+        }
 
         try {
             $receipt = BallotBox::cast($event, $data['code'], $data['choices']);
         } catch (BallotRejected $e) {
+            if ($e->unknownCode) {
+                CodeGuard::miss($request, $event);
+            }
             return response()->json(['message' => $e->getMessage()], $e->status);
         }
 

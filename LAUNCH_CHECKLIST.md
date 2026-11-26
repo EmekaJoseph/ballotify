@@ -28,6 +28,7 @@ there is only a note: the command reports what it actually finds.
 - [ ] Queue worker running (`php artisan queue:work`, kept alive by Supervisor or similar) (auto: queue driver, stuck and failed jobs)
 - [ ] Scheduler cron: `* * * * * cd /path/to/backend && php artisan schedule:run` (auto)
 - [ ] Daily database backups, and one restore tried
+- [ ] Frontend `.env` on the server: `NUXT_PUBLIC_SUPPORT_WHATSAPP=+2348139590011` (WhatsApp chat button)
 
 ## Before selling widely
 

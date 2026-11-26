@@ -32,7 +32,7 @@ export const publicApi = {
         api.post<{ message: string; sent_to: string[] }>(`/public/events/${token}/request-code`, data),
 
     nominationForm: (token: string) => api.get<NominationForm>(`/public/events/${token}/nominations`),
-    nominate: (token: string, data: { category_id: number; nominee_name: string; reason?: string; email?: string; captcha_token?: string }) =>
+    nominate: (token: string, data: { category_id: number; nominee_name: string; reason?: string; email?: string; captcha_token?: string; device_id?: string }) =>
         api.post<{ message: string }>(`/public/events/${token}/nominations`, data),
 
     candidateProfile: (token: string) => api.get<CandidateProfile>(`/public/candidate-profile/${token}`),

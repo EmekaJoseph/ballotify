@@ -227,8 +227,11 @@ return new class extends Migration
             $table->string('reason', 280)->nullable();
             $table->string('nominator_email')->nullable();
             $table->char('ip_hash', 64)->nullable();
+            // Hash of an anonymous ID the browser keeps: with ip_hash, "the same person".
+            $table->char('device_hash', 64)->nullable();
             $table->timestamp('created_at')->useCurrent();
             $table->index(['event_id', 'category_id', 'normalized_name']);
+            $table->index(['category_id', 'ip_hash', 'device_hash']);
         });
 
         // Signed snapshot of final results that anyone can verify later.

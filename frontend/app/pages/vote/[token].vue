@@ -309,7 +309,8 @@ async function checkCode() {
     checking.value = true;
     codeError.value = '';
     try {
-        const { data } = await publicApi.validateCode(token, normalized.value);
+        const { data } = await retryWhenBusy(() => publicApi.validateCode(token, normalized.value), () => { codeError.value = t('vote.busyRetrying'); });
+        codeError.value = '';
         voterName.value = data.name?.trim() || null;
         // Voter groups: the categories this code may vote in (all when the API doesn't say).
         allowedCategories.value = data.categories ?? null;
@@ -323,6 +324,7 @@ async function checkCode() {
         if (status === 422 && (e as { response?: { data?: { proxy?: boolean } } }).response?.data?.proxy) codeError.value = apiErrorMessage(e);
         else if (status === 422) codeError.value = t('vote.badCode');
         else if (status === 403) await load();
+        else if (status === 429 && !(e as { response?: { data?: { retry_after?: number } } }).response?.data?.retry_after) codeError.value = t('vote.busy');
         else codeError.value = apiErrorMessage(e);
     } finally {
         checking.value = false;
@@ -340,7 +342,8 @@ async function castVote(choices: Choice[]) {
     submitting.value = true;
     submitError.value = '';
     try {
-        const { data } = await publicApi.castVote(token, { code: normalized.value, choices });
+        const { data } = await retryWhenBusy(() => publicApi.castVote(token, { code: normalized.value, choices }), () => { submitError.value = t('vote.busyRetrying'); });
+        submitError.value = '';
         receipt.value = data.receipt ?? null;
         stage.value = 'done';
         window.scrollTo({ top: 0 });
@@ -349,6 +352,8 @@ async function castVote(choices: Choice[]) {
         const status = apiStatus(e);
         if (status === 403) {
             submitError.value = t('vote.closedBeforeSubmit');
+        } else if (status === 429 && !(e as { response?: { data?: { retry_after?: number } } }).response?.data?.retry_after) {
+            submitError.value = t('vote.busy');
         } else {
             submitError.value = apiErrorMessage(e, t('vote.submitFailed'));
         }

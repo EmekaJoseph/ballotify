@@ -21,6 +21,8 @@ class NominationController extends Controller
 {
     private const PER_PERSON_PER_CATEGORY = 3;
     private const MAX_SUGGESTIONS = 300;
+    /** Same IP address, many browsers: a generous cap per category (shared mobile networks). */
+    private const PER_NETWORK_PER_CATEGORY = 30;
 
     /** Public: the nomination form. */
     public function form(string $token)
@@ -47,6 +49,8 @@ class NominationController extends Controller
             'nominee_name' => ['required', 'string', 'min:2', 'max:120'],
             'reason' => ['nullable', 'string', 'max:280'],
             'email' => ['nullable', 'email:rfc', 'max:255'],
+            // Anonymous ID the browser keeps (see store): random, never personal.
+            'device_id' => ['nullable', 'string', 'max:100'],
         ]);
         Turnstile::verify($request);
 
@@ -59,13 +63,30 @@ class NominationController extends Controller
             throw ValidationException::withMessages(['category_id' => [__('Choose a category from this event.')]]);
         }
 
-        $ipHash = hash_hmac('sha256', (string) $request->ip(), (string) config('app.key'));
-        $mine = Nomination::where('category_id', $category->id)->where('ip_hash', $ipHash)->count();
-        if ($mine >= self::PER_PERSON_PER_CATEGORY) {
-            return response()->json(['message' => __('You’ve already sent the most nominations allowed for this category.')], 429);
-        }
+        // "The same person" = same IP address AND same browser. Mobile networks share one IP
+        // among many customers, so the IP alone would block strangers; the browser's
+        // anonymous ID tells them apart. No ID (storage blocked): the IP alone decides.
+        $key = (string) config('app.key');
+        $ipHash = hash_hmac('sha256', (string) $request->ip(), $key);
+        $deviceHash = ! empty($data['device_id']) ? hash_hmac('sha256', 'device:' . $data['device_id'], $key) : null;
+        $samePerson = fn () => Nomination::where('category_id', $category->id)->where('ip_hash', $ipHash)
+            ->when($deviceHash, fn ($q) => $q->where('device_hash', $deviceHash));
 
         $name = trim(preg_replace('/\s+/u', ' ', $data['nominee_name']) ?? '');
+
+        // One nomination of a name per category per person (the same name in another category is fine).
+        if ($samePerson()->where('normalized_name', Nomination::normalize($name))->exists()) {
+            throw ValidationException::withMessages(['nominee_name' => [
+                __('You’ve already nominated :name in “:category”. You can nominate them in another category.', ['name' => $name, 'category' => $category->name]),
+            ]]);
+        }
+        if ($samePerson()->count() >= self::PER_PERSON_PER_CATEGORY) {
+            return response()->json(['message' => __('You’ve already sent the most nominations allowed for this category.')], 429);
+        }
+        // Backstop against one network flooding a category (many browsers, one address).
+        if (Nomination::where('category_id', $category->id)->where('ip_hash', $ipHash)->count() >= self::PER_NETWORK_PER_CATEGORY) {
+            return response()->json(['message' => __('Too many nominations from this network for this category. Please try again later.')], 429);
+        }
         Nomination::create([
             'event_id' => $event->id,
             'category_id' => $category->id,
@@ -74,6 +95,7 @@ class NominationController extends Controller
             'reason' => isset($data['reason']) ? trim($data['reason']) ?: null : null,
             'nominator_email' => isset($data['email']) ? strtolower($data['email']) : null,
             'ip_hash' => $ipHash,
+            'device_hash' => $deviceHash,
         ]);
 
         return response()->json(['message' => __('Thank you! Your nomination of :name for “:category” was received.', ['name' => $name, 'category' => $category->name])], 201);

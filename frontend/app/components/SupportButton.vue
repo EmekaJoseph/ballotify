@@ -1,5 +1,5 @@
 <template>
-    <!-- Floating "Chat with support" (organisers only: dashboard and help centre). Hidden when no number is set. -->
+    <!-- Floating "Chat with support": dashboard, website and sign-in pages (not voting pages). Hidden when no number is set. -->
     <a v-if="support.whatsapp" :href="support.whatsappHref(context)" target="_blank" rel="noopener" class="support-fab"
         title="Chat with Ballotify support on WhatsApp" aria-label="Chat with Ballotify support on WhatsApp">
         <i class="bi bi-whatsapp"></i><span class="label">Help</span>

@@ -416,11 +416,15 @@ class VoterController extends Controller
         if ($event->isPaid() || ! $event->isOpen()) {
             return response()->json(['valid' => false, 'message' => 'This election is not open.'], 403);
         }
+        if ($blocked = \App\Support\CodeGuard::blocked($request, $event)) {
+            return $blocked;
+        }
         $voter = Voter::where('event_id', $event->id)
             ->whereNull('used_at')
             ->where('code', self::normalizeCode($data['code']))
             ->first(['id', 'name', 'groups', 'weight', 'proxy_voter_id']);
         if (! $voter) {
+            \App\Support\CodeGuard::miss($request, $event);
             return response()->json(['valid' => false, 'message' => 'Invalid or used voting code.'], 422);
         }
         // Someone else holds this member's proxy: they can't vote as well.
@@ -435,6 +439,7 @@ class VoterController extends Controller
         // code is theirs. Only returned for a valid, unused code (rate-limited).
         // `categories`: the ones this voter (or a member they hold a proxy for) may vote in.
         // `weight`: how many votes this ballot counts as; `proxy_for`: whose votes it also carries.
+        \App\Support\CodeGuard::ok($request, $event);
         $members = MeetingRules::members($event, $voter);
         return response()->json([
             'valid' => true,

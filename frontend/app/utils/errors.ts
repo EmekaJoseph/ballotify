@@ -8,7 +8,8 @@ export function apiErrorMessage(err: unknown, fallback = t('err.generic')): stri
         const data = err.response.data as { message?: string; errors?: Record<string, string[]> } | undefined;
         const firstFieldError = data?.errors ? Object.values(data.errors)[0]?.[0] : undefined;
         if (firstFieldError) return firstFieldError;
-        if (err.response.status === 429) return t('err.tooMany');
+        // A 429 that carries retry_after explains itself (e.g. too many wrong codes); others are generic.
+        if (err.response.status === 429) return (data as { retry_after?: number } | undefined)?.retry_after && data?.message ? data.message : t('err.tooMany');
         if (data?.message) return data.message;
     }
     return fallback;
@@ -29,4 +30,25 @@ export function planLimitReason(err: unknown): string | null {
 
 export function apiStatus(err: unknown): number | undefined {
     return isAxiosError(err) ? err.response?.status : undefined;
+}
+
+/**
+ * Runs a request again when the server is briefly busy (HTTP 429 from the rate limiter),
+ * waiting as long as it asks (Retry-After, at most 10 s), up to `tries` times. A 429 that
+ * carries `retry_after` in its body is a deliberate block (e.g. too many wrong codes): not retried.
+ * Safe for votes: a throttled request is refused before anything is recorded.
+ */
+export async function retryWhenBusy<T>(run: () => Promise<T>, onWait?: (seconds: number) => void, tries = 3): Promise<T> {
+    for (let attempt = 1; ; attempt++) {
+        try {
+            return await run();
+        } catch (e) {
+            const blocked = isAxiosError(e) && (e.response?.data as { retry_after?: number } | undefined)?.retry_after;
+            if (apiStatus(e) !== 429 || blocked || attempt >= tries) throw e;
+            const header = Number(isAxiosError(e) ? e.response?.headers?.['retry-after'] : NaN);
+            const seconds = Math.min(10, Math.max(2, Number.isFinite(header) ? header : 3)) + Math.random(); // spread retries out
+            onWait?.(Math.round(seconds));
+            await new Promise(r => setTimeout(r, seconds * 1000));
+        }
+    }
 }

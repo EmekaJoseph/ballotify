@@ -46,6 +46,7 @@
         </main>
 
         <TheFooter />
+        <SupportButton :context="`Website ${route.path}`" />
     </div>
 </template>
 

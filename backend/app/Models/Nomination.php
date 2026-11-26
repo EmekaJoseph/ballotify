@@ -10,9 +10,9 @@ class Nomination extends Model
 {
     public const UPDATED_AT = null;
 
-    protected $fillable = ['event_id', 'category_id', 'nominee_name', 'normalized_name', 'reason', 'nominator_email', 'ip_hash'];
+    protected $fillable = ['event_id', 'category_id', 'nominee_name', 'normalized_name', 'reason', 'nominator_email', 'ip_hash', 'device_hash'];
 
-    protected $hidden = ['ip_hash', 'nominator_email'];
+    protected $hidden = ['ip_hash', 'device_hash', 'nominator_email'];
 
     protected $casts = ['created_at' => 'datetime'];
 
