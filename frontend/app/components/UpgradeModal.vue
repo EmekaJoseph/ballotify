@@ -32,14 +32,14 @@
 </template>
 
 <script setup lang="ts">
-import type { ProTier } from '~/types';
+import type { PlanSize, ProTier } from '~/types';
 
 const { plans, tiers, tierByKey, upgradeTarget: target, startUpgrade, redirecting } = useBilling();
 const contactEmail = String(useRuntimeConfig().public.contactEmail || '');
 const choice = ref<ProTier | null>(null);
 
 /** The event's paid size (account-wide Pro can't be upgraded here). */
-const current = computed<ProTier | null>(() => (target.value?.limits?.plan === 'pro' ? (target.value.limits.tier ?? null) : null));
+const current = computed<PlanSize | null>(() => (target.value?.limits?.plan === 'pro' ? (target.value.limits.tier ?? null) : null));
 const payLabel = computed(() => {
     const t = tierByKey(choice.value);
     if (!t) return '';

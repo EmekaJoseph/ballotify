@@ -26,6 +26,8 @@ return new class extends Migration
             $table->timestamp('suspended_at')->nullable();
             // Set by the platform admin: every event of this account is Pro, free of charge.
             $table->timestamp('pro_account_at')->nullable();
+            // Size of the admin-granted account plan: small | standard | large | unlimited (null = large).
+            $table->string('pro_account_tier', 10)->nullable();
             // Where money from paid public voting is sent.
             $table->string('payout_bank_name')->nullable();
             $table->string('payout_account_number', 20)->nullable();

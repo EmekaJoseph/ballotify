@@ -49,7 +49,18 @@
             <p v-if="info.paid_votes" class="text-center small text-muted mt-4 mb-1">
                 <i class="bi bi-trophy"></i> <b class="text-ink">Award nights:</b> paid public voting is free to set up. We keep {{ info.paid_votes.fee_percent }}% of each vote payment; the rest is yours.
             </p>
-            <p class="text-center small text-muted mt-2 mb-0">Running something bigger? <a v-if="contactEmail" :href="`mailto:${contactEmail}`">Talk to us</a><span v-else>Talk to us</span> about larger events.</p>
+            <div class="unlimited-note mt-4">
+                <div>
+                    <div class="fw-800 text-ink"><i class="bi bi-infinity"></i> Pro Unlimited</div>
+                    <div class="small text-muted">More than {{ formatNumber(largest) }} voters, or many events for a national body? No voter limit and no co-organiser limit. Set up by our team.</div>
+                </div>
+                <a v-if="support.whatsapp" :href="support.whatsappHref('Pricing: Pro Unlimited')" target="_blank" rel="noopener" class="btn btn-ghost btn-sm flex-shrink-0">
+                    <i class="bi bi-whatsapp"></i> Talk to us
+                </a>
+                <a v-else-if="contactEmail" :href="`mailto:${contactEmail}?subject=${encodeURIComponent('Pro Unlimited')}`" class="btn btn-ghost btn-sm flex-shrink-0">
+                    <i class="bi bi-envelope"></i> Talk to us
+                </a>
+            </div>
         </div>
     </section>
 </template>
@@ -62,9 +73,12 @@ import type { PlanInfo } from '~/types';
 const auth = useAuthStore();
 const ctaLink = computed(() => (auth.isAuthenticated ? '/dashboard/events/create' : '/signup'));
 const contactEmail = String(useRuntimeConfig().public.contactEmail || '');
+const support = useSupport();
 
 // Hidden if the API is unreachable or billing is switched off.
 const info = ref<PlanInfo | null>(null);
+/** The biggest size sold at checkout (Pro Unlimited starts above it). */
+const largest = computed(() => Math.max(0, ...(info.value?.tiers ?? []).map(t => t.max_voters)));
 onMounted(async () => {
     try { info.value = (await publicApi.plans()).data; } catch { /* no pricing section */ }
 });
@@ -77,6 +91,7 @@ const blurb: Record<string, string> = {
 </script>
 
 <style scoped>
+.unlimited-note { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; justify-content: space-between; max-width: 720px; margin-inline: auto; padding: .9rem 1.1rem; border: 1px dashed var(--line-strong); border-radius: var(--radius); background: var(--surface); }
 .plan { display: flex; flex-direction: column; padding: 2rem; }
 .plan.featured { border: 2px solid var(--brand-500); box-shadow: var(--shadow-lg); }
 .amount { font-size: 2.4rem; font-weight: 800; letter-spacing: -.03em; line-height: 1.1; color: var(--ink); }

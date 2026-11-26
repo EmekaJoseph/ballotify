@@ -32,8 +32,49 @@ class Plans
         'pro_small_price_naira', 'pro_small_max_voters', 'pro_large_price_naira', 'pro_large_max_voters', 'sms_price_naira',
     ];
 
-    /** Pro sizes, smallest first. */
+    /** Pro sizes sold at checkout, smallest first. */
     public const TIERS = ['small', 'standard', 'large'];
+
+    /** No voter or co-organiser cap. Never sold at checkout: only the platform admin sets it. */
+    public const UNLIMITED = 'unlimited';
+
+    /** Every size, smallest first (what the platform admin can assign). */
+    public const ALL_TIERS = ['small', 'standard', 'large', self::UNLIMITED];
+
+    /** A size's details, Unlimited included (no price; SMS allowance as Large unless set per event). */
+    public static function tierInfo(string $tier): array
+    {
+        if ($tier === self::UNLIMITED) {
+            return ['key' => self::UNLIMITED, 'name' => 'Pro Unlimited', 'price_naira' => null, 'max_voters' => null,
+                'sms_included' => self::tiers()['large']['sms_included']];
+        }
+        return self::tiers()[$tier] ?? self::tiers()['large'];
+    }
+
+    /** Position in ALL_TIERS (-1 for none), to compare sizes. */
+    public static function tierRank(?string $tier): int
+    {
+        $i = $tier === null ? false : array_search($tier, self::ALL_TIERS, true);
+        return $i === false ? -1 : $i;
+    }
+
+    /** The bigger of two sizes. */
+    private static function biggerTier(?string $a, ?string $b): ?string
+    {
+        return self::tierRank($a) >= self::tierRank($b) ? $a : $b;
+    }
+
+    /** The size an admin-granted account gives every event (the platform owner: Unlimited). */
+    public static function accountTier(?User $user): ?string
+    {
+        if (! self::accountIsPro($user)) {
+            return null;
+        }
+        if (! self::enabled() || $user?->is_admin) {
+            return self::UNLIMITED;
+        }
+        return in_array($user?->pro_account_tier, self::ALL_TIERS, true) ? $user->pro_account_tier : 'large';
+    }
 
     /** Co-organisers per Pro event. */
     public const MAX_MEMBERS = 10;
@@ -95,16 +136,19 @@ class Plans
         ];
     }
 
-    /** The event's Pro size, or null on Free. Account-wide Pro (admin grants) counts as Large. */
+    /**
+     * The event's Pro size, or null on Free: the bigger of its own size (paid, or set by
+     * the admin) and its account's (admin grant; Large unless the admin chose another).
+     */
     public static function tierOf(Event $event): ?string
     {
         if (! self::isPro($event)) {
             return null;
         }
-        if ($event->plan !== 'pro' || self::accountIsPro($event->user)) {
-            return 'large';
-        }
-        return in_array($event->pro_tier, self::TIERS, true) ? $event->pro_tier : 'large'; // older Pro events
+        $own = $event->plan === 'pro'
+            ? (in_array($event->pro_tier, self::ALL_TIERS, true) ? $event->pro_tier : 'large') // older Pro events: Large
+            : null;
+        return self::biggerTier($own, self::accountTier($event->user));
     }
 
     /** Price to move an event to $tier: the full price, or the difference from its current size. */
@@ -112,7 +156,7 @@ class Plans
     {
         $tiers = self::tiers();
         $current = $event->plan === 'pro' ? self::tierOf($event) : null;
-        return max(0, $tiers[$tier]['price_naira'] - ($current ? $tiers[$current]['price_naira'] : 0));
+        return max(0, $tiers[$tier]['price_naira'] - ($current ? (int) self::tierInfo($current)['price_naira'] : 0));
     }
 
     // ------------------------------------------------------------------ SMS
@@ -129,7 +173,7 @@ class Plans
         if (! self::isPro($event)) {
             return 0;
         }
-        return (int) $event->sms_included > 0 ? (int) $event->sms_included : self::tiers()[self::tierOf($event)]['sms_included'];
+        return (int) $event->sms_included > 0 ? (int) $event->sms_included : self::tierInfo(self::tierOf($event))['sms_included'];
     }
 
     /** @return array{included: int, used: int, left: int, credits: int, unlimited: bool, price_naira: int} */
@@ -221,16 +265,17 @@ class Plans
         return [
             'plan' => $pro ? 'pro' : 'free',
             'tier' => $tier,
-            'tier_name' => $tier ? self::tiers()[$tier]['name'] : null,
-            // Billing off = no cap at all; otherwise the plan's (or Pro size's) cap.
-            'max_voters' => ! self::enabled() ? null : ($pro ? self::tiers()[$tier]['max_voters'] : $s['free_max_voters']),
+            'tier_name' => $tier ? self::tierInfo($tier)['name'] : null,
+            // Billing off or Pro Unlimited = no cap at all; otherwise the plan's (or Pro size's) cap.
+            'max_voters' => ! self::enabled() ? null : ($pro ? self::tierInfo($tier)['max_voters'] : $s['free_max_voters']),
             'sms' => $pro ? self::smsStatus($event) : null,
             'messaging' => $pro,
             'branding' => ! $pro,          // "Powered by Ballotify" shown
             'custom_branding' => $pro,     // own logo and colour
             'team' => $pro,                // co-organisers
             'meeting_rules' => $pro,       // weighted votes, proxies, quorum
-            'max_members' => $pro ? self::MAX_MEMBERS : 0,
+            // null = no cap (Pro Unlimited).
+            'max_members' => $pro ? ($tier === self::UNLIMITED ? null : self::MAX_MEMBERS) : 0,
             // Pro through the account (admin grant) rather than a payment on this event.
             'via_account' => $pro && $event->plan !== 'pro',
         ];
@@ -362,7 +407,7 @@ class Plans
         if (! self::isPro($event)) {
             self::deny('Co-organisers are a Pro feature. Upgrade this event to invite your committee.', 'team');
         }
-        if ($currentMembers >= self::MAX_MEMBERS) {
+        if (self::tierOf($event) !== self::UNLIMITED && $currentMembers >= self::MAX_MEMBERS) {
             self::deny('An event can have up to ' . self::MAX_MEMBERS . ' co-organisers.', 'team', false);
         }
     }

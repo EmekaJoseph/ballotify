@@ -13,9 +13,10 @@
             <div class="usage mt-3">
                 <div class="d-flex justify-content-between small mb-1">
                     <span class="text-muted"><i class="bi bi-people"></i> Voters</span>
-                    <b :class="{ 'text-danger': voterCount >= (limits!.max_voters ?? Infinity) }">{{ formatNumber(voterCount) }} / {{ formatNumber(limits!.max_voters ?? 0) }}</b>
+                    <b v-if="limits!.max_voters === null">{{ formatNumber(voterCount) }} <span class="text-muted fw-normal">· no limit</span></b>
+                    <b v-else :class="{ 'text-danger': voterCount >= limits!.max_voters }">{{ formatNumber(voterCount) }} / {{ formatNumber(limits!.max_voters) }}</b>
                 </div>
-                <div class="bar slim"><span :style="{ width: Math.min(100, percent(voterCount, limits!.max_voters ?? 0)) + '%' }"></span></div>
+                <div v-if="limits!.max_voters !== null" class="bar slim"><span :style="{ width: Math.min(100, percent(voterCount, limits!.max_voters)) + '%' }"></span></div>
             </div>
 
             <div v-if="sms && !sms.unlimited" class="usage mt-3">
@@ -98,7 +99,7 @@ const voterCount = computed(() => props.event.voters_count ?? 0);
 // Hidden when billing is switched off for this installation.
 const show = computed(() => !!limits.value && (plans.value ? plans.value.billing_enabled : true) && limits.value.max_voters !== null);
 /** A paid size below Large can grow (account-wide Pro is already the largest). */
-const canGrow = computed(() => isPro.value && !limits.value?.via_account && limits.value?.tier !== 'large' && props.event.status !== 'completed');
+const canGrow = computed(() => isPro.value && !limits.value?.via_account && limits.value?.tier !== 'large' && limits.value?.tier !== 'unlimited' && props.event.status !== 'completed');
 
 const proNote = computed(() => {
     if (limits.value?.via_account) return 'Your account includes Pro for every event.';

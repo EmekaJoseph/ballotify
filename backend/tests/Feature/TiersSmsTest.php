@@ -183,6 +183,46 @@ it('lets the platform admin give an event a size', function () {
     expect($event->fresh()->pro_tier)->toBe('large')->and($event->fresh()->sms_included)->toBe(5000);
 });
 
+it('lets the platform admin make an event Pro Unlimited: no voter or team cap, nothing to buy', function () {
+    $admin = User::factory()->create(['is_admin' => true]);
+    $event = tsEvent();
+    $this->actingAs($admin)->postJson("/api/admin/events/{$event->id}/plan", ['plan' => 'pro', 'tier' => 'unlimited', 'sms_included' => 20000])
+        ->assertOk()->assertJsonPath('pro_tier', 'unlimited');
+    expect($event->fresh()->sms_included)->toBe(20000);
+
+    $owner = $this->actingAs($event->user);
+    $owner->getJson("/api/events/{$event->id}")->assertJsonPath('limits.tier', 'unlimited')
+        ->assertJsonPath('limits.tier_name', 'Pro Unlimited')
+        ->assertJsonPath('limits.max_voters', null)
+        ->assertJsonPath('limits.max_members', null)
+        ->assertJsonPath('limits.sms.included', 20000);
+
+    // More voters than Pro Large allows.
+    $owner->postJson("/api/events/{$event->id}/voters/generate", ['count' => 6000])->assertCreated();
+    expect($event->voters()->count())->toBe(6000);
+
+    // Nothing to buy, and a late payment for a smaller size never shrinks it.
+    $owner->postJson("/api/events/{$event->id}/upgrade", ['tier' => 'large'])->assertStatus(409);
+    $late = Payment::create(['user_id' => $event->user_id, 'event_id' => $event->id, 'reference' => 'BLT-LATE1', 'amount_kobo' => 2_000_000, 'currency' => 'NGN', 'tier' => 'small']);
+    tsPay($this, $late);
+    expect($event->fresh()->pro_tier)->toBe('unlimited');
+});
+
+it('lets the platform admin give a whole account any size', function () {
+    $admin = User::factory()->create(['is_admin' => true]);
+    $event = tsEvent();
+    $this->actingAs($admin)->postJson("/api/admin/users/{$event->user_id}/pro", ['enabled' => true, 'tier' => 'small'])->assertOk()
+        ->assertJsonPath('pro_account_tier', 'small');
+    $this->actingAs($event->user)->getJson("/api/events/{$event->id}")->assertJsonPath('limits.tier', 'small')->assertJsonPath('limits.max_voters', 200);
+
+    $this->actingAs($admin)->postJson("/api/admin/users/{$event->user_id}/pro", ['enabled' => true, 'tier' => 'unlimited'])->assertOk();
+    $this->actingAs($event->user)->getJson("/api/events/{$event->id}")->assertJsonPath('limits.tier', 'unlimited')->assertJsonPath('limits.max_voters', null);
+
+    // Removing it: back to Free (the event wasn't paid for).
+    $this->actingAs($admin)->postJson("/api/admin/users/{$event->user_id}/pro", ['enabled' => false])->assertOk()->assertJsonPath('pro_account_tier', null);
+    $this->actingAs($event->user)->getJson("/api/events/{$event->id}")->assertJsonPath('limits.plan', 'free');
+});
+
 it('keeps every SMS to one message', function () {
     $long = str_repeat('Very Long Organisation Name ', 6);
     $url = 'https://vote.example-organisation.com/vote/' . Str::uuid();

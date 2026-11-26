@@ -20,12 +20,13 @@
 </template>
 
 <script setup lang="ts">
-import type { PlanTier, ProTier } from '~/types';
+import type { PlanSize, PlanTier, ProTier } from '~/types';
 
-const props = withDefaults(defineProps<{ tiers: PlanTier[]; current?: ProTier | null; voters?: number }>(), { current: null, voters: 0 });
+const props = withDefaults(defineProps<{ tiers: PlanTier[]; current?: PlanSize | null; voters?: number }>(), { current: null, voters: 0 });
 const model = defineModel<ProTier | null>({ default: null });
 
-const order = (k: string) => props.tiers.findIndex(t => t.key === k);
+// Pro Unlimited (admin only) isn't for sale: it ranks above every size, so nothing is choosable.
+const order = (k: string) => (k === 'unlimited' ? Number.POSITIVE_INFINITY : props.tiers.findIndex(t => t.key === k));
 const currentPrice = computed(() => props.tiers.find(t => t.key === props.current)?.price_naira ?? 0);
 /** Upgrading pays the difference from the current size. */
 const price = (t: PlanTier) => Math.max(0, t.price_naira - currentPrice.value);

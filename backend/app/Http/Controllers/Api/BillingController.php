@@ -61,8 +61,11 @@ class BillingController extends Controller
         }
         // Moving up only: Small -> Pro -> Large, paying the difference.
         $current = $event->plan === 'pro' ? Plans::tierOf($event) : null;
-        if ($current && array_search($tier, Plans::TIERS, true) <= array_search($current, Plans::TIERS, true)) {
-            return response()->json(['message' => "This event is already {$tiers[$current]['name']}. Choose a bigger size to upgrade."], 409);
+        if ($current && Plans::tierRank($tier) <= Plans::tierRank($current)) {
+            $name = Plans::tierInfo($current)['name'];
+            return response()->json(['message' => $current === Plans::UNLIMITED
+                ? "This event is already {$name}: there's nothing bigger to buy."
+                : "This event is already {$name}. Choose a bigger size to upgrade."], 409);
         }
         $voters = $event->voters()->count();
         if ($voters > $tiers[$tier]['max_voters']) {
@@ -305,8 +308,10 @@ class BillingController extends Controller
                 if ($event) {
                     $tier = in_array($payment->tier, Plans::TIERS, true) ? $payment->tier : 'standard';
                     $size = Plans::tiers()[$tier];
+                    // A late payment never shrinks an event the admin has since made bigger (e.g. Unlimited).
+                    $keep = $event->plan === 'pro' && Plans::tierRank($event->pro_tier) > Plans::tierRank($tier);
                     $event->forceFill([
-                        'plan' => 'pro', 'pro_tier' => $tier, 'upgraded_at' => now(), 'upgraded_via' => 'payment',
+                        'plan' => 'pro', 'pro_tier' => $keep ? $event->pro_tier : $tier, 'upgraded_at' => now(), 'upgraded_via' => 'payment',
                         // 1 SMS per voter of the new size (a size upgrade tops the allowance up).
                         'sms_included' => max((int) $event->sms_included, $size['sms_included']),
                     ])->save();

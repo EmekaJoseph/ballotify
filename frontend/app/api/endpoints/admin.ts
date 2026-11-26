@@ -1,5 +1,5 @@
 import api from '../index';
-import type { AuditEntry, BallotEvent, Candidate, CandidateImportResult, CandidateImportRow, Category, Earnings, EventResults, EventTemplate, GeneratedCode, InviteChannel, MemberRole, MessagingStatus, MyPayment, Paginated, PaymentReceiptInfo, PlanInfo, PlanSettings, PlatformEvent, PlatformOverview, PlatformPayment, PlatformPayout, PlatformUser, ResultsVisibility, SystemHealth, TeamInfo, TeamMember, User, Voter, VoterContact, VotingMode, NominationSummary, ResultCertificateInfo, Bank, VotingMethod, PassRule, VoterGroup } from '~/types';
+import type { AuditEntry, BallotEvent, Candidate, CandidateImportResult, CandidateImportRow, Category, Earnings, EventResults, EventTemplate, GeneratedCode, InviteChannel, MemberRole, MessagingStatus, MyPayment, Paginated, PaymentReceiptInfo, PlanInfo, PlanSettings, PlanSize, PlatformEvent, PlatformOverview, PlatformPayment, PlatformPayout, PlatformUser, ResultsVisibility, SystemHealth, TeamInfo, TeamMember, User, Voter, VoterContact, VotingMode, NominationSummary, ResultCertificateInfo, Bank, VotingMethod, PassRule, VoterGroup } from '~/types';
 
 type Id = number | string;
 
@@ -162,9 +162,12 @@ export const platformApi = {
     unsuspend: (userId: Id) => api.post<PlatformUser>(`/admin/users/${userId}/unsuspend`),
     events: (params: { search?: string; status?: string; page?: number }) =>
         api.get<Paginated<PlatformEvent>>('/admin/events', { params }),
-    setEventPlan: (eventId: Id, plan: 'free' | 'pro', tier?: 'small' | 'standard' | 'large') =>
-        api.post<{ id: number; plan: 'free' | 'pro'; upgraded_via: 'payment' | 'admin' | null }>(`/admin/events/${eventId}/plan`, { plan, tier }),
-    setAccountPro: (userId: Id, enabled: boolean) => api.post<PlatformUser>(`/admin/users/${userId}/pro`, { enabled }),
+    /** Any event to any plan: Free, or a Pro size including Unlimited (optionally with its SMS allowance). */
+    setEventPlan: (eventId: Id, plan: 'free' | 'pro', tier?: PlanSize, smsIncluded?: number) =>
+        api.post<{ id: number; plan: 'free' | 'pro'; pro_tier: PlanSize | null; upgraded_via: 'payment' | 'admin' | null; sms_included: number }>(
+            `/admin/events/${eventId}/plan`, { plan, tier, ...(smsIncluded !== undefined ? { sms_included: smsIncluded } : {}) }),
+    /** Every event on an account gets this size (enabled false = none). */
+    setAccountPro: (userId: Id, enabled: boolean, tier?: PlanSize) => api.post<PlatformUser>(`/admin/users/${userId}/pro`, { enabled, tier }),
     plans: () => api.get<PlanSettings>('/admin/plans'),
     updatePlans: (data: Partial<Omit<PlanSettings, 'billing_enabled' | 'payments_enabled'>>) => api.put<PlanSettings>('/admin/plans', data),
     payments: (params: { search?: string; status?: string; page?: number }) =>

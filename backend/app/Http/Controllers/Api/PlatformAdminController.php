@@ -218,8 +218,15 @@ class PlatformAdminController extends Controller
     /** Make every event of an account Pro, free of charge (or take it back). */
     public function setAccountPro(Request $request, User $user)
     {
-        $data = $request->validate(['enabled' => ['required', 'boolean']]);
-        $user->forceFill(['pro_account_at' => $data['enabled'] ? ($user->pro_account_at ?? now()) : null])->save();
+        $data = $request->validate([
+            'enabled' => ['required', 'boolean'],
+            // The size every event on the account gets (default Large); Unlimited has no caps.
+            'tier' => ['sometimes', Rule::in(Plans::ALL_TIERS)],
+        ]);
+        $user->forceFill([
+            'pro_account_at' => $data['enabled'] ? ($user->pro_account_at ?? now()) : null,
+            'pro_account_tier' => $data['enabled'] ? ($data['tier'] ?? $user->pro_account_tier ?? 'large') : null,
+        ])->save();
 
         return response()->json($user->loadCount('events'));
     }
@@ -229,22 +236,27 @@ class PlatformAdminController extends Controller
     {
         $data = $request->validate([
             'plan' => ['required', Rule::in(['free', 'pro'])],
-            'tier' => ['sometimes', Rule::in(Plans::TIERS)],
+            'tier' => ['sometimes', Rule::in(Plans::ALL_TIERS)],
+            // SMS this event includes (optional; by default the size's allowance, never less than before).
+            'sms_included' => ['sometimes', 'nullable', 'integer', 'min:0', 'max:10000000'],
         ]);
         $tier = $data['tier'] ?? 'large';
-        if ($data['plan'] === 'pro' && ($event->plan !== 'pro' || $event->pro_tier !== $tier)) {
-            $size = Plans::tiers()[$tier];
+        $sms = $data['sms_included'] ?? null;
+        if ($data['plan'] === 'pro' && ($event->plan !== 'pro' || $event->pro_tier !== $tier || $sms !== null)) {
+            $size = Plans::tierInfo($tier);
             $event->forceFill([
                 'plan' => 'pro', 'pro_tier' => $tier, 'upgraded_at' => now(), 'upgraded_via' => 'admin',
-                'sms_included' => max((int) $event->sms_included, $size['sms_included']),
+                // Never less than the size's allowance or what the event already had.
+                'sms_included' => max((int) $sms, (int) $event->sms_included, $size['sms_included']),
             ])->save();
-            Audit::log($event, 'event.plan', "Upgraded to {$size['name']} by the platform admin");
+            Audit::log($event, 'event.plan', "Set to {$size['name']} by the platform admin"
+                . ($sms !== null ? ' (' . number_format($sms) . ' SMS included)' : ''));
         } elseif ($data['plan'] === 'free' && $event->plan !== 'free') {
             $event->forceFill(['plan' => 'free', 'pro_tier' => null, 'upgraded_at' => null, 'upgraded_via' => null])->save();
             Audit::log($event, 'event.plan', 'Set back to Free by the platform admin');
         }
 
-        return response()->json(['id' => $event->id, 'plan' => $event->plan, 'pro_tier' => $event->pro_tier, 'upgraded_via' => $event->upgraded_via]);
+        return response()->json(['id' => $event->id, 'plan' => $event->plan, 'pro_tier' => $event->pro_tier, 'upgraded_via' => $event->upgraded_via, 'sms_included' => (int) $event->sms_included]);
     }
 
     public function payments(Request $request)
@@ -337,8 +349,8 @@ class PlatformAdminController extends Controller
         ]);
 
         $events = Event::query()
-            ->select(['id', 'user_id', 'voting_mode', 'name', 'starts_at', 'ends_at', 'results_visibility', 'plan', 'upgraded_via', 'created_at'])
-            ->with(['user:id,name,email,suspended_at,pro_account_at,is_admin'])
+            ->select(['id', 'user_id', 'voting_mode', 'name', 'starts_at', 'ends_at', 'results_visibility', 'plan', 'pro_tier', 'upgraded_via', 'created_at'])
+            ->with(['user:id,name,email,suspended_at,pro_account_at,pro_account_tier,is_admin'])
             ->when($data['search'] ?? null, function ($q, $term) {
                 $like = $this->like($term);
                 $q->where(fn ($w) => $w->where('name', 'like', $like)

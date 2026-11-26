@@ -15,6 +15,8 @@ export interface User {
     suspended_at?: string | null;
     /** Granted by the platform admin: every event of this account is Pro. */
     pro_account_at?: string | null;
+    /** Size of the admin-granted account plan (null = Large). */
+    pro_account_tier?: PlanSize | null;
     /** Prepaid SMS credits, used once an event's included SMS run out. */
     sms_credits?: number;
     /** Where paid-voting money is sent. */
@@ -358,8 +360,9 @@ export interface PlatformEvent {
     voters_count: number;
     voted_count: number;
     plan: 'free' | 'pro';
+    pro_tier?: PlanSize | null;
     upgraded_via: 'payment' | 'admin' | null;
-    user: { id: number; name: string; email: string; suspended_at: string | null; pro_account_at: string | null; is_admin: boolean } | null;
+    user: { id: number; name: string; email: string; suspended_at: string | null; pro_account_at: string | null; pro_account_tier?: PlanSize | null; is_admin: boolean } | null;
 }
 
 export interface CandidateImportRow {
@@ -377,6 +380,8 @@ export interface CandidateImportResult {
 // ---------------------------------------------------------------- billing
 
 export type ProTier = 'small' | 'standard' | 'large';
+/** Every plan size: the three sold at checkout, plus Unlimited (set by the platform admin only). */
+export type PlanSize = ProTier | 'unlimited';
 
 /** A Pro size: price per event, voter cap and SMS included (1 per voter). */
 export interface PlanTier { key: ProTier; name: string; price_naira: number; max_voters: number; sms_included: number }
@@ -387,7 +392,7 @@ export interface SmsStatus { included: number; used: number; left: number; credi
 export interface EventLimits {
     plan: 'free' | 'pro';
     /** Pro size (null on Free). */
-    tier?: ProTier | null;
+    tier?: PlanSize | null;
     tier_name?: string | null;
     sms?: SmsStatus | null;
     /** null = no cap (billing switched off). */
@@ -400,7 +405,8 @@ export interface EventLimits {
     team: boolean;
     /** Weighted votes, proxies and quorum. */
     meeting_rules?: boolean;
-    max_members: number;
+    /** null = no cap (Pro Unlimited). */
+    max_members: number | null;
     /** Pro because the whole account was upgraded by the admin. */
     via_account: boolean;
 }

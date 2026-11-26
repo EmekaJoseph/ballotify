@@ -103,7 +103,7 @@
                     <h3 class="h6 fw-800 mb-2">Free upgrades</h3>
                     <p class="small text-muted mb-0">
                         <b>Events tab → Make Pro</b> upgrades one event without payment.
-                        <b>Organisers tab → Give Pro</b> makes every event of that account Pro (for partners, sponsors or staff).
+                        <b>Organisers tab → account plan</b> gives every event of that organiser a size, up to Pro Unlimited (for partners, big clients or staff). <b>Events tab → plan</b> sets one event.
                     </p>
                 </div>
             </div>
@@ -156,9 +156,10 @@
                                 </td>
                                 <td class="text-end text-nowrap">
                                     <template v-if="!u.is_admin">
-                                        <button class="btn btn-ghost btn-sm me-1" :disabled="acting === u.id" @click="toggleAccountPro(u)">
-                                            <i class="bi" :class="u.pro_account_at ? 'bi-x-lg' : 'bi-lightning-charge'"></i> {{ u.pro_account_at ? 'Remove Pro' : 'Give Pro' }}
-                                        </button>
+                                        <!-- Account plan: every event of this organiser gets this size (or bigger, if an event has its own). -->
+                                        <AppSelect :model-value="accountPlanChoice(u)" :options="adminPlanOptions('No account plan')" variant="pill" size="sm" :block="false"
+                                            class="me-1" :disabled="acting === u.id" :aria-label="`Account plan for ${u.name}`" :menu-min-width="180"
+                                            @change="(v: AdminPlanChoice) => setAccountPlan(u, v)" />
                                         <template v-if="u.id !== auth.user?.id">
                                             <button v-if="u.suspended_at" class="btn btn-soft btn-sm" :disabled="acting === u.id" @click="unsuspend(u)">
                                                 <i class="bi bi-arrow-counterclockwise"></i> Restore
@@ -194,8 +195,10 @@
                                 </td>
                                 <td><StatusBadge :status="ev.status" :draft="isDraft(ev)" /></td>
                                 <td class="text-nowrap small">
-                                    <span v-if="ev.plan === 'pro'" class="pill pill-pro"><i class="bi bi-lightning-charge-fill"></i> Pro</span>
-                                    <span v-else-if="ev.user?.pro_account_at || ev.user?.is_admin" class="pill pill-violet" title="Pro through the account">Pro (account)</span>
+                                    <span v-if="ev.plan === 'pro'" class="pill pill-pro"><i class="bi bi-lightning-charge-fill"></i> {{ PLAN_SIZE_NAMES[ev.pro_tier ?? 'large'] }}</span>
+                                    <span v-else-if="ev.user?.pro_account_at || ev.user?.is_admin" class="pill pill-violet" title="Through the organiser’s account">
+                                        {{ ev.user?.is_admin ? 'Pro Unlimited' : PLAN_SIZE_NAMES[ev.user?.pro_account_tier ?? 'large'] }} (account)
+                                    </span>
                                     <span v-else class="pill pill-completed">Free</span>
                                     <div v-if="ev.upgraded_via" class="text-muted mt-1">{{ ev.upgraded_via === 'payment' ? 'Paid' : 'By admin' }}</div>
                                 </td>
@@ -204,8 +207,10 @@
                                     <span v-if="ev.voters_count" class="text-muted">({{ percent(ev.voted_count, ev.voters_count) }}%)</span>
                                 </td>
                                 <td class="text-end text-nowrap">
-                                    <button v-if="ev.plan === 'pro'" class="btn btn-ghost btn-sm" :disabled="acting === ev.id" @click="setPlan(ev, 'free')">Make Free</button>
-                                    <button v-else-if="!ev.user?.pro_account_at && !ev.user?.is_admin" class="btn btn-soft btn-sm" :disabled="acting === ev.id" @click="setPlan(ev, 'pro')"><i class="bi bi-lightning-charge"></i> Make Pro</button>
+                                    <!-- Any event to any plan (the event's own plan; an account plan applies on top). -->
+                                    <AppSelect :model-value="eventPlanChoice(ev)" :options="adminPlanOptions()" variant="pill" size="sm" :block="false"
+                                        :disabled="acting === ev.id" :aria-label="`Plan for ${ev.name}`" :menu-min-width="170"
+                                        @change="(v: AdminPlanChoice) => setPlan(ev, v)" />
                                 </td>
                             </tr>
                         </tbody>
@@ -254,7 +259,7 @@
 <script setup lang="ts">
 import { platformApi } from '~/api/endpoints/admin';
 import { useAuthStore } from '~/stores/auth';
-import type { Paginated, PlanSettings, PlatformEvent, PlatformOverview, PlatformPayment, PlatformUser } from '~/types';
+import type { Paginated, PlanSettings, PlanSize, PlatformEvent, PlatformOverview, PlatformPayment, PlatformUser } from '~/types';
 
 definePageMeta({ layout: 'dashboard', middleware: ['auth', 'admin'] });
 useHead({ title: 'Platform admin · Ballotify' });
@@ -382,21 +387,32 @@ async function unsuspend(u: PlatformUser) {
     });
 }
 
-async function toggleAccountPro(u: PlatformUser) {
-    const enable = !u.pro_account_at;
-    const ok = await confirm(enable
-        ? { title: `Give ${u.name} a Pro account?`, message: 'Every event on this account, current and future, becomes Pro without payment: more voters, email and SMS invitations, no branding.', confirmText: 'Give Pro' }
-        : { title: `Remove Pro from ${u.name}?`, message: 'Their events go back to the free limits, except events that were paid for or upgraded individually. Existing voters are kept, but they can’t add more beyond the free limit.', confirmText: 'Remove Pro', danger: true });
+const accountPlanChoice = (u: PlatformUser): AdminPlanChoice => (u.pro_account_at ? (u.pro_account_tier ?? 'large') : 'free');
+
+/** Every event on this organiser's account, current and future, gets this size (no payment). */
+async function setAccountPlan(u: PlatformUser, choice: AdminPlanChoice) {
+    if (choice === accountPlanChoice(u)) return;
+    const name = choice === 'free' ? '' : PLAN_SIZE_NAMES[choice];
+    const ok = await confirm(choice === 'free'
+        ? { title: `Remove the account plan from ${u.name}?`, message: 'Their events go back to the free limits, except events paid for or upgraded on their own. Existing voters are kept, but they can’t add more beyond the limit.', confirmText: 'Remove plan', danger: true }
+        : { title: `Give ${u.name} ${name} on every event?`, message: choice === 'unlimited'
+            ? 'Every event on this account, current and future, gets Pro Unlimited without payment: no voter limit, no co-organiser limit, email and SMS invitations, no branding. SMS beyond the included allowance still come from SMS credits.'
+            : `Every event on this account, current and future, becomes ${name} without payment. Events with a bigger plan of their own keep it.`, confirmText: `Give ${name}` });
     if (!ok) return;
     await act(u.id, async () => {
-        replaceRow((await platformApi.setAccountPro(u.id, enable)).data);
-        toast.success(enable ? `${u.name} now has a Pro account` : `Pro removed from ${u.name}`);
+        replaceRow((await platformApi.setAccountPro(u.id, choice !== 'free', choice === 'free' ? undefined : choice)).data);
+        toast.success(choice === 'free' ? `Account plan removed from ${u.name}` : `${u.name} now has ${name} on every event`);
     });
 }
 
 // ----- Events -----
-async function setPlan(ev: PlatformEvent, plan: 'free' | 'pro') {
-    if (plan === 'free') {
+const eventPlanChoice = (ev: PlatformEvent): AdminPlanChoice => (ev.plan === 'pro' ? (ev.pro_tier ?? 'large') : 'free');
+
+/** Any event to any plan, without payment. Unlimited asks how many SMS it includes. */
+async function setPlan(ev: PlatformEvent, choice: AdminPlanChoice) {
+    if (choice === eventPlanChoice(ev)) return;
+    let sms: number | undefined;
+    if (choice === 'free') {
         const ok = await confirm({
             title: `Set “${ev.name}” back to Free?`,
             message: ev.upgraded_via === 'payment'
@@ -406,14 +422,34 @@ async function setPlan(ev: PlatformEvent, plan: 'free' | 'pro') {
             danger: true,
         });
         if (!ok) return;
+    } else {
+        const name = PLAN_SIZE_NAMES[choice];
+        const smaller = ev.plan === 'pro' && ev.upgraded_via === 'payment' && planRank(choice) < planRank(ev.pro_tier ?? 'large');
+        const ok = await confirm({
+            title: `Make “${ev.name}” ${name}?`,
+            message: [
+                choice === 'unlimited'
+                    ? 'No voter limit and no co-organiser limit, without payment. It includes SMS for one message per voter it has now (at least as many as Pro Large); more come from SMS credits.'
+                    : `Without payment. It gets ${name}’s voter limit and SMS allowance.`,
+                smaller ? 'This organiser PAID for a bigger size. Only do this if you have refunded the difference.' : '',
+            ].filter(Boolean).join(' '),
+            confirmText: `Make ${name}`,
+            danger: smaller,
+        });
+        if (!ok) return;
+        // Unlimited: one SMS per voter already on the list (never less than Large's allowance; set by the server).
+        if (choice === 'unlimited' && ev.voters_count) sms = ev.voters_count;
     }
     await act(ev.id, async () => {
-        const { data } = await platformApi.setEventPlan(ev.id, plan);
-        replaceRow({ ...ev, plan: data.plan, upgraded_via: data.upgraded_via });
-        toast.success(plan === 'pro' ? `“${ev.name}” is now Pro` : `“${ev.name}” is now Free`);
+        const { data } = choice === 'free'
+            ? await platformApi.setEventPlan(ev.id, 'free')
+            : await platformApi.setEventPlan(ev.id, 'pro', choice, sms);
+        replaceRow({ ...ev, plan: data.plan, pro_tier: data.pro_tier, upgraded_via: data.upgraded_via });
+        toast.success(choice === 'free' ? `“${ev.name}” is now Free` : `“${ev.name}” is now ${PLAN_SIZE_NAMES[choice]}`);
         loadOverview();
     });
 }
+const planRank = (t: PlanSize) => ['small', 'standard', 'large', 'unlimited'].indexOf(t);
 
 async function act(id: number, fn: () => Promise<void>) {
     acting.value = id;
