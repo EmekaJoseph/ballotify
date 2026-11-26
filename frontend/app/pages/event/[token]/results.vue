@@ -40,6 +40,10 @@
                 </button>
             </ResultsHeader>
 
+            <div v-if="results.integrity?.votes_reset?.length" class="integrity warn mb-2">
+                <i class="bi bi-arrow-counterclockwise"></i>
+                <span>{{ tn('res.votesReset', results.integrity.votes_reset.length, { date: formatDate(results.integrity.votes_reset.at(-1)?.at ?? null, true) }) }}</span>
+            </div>
             <div v-if="results.integrity" class="integrity mb-4" :class="{ warn: results.integrity.changes_during_voting > 0 }">
                 <i class="bi" :class="results.integrity.changes_during_voting ? 'bi-info-circle' : 'bi-shield-check'"></i>
                 <span><template v-if="!isPaid">{{ t('layout.secretBallot') }} · </template>{{ results.integrity.changes_during_voting

@@ -113,6 +113,14 @@
                             <span v-if="erasing" class="spinner-border spinner-border-sm"></span><i v-else class="bi bi-eraser"></i> Erase contact details
                         </button>
                     </div>
+                    <div v-if="canResetVotes" class="card-b pad danger-zone mb-4">
+                        <h3 class="h6 fw-800 mb-2 text-danger">Reset votes and results</h3>
+                        <p class="small text-muted mb-3">
+                            After a test run: erases every vote and result so the real election starts clean. Voters keep their codes.
+                            Recorded for good on the results, report and certificate.
+                        </p>
+                        <button class="btn btn-danger-soft w-100" @click="resetOpen = true"><i class="bi bi-arrow-counterclockwise"></i> Reset votes…</button>
+                    </div>
                     <div v-if="can('own')" class="card-b pad danger-zone">
                         <h3 class="h6 fw-800 mb-2 text-danger">Delete event</h3>
                         <p class="small text-muted mb-3">Permanently removes the ballot, voter list, results and activity log.</p>
@@ -123,6 +131,7 @@
             </div>
             <EventTour v-if="showTour" @done="finishTour" />
         </template>
+        <EventResetVotesModal v-if="event" :open="resetOpen" :event-id="event.id" :event-name="event.name" @close="resetOpen = false" @done="onVotesReset" />
     </div>
 </template>
 
@@ -382,6 +391,14 @@ async function closeNow() {
     const now = new Date();
     const start = event.value.starts_at ? new Date(event.value.starts_at) : null;
     await save({ ends_at: now.toISOString(), starts_at: start && start > now ? now.toISOString() : event.value.starts_at });
+}
+
+// Reset votes (test runs): owner only; never paid voting or once voting has closed.
+const resetOpen = ref(false);
+const canResetVotes = computed(() => can('own') && event.value?.voting_mode !== 'paid' && event.value?.status !== 'completed');
+async function onVotesReset() {
+    resetOpen.value = false;
+    await load(true);
 }
 
 async function remove() {

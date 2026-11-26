@@ -130,6 +130,10 @@ export const adminApi = {
     updateVoter: (eventId: Id, voterId: Id, data: VoterContact & { code?: string; proxy_voter_id?: number | null }) =>
         api.patch<Voter>(`/events/${eventId}/voters/${voterId}`, data),
     deleteVoter: (eventId: Id, voterId: Id) => api.delete(`/events/${eventId}/voters/${voterId}`),
+    /** Delete several voters at once (votes already cast stay counted). */
+    deleteVoters: (eventId: Id, ids: Id[]) => api.post<{ deleted: number; voted: number }>(`/events/${eventId}/voters/bulk-delete`, { ids }),
+    /** Test runs: erase every vote and result; voters and codes stay (owner only, never paid/closed/certified). */
+    resetVotes: (eventId: Id, confirmName: string) => api.post<{ erased: number; message: string }>(`/events/${eventId}/reset-votes`, { confirm_name: confirmName }),
     generateVoters: (eventId: Id, data: { count: number }) =>
         api.post<{ voters: GeneratedCode[] }>(`/events/${eventId}/voters/generate`, data),
     voterGroups: (eventId: Id) => api.get<VoterGroup[]>(`/events/${eventId}/voter-groups`),

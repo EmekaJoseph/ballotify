@@ -152,6 +152,31 @@ class VoterController extends Controller
         return response()->json([], 204);
     }
 
+    /** Delete the ticked voters (same rules as one at a time: votes already cast stay counted). */
+    public function bulkDestroy(Request $request, Event $event)
+    {
+        Gate::authorize('voters', $event);
+        $data = $request->validate(['ids' => ['required', 'array', 'min:1', 'max:' . self::MAX_BATCH], 'ids.*' => ['integer']]);
+
+        [$deleted, $voted, $freed] = DB::transaction(function () use ($event, $data) {
+            $voters = Voter::where('event_id', $event->id)->whereIn('id', $data['ids'])->lockForUpdate()->get(['id', 'used_at']);
+            $ids = $voters->pluck('id');
+            // Proxy holders removed: the members they held for vote for themselves again
+            // (unless those members are being removed too).
+            $freed = Voter::whereIn('proxy_voter_id', $ids)->whereNotIn('id', $ids)->whereNull('used_at')->update(['proxy_voter_id' => null]);
+            Voter::whereIn('id', $ids)->delete();
+            return [$ids->count(), $voters->whereNotNull('used_at')->count(), $freed];
+        });
+
+        if ($deleted) {
+            Audit::log($event, 'voters.deleted', "{$deleted} voter" . ($deleted === 1 ? '' : 's') . ' removed'
+                . ($voted ? " ({$voted} had already voted; their votes stay counted)" : '')
+                . ($freed ? "; {$freed} prox" . ($freed === 1 ? 'y' : 'ies') . ' they held cancelled' : ''));
+        }
+
+        return response()->json(['deleted' => $deleted, 'voted' => $voted]);
+    }
+
     /**
      * USSD: give every voter who hasn't voted a numbers-only code (keypads can't
      * type letters). Old codes stop working, so codes must be sent again.

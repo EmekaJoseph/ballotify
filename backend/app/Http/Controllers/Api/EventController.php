@@ -654,6 +654,8 @@ class EventController extends Controller
                 'changes_during_voting' => $event->auditLogs()->where('during_voting', true)
                     ->where(fn ($q) => $q->where('action', 'like', 'candidate.%')->orWhere('action', 'like', 'category.%'))
                     ->count(),
+                // Test-run resets (when, by whom): never hidden.
+                'votes_reset' => VoteResetController::history($event),
             ],
             'timeline' => Timeline::for($event),
             // Weighted votes / proxies / quorum (null when none are on).

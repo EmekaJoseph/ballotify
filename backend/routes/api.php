@@ -18,6 +18,7 @@ use App\Http\Controllers\Api\CertificateController;
 use App\Http\Controllers\Api\NominationController;
 use App\Http\Controllers\Api\SelfRegistrationController;
 use App\Http\Controllers\Api\UssdController;
+use App\Http\Controllers\Api\VoteResetController;
 
 // ---------------------------------------------------------------- authentication
 Route::prefix('auth')->group(function () {
@@ -104,6 +105,8 @@ Route::middleware(['auth:sanctum', 'active'])->scopeBindings()->group(function (
     Route::post('events/{event}/voters', [VoterController::class, 'store']);
     Route::patch('events/{event}/voters/{voter}', [VoterController::class, 'update']);
     Route::delete('events/{event}/voters/{voter}', [VoterController::class, 'destroy']);
+    Route::post('events/{event}/voters/bulk-delete', [VoterController::class, 'bulkDestroy'])->middleware('throttle:30,1');
+    Route::post('events/{event}/reset-votes', [VoteResetController::class, 'store'])->middleware('throttle:6,1');
     Route::post('events/{event}/voters/import', [VoterController::class, 'import']);
     Route::get('events/{event}/voter-groups', [VoterController::class, 'groups']);
     Route::post('events/{event}/voters/generate', [VoterController::class, 'generate']);

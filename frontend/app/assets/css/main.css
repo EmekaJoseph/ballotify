@@ -206,6 +206,8 @@ a { text-decoration: none; }
 .form-check-input:checked,
 .form-check-input[type=checkbox]:indeterminate { background-color: var(--brand-600); border-color: var(--brand-600); }
 .form-check-input:focus { box-shadow: 0 0 0 4px rgba(20, 145, 138, .14); border-color: var(--brand-500); }
+/* Checkboxes are sized in em: the small header text would shrink "select all". Same size everywhere in tables. */
+.table-b .form-check-input { font-size: 1rem; margin-top: 0; vertical-align: middle; }
 .input-icon { position: relative; }
 .input-icon > i { position: absolute; left: .95rem; top: 50%; transform: translateY(-50%); color: var(--icon-muted); pointer-events: none; }
 .input-icon > .form-control { padding-left: 2.6rem; }

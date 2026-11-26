@@ -104,6 +104,9 @@
                     <button class="btn btn-primary btn-sm" :disabled="event.status === 'completed'" @click="sendToSelected">
                         <i class="bi bi-send"></i> Send codes to selected
                     </button>
+                    <button class="btn btn-danger-soft btn-sm" :disabled="deletingMany" @click="deleteSelected">
+                        <span v-if="deletingMany" class="spinner-border spinner-border-sm"></span><i v-else class="bi bi-trash"></i> Delete selected
+                    </button>
                     <button class="btn btn-link btn-sm text-muted ms-auto" @click="clearSelection">Clear selection</button>
                 </div>
                 <div class="table-responsive">
@@ -501,6 +504,42 @@ function dupLabel(m: DuplicateMatch[]): string {
     const k = m[0]!.kind;
     const more = m.length > 1 ? ` +${m.length - 1}` : '';
     return (k === 'same' ? 'Possible duplicate' : k === 'email' ? 'Same email' : k === 'phone' ? 'Same phone' : 'Same name') + more;
+}
+
+/** Delete every ticked voter (asks first; same rules as deleting one). */
+const deletingMany = ref(false);
+async function deleteSelected() {
+    const list = voters.value.filter(v => selected.value.has(v.id));
+    if (!list.length) return;
+    const n = list.length;
+    const voted = list.filter(v => v.used_at).length;
+    // Members (not being deleted, not yet voted) whose proxy is held by someone being deleted.
+    const proxies = voters.value.filter(m => m.proxy_voter_id && selected.value.has(m.proxy_voter_id) && !selected.value.has(m.id) && !m.used_at).length;
+    const ok = await confirm({
+        title: `Delete ${n} voter${n === 1 ? '' : 's'}?`,
+        message: [
+            n - voted ? `${n - voted === n ? 'Their' : `${n - voted} of them haven’t voted: their`} codes stop working at once, even if already sent.` : '',
+            voted ? `${voted} already voted: ${voted === 1 ? 'that vote stays' : 'those votes stay'} counted (secret, so ${voted === 1 ? 'it' : 'they'} can’t be removed).` : '',
+            proxies ? `${proxies} member${proxies === 1 ? '' : 's'} whose proxy they hold will vote for themselves again.` : '',
+            'This can’t be undone, and is recorded in the Activity log.',
+        ].filter(Boolean).join(' '),
+        confirmText: `Delete ${n} voter${n === 1 ? '' : 's'}`,
+        danger: true,
+    });
+    if (!ok) return;
+    deletingMany.value = true;
+    try {
+        const { data } = await adminApi.deleteVoters(props.event.id, list.map(v => v.id));
+        const gone = new Set(list.map(v => v.id));
+        voters.value = voters.value.filter(v => !gone.has(v.id));
+        clearSelection();
+        toast.success(`${data.deleted} voter${data.deleted === 1 ? '' : 's'} deleted` + (data.voted ? ` (${data.voted} secret vote${data.voted === 1 ? '' : 's'} stay counted)` : ''));
+        emit('changed');
+    } catch (e) {
+        toast.error(apiErrorMessage(e));
+    } finally {
+        deletingMany.value = false;
+    }
 }
 
 async function removeVoter(v: Voter) {

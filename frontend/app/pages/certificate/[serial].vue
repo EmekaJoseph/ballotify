@@ -35,6 +35,11 @@
                 </template>
             </div>
 
+            <div v-if="p.votes_reset?.length" class="cert-rules mb-4">
+                <div class="small-caps mb-1">Votes reset</div>
+                <div>{{ describeResets(p.votes_reset) }}</div>
+            </div>
+
             <div v-if="certRules.length" class="cert-rules mb-4" :class="{ bad: certVerdict && !certVerdict.ok }">
                 <div class="small-caps mb-1">Meeting rules</div>
                 <ul class="mb-1"><li v-for="l in certRules" :key="l">{{ l }}</li></ul>

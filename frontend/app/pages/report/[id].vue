@@ -97,6 +97,7 @@
                         <tr><th>Organiser</th><td>{{ organiser || '–' }}</td></tr>
                         <tr><th>Results visibility</th><td>{{ visibilityLabel }}</td></tr>
                         <tr><th>Changes after voting began</th><td>{{ changes }}</td></tr>
+                        <tr v-if="resetText"><th>Votes reset (test runs)</th><td>{{ results.integrity?.votes_reset?.length }}</td></tr>
                         <tr><th>Generated</th><td>{{ generatedAt }}</td></tr>
                         <tr><th>Reference</th><td class="mono">EV-{{ results.event.id }} · {{ event.link_token.slice(0, 8) }}</td></tr>
                     </tbody>
@@ -158,6 +159,7 @@
                 <p>
                     <template v-if="changes === 0">No changes were made to the ballot after voting began.</template>
                     <template v-else>{{ changes }} change{{ changes === 1 ? ' was' : 's were' }} made to the ballot after voting began (name, description or photo corrections); each is recorded in the event’s activity log.</template>
+                    <template v-if="resetText"> {{ resetText }}</template>
                     <template v-if="certificate"> These results were certified as {{ certificate.serial }} on {{ formatDate(certificate.issued_at, true) }}.</template>
                 </p>
             </section>
@@ -244,6 +246,7 @@ const opts = reactive({ register: true, signatures: true });
 const paid = computed(() => event.value?.voting_mode === 'paid');
 const final = computed(() => results.value?.event.status === 'completed');
 const changes = computed(() => results.value?.integrity?.changes_during_voting ?? 0);
+const resetText = computed(() => describeResets(results.value?.integrity?.votes_reset));
 const ruleLines = computed(() => describeRules(results.value?.rules));
 const verdict = computed(() => (results.value?.rules?.quorum ? quorumVerdict(results.value.rules.quorum, final.value) : null));
 const organiser = ref('');

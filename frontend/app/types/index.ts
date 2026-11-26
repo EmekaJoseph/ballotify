@@ -255,7 +255,8 @@ export interface EventResults {
         voted: number;
         total_candidates: number;
     };
-    integrity?: { changes_during_voting: number };
+    /** votes_reset: each test-run reset (when, by whom, how many voters' votes were erased). */
+    integrity?: { changes_during_voting: number; votes_reset?: VoteReset[] };
     /** Weighted votes / proxies / quorum in force (null when none are on). */
     rules?: MeetingRulesSummary | null;
     /** Votes over time (turnout chart). */
@@ -599,6 +600,9 @@ export interface NominationForm {
     categories: { id: number; name: string; suggestions: string[] }[];
 }
 
+/** A "reset votes and results" (test run): always shown with the results. */
+export interface VoteReset { at: string | null; by: string | null; voters: number }
+
 export interface CertificatePayload {
     event: { id: number; name: string; organiser: string | null; voting_mode: VotingMode; starts_at: string | null; ends_at: string | null };
     stats: { voters?: number; ballots?: number; receipts?: number; votes?: number; payments?: number };
@@ -611,6 +615,8 @@ export interface CertificatePayload {
         motion?: MotionResult;
     }[];
     issued_at: string;
+    /** Test-run resets before these results (only present when there were any). */
+    votes_reset?: VoteReset[];
 }
 
 export interface ResultCertificateInfo {

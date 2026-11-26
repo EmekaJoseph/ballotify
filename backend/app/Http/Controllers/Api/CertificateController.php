@@ -42,6 +42,8 @@ class CertificateController extends Controller
                    'receipts' => BallotReceipt::where('event_id', $event->id)->count()],
             // Weighted votes / proxies / quorum, when used.
             'rules' => \App\Support\MeetingRules::summary($event),
+            // Votes reset during a test run, before these results (when, by whom).
+            ...(($resets = VoteResetController::history($event)) ? ['votes_reset' => $resets] : []),
             'categories' => $categories->map(function ($cat) {
                 $tally = \App\Support\Tally::category($cat, $cat->candidates);
                 $byId = $cat->candidates->keyBy('id');
