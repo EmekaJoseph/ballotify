@@ -1,36 +1,42 @@
 <template>
-    <BaseModal :open="open" title="Import voters" subtitle="One person per line: name, email, phone. Email and phone are optional."
+    <BaseModal :open="open" title="Import voters" subtitle="From an Excel or CSV file: one person per row. To type a few names, use Add instead."
         size="lg" @close="emit('close')">
-        <textarea v-model="text" class="form-control mono small" rows="7"
-            placeholder="Ada Obi, ada@example.com, 08012345678&#10;Bola Ade, bola@example.com&#10;Chidi Eze, , +2348098765432"></textarea>
+        <!-- A file only (Excel or CSV): no typing. Click to choose, or drop it here. -->
+        <label class="dropzone" :class="{ over: dragOver, loaded: !!fileName }" @dragover.prevent="dragOver = true" @dragleave.prevent="dragOver = false" @drop.prevent="onDrop">
+            <input type="file" :accept="TABLE_FILE_ACCEPT" class="visually-hidden" @change="loadFile" />
+            <i class="bi" :class="fileName ? 'bi-file-earmark-check' : 'bi-file-earmark-spreadsheet'"></i>
+            <template v-if="fileName">
+                <span class="fw-bold text-ink text-break">{{ fileName }}</span>
+                <span class="small text-muted">Click to choose another file</span>
+            </template>
+            <template v-else>
+                <span class="fw-bold text-ink">Choose an Excel or CSV file</span>
+                <span class="small text-muted">or drop it here · columns Name, Email, Phone…</span>
+            </template>
+        </label>
 
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-2">
-            <div class="d-flex flex-wrap gap-2">
-                <label class="btn btn-ghost btn-sm mb-0">
-                    <i class="bi bi-file-earmark-spreadsheet"></i> Load Excel or CSV
-                    <input type="file" :accept="TABLE_FILE_ACCEPT" class="visually-hidden" @change="loadFile" />
-                </label>
-                <button type="button" class="btn btn-ghost btn-sm" title="A spreadsheet with the right columns and example rows. Fill it in (Excel is fine), then load it here."
-                    @click="downloadTemplate"><i class="bi bi-download"></i> Download template</button>
-            </div>
+            <button type="button" class="btn btn-ghost btn-sm" title="A spreadsheet with the right columns and example rows. Fill it in (Excel is fine), then load it here."
+                @click="downloadTemplate"><i class="bi bi-download"></i> Download template</button>
             <span class="small text-muted">
                 {{ rows.length }} voter{{ rows.length === 1 ? '' : 's' }} ·
                 <i class="bi bi-envelope"></i> {{ withEmail }} · <i class="bi bi-phone"></i> {{ withPhone }}
             </span>
         </div>
         <div class="form-text">
-            Spreadsheet exports work too. Columns named <b>Name</b>, <b>Email</b>, <b>Phone</b>, an <b>ID</b> column (e.g. Membership number, Staff ID)
+            Columns named <b>Name</b>, <b>Email</b>, <b>Phone</b>, an <b>ID</b> column (e.g. Membership number, Staff ID)
             and a <b>Group</b> column (e.g. branch or unit; several separated by “;”) are matched in any order.
             <template v-if="weighted"> A <b>Weight</b> (or Shares) column sets how many votes each ballot counts as; blank means 1.</template>
             The ID lets voters request their own code if you switch on self-registration.
             Local numbers like 0801… are converted using your country code.
         </div>
 
-        <div v-if="rows.length" class="table-responsive mt-3 border rounded-3">
-            <table class="table-b small">
-                <thead><tr><th>#</th><th>Name</th><th>Email</th><th>Phone</th><th v-if="withId">ID</th><th v-if="withGroups">Groups</th><th v-if="withWeight">Weight</th></tr></thead>
+        <div v-if="rows.length || removed.size" class="mt-3 border rounded-3 overflow-hidden">
+          <div class="preview">
+            <table class="table-b small mb-0">
+                <thead><tr><th>#</th><th>Name</th><th>Email</th><th>Phone</th><th v-if="withId">ID</th><th v-if="withGroups">Groups</th><th v-if="withWeight">Weight</th><th></th></tr></thead>
                 <tbody>
-                    <tr v-for="(r, i) in rows.slice(0, 5)" :key="i">
+                    <tr v-for="(r, i) in rows.slice(0, PREVIEW_MAX)" :key="origin[i]">
                         <td class="text-muted">{{ i + 1 }}</td>
                         <td>
                             {{ r.name || '—' }}
@@ -41,10 +47,20 @@
                         <td v-if="withId" class="mono">{{ r.member_id || '—' }}</td>
                         <td v-if="withGroups">{{ r.groups || '—' }}</td>
                         <td v-if="withWeight" class="mono">{{ r.weight || '1' }}</td>
+                        <td class="text-end">
+                            <button type="button" class="btn btn-ghost btn-icon btn-sm" title="Leave this row out" :aria-label="`Leave out row ${i + 1}`" @click="removeRow(i)">
+                                <i class="bi bi-x-lg"></i>
+                            </button>
+                        </td>
                     </tr>
                 </tbody>
             </table>
-            <div v-if="rows.length > 5" class="small text-muted px-3 py-2 border-top">…and {{ rows.length - 5 }} more</div>
+          </div>
+            <div v-if="removed.size || rows.length > PREVIEW_MAX" class="d-flex flex-wrap gap-2 align-items-center small text-muted px-3 py-2 border-top">
+                <span v-if="rows.length > PREVIEW_MAX">Showing the first {{ formatNumber(PREVIEW_MAX) }} of {{ formatNumber(rows.length) }}.</span>
+                <span v-if="removed.size">{{ removed.size }} row{{ removed.size === 1 ? '' : 's' }} left out.</span>
+                <button v-if="removed.size" type="button" class="btn btn-link btn-sm p-0" @click="restoreRows">Put back</button>
+            </div>
         </div>
 
         <!-- Possible duplicates: in this file, or already on the voter list (warned, not blocked) -->
@@ -104,14 +120,14 @@ const busy = ref(false);
 const error = ref('');
 useErrorAlert(error, 'Import didn’t work');
 
-watch(() => props.open, (o) => { if (o) { text.value = ''; error.value = ''; skipListed.value = true; } });
+watch(() => props.open, (o) => { if (o) { text.value = ''; fileName.value = ''; error.value = ''; skipListed.value = true; } });
 
 const emailOk = (e: string) => /^\S+@\S+\.\S+$/.test(e);
 const looksLikeEmail = (s: string) => s.includes('@');
 const looksLikePhone = (s: string) => /^[+\d][\d\s\-().]{6,}$/.test(s);
 
 /** Parse lines/CSV into contacts. Uses a header row when present, otherwise guesses each cell. */
-const rows = computed<VoterContact[]>(() => {
+const parsed = computed<VoterContact[]>(() => {
     const table = parseCsv(text.value);
     if (!table.length) return [];
 
@@ -153,6 +169,20 @@ const rows = computed<VoterContact[]>(() => {
     }).filter(r => r.name || r.email || r.phone || r.member_id);
 });
 
+// ----- Removing single rows before importing (the file itself is not changed)
+const PREVIEW_MAX = 500;
+const removed = ref(new Set<number>());
+/** Positions in the file of the rows still included. */
+const origin = computed(() => parsed.value.map((_, i) => i).filter(i => !removed.value.has(i)));
+const rows = computed(() => origin.value.map(i => parsed.value[i]!));
+function removeRow(i: number) {
+    const at = origin.value[i];
+    if (at === undefined) return;
+    removed.value = new Set(removed.value).add(at);
+}
+function restoreRows() { removed.value = new Set(); }
+watch(text, () => { removed.value = new Set(); });
+
 const withEmail = computed(() => rows.value.filter(r => r.email).length);
 const withPhone = computed(() => rows.value.filter(r => r.phone).length);
 const withId = computed(() => rows.value.some(r => r.member_id));
@@ -178,14 +208,24 @@ const listed = computed(() => crossMatches(rows.value, props.existing, existingL
 const alreadyListed = computed(() => new Set([...listed.value].filter(([, m]) => m[0]!.kind === 'same').map(([i]) => i)));
 const toCreate = computed(() => (skipListed.value ? rows.value.filter((_, i) => !alreadyListed.value.has(i)) : rows.value));
 
+const fileName = ref('');
+const dragOver = ref(false);
+function onDrop(e: DragEvent) {
+    dragOver.value = false;
+    const file = e.dataTransfer?.files?.[0];
+    if (file) readFile(file);
+}
 async function loadFile(e: Event) {
     const input = e.target as HTMLInputElement;
     const file = input.files?.[0];
     input.value = '';
-    if (!file) return;
+    if (file) await readFile(file);
+}
+async function readFile(file: File) {
     if (file.size > 3 * 1024 * 1024) { error.value = 'That file is larger than 3 MB.'; return; }
+    fileName.value = file.name;
     try { text.value = await readTableFile(file); error.value = ''; }
-    catch (err) { error.value = err instanceof Error ? err.message : 'That file couldn’t be read.'; }
+    catch (err) { fileName.value = ''; text.value = ''; error.value = err instanceof Error ? err.message : 'That file couldn’t be read.'; }
 }
 
 async function submit() {
@@ -205,6 +245,16 @@ async function submit() {
 </script>
 
 <style scoped>
+.preview { max-height: 340px; overflow: auto; }
+.preview thead th { position: sticky; top: 0; z-index: 1; }
+.dropzone {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .2rem; text-align: center; cursor: pointer;
+    padding: 1.6rem 1rem; border: 2px dashed var(--line-strong); border-radius: 14px; background: var(--surface-2);
+    transition: border-color .15s ease, background-color .15s ease;
+}
+.dropzone:hover, .dropzone.over { border-color: var(--brand-500); background: var(--brand-50); }
+.dropzone.loaded { border-style: solid; border-color: var(--brand-500); }
+.dropzone > .bi { font-size: 1.8rem; color: var(--brand-600); }
 .dup-panel { padding: .75rem .9rem; border-radius: 12px; background: var(--warning-50); color: var(--warning-text); font-size: .875rem; overflow-wrap: anywhere; }
 .dup-panel ul { padding-left: 1.1rem; }
 .dup-panel .form-check-label { color: var(--ink); }

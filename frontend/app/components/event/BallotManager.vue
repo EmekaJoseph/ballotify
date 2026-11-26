@@ -31,6 +31,9 @@
             </form>
             <!-- Secondary tools: import while the ballot can change; export any time. -->
             <div class="ballot-tools" :class="{ 'mt-3 pt-3 border-top': !locked && canEdit }">
+                <button v-if="!locked && canEdit && categories.some(c => c.method !== 'motion')" type="button" class="btn btn-ghost btn-sm text-nowrap" :disabled="busy" @click="openBatch(null)">
+                    <i class="bi bi-person-plus"></i> Add candidates
+                </button>
                 <button v-if="!locked && canEdit" type="button" class="btn btn-ghost btn-sm text-nowrap" :disabled="busy" @click="importOpen = true">
                     <i class="bi bi-file-earmark-spreadsheet"></i> Import candidates
                 </button>
@@ -81,7 +84,7 @@
                             <button v-if="cat.method !== 'motion'" class="btn btn-ghost btn-icon btn-sm" :class="{ 'shuffle-on': cat.shuffle_candidates }" :disabled="busy"
                                 :title="cat.shuffle_candidates ? 'Candidates appear in random order. Click for a fixed order.' : 'Show candidates in random order on each ballot'"
                                 :aria-pressed="!!cat.shuffle_candidates" aria-label="Random candidate order" @click="toggleShuffle(cat)"><i class="bi bi-shuffle"></i></button>
-                            <button v-if="!locked && cat.method !== 'motion'" class="btn btn-soft btn-sm" @click="openCandidate(null, cat.id)"><i class="bi bi-person-plus"></i> <span class="d-none d-sm-inline">Candidate</span></button>
+                            <button v-if="!locked && cat.method !== 'motion'" class="btn btn-soft btn-sm" @click="openBatch(cat.id)"><i class="bi bi-person-plus"></i> <span class="d-none d-sm-inline">Candidates</span></button>
                             <button v-if="cat.method === 'motion'" class="btn btn-ghost btn-icon btn-sm" title="Edit motion" aria-label="Edit motion" @click="openMotion(cat)"><i class="bi bi-pencil"></i></button>
                             <button v-else class="btn btn-ghost btn-icon btn-sm" title="Rename" aria-label="Rename category" @click="editingCat = cat.id; catDraft = cat.name"><i class="bi bi-pencil"></i></button>
                             <button v-if="!locked" class="btn btn-ghost btn-icon btn-sm text-danger" title="Delete" aria-label="Delete category" @click="removeCategory(cat)"><i class="bi bi-trash"></i></button>
@@ -90,7 +93,7 @@
                 </header>
 
                 <div v-if="!candidatesOf(cat.id).length" class="p-4 text-center small text-muted">
-                    No candidates<template v-if="!locked && canEdit"> yet. <button class="btn btn-link btn-sm p-0 align-baseline" @click="openCandidate(null, cat.id)">Add the first one</button></template>.
+                    No candidates<template v-if="!locked && canEdit"> yet. <button class="btn btn-link btn-sm p-0 align-baseline" @click="openBatch(cat.id)">Add candidates</button></template>.
                 </div>
                 <ul v-else class="list-unstyled mb-0">
                     <li v-for="cand in candidatesOf(cat.id)" :key="cand.id" class="cand-row" :class="{ motion: cand.motion_choice }">
@@ -125,6 +128,8 @@
             </template>
         </BaseModal>
 
+        <EventCandidateBatchModal :open="batchOpen" :event-id="event.id" :categories="categories" :candidates="event.candidates ?? []"
+            :initial-category-id="batchCategory" @close="batchOpen = false" @saved="onBatchSaved" />
         <EventCandidateImportModal :open="importOpen" :event-id="event.id" @close="importOpen = false" @imported="onImported" />
         <EventMotionModal :open="motionOpen" :event-id="event.id" :category="motionCat" :locked="locked" @close="motionOpen = false" @saved="motionOpen = false; emit('changed')" />
         <EventCategoryGroupsModal :open="!!groupsFor" :event-id="event.id" :category="groupsFor" @close="groupsFor = null" @saved="groupsFor = null; emit('changed')" />
@@ -266,10 +271,19 @@ async function setLimit(cat: Category, raw: string) {
     await run(() => adminApi.updateCategory(props.event.id, cat.id, { method, max_choices }), `“${cat.name}”: ${label.charAt(0).toLowerCase()}${label.slice(1)}`);
 }
 
+// Add several candidates at once (one-line form + list).
+const batchOpen = ref(false);
+const batchCategory = ref<number | null>(null);
+function openBatch(categoryId: number | null) { batchCategory.value = categoryId; batchOpen.value = true; }
+function onBatchSaved(result: CandidateImportResult) {
+    batchOpen.value = false;
+    onImported(result);
+}
+
 function onImported(result: CandidateImportResult) {
     importOpen.value = false;
     const cats = result.categories_created;
-    toast.success(`${result.created} candidate${result.created === 1 ? '' : 's'} imported`
+    toast.success(`${result.created} candidate${result.created === 1 ? '' : 's'} added`
         + (cats ? ` into ${cats} new categor${cats === 1 ? 'y' : 'ies'}` : ''));
     if (result.skipped.length) {
         const first = result.skipped[0]!;

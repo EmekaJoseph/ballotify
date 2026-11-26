@@ -29,7 +29,7 @@
                         <i class="bi bi-alarm"></i> Remind
                     </button>
                     <button class="btn btn-soft btn-sm" @click="dialog = 'import'"><i class="bi bi-upload"></i> Import</button>
-                    <button class="btn btn-ghost btn-sm" @click="openForm(null)"><i class="bi bi-person-plus"></i> Add</button>
+                    <button class="btn btn-ghost btn-sm" @click="dialog = 'batch'"><i class="bi bi-person-plus"></i> Add</button>
                     <button class="btn btn-ghost btn-sm" @click="dialog = 'generate'"><i class="bi bi-magic"></i> Generate</button>
                     <button class="btn btn-ghost btn-sm" :disabled="!voters.length" @click="exportCsv(voters)"><i class="bi bi-download"></i> CSV</button>
                     <button class="btn btn-ghost btn-sm" :disabled="!pendingVoters.length" @click="printSlips(pendingVoters)"><i class="bi bi-printer"></i> Print</button>
@@ -206,6 +206,8 @@
         </div>
 
         <!-- Dialogs -->
+        <EventVoterBatchModal :open="dialog === 'batch'" :event-id="event.id" :existing="voters" :member-label="event.member_id_label || 'Member ID'"
+            :weighted="!!event.weighted_votes" :group-options="groupNames" @close="dialog = null" @created="afterCreate" @limit="onLimit" />
         <EventVoterFormModal :open="dialog === 'form'" :event-id="event.id" :voter="editing" :existing="voters" :member-label="event.member_id_label || 'Member ID'" :group-options="groupNames" :rules="formRules" @close="dialog = null" @saved="onSaved" @limit="onLimit" />
         <EventVoterImportModal :open="dialog === 'import'" :event-id="event.id" :existing="voters" :member-label="event.member_id_label || 'Member ID'" :weighted="!!event.weighted_votes" @close="dialog = null" @created="afterCreate" @limit="onLimit" />
         <EventWhatsAppModal :open="dialog === 'whatsapp'" :event="event" :voters="voters" :vote-url="voteUrl" @close="dialog = null" @shared="onShared" />
@@ -297,7 +299,7 @@ const duplicates = computed(() => {
 const strongDuplicates = computed(() => [...duplicates.value.values()].filter(m => m[0]!.kind === 'same' || m[0]!.kind === 'email').length);
 const page = ref(1);
 
-const dialog = ref<null | 'form' | 'import' | 'generate' | 'created' | 'invite' | 'whatsapp' | 'remind'>(null);
+const dialog = ref<null | 'form' | 'batch' | 'import' | 'generate' | 'created' | 'invite' | 'whatsapp' | 'remind'>(null);
 const editing = ref<Voter | null>(null);
 /** null = whole list (pick an audience); array = exactly these voters. */
 const inviting = ref<Voter[] | null>(null);
