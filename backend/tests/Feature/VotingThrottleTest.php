@@ -75,6 +75,27 @@ it('gives a busy network more room for typos as real codes come in', function ()
     $post('G9999999')->assertStatus(429);
 });
 
+it('behind a proxy, sees each voter\'s real IP when TRUSTED_PROXIES is set', function () {
+    [$event] = busyElection(1);
+    $t = $event->link_token;
+    // Every request arrives from the proxy (127.0.0.1); the visitor is in X-Forwarded-For.
+    $via = fn (string $client, string $code) => $this->withServerVariables(['REMOTE_ADDR' => '127.0.0.1'])
+        ->withHeader('X-Forwarded-For', $client)
+        ->postJson("/api/public/events/{$t}/code/validate", ['code' => $code]);
+
+    config(['app.trusted_proxies' => '127.0.0.1']);
+    (new \App\Providers\AppServiceProvider($this->app))->boot();
+    try {
+        foreach (range(1, CodeGuard::MAX_MISSES) as $i) {
+            $via('41.58.10.1', sprintf('G%07d', $i))->assertStatus(422);
+        }
+        $via('41.58.10.1', 'V0000001')->assertStatus(429); // the guesser is blocked…
+        $via('105.112.3.7', 'V0000001')->assertOk();      // …another voter behind the same proxy is not
+    } finally {
+        \Illuminate\Http\Middleware\TrustProxies::flushState();
+    }
+});
+
 it('limits how often one code can be tried', function () {
     [$event] = busyElection(1);
     $t = $event->link_token;

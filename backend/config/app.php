@@ -58,6 +58,17 @@ return [
     'frontend_url' => env('FRONTEND_URL', 'http://localhost:3000'),
 
     /*
+    | Reverse proxies in front of the app (Nginx, Cloudflare, a load balancer) whose
+    | X-Forwarded-For header is believed, so each visitor's real IP address is seen.
+    | Every per-IP limit (wrong voting codes, nominations, sign-in attempts) depends on it:
+    | without it, all visitors share the proxy's address and one person's mistakes block all.
+    |   127.0.0.1     Nginx on the same server
+    |   *             behind Cloudflare or a load balancer (only if the app can't be reached directly)
+    |   (empty)       nothing in front (local development)
+    */
+    'trusted_proxies' => env('TRUSTED_PROXIES'),
+
+    /*
     |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------

@@ -99,6 +99,11 @@ class LaunchChecklist extends Command
             $checks[] = [$https, "{$name} uses HTTPS", $https ? '' : (string) $url];
         }
 
+        // Behind Nginx / Cloudflare, per-IP limits need the proxy trusted (config/app.php).
+        $proxies = (string) config('app.trusted_proxies');
+        $checks[] = [$proxies !== '' ? true : (app()->environment('production') ? false : null), 'Trusted proxies set',
+            $proxies !== '' ? "TRUSTED_PROXIES={$proxies}" : 'set TRUSTED_PROXIES (127.0.0.1 for Nginx on the same server, * behind Cloudflare)'];
+
         // Payments: only the key's mode, never the key
         $key = (string) config('services.paystack.secret_key');
         $mode = str_starts_with($key, 'sk_live_') ? 'live' : (str_starts_with($key, 'sk_test_') ? 'test' : ($key === '' ? 'missing' : 'unrecognised'));

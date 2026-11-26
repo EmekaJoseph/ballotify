@@ -20,7 +20,12 @@ there is only a note: the command reports what it actually finds.
 
 ## Production setup
 
+- [ ] Frontend domain chosen; API `.env`: `FRONTEND_URL` + `CORS_ALLOWED_ORIGINS` = it (and its `www.` form if used), then `php artisan config:cache`. API runs at `https://ballotify.agudatechy.com`
+- [ ] Frontend built with `NUXT_PUBLIC_API_BASE=https://ballotify.agudatechy.com/api` (these are baked in at build time: rebuild after changing them), and the host sends every unknown path to `index.html` (single-page app)
+- [ ] Paystack webhook: `https://ballotify.agudatechy.com/api/paystack/webhook`; Turnstile site key allowed on the frontend domain
 - [ ] `APP_DEBUG=false` (auto)
+- [ ] `TRUSTED_PROXIES` set: `127.0.0.1` for Nginx on the same server, `*` behind Cloudflare (auto). Without it, one person's wrong codes block everyone.
+- [ ] Update Symfony packages for the 2026-11-25 security advisories (`composer update "symfony/*"`, then run the tests)
 - [ ] HTTPS on both the site and the API (auto)
 - [ ] Live Paystack key (`sk_live_…`) and webhook URL set in the Paystack dashboard (auto: key)
 - [ ] Real mail sender (not `log`) (auto)

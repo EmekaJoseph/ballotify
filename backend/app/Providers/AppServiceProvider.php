@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Services\Sms\SmsManager;
 use App\Services\Sms\SmsSender;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Middleware\TrustProxies;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
@@ -25,6 +26,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // See config/app.php: the proxies whose forwarded client IP is believed.
+        if ($proxies = trim((string) config('app.trusted_proxies'))) {
+            TrustProxies::at($proxies === '*' ? '*' : array_map('trim', explode(',', $proxies)));
+        }
+
         // Login / signup: slow down credential stuffing.
         RateLimiter::for('auth', fn (Request $request) => Limit::perMinute(10)->by($request->ip()));
 
