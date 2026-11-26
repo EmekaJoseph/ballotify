@@ -442,10 +442,15 @@ h3 { font-size: 1.05rem; font-weight: 800; margin: 0; }
 .r-foot { margin-top: 3rem; text-align: center; font-size: .75rem; color: #94a3b8; }
 
 @media print {
-    @page { size: A4; margin: 14mm 13mm; }
+    /* The margin lives on the page itself (padding repeated on every printed page), so it's
+       the same whatever "Margins" the print dialog is set to, and no browser URL/date lines. */
+    @page { size: A4; margin: 0; }
     .no-print { display: none !important; }
     .report-shell { background: #fff; padding: 0; min-height: 0; }
-    .paper { box-shadow: none; border-radius: 0; padding: 0; max-width: none; }
+    .paper {
+        box-shadow: none; border-radius: 0; max-width: none; padding: 14mm 13mm;
+        -webkit-box-decoration-break: clone; box-decoration-break: clone;
+    }
     .paper * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     /* All the headline numbers on one row across the A4 page. */
     .stats { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: 1fr; gap: .5rem; }

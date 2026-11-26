@@ -89,6 +89,8 @@ export const adminApi = {
     // Nominations and certified results
     getNominations: (eventId: Id) => api.get<NominationSummary>(`/events/${eventId}/nominations`),
     promoteNominee: (eventId: Id, data: { category_id: number; name: string }) => api.post(`/events/${eventId}/nominations/promote`, data),
+    setNomineeSuggestions: (eventId: Id, data: { category_id: number; names: string[] }) =>
+        api.put<{ category_id: number; suggestions: string[] }>(`/events/${eventId}/nominations/suggestions`, data),
     getCertificates: (eventId: Id) => api.get<ResultCertificateInfo[]>(`/events/${eventId}/certificates`),
     issueCertificate: (eventId: Id) => api.post<ResultCertificateInfo>(`/events/${eventId}/certificates`),
     /** Private link for a candidate to edit their own photo and description. */

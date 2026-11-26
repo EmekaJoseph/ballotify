@@ -12,7 +12,7 @@ there is only a note: the command reports what it actually finds.
 
 - [ ] Set the new prices in Admin → Pricing (₦20,000 / ₦45,000 / ₦105,000, SMS ₦10) (auto)
 - [ ] Run `php artisan migrate` on the server (auto)
-- [ ] Browser click-through on a test event: meeting rules (weight, proxy, quorum), delete confirmations, duplicate-voter warnings, plan names
+- [ ] Browser click-through on a test event: meeting rules (weight, proxy, quorum), delete confirmations, duplicate-voter warnings, plan names, nomination suggestions (pick or type), Excel import (voters, candidates, suggested names), ballot PDF export
 - [ ] One real Paystack payment with a real card: Pro Small upgrade, event upgrades, receipt email arrives
 - [ ] Buy a small SMS credit pack with a real card
 - [ ] Real SMS invitation to your own phone: arrives, code works

@@ -136,6 +136,41 @@ it('collects public nominations and lets the organiser add nominees to the ballo
     $this->postJson($url, ['category_id' => $cat->id, 'nominee_name' => 'Late'])->assertForbidden();
 });
 
+it('lets the organiser suggest nominee names that the public can pick or ignore', function () {
+    $event = tfEvent(['voting_mode' => 'paid', 'vote_price_naira' => 50, 'starts_at' => now()->addDays(3), 'ends_at' => now()->addDays(5),
+        'nominations_enabled' => true, 'nominations_ends_at' => now()->addDays(2)], pro: false);
+    $cat = Category::create(['event_id' => $event->id, 'name' => 'Best Artist']);
+    $api = "/api/events/{$event->id}/nominations/suggestions";
+
+    // Cleaned up: spaces squeezed, duplicates (any case) dropped, too-short names ignored.
+    $this->actingAs($event->user)->putJson($api, ['category_id' => $cat->id, 'names' => ['  Burna   Boy ', 'Tems', 'burna boy', 'x', '']])
+        ->assertOk()->assertJsonPath('suggestions', ['Burna Boy', 'Tems']);
+    expect(AuditLog::where('action', 'nomination.suggestions')->count())->toBe(1);
+
+    $url = "/api/public/events/{$event->link_token}/nominations";
+    $this->getJson($url)->assertJsonPath('categories.0.suggestions', ['Burna Boy', 'Tems']);
+
+    // Picking a suggestion and typing your own both work, and count together with other spellings.
+    $this->postJson($url, ['category_id' => $cat->id, 'nominee_name' => 'Burna Boy'])->assertCreated();
+    $this->postJson($url, ['category_id' => $cat->id, 'nominee_name' => 'BURNA BOY'])->assertCreated();
+    $this->postJson($url, ['category_id' => $cat->id, 'nominee_name' => 'Asake'])->assertCreated();
+    $this->actingAs($event->user)->getJson("/api/events/{$event->id}/nominations")
+        ->assertJsonPath('categories.0.suggestions', ['Burna Boy', 'Tems'])
+        ->assertJsonPath('categories.0.nominees.0.name', 'Burna Boy')
+        ->assertJsonPath('categories.0.nominees.0.count', 2)
+        ->assertJsonPath('categories.0.nominees.1.name', 'Asake');
+
+    // Emptying the list removes it.
+    $this->actingAs($event->user)->putJson($api, ['category_id' => $cat->id, 'names' => []])->assertOk();
+    expect($cat->fresh()->nominee_suggestions)->toBeNull();
+
+    // Only the organiser's team, and only this event's categories.
+    $other = tfEvent();
+    $otherCat = Category::create(['event_id' => $other->id, 'name' => 'Elsewhere']);
+    $this->actingAs($event->user)->putJson($api, ['category_id' => $otherCat->id, 'names' => ['A b']])->assertNotFound();
+    $this->actingAs(User::factory()->create())->putJson($api, ['category_id' => $cat->id, 'names' => ['A b']])->assertNotFound(); // strangers can't even see the event
+});
+
 // ------------------------------------------------------------------ USSD voting
 
 it('runs a full USSD vote with the same rules and a receipt', function () {

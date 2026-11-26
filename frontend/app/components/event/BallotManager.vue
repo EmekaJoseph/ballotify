@@ -15,22 +15,31 @@
         </div>
 
         <!-- Add category -->
-        <form v-if="!locked && canEdit" class="card-b pad mb-4 d-flex flex-column flex-sm-row gap-2" @submit.prevent="addCategory">
-            <div class="input-icon flex-grow-1">
-                <i class="bi bi-folder-plus"></i>
-                <input v-model.trim="newCategory" type="text" class="form-control" maxlength="255"
-                    placeholder="New category, e.g. President" aria-label="New category name" :disabled="busy" />
+        <div v-if="(!locked && canEdit) || categories.length" class="card-b pad mb-4">
+            <form v-if="!locked && canEdit" class="d-flex flex-column flex-sm-row gap-2" @submit.prevent="addCategory">
+                <div class="input-icon flex-grow-1 min-w-0">
+                    <i class="bi bi-folder-plus"></i>
+                    <input v-model.trim="newCategory" type="text" class="form-control" maxlength="255"
+                        placeholder="New category, e.g. President" aria-label="New category name" :disabled="busy" />
+                </div>
+                <button type="submit" class="btn btn-primary text-nowrap flex-shrink-0" :disabled="busy || !newCategory">
+                    <i class="bi bi-plus-lg"></i> Add category
+                </button>
+                <button v-if="!paid" type="button" class="btn btn-ghost text-nowrap flex-shrink-0" :disabled="busy" @click="openMotion(null)">
+                    <i class="bi bi-hand-thumbs-up"></i> Add motion
+                </button>
+            </form>
+            <!-- Secondary tools: import while the ballot can change; export any time. -->
+            <div class="ballot-tools" :class="{ 'mt-3 pt-3 border-top': !locked && canEdit }">
+                <button v-if="!locked && canEdit" type="button" class="btn btn-ghost btn-sm text-nowrap" :disabled="busy" @click="importOpen = true">
+                    <i class="bi bi-file-earmark-spreadsheet"></i> Import candidates
+                </button>
+                <NuxtLink v-if="categories.length" :to="`/ballot-sheet/${event.id}`" target="_blank" class="btn btn-ghost btn-sm text-nowrap"
+                    title="All categories and candidates on one printable page: save it as PDF, or print paper ballots">
+                    <i class="bi bi-file-earmark-pdf"></i> Export PDF
+                </NuxtLink>
             </div>
-            <button type="submit" class="btn btn-primary" :disabled="busy || !newCategory">
-                <i class="bi bi-plus-lg"></i> Add category
-            </button>
-            <button v-if="!paid" type="button" class="btn btn-ghost" :disabled="busy" @click="openMotion(null)">
-                <i class="bi bi-hand-thumbs-up"></i> Add motion
-            </button>
-            <button type="button" class="btn btn-ghost" :disabled="busy" @click="importOpen = true">
-                <i class="bi bi-upload"></i> Import candidates
-            </button>
-        </form>
+        </div>
 
         <EmptyState v-if="!categories.length" class="card-b" icon="bi-ui-checks-grid" title="Your ballot is empty"
             text="Start with a category such as “President” or “Best Actor”, then add candidates to it. Or import them all from a spreadsheet." />
@@ -393,6 +402,8 @@ async function revokeProfileLink() {
 </script>
 
 <style scoped>
+.ballot-tools { display: flex; flex-wrap: wrap; gap: .5rem; justify-content: flex-end; }
+.ballot-tools:empty { display: none; }
 .who-pill { border: 1px dashed var(--line-strong); background: none; border-radius: 999px; padding: .05rem .55rem; font-size: .78rem; color: var(--muted); display: inline-flex; gap: .3rem; align-items: center; max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .who-pill:hover:not(:disabled) { border-color: var(--brand-500); color: var(--brand-600); }
 .who-pill.limited { border-style: solid; border-color: var(--violet-200, #d9cffe); background: var(--violet-50, rgba(124, 92, 255, .08)); color: var(--violet-600, #6d4ce8); font-weight: 700; }

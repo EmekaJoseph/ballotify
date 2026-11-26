@@ -96,6 +96,8 @@ return new class extends Migration
             $table->string('pass_rule', 16)->nullable();
             // Voter groups allowed to vote in this category (null = everyone).
             $table->json('groups')->nullable();
+            // Nominations: names the organiser suggests; the public picks one or types their own.
+            $table->json('nominee_suggestions')->nullable();
             // Ballots that answered this category (the base for "% of voters").
             $table->unsignedInteger('ballots')->default(0);
             $table->timestamps();

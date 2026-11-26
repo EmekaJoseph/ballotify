@@ -18,9 +18,9 @@ class Category extends Model
     /** Share of (Yes + No) a motion needs: simple = more Yes than No. */
     public const PASS_RULES = ['simple', 'two_thirds', 'three_quarters'];
 
-    protected $fillable = ['event_id', 'name', 'max_choices', 'shuffle_candidates', 'method', 'description', 'pass_rule', 'groups'];
+    protected $fillable = ['event_id', 'name', 'max_choices', 'shuffle_candidates', 'method', 'description', 'pass_rule', 'groups', 'nominee_suggestions'];
 
-    protected $casts = ['max_choices' => 'integer', 'shuffle_candidates' => 'boolean', 'ballots' => 'integer', 'groups' => 'array'];
+    protected $casts = ['max_choices' => 'integer', 'shuffle_candidates' => 'boolean', 'ballots' => 'integer', 'groups' => 'array', 'nominee_suggestions' => 'array'];
 
     /** New categories are "choose one" unless told otherwise. */
     protected $attributes = ['max_choices' => 1, 'shuffle_candidates' => false, 'method' => self::PLURALITY, 'ballots' => 0];

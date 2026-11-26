@@ -583,7 +583,7 @@ export interface NominationSummary {
     enabled: boolean;
     ends_at: string | null;
     total: number;
-    categories: { id: number; name: string; nominees: { name: string; count: number; reasons: string[]; on_ballot: boolean }[] }[];
+    categories: { id: number; name: string; suggestions: string[]; nominees: { name: string; count: number; reasons: string[]; on_ballot: boolean }[] }[];
 }
 
 export interface NominationForm {
@@ -595,7 +595,8 @@ export interface NominationForm {
     ends_at: string | null;
     voting_starts_at: string | null;
     brand: Brand | null;
-    categories: { id: number; name: string }[];
+    /** suggestions: names the organiser listed; people may pick one or type their own. */
+    categories: { id: number; name: string; suggestions: string[] }[];
 }
 
 export interface CertificatePayload {

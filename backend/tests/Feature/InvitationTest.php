@@ -43,6 +43,7 @@ it('normalises phone numbers to international format', function () {
     expect(PhoneNumber::normalize('0801 234 5678'))->toBe('+2348012345678')
         ->and(PhoneNumber::normalize('+44 (20) 7946-0958'))->toBe('+442079460958')
         ->and(PhoneNumber::normalize('2348012345678'))->toBe('+2348012345678')
+        ->and(PhoneNumber::normalize('8098765432'))->toBe('+2348098765432') // from Excel: leading 0 dropped
         ->and(PhoneNumber::normalize('  '))->toBeNull()
         ->and(PhoneNumber::isValid('+2348012345678'))->toBeTrue()
         ->and(PhoneNumber::isValid('12'))->toBeFalse();

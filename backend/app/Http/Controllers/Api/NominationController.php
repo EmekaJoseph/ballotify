@@ -20,6 +20,7 @@ use Illuminate\Validation\ValidationException;
 class NominationController extends Controller
 {
     private const PER_PERSON_PER_CATEGORY = 3;
+    private const MAX_SUGGESTIONS = 300;
 
     /** Public: the nomination form. */
     public function form(string $token)
@@ -34,7 +35,7 @@ class NominationController extends Controller
             'language' => $event->language,
             'brand' => ($event->brand_color || $event->brand_logo_path) && \App\Support\Plans::isPro($event)
                 ? ['color' => $event->brand_color, 'logo_url' => $event->brand_logo_url] : null,
-            'categories' => $event->categories->map->only(['id', 'name']),
+            'categories' => $event->categories->map(fn ($c) => ['id' => $c->id, 'name' => $c->name, 'suggestions' => $c->nominee_suggestions ?? []]),
         ]);
     }
 
@@ -96,6 +97,7 @@ class NominationController extends Controller
             'categories' => $event->categories->map(fn ($cat) => [
                 'id' => $cat->id,
                 'name' => $cat->name,
+                'suggestions' => $cat->nominee_suggestions ?? [],
                 'nominees' => collect($rows[$cat->id] ?? [])->groupBy('normalized_name')
                     ->map(fn ($group, $key) => [
                         'name' => $group->countBy('nominee_name')->sortDesc()->keys()->first(), // most common spelling
@@ -106,6 +108,38 @@ class NominationController extends Controller
                     ->sortByDesc('count')->values(),
             ]),
         ]);
+    }
+
+    /**
+     * Organiser: the names suggested in a category's nomination form. The public
+     * can pick one or type their own; same names (any spacing or case) count together.
+     */
+    public function suggestions(Request $request, Event $event)
+    {
+        Gate::authorize('manage', $event);
+        $data = $request->validate([
+            'category_id' => ['required', 'integer'],
+            'names' => ['present', 'array', 'max:' . self::MAX_SUGGESTIONS],
+            'names.*' => ['nullable', 'string', 'max:120'],
+        ]);
+        $category = Category::where('event_id', $event->id)->findOrFail($data['category_id']);
+
+        $names = [];
+        foreach ($data['names'] as $raw) {
+            $name = trim(preg_replace('/\s+/u', ' ', (string) $raw) ?? '');
+            if (mb_strlen($name) >= 2) $names[Nomination::normalize($name)] ??= $name; // first spelling wins
+        }
+        $names = array_values($names);
+
+        $category->nominee_suggestions = $names ?: null;
+        if ($category->isDirty('nominee_suggestions')) {
+            $category->save();
+            Audit::log($event, 'nomination.suggestions', count($names)
+                ? 'Suggested nominees for “' . $category->name . '”: ' . count($names) . ' name' . (count($names) === 1 ? '' : 's')
+                : 'Suggested nominees for “' . $category->name . '” removed');
+        }
+
+        return response()->json(['category_id' => $category->id, 'suggestions' => $names]);
     }
 
     /** Organiser: put a nominee on the ballot. */

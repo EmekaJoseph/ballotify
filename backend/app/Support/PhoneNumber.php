@@ -40,6 +40,11 @@ class PhoneNumber
         if ($country !== '' && str_starts_with($digits, $country)) {
             return '+' . $digits;
         }
+        // A local number that lost its leading 0 (Excel stores 0801… as the number 801…):
+        // too short to include a country code, so it gets the default one.
+        if ($country !== '' && strlen($digits) >= 7 && strlen($digits) <= 10) {
+            return '+' . $country . $digits;
+        }
 
         return $digits;
     }

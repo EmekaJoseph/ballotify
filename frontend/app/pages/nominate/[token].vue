@@ -43,7 +43,9 @@
                     :placeholder="t('nom.chooseCategory')" :search-placeholder="t('nom.chooseCategory')" :empty-text="'—'" />
 
                 <label for="nom-name" class="form-label">{{ t('nom.who') }}</label>
-                <input id="nom-name" v-model.trim="nominee" class="form-control form-control-lg mb-3" maxlength="120" :placeholder="t('nom.fullName')" />
+                <AppCombobox id="nom-name" v-model="nominee" :options="suggestions" size="lg" :maxlength="120"
+                    :placeholder="t('nom.fullName')" :toggle-label="t('nom.showSuggestions')" :class="suggestions.length ? 'mb-1' : 'mb-3'" />
+                <div v-if="suggestions.length" class="form-text mb-3">{{ t('nom.pickOrType') }}</div>
 
                 <label for="nom-reason" class="form-label">{{ t('nom.why') }} <span class="text-muted fw-normal">{{ t('common.optional') }}</span></label>
                 <textarea id="nom-reason" v-model="reason" class="form-control mb-1" rows="2" maxlength="280" :placeholder="t('nom.whyPh')"></textarea>
@@ -53,7 +55,7 @@
                 <input id="nom-email" v-model.trim="email" type="email" class="form-control mb-3" autocomplete="email" maxlength="255" />
 
                 <HumanCheck ref="human" v-model="captcha" class="mb-3" />
-                <button class="btn btn-primary btn-lg w-100" :disabled="busy || !categoryId || nominee.length < 2">
+                <button class="btn btn-primary btn-lg w-100" :disabled="busy || !categoryId || nominee.trim().length < 2">
                     <span v-if="busy" class="spinner-border spinner-border-sm"></span> {{ t('nom.send') }}
                 </button>
                 <p class="small text-muted text-center mt-3 mb-0">{{ t('nom.organiserDecides') }}</p>
@@ -83,6 +85,8 @@ const captcha = ref('');
 const human = ref<{ reset: () => void } | null>(null);
 const busy = ref(false);
 const done = ref('');
+/** The organiser's suggested names for the chosen category. */
+const suggestions = computed(() => form.value?.categories.find(c => c.id === categoryId.value)?.suggestions ?? []);
 
 useHead({ title: computed(() => `${t('nom.title')} · ${form.value?.name ?? 'Ballotify'}`) });
 useBrandTheme(() => form.value?.brand);
@@ -104,7 +108,7 @@ async function submit() {
     busy.value = true;
     try {
         const { data } = await publicApi.nominate(token, {
-            category_id: categoryId.value, nominee_name: nominee.value, reason: reason.value.trim() || undefined,
+            category_id: categoryId.value, nominee_name: nominee.value.trim(), reason: reason.value.trim() || undefined,
             email: email.value || undefined, captcha_token: captcha.value || undefined,
         });
         done.value = data.message;

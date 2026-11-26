@@ -8,10 +8,10 @@
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-2">
             <div class="d-flex flex-wrap gap-2">
                 <label class="btn btn-ghost btn-sm mb-0">
-                    <i class="bi bi-filetype-csv"></i> Load a .csv file
-                    <input type="file" accept=".csv,.txt,text/csv,text/plain" class="visually-hidden" @change="loadFile" />
+                    <i class="bi bi-file-earmark-spreadsheet"></i> Load Excel or CSV
+                    <input type="file" :accept="TABLE_FILE_ACCEPT" class="visually-hidden" @change="loadFile" />
                 </label>
-                <button type="button" class="btn btn-ghost btn-sm" title="A spreadsheet with the right columns and example rows. Fill it in, save as CSV, then load it here."
+                <button type="button" class="btn btn-ghost btn-sm" title="A spreadsheet with the right columns and example rows. Fill it in (Excel is fine), then load it here."
                     @click="downloadTemplate"><i class="bi bi-download"></i> Download template</button>
             </div>
             <span class="small text-muted">
@@ -111,7 +111,8 @@ async function loadFile(e: Event) {
     input.value = '';
     if (!file) return;
     if (file.size > 3 * 1024 * 1024) { error.value = 'That file is larger than 3 MB.'; return; }
-    text.value = await file.text();
+    try { text.value = await readTableFile(file); error.value = ''; }
+    catch (err) { error.value = err instanceof Error ? err.message : 'That file couldn’t be read.'; }
 }
 
 function downloadTemplate() {

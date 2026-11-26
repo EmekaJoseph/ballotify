@@ -76,6 +76,7 @@ Route::middleware(['auth:sanctum', 'active'])->scopeBindings()->group(function (
     // Nominations (organiser view) and certified results
     Route::get('events/{event}/nominations', [NominationController::class, 'index']);
     Route::post('events/{event}/nominations/promote', [NominationController::class, 'promote']);
+    Route::put('events/{event}/nominations/suggestions', [NominationController::class, 'suggestions']);
     Route::get('events/{event}/certificates', [CertificateController::class, 'index']);
     Route::post('events/{event}/certificates', [CertificateController::class, 'issue'])->middleware('throttle:10,1');
 
