@@ -38,10 +38,19 @@
                 <button class="btn btn-primary" @click="copyText(voteUrl, 'Voting link copied')"><i class="bi bi-link-45deg"></i> Copy voting link</button>
             </PageHeader>
 
-            <div class="segmented mb-4" role="tablist">
-                <button v-for="t in tabs" :key="t.key" type="button" role="tab" :aria-selected="tab === t.key" :data-tour="`tab-${t.key}`"
-                    :class="{ active: tab === t.key }" @click="tab = t.key">
-                    <i class="bi" :class="t.icon"></i>{{ t.label }}
+            <!-- Desktop: always fits (smaller, then icons only). Phones: swipe to scroll. -->
+            <div class="tab-nav mb-4">
+                <button v-show="canScroll.left" type="button" class="tab-arrow left" aria-label="Previous tabs" tabindex="-1" @click="scrollTabs(-1)">
+                    <i class="bi bi-chevron-left"></i>
+                </button>
+                <div ref="tabBar" class="segmented" :class="`fit-${tabFit}`" role="tablist" @scroll.passive="updateArrows">
+                    <button v-for="t in tabs" :key="t.key" type="button" role="tab" :aria-selected="tab === t.key" :data-tour="`tab-${t.key}`"
+                        :class="{ active: tab === t.key }" :title="tabFit === 'icons' ? t.label : undefined" :aria-label="t.label" @click="tab = t.key">
+                        <i class="bi" :class="t.icon"></i><span class="tab-label">{{ t.label }}</span>
+                    </button>
+                </div>
+                <button v-show="canScroll.right" type="button" class="tab-arrow right" aria-label="More tabs" tabindex="-1" @click="scrollTabs(1)">
+                    <i class="bi bi-chevron-right"></i>
                 </button>
             </div>
 
@@ -159,10 +168,79 @@ const saving = ref(false);
 const fieldErrors = ref<Record<string, string>>({});
 const formVersion = ref(0);
 
+// ----- Tab bar fit: on screens from 768px it never scrolls; it steps down to
+// smaller labels, then icons only (the active tab keeps its label). Phones scroll.
+const tabBar = ref<HTMLElement | null>(null);
+const tabFit = ref<'full' | 'compact' | 'icons'>('full');
+let fitting = false;
+async function fitTabs() {
+    const el = tabBar.value;
+    if (!el || fitting) return;
+    fitting = true;
+    try {
+        const steps = ['full', 'compact', 'icons'] as const;
+        if (window.innerWidth < 768) { tabFit.value = 'full'; return; }
+        for (const step of steps) {
+            tabFit.value = step;
+            await nextTick();
+            if (el.scrollWidth <= el.clientWidth + 1) return;
+        }
+    } finally {
+        fitting = false;
+        await nextTick();
+        updateArrows();
+        revealActiveTab();
+    }
+}
+
+// ----- When the bar does scroll (phones, very narrow windows): arrows at the ends.
+const canScroll = reactive({ left: false, right: false });
+function updateArrows() {
+    const el = tabBar.value;
+    if (!el) return;
+    canScroll.left = el.scrollLeft > 2;
+    canScroll.right = el.scrollLeft + el.clientWidth < el.scrollWidth - 2;
+}
+function scrollTabs(dir: 1 | -1) {
+    const el = tabBar.value;
+    if (el) el.scrollBy({ left: dir * el.clientWidth * 0.7, behavior: 'smooth' });
+}
+/** Keep the active tab in view (e.g. opened from a link to ?tab=settings). */
+function revealActiveTab() {
+    // Scrolls the strip only (scrollIntoView could also move the page up or down).
+    const bar = tabBar.value;
+    const el = bar?.querySelector<HTMLElement>('button.active');
+    if (!bar || !el || bar.scrollWidth <= bar.clientWidth) return;
+    const pad = 40; // clear of the arrow
+    const left = el.offsetLeft - bar.offsetLeft;
+    if (left < bar.scrollLeft + pad) bar.scrollTo({ left: Math.max(0, left - pad), behavior: 'smooth' });
+    else if (left + el.offsetWidth > bar.scrollLeft + bar.clientWidth - pad) {
+        bar.scrollTo({ left: left + el.offsetWidth - bar.clientWidth + pad, behavior: 'smooth' });
+    }
+}
+let tabBarObserver: ResizeObserver | null = null;
+let lastWidth = 0;
+watch(tabBar, (el, old) => {
+    if (old) tabBarObserver?.unobserve(old.parentElement ?? old);
+    if (!el) return;
+    // Only width matters: content growing taller below the bar mustn't re-measure (it would flicker).
+    tabBarObserver ??= new ResizeObserver((entries) => {
+        const w = Math.round(entries[0]?.contentRect.width ?? 0);
+        if (w !== lastWidth) { lastWidth = w; fitTabs(); }
+    });
+    // Watch the page column, not the bar: the bar's own size changes as it fits.
+    tabBarObserver.observe(el.parentElement ?? el);
+    fitTabs();
+});
+onBeforeUnmount(() => tabBarObserver?.disconnect());
+
 const initialTab = String(route.query.tab ?? 'overview');
 const tab = ref<TabKey>(ALL_TABS.some(t => t.key === initialTab) ? (initialTab as TabKey) : 'overview');
 // A tab this user can't see (or wrong for the voting mode) falls back to the overview.
 watch(tabs, (list) => { if (event.value && !list.some(t => t.key === tab.value)) tab.value = 'overview'; });
+// More or fewer tabs (roles, voting mode), or a different active tab (it keeps its label): fit again.
+// (Must come after `tab` is declared: watch reads it straight away.)
+watch(() => [tabs.value.length, tab.value], () => fitTabs());
 function goTab(key: string) { if (tabs.value.some(t => t.key === key)) tab.value = key as TabKey; }
 // Links to another tab of the same event (e.g. ?tab=settings) reuse this page: follow the URL.
 watch(() => route.query.tab, (q) => {
@@ -326,6 +404,22 @@ async function remove() {
 </script>
 
 <style scoped>
+/* Tab bar: arrows over the ends when it scrolls. */
+.tab-nav { position: relative; display: flex; max-width: 100%; width: fit-content; }
+.tab-nav .segmented { min-width: 0; }
+.tab-arrow {
+    position: absolute; top: 4px; bottom: 4px; z-index: 2; width: 36px; border: 0; padding: 0;
+    display: grid; place-items: center; color: var(--ink); cursor: pointer; border-radius: 10px;
+}
+.tab-arrow.left { left: 4px; background: linear-gradient(90deg, var(--surface) 60%, transparent); justify-content: start; padding-left: 6px; }
+.tab-arrow.right { right: 4px; background: linear-gradient(270deg, var(--surface) 60%, transparent); justify-content: end; padding-right: 6px; }
+.tab-arrow:hover { color: var(--brand-600); }
+
+/* Tab bar sizes (see fitTabs). */
+.segmented.fit-compact button { font-size: .82rem; padding: .45rem .65rem; gap: .35rem; }
+.segmented.fit-icons button { padding: .5rem .7rem; }
+.segmented.fit-icons button:not(.active) .tab-label { display: none; }
+.segmented.fit-icons button i { font-size: 1.05rem; }
 .danger-zone { border-color: var(--danger-line); }
 .settings-nav { display: flex; flex-direction: column; gap: .25rem; padding: .5rem; position: sticky; top: 1rem; }
 .settings-link {
