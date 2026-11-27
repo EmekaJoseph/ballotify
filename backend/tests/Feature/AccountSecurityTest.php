@@ -26,6 +26,21 @@ it('requires accepting the terms to sign up, and sends a verification email', fu
     Notification::assertSentTo($user, VerifyEmailAddress::class);
 });
 
+it('signs people up even when the mail server is broken, and explains a repeat sign-up', function () {
+    // The mail server fails: the sign-up must still succeed (the email goes after the response).
+    \Illuminate\Support\Facades\Event::listen(\Illuminate\Notifications\Events\NotificationSending::class, function () {
+        throw new RuntimeException('SMTP connection timed out');
+    });
+    $signup = ['name' => 'B', 'email' => 'b@example.com', 'password' => 'secret123', 'terms' => true];
+
+    $this->postJson('/api/auth/register', $signup)->assertCreated()->assertJsonStructure(['token', 'user']);
+    expect(User::where('email', 'b@example.com')->count())->toBe(1);
+
+    // Pressing Sign up again: a clear message, not a bare "already taken".
+    $this->postJson('/api/auth/register', $signup)->assertStatus(422)
+        ->assertJsonPath('errors.email.0', 'An account with this email already exists. Sign in instead, or reset your password if you’ve forgotten it.');
+});
+
 it('verifies the email through the signed link the frontend forwards', function () {
     config(['app.frontend_url' => 'https://app.example.com']);
     $user = User::factory()->unverified()->create();

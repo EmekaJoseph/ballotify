@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Laravel\Sanctum\PersonalAccessToken;
+use function Illuminate\Support\defer;
 
 class AuthController extends Controller
 {
@@ -26,7 +27,10 @@ class AuthController extends Controller
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'string', 'min:8'],
             'terms' => ['accepted'],
-        ], ['terms.accepted' => 'Please accept the Terms and Privacy Policy to continue.']);
+        ], [
+            'terms.accepted' => 'Please accept the Terms and Privacy Policy to continue.',
+            'email.unique' => 'An account with this email already exists. Sign in instead, or reset your password if you’ve forgotten it.',
+        ]);
         Turnstile::verify($request);
 
         $user = User::create([
@@ -35,7 +39,9 @@ class AuthController extends Controller
             'password' => $data['password'], // hashed by the model cast
         ]);
 
-        $this->safely(fn () => $user->sendEmailVerificationNotification());
+        // Sent after the response: a slow or broken mail server must never make a sign-up that
+        // succeeded look failed (the person would retry and get "email already taken").
+        defer(fn () => $this->safely(fn () => $user->sendEmailVerificationNotification()));
 
         return response()->json(['token' => $this->issueToken($user), 'user' => $user], 201);
     }
