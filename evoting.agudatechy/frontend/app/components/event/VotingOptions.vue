@@ -1,21 +1,5 @@
 <template>
     <div class="d-grid gap-4">
-        <!-- Language of the voting pages -->
-        <section class="card-b pad">
-            <div class="opt-head">
-                <span class="icon-tile"><i class="bi bi-translate"></i></span>
-                <div class="flex-grow-1 min-w-0">
-                    <h3 class="h6 fw-800 mb-1">Voting page language</h3>
-                    <p class="small text-muted mb-0">
-                        The language voters see first on the voting, nominations and results pages.
-                        They can still switch with the language button at the top of the page.
-                    </p>
-                </div>
-                <AppSelect id="opt-lang" :model-value="event.language || 'en'" :options="LANGUAGES.map(l => ({ value: l.code, label: l.name }))"
-                    :block="false" class="lang-select" :disabled="busy === 'language'" aria-label="Voting page language" @change="saveLanguage" />
-            </div>
-        </section>
-
         <!-- Nominations -->
         <section class="card-b pad">
             <div class="opt-head">
@@ -83,11 +67,6 @@ async function patch(key: string, data: EventPayload, success: string) {
     }
 }
 
-async function saveLanguage(code: string) {
-    const name = LANGUAGES.find(l => l.code === code)?.name ?? code;
-    await patch('language', { language: code }, `Voting pages now open in ${name}`);
-}
-
 async function toggleNominations(el: HTMLInputElement) {
     const on = el.checked;
     if (!await patch('nominations', { nominations_enabled: on }, on ? 'Nominations are open' : 'Nominations switched off')) el.checked = !on;
@@ -98,8 +77,6 @@ function saveNomEnds() {
 </script>
 
 <style scoped>
-.lang-select { width: auto; min-width: 140px; flex-shrink: 0; align-self: center; }
-@media (max-width: 575.98px) { .lang-select { min-width: 0; max-width: 130px; } }
 .opt-head { display: flex; gap: 1rem; align-items: flex-start; }
 .opt-head .form-switch .form-check-input { width: 2.6em; height: 1.4em; cursor: pointer; }
 .opt-body { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--line); }

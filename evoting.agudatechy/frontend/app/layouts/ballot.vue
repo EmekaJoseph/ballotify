@@ -7,8 +7,6 @@
                     <span v-if="mode === 'paid'" class="small text-muted d-none d-md-inline-flex align-items-center gap-1"><i class="bi bi-lock"></i> {{ t('layout.securePayments') }}</span>
                     <span v-else-if="mode === 'nominate'" class="small text-muted d-none d-md-inline-flex align-items-center gap-1"><i class="bi bi-megaphone"></i> {{ t('layout.nominations') }}</span>
                     <span v-else-if="mode === 'codes'" class="small text-muted d-none d-md-inline-flex align-items-center gap-1"><i class="bi bi-shield-lock"></i> {{ t('layout.secretBallot') }}</span>
-                    <LangSwitcher />
-                    <ThemeToggle />
                 </div>
             </div>
         </header>
@@ -28,10 +26,6 @@ const wide = computed(() => Boolean(route.meta.wide));
 const branding = useBallotBranding();
 const mode = useBallotMode();
 
-// Public pages speak the voter's language; the rest of the app stays English.
-enterBallotPages();
-onBeforeUnmount(leaveBallotPages);
-useHead({ htmlAttrs: { lang: ballotLang } });
 </script>
 
 <style scoped>

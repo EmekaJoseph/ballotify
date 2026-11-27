@@ -276,6 +276,4 @@ defineExpose({ open: openMenu, close });
 
 <style>
 /* Dark mode: the active row needs a deeper tint than brand-50. */
-:root[data-theme="dark"] .as-option.active { background: rgba(5, 133, 128, .18); }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .as-option.active { background: rgba(5, 133, 128, .18); } }
 </style>

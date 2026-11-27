@@ -9,7 +9,6 @@
                 </nav>
 
                 <div class="d-none d-xl-flex align-items-center gap-2">
-                    <ThemeToggle class="me-1" />
                     <template v-if="auth.isAuthenticated">
                         <NuxtLink to="/dashboard" class="btn btn-primary">Dashboard <i class="bi bi-arrow-right"></i></NuxtLink>
                     </template>
@@ -28,7 +27,6 @@
             <Transition name="drop">
                 <div v-if="menuOpen" class="mobile-menu d-xl-none">
                     <div class="container d-grid gap-1 py-3">
-                        <div class="d-flex justify-content-between align-items-center px-2 pb-2"><span class="small-caps">Theme</span><ThemeToggle /></div>
                         <NuxtLink v-for="l in links" :key="l.to" :to="l.to" class="nav-l">{{ l.label }}</NuxtLink>
                         <div class="divider my-2"></div>
                         <NuxtLink v-if="auth.isAuthenticated" to="/dashboard" class="btn btn-primary">Dashboard</NuxtLink>

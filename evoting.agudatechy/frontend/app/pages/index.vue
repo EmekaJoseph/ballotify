@@ -30,7 +30,25 @@
                     </div>
                 </div>
                 <div class="col-lg-5 text-center fade-up" style="animation-delay: .12s">
-                    <img src="/brand/logo-on-dark.png" alt="Agudatechy" class="hero-logo" width="635" height="596" />
+                    <!-- A small mock ballot: shows what voters see, without being a real form. -->
+                    <div class="mock" aria-hidden="true">
+                        <div class="mock-top">
+                            <span class="mock-chip"><i class="bi bi-shield-lock"></i> Secret ballot</span>
+                            <span class="mock-code">Code · K7Q-29X</span>
+                        </div>
+                        <div class="mock-title">President</div>
+                        <div class="mock-sub">Choose one</div>
+                        <div v-for="(c, i) in mockCandidates" :key="c" class="mock-row" :class="{ on: i === 1 }">
+                            <span class="mock-av">{{ c.split(' ').map(w => w[0]).join('') }}</span>
+                            <span class="flex-grow-1 text-start">{{ c }}</span>
+                            <span class="mock-radio"><i v-if="i === 1" class="bi bi-check-lg"></i></span>
+                        </div>
+                        <div class="mock-btn">Review and submit <i class="bi bi-arrow-right"></i></div>
+                        <div class="mock-turnout">
+                            <div class="d-flex justify-content-between"><span>Turnout</span><b>68%</b></div>
+                            <div class="mock-bar"><span style="width: 68%"></span></div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -44,6 +62,7 @@ definePageMeta({ layout: 'public' });
 useHead({ title: 'E-voting by Agudatechy · Secret ballot elections online' });
 
 const auth = useAuthStore();
+const mockCandidates = ['Ada Okafor', 'Bayo Adeyemi', 'Hauwa Musa'];
 </script>
 
 <style scoped>
@@ -61,6 +80,27 @@ const auth = useAuthStore();
 .eyebrow.dark { background: rgba(255, 255, 255, .08); color: #99f6e4; border-color: rgba(255, 255, 255, .12); }
 .hero-points span { color: rgba(255, 255, 255, .72); font-weight: 600; font-size: .92rem; display: inline-flex; gap: .45rem; align-items: center; }
 .hero-points .bi { color: #00d4c9; }
-.hero-logo { width: 100%; max-width: 340px; height: auto; filter: drop-shadow(0 24px 60px rgba(0, 212, 201, .18)); }
-@media (max-width: 991.98px) { .hero-logo { max-width: 200px; } }
+.mock {
+    max-width: 360px; margin: 0 auto; padding: 1.25rem; border-radius: 20px; text-align: left;
+    background: rgba(255, 255, 255, .06); border: 1px solid rgba(255, 255, 255, .12);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, .35), 0 0 0 1px rgba(0, 212, 201, .08); backdrop-filter: blur(8px);
+    transform: rotate(-1.5deg); color: #fff;
+}
+.mock-top { display: flex; justify-content: space-between; align-items: center; gap: .5rem; margin-bottom: 1rem; }
+.mock-chip { font-size: .72rem; font-weight: 700; color: #99f6e4; background: rgba(0, 212, 201, .14); padding: .25rem .6rem; border-radius: 999px; display: inline-flex; gap: .3rem; }
+.mock-code { font-size: .72rem; color: rgba(255, 255, 255, .55); font-family: ui-monospace, monospace; }
+.mock-title { font-weight: 800; font-size: 1.15rem; }
+.mock-sub { font-size: .8rem; color: rgba(255, 255, 255, .55); margin-bottom: .75rem; }
+.mock-row { display: flex; align-items: center; gap: .65rem; padding: .6rem .7rem; border-radius: 12px; margin-bottom: .45rem; font-weight: 600; font-size: .92rem; border: 1px solid rgba(255, 255, 255, .1); background: rgba(255, 255, 255, .04); }
+.mock-row.on { border-color: #00d4c9; background: rgba(0, 212, 201, .12); }
+.mock-av { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; font-size: .72rem; font-weight: 800; background: rgba(255, 255, 255, .12); }
+.mock-row.on .mock-av { background: #058580; }
+.mock-radio { width: 20px; height: 20px; border-radius: 50%; border: 2px solid rgba(255, 255, 255, .3); display: grid; place-items: center; font-size: .75rem; }
+.mock-row.on .mock-radio { background: #00d4c9; border-color: #00d4c9; color: #032b29; }
+.mock-btn { margin-top: .9rem; text-align: center; padding: .65rem; border-radius: 12px; background: #058580; font-weight: 700; font-size: .9rem; }
+.mock-turnout { margin-top: 1rem; font-size: .78rem; color: rgba(255, 255, 255, .65); }
+.mock-turnout b { color: #fff; }
+.mock-bar { height: 6px; border-radius: 999px; background: rgba(255, 255, 255, .12); margin-top: .35rem; overflow: hidden; }
+.mock-bar span { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, #058580, #00d4c9); }
+@media (max-width: 991.98px) { .mock { transform: none; } }
 </style>

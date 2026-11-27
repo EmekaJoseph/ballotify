@@ -214,7 +214,6 @@ async function load() {
     stage.value = 'loading';
     try {
         event.value = (await publicApi.getEvent(token)).data;
-        setEventLanguage(event.value.language);
         branding.value = event.value.branding !== false;
         ballotMode.value = event.value.voting_mode;
         stage.value = isPaid.value ? 'paid' : 'code';
@@ -226,7 +225,6 @@ async function load() {
         const status = apiStatus(e);
         const body = (e as { response?: { data?: { status?: EventStatus; starts_at?: string | null; results_public?: boolean; nominations_open?: boolean; language?: string } } }).response?.data;
         nominationsOpen.value = !!body?.nominations_open;
-        if (body?.language) setEventLanguage(body.language);
         if (status === 403 && body?.status === 'upcoming') {
             showUnavailable({ status: 'upcoming', title: t('vote.notStarted'), text: t('vote.opensAt', { date: formatDate(body.starts_at ?? null, true) }), icon: 'bi-clock', tone: 'amber', startsAt: body.starts_at ?? null });
         } else if (status === 403) {

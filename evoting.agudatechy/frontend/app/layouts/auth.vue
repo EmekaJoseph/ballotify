@@ -17,7 +17,6 @@
             </div>
         </div>
         <div class="auth-main position-relative">
-            <ThemeToggle class="theme-corner" />
             <div class="d-lg-none mb-4"><AppLogo /></div>
             <div class="w-100" style="max-width: 420px">
                 <slot />
@@ -42,7 +41,6 @@ const year = new Date().getFullYear();
 }
 .side-text { color: rgba(255, 255, 255, .72); }
 .side-text .bi { color: #5eead4; margin-right: .5rem; }
-.theme-corner { position: absolute; top: 1rem; right: 1rem; }
 .auth-wrap { background: var(--surface); }
 .auth-main { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2.5rem 1.25rem; }
 </style>

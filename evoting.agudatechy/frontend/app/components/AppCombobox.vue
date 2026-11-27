@@ -168,6 +168,4 @@ defineExpose({ focus: () => input.value?.focus() });
 </style>
 
 <style>
-:root[data-theme="dark"] .ac-option.active { background: rgba(5, 133, 128, .18); }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .ac-option.active { background: rgba(5, 133, 128, .18); } }
 </style>

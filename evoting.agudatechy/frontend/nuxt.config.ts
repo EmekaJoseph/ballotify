@@ -16,19 +16,12 @@ export default defineNuxtConfig({
   app: {
     pageTransition: { name: 'page', mode: 'out-in' },
     head: {
-      htmlAttrs: { lang: 'en' },
+      htmlAttrs: { lang: 'en', 'data-theme': 'light', 'data-bs-theme': 'light' },
       title: 'E-voting by Agudatechy',
       meta: [
         { name: 'viewport', content: 'width=device-width, initial-scale=1, viewport-fit=cover' },
         { name: 'description', content: 'Secret ballot elections online by Agudatechy: one-time voter codes, a clean ballot on any device, and certified results.' },
         { name: 'theme-color', content: '#058580' },
-      ],
-      script: [
-        {
-          // Set the theme before first paint so dark mode never flashes white.
-          tagPosition: 'head',
-          innerHTML: "(function(){try{var t=localStorage.getItem('theme')||'system';var d=t==='dark'||(t==='system'&&window.matchMedia('(prefers-color-scheme: dark)').matches);var e=document.documentElement;e.setAttribute('data-theme',d?'dark':'light');e.setAttribute('data-bs-theme',d?'dark':'light')}catch(x){}})()",
-        },
       ],
       link: [
         { rel: 'icon', type: 'image/png', sizes: '32x32', href: '/favicon-32x32.png' },

@@ -149,7 +149,6 @@ useBrandTheme(() => form.value?.brand);
 onMounted(async () => {
     try {
         form.value = (await publicApi.nominationForm(token)).data;
-        setEventLanguage(form.value.language);
         resetEntries();
     } catch (e) {
         notFound.value = apiStatus(e) === 404;

@@ -11,7 +11,7 @@ return [
     | Languages of the public voting pages (the organiser picks the default,
     | voters can switch). Translations: frontend app/i18n, backend lang/*.json.
     */
-    'languages' => ['en', 'yo', 'ha', 'ig', 'fr'],
+    'languages' => ['en'],
 
     'voter_contact_retention_days' => (int) env('VOTER_CONTACT_RETENTION_DAYS', 30),
 

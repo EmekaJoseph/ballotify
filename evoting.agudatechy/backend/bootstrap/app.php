@@ -17,7 +17,6 @@ return Application::configure(basePath: dirname(__DIR__))
         ['prefix' => 'api', 'middleware' => ['api', 'auth:sanctum']],
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->api(append: [\App\Http\Middleware\SetLocale::class]);
         $middleware->alias([
             'active' => \App\Http\Middleware\EnsureNotSuspended::class,
             'superadmin' => \App\Http\Middleware\EnsureSuperAdmin::class,

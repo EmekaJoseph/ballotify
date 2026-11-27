@@ -159,7 +159,6 @@ async function fetchResults(manual = false) {
     refreshing.value = true;
     try {
         results.value = (await publicApi.getResults(token)).data;
-        setEventLanguage(results.value.event.language);
         branding.value = results.value.event.branding !== false;
         ballotMode.value = results.value.event.voting_mode ?? 'codes';
         hidden.value = null;
@@ -168,7 +167,6 @@ async function fetchResults(manual = false) {
     } catch (e) {
         if (apiStatus(e) === 403) {
             hidden.value = (e as { response: { data: HiddenResults } }).response.data;
-            setEventLanguage(hidden.value.event.language);
             results.value = null;
             return;
         }

@@ -28,10 +28,6 @@
             </nav>
 
             <div class="mt-auto p-3">
-                <div class="d-flex align-items-center justify-content-between mb-3 px-1">
-                    <span class="small-caps">Theme</span>
-                    <ThemeToggle />
-                </div>
                 <div class="user-card">
                     <span class="avatar sm" :style="{ background: colorFor(auth.user?.email) }">{{ initials(auth.user?.name) }}</span>
                     <div class="min-w-0 flex-grow-1">
