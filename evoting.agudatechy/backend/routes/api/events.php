@@ -23,6 +23,7 @@ Route::delete('events/{event}', [EventController::class, 'destroy']);
 Route::get('events/{event}/voting-link', [EventController::class, 'link']);
 Route::get('events/{event}/results', [EventController::class, 'adminResults']);
 Route::get('events/{event}/activity', [EventController::class, 'activity']);
+Route::post('events/{event}/logo', [EventController::class, 'logo'])->middleware('throttle:20,1');
 Route::post('events/{event}/duplicate', [EventController::class, 'duplicate'])->middleware('throttle:20,1');
 
 // Nominations (organiser view) and certified results

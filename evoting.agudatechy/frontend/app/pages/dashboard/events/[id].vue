@@ -75,6 +75,7 @@
                         <EventForm :key="event.id + '-' + formVersion" :event="event" :busy="saving" :server-errors="fieldErrors"
                             submit-label="Save changes" @submit="save" />
                     </div>
+                    <EventLogoCard v-if="settingsTab === 'general'" :event="event" class="mt-4" @saved="load(true)" />
                     <EventVotingOptions v-else-if="settingsTab === 'options'" :event="event" @changed="load(true)" @go="goTab($event)" />
                     <div v-else class="advanced-grid">
                     <div class="card-b pad">

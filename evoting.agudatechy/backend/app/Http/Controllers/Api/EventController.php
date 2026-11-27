@@ -201,6 +201,23 @@ class EventController extends Controller
         return response()->json($this->present($event->loadCount($this->counts()), $request->user()));
     }
 
+    /** The event's own logo, shown on the voting, nominations and results pages, report and ballot PDF. */
+    public function logo(Request $request, Event $event)
+    {
+        Gate::authorize('manage', $event);
+        $request->validate([
+            'logo' => ['required_without:remove_logo', 'nullable', File::image()->max('2mb')],
+            'remove_logo' => ['sometimes', 'boolean'],
+        ], ['logo.required_without' => 'Choose an image for the logo.']);
+
+        $this->deleteLogo($event->brand_logo_path);
+        $event->brand_logo_path = $request->hasFile('logo') ? $this->storeLogo($request->file('logo')) : null;
+        $event->save();
+        Audit::log($event, 'event.logo', $event->brand_logo_path ? 'Event logo updated' : 'Event logo removed');
+
+        return response()->json($this->present($event->loadCount($this->counts()), $request->user()));
+    }
+
     public function destroy(Event $event)
     {
         Gate::authorize('own', $event);

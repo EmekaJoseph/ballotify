@@ -56,6 +56,8 @@ export const adminApi = {
     createEvent: (data: EventPayload) => api.post<BallotEvent>('/events', data),
     getEvent: (eventId: Id) => api.get<BallotEvent>(`/events/${eventId}`),
     updateEvent: (eventId: Id, data: EventPayload) => api.patch<BallotEvent>(`/events/${eventId}`, data),
+    /** Event logo (multipart: logo, or remove_logo=1). */
+    updateLogo: (eventId: Id, form: FormData) => api.post<BallotEvent>(`/events/${eventId}/logo`, form),
     deleteEvent: (eventId: Id) => api.delete(`/events/${eventId}`),
     /** Copies the ballot (no voters, votes or dates) into a new event. */
     duplicateEvent: (eventId: Id) => api.post<BallotEvent>(`/events/${eventId}/duplicate`),

@@ -10,7 +10,8 @@
                 <div class="input-icon">
                     <i class="bi bi-person"></i>
                     <input id="name" v-model.trim="form.name" type="text" class="form-control form-control-lg"
-                        :class="{ 'is-invalid': fieldErrors.name }" autocomplete="name" placeholder="Jane Doe" required :disabled="loading" />
+                        :class="{ 'is-invalid': fieldErrors.name }" autocomplete="name" placeholder="Firstname Lastname"
+                        required :disabled="loading" />
                 </div>
                 <div v-if="fieldErrors.name" class="field-error">{{ fieldErrors.name }}</div>
             </div>
@@ -19,7 +20,8 @@
                 <div class="input-icon">
                     <i class="bi bi-envelope"></i>
                     <input id="email" v-model.trim="form.email" type="email" class="form-control form-control-lg"
-                        :class="{ 'is-invalid': fieldErrors.email }" autocomplete="email" placeholder="you@organisation.com" required :disabled="loading" />
+                        :class="{ 'is-invalid': fieldErrors.email }" autocomplete="email"
+                        placeholder="you@organisation.com" required :disabled="loading" />
                 </div>
                 <div v-if="fieldErrors.email" class="field-error">{{ fieldErrors.email }}</div>
             </div>
@@ -27,18 +29,21 @@
                 <label for="password" class="form-label">Password</label>
                 <PasswordInput id="password" v-model="form.password" :invalid="!!fieldErrors.password"
                     autocomplete="new-password" placeholder="At least 8 characters" required :disabled="loading" />
-                <div class="bar slim mt-2"><span :style="{ width: strength.pct + '%', background: strength.color }"></span></div>
+                <div class="bar slim mt-2"><span
+                        :style="{ width: strength.pct + '%', background: strength.color }"></span></div>
                 <div class="form-text">{{ strength.label }}</div>
                 <div v-if="fieldErrors.password" class="field-error">{{ fieldErrors.password }}</div>
             </div>
             <div class="mb-4">
                 <label for="confirm" class="form-label">Confirm password</label>
-                <PasswordInput id="confirm" v-model="form.confirm" icon="bi-shield-lock" :invalid="!!fieldErrors.confirm"
-                    autocomplete="new-password" placeholder="Repeat password" required :disabled="loading" />
+                <PasswordInput id="confirm" v-model="form.confirm" icon="bi-shield-lock"
+                    :invalid="!!fieldErrors.confirm" autocomplete="new-password" placeholder="Repeat password" required
+                    :disabled="loading" />
                 <div v-if="fieldErrors.confirm" class="field-error">{{ fieldErrors.confirm }}</div>
             </div>
             <div class="form-check mb-4">
-                <input id="terms" v-model="form.terms" class="form-check-input" type="checkbox" :class="{ 'is-invalid': fieldErrors.terms }" :disabled="loading" />
+                <input id="terms" v-model="form.terms" class="form-check-input" type="checkbox"
+                    :class="{ 'is-invalid': fieldErrors.terms }" :disabled="loading" />
                 <label class="form-check-label small text-muted" for="terms">
                     I agree to the <NuxtLink to="/terms" target="_blank">Terms of Service</NuxtLink>
                     and <NuxtLink to="/privacy" target="_blank">Privacy Policy</NuxtLink>.

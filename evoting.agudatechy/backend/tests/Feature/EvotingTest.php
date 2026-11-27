@@ -65,3 +65,27 @@ it('seeds the platform admin', function () {
         ->and($admin->awaiting_approval)->toBeFalse()
         ->and(\Illuminate\Support\Facades\Hash::check('password123#', $admin->password))->toBeTrue();
 });
+
+it('lets the organiser add and remove an event logo, shown on the public pages', function () {
+    $owner = User::factory()->create();
+    $event = Event::create(['user_id' => $owner->id, 'name' => 'Union election', 'link_token' => 'tok-logo']);
+
+    $path = $this->actingAs($owner)->post("/api/events/{$event->id}/logo", [
+        'logo' => \Illuminate\Http\UploadedFile::fake()->image('logo.png', 200, 200),
+    ], ['Accept' => 'application/json'])->assertOk()->json('brand_logo_url');
+    expect($path)->toContain('/branding/');
+    $file = $event->fresh()->brand_logo_path;
+    expect(file_exists(public_path($file)))->toBeTrue();
+
+    $this->getJson("/api/public/events/{$event->link_token}")->assertOk()->assertJsonPath('brand.logo_url', $path);
+
+    $this->actingAs($owner)->postJson("/api/events/{$event->id}/logo", ['remove_logo' => true])
+        ->assertOk()->assertJsonPath('brand_logo_url', null);
+    expect(file_exists(public_path($file)))->toBeFalse();
+
+    // Not an image, and strangers can't change it.
+    $this->actingAs($owner)->post("/api/events/{$event->id}/logo", [
+        'logo' => \Illuminate\Http\UploadedFile::fake()->create('notes.pdf', 10, 'application/pdf'),
+    ], ['Accept' => 'application/json'])->assertUnprocessable();
+    $this->actingAs(User::factory()->create())->postJson("/api/events/{$event->id}/logo", ['remove_logo' => true])->assertNotFound();
+});
