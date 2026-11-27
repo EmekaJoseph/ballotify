@@ -148,6 +148,41 @@ it('collects public nominations and lets the organiser add nominees to the ballo
     $this->postJson($url, ['category_id' => $cat->id, 'nominee_name' => 'Late'])->assertForbidden();
 });
 
+it('takes the whole nomination form at once: every category, several names each', function () {
+    $event = tfEvent(['voting_mode' => 'paid', 'vote_price_naira' => 50, 'starts_at' => now()->addDays(3), 'ends_at' => now()->addDays(5),
+        'nominations_enabled' => true, 'nominations_ends_at' => now()->addDays(2)], pro: false);
+    $artist = Category::create(['event_id' => $event->id, 'name' => 'Best Artist']);
+    $dressed = Category::create(['event_id' => $event->id, 'name' => 'Best Dressed']);
+    $motion = Category::create(['event_id' => $event->id, 'name' => 'Approve budget', 'method' => 'motion']);
+    $url = "/api/public/events/{$event->link_token}/nominations";
+
+    // The form lists only categories people can nominate in, and the per-category limit.
+    $this->getJson($url)->assertJsonCount(2, 'categories')->assertJsonPath('per_category', 3);
+
+    $row = fn ($cat, $name) => ['category_id' => $cat->id, 'nominee_name' => $name];
+    $this->postJson("{$url}/batch", ['device_id' => 'phone-a', 'email' => 'fan@example.com', 'nominations' => [
+        $row($artist, 'Burna Boy'), $row($artist, 'Tems'), $row($artist, 'TEMS'),   // a repeat inside the form
+        $row($dressed, 'Burna Boy'),                                                 // same name, other category: fine
+        $row($motion, 'Someone'),                                                    // motions take no nominations
+    ]])->assertCreated()
+        ->assertJsonCount(3, 'accepted')
+        ->assertJsonCount(2, 'refused')
+        ->assertJsonPath('refused.0.name', 'TEMS')
+        ->assertJsonPath('refused.1.category', null);
+
+    // The per-category limit counts across visits: 2 already in Best Artist, so 1 more fits.
+    $this->postJson("{$url}/batch", ['device_id' => 'phone-a', 'nominations' => [$row($artist, 'Asake'), $row($artist, 'Rema')]])
+        ->assertCreated()->assertJsonPath('accepted.0.name', 'Asake')->assertJsonPath('refused.0.name', 'Rema');
+
+    // Nothing accepted: 422 with the reasons.
+    $this->postJson("{$url}/batch", ['device_id' => 'phone-a', 'nominations' => [$row($artist, 'Burna Boy')]])
+        ->assertStatus(422)->assertJsonCount(1, 'refused');
+    $this->postJson("{$url}/batch", ['nominations' => []])->assertStatus(422);
+
+    expect(\App\Models\Nomination::where('event_id', $event->id)->count())->toBe(4)
+        ->and(\App\Models\Nomination::where('event_id', $event->id)->where('nominee_name', 'Tems')->value('nominator_email'))->toBe('fan@example.com');
+});
+
 it('lets the organiser suggest nominee names that the public can pick or ignore', function () {
     $event = tfEvent(['voting_mode' => 'paid', 'vote_price_naira' => 50, 'starts_at' => now()->addDays(3), 'ends_at' => now()->addDays(5),
         'nominations_enabled' => true, 'nominations_ends_at' => now()->addDays(2)], pro: false);

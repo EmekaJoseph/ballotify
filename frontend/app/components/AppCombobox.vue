@@ -4,7 +4,7 @@
             <input :id="id" ref="input" :value="model" type="text" class="form-control" :class="size === 'lg' ? 'form-control-lg' : ''"
                 role="combobox" aria-autocomplete="list" :aria-expanded="showMenu" :aria-controls="listId"
                 :aria-activedescendant="showMenu && active >= 0 ? optionId(active) : undefined"
-                :placeholder="placeholder" :maxlength="maxlength" autocomplete="off" spellcheck="false"
+                :placeholder="placeholder" :maxlength="maxlength" :aria-label="ariaLabel" autocomplete="off" spellcheck="false"
                 @input="onInput" @focus="openMenu" @click="openMenu" @keydown="onKey" @blur="close" />
             <button v-if="options.length" type="button" class="ac-toggle" tabindex="-1" :aria-label="toggleLabel"
                 @mousedown.prevent @click="toggle">
@@ -38,7 +38,8 @@ const props = withDefaults(defineProps<{
     maxlength?: number;
     id?: string;
     toggleLabel?: string;
-}>(), { placeholder: '', size: 'md', maxlength: undefined, id: undefined, toggleLabel: 'Show suggestions' });
+    ariaLabel?: string;
+}>(), { placeholder: '', size: 'md', maxlength: undefined, id: undefined, toggleLabel: 'Show suggestions', ariaLabel: undefined });
 const model = defineModel<string>({ default: '' });
 
 const uid = useId();

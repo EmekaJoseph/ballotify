@@ -1,5 +1,5 @@
 import api from '../index';
-import type { CandidateProfile, Choice, EventResults, NominationForm, PlanInfo, PublicEvent, ReceiptCheck, ResultCertificateInfo } from '~/types';
+import type { CandidateProfile, Choice, EventResults, NominationForm, NominationResult, PlanInfo, PublicEvent, ReceiptCheck, ResultCertificateInfo } from '~/types';
 
 export const publicApi = {
     /** Ballot for an open event. Responds 403 with {status, message} when not open, 404 when unknown. */
@@ -34,6 +34,9 @@ export const publicApi = {
     nominationForm: (token: string) => api.get<NominationForm>(`/public/events/${token}/nominations`),
     nominate: (token: string, data: { category_id: number; nominee_name: string; reason?: string; email?: string; captcha_token?: string; device_id?: string }) =>
         api.post<{ message: string }>(`/public/events/${token}/nominations`, data),
+    /** Every category at once (several names each): one request, one "I'm human" check. */
+    nominateMany: (token: string, data: { nominations: { category_id: number; nominee_name: string; reason?: string }[]; captcha_token?: string; device_id?: string }) =>
+        api.post<NominationResult>(`/public/events/${token}/nominations/batch`, data),
 
     candidateProfile: (token: string) => api.get<CandidateProfile>(`/public/candidate-profile/${token}`),
     updateCandidateProfile: (token: string, form: FormData) => api.post<CandidateProfile>(`/public/candidate-profile/${token}`, form),

@@ -604,6 +604,15 @@ export interface NominationForm {
     brand: Brand | null;
     /** suggestions: names the organiser listed; people may pick one or type their own. */
     categories: { id: number; name: string; suggestions: string[] }[];
+    /** Names one person may put forward per category. */
+    per_category?: number;
+}
+
+/** The whole nomination form, sent at once: what was kept, and what wasn't (with why). */
+export interface NominationResult {
+    message: string;
+    accepted: { category_id: number; category: string; name: string }[];
+    refused: { category_id: number; category: string | null; name: string; reason: string }[];
 }
 
 /** A "reset votes and results" (test run): always shown with the results. */

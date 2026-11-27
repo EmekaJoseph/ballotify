@@ -37,11 +37,14 @@ class NominationController extends Controller
             'language' => $event->language,
             'brand' => ($event->brand_color || $event->brand_logo_path) && \App\Support\Plans::isPro($event)
                 ? ['color' => $event->brand_color, 'logo_url' => $event->brand_logo_url] : null,
-            'categories' => $event->categories->map(fn ($c) => ['id' => $c->id, 'name' => $c->name, 'suggestions' => $c->nominee_suggestions ?? []]),
+            'categories' => $event->categories->reject(fn ($c) => $c->isMotion())->values()
+                ->map(fn ($c) => ['id' => $c->id, 'name' => $c->name, 'suggestions' => $c->nominee_suggestions ?? []]),
+            // Names one person may put forward per category.
+            'per_category' => self::PER_PERSON_PER_CATEGORY,
         ]);
     }
 
-    /** Public: submit a nomination. */
+    /** Public: submit one nomination. */
     public function store(Request $request, string $token)
     {
         $data = $request->validate([
@@ -49,7 +52,7 @@ class NominationController extends Controller
             'nominee_name' => ['required', 'string', 'min:2', 'max:120'],
             'reason' => ['nullable', 'string', 'max:280'],
             'email' => ['nullable', 'email:rfc', 'max:255'],
-            // Anonymous ID the browser keeps (see store): random, never personal.
+            // Anonymous ID the browser keeps (see sameNominator): random, never personal.
             'device_id' => ['nullable', 'string', 'max:100'],
         ]);
         Turnstile::verify($request);
@@ -58,47 +61,140 @@ class NominationController extends Controller
         if (! $event->nominationsOpen()) {
             return response()->json(['message' => __('Nominations are closed for this event.')], 403);
         }
-        $category = Category::where('event_id', $event->id)->find($data['category_id']);
+        $category = $this->nominatable($event)->firstWhere('id', $data['category_id']);
         if (! $category) {
             throw ValidationException::withMessages(['category_id' => [__('Choose a category from this event.')]]);
         }
 
-        // "The same person" = same IP address AND same browser. Mobile networks share one IP
-        // among many customers, so the IP alone would block strangers; the browser's
-        // anonymous ID tells them apart. No ID (storage blocked): the IP alone decides.
+        [$ipHash, $deviceHash] = $this->sameNominator($request, $data['device_id'] ?? null);
+        $refused = $this->accept($event, $category, $data['nominee_name'], $data['reason'] ?? null, $data['email'] ?? null, $ipHash, $deviceHash);
+        if ($refused) {
+            return $refused['status'] === 422
+                ? throw ValidationException::withMessages(['nominee_name' => [$refused['message']]])
+                : response()->json(['message' => $refused['message']], $refused['status']);
+        }
+        $name = self::squish($data['nominee_name']);
+
+        return response()->json(['message' => __('Thank you! Your nomination of :name for “:category” was received.', ['name' => $name, 'category' => $category->name])], 201);
+    }
+
+    /**
+     * Public: the whole form at once (every category, several names each). One request,
+     * so one "I'm human" check covers it. Each name is checked like a single nomination;
+     * those refused are listed with the reason, the rest are kept.
+     */
+    public function storeMany(Request $request, string $token)
+    {
+        $data = $request->validate([
+            'nominations' => ['required', 'array', 'min:1', 'max:300'],
+            'nominations.*.category_id' => ['required', 'integer'],
+            'nominations.*.nominee_name' => ['required', 'string', 'min:2', 'max:120'],
+            'nominations.*.reason' => ['nullable', 'string', 'max:280'],
+            'email' => ['nullable', 'email:rfc', 'max:255'],
+            'device_id' => ['nullable', 'string', 'max:100'],
+        ], [
+            'nominations.required' => __('Enter at least one name.'),
+            'nominations.*.nominee_name.min' => __('Names need at least 2 letters.'),
+        ]);
+        Turnstile::verify($request);
+
+        $event = Event::publicToken($token)->firstOrFail();
+        if (! $event->nominationsOpen()) {
+            return response()->json(['message' => __('Nominations are closed for this event.')], 403);
+        }
+        $categories = $this->nominatable($event)->keyBy('id');
+        [$ipHash, $deviceHash] = $this->sameNominator($request, $data['device_id'] ?? null);
+
+        $accepted = [];
+        $refused = [];
+        foreach ($data['nominations'] as $row) {
+            $category = $categories->get($row['category_id']);
+            $name = self::squish($row['nominee_name']);
+            if (! $category) {
+                $refused[] = ['category_id' => $row['category_id'], 'category' => null, 'name' => $name, 'reason' => __('Choose a category from this event.')];
+                continue;
+            }
+            $no = $this->accept($event, $category, $name, $row['reason'] ?? null, $data['email'] ?? null, $ipHash, $deviceHash);
+            if ($no) {
+                $refused[] = ['category_id' => $category->id, 'category' => $category->name, 'name' => $name, 'reason' => $no['message']];
+            } else {
+                $accepted[] = ['category_id' => $category->id, 'category' => $category->name, 'name' => $name];
+            }
+        }
+
+        $n = count($accepted);
+        return response()->json([
+            'message' => $n
+                ? trans_choice('Thank you! Your nomination was received.|Thank you! Your :count nominations were received.', $n, ['count' => $n])
+                : __('None of these nominations could be sent.'),
+            'accepted' => $accepted,
+            'refused' => $refused,
+        ], $n ? 201 : 422);
+    }
+
+    /** Categories people can nominate in (motions have fixed Yes / No / Abstain). */
+    private function nominatable(Event $event)
+    {
+        return $event->categories()->get()->reject(fn ($c) => $c->isMotion())->values();
+    }
+
+    /**
+     * "The same person" = same IP address AND same browser. Mobile networks share one IP
+     * among many customers, so the IP alone would block strangers; the browser's anonymous
+     * ID tells them apart. No ID (storage blocked): the IP alone decides.
+     *
+     * @return array{0: string, 1: ?string} [ip hash, device hash]
+     */
+    private function sameNominator(Request $request, ?string $deviceId): array
+    {
         $key = (string) config('app.key');
-        $ipHash = hash_hmac('sha256', (string) $request->ip(), $key);
-        $deviceHash = ! empty($data['device_id']) ? hash_hmac('sha256', 'device:' . $data['device_id'], $key) : null;
+        return [
+            hash_hmac('sha256', (string) $request->ip(), $key),
+            $deviceId ? hash_hmac('sha256', 'device:' . $deviceId, $key) : null,
+        ];
+    }
+
+    private static function squish(string $name): string
+    {
+        return trim(preg_replace('/\s+/u', ' ', $name) ?? '');
+    }
+
+    /**
+     * Save one nomination, or say why not (null = saved). The rules: a name once per
+     * category per person, at most PER_PERSON_PER_CATEGORY names per category per person,
+     * and a cap per network.
+     *
+     * @return array{status: int, message: string}|null
+     */
+    private function accept(Event $event, Category $category, string $rawName, ?string $reason, ?string $email, string $ipHash, ?string $deviceHash): ?array
+    {
+        $name = self::squish($rawName);
         $samePerson = fn () => Nomination::where('category_id', $category->id)->where('ip_hash', $ipHash)
             ->when($deviceHash, fn ($q) => $q->where('device_hash', $deviceHash));
 
-        $name = trim(preg_replace('/\s+/u', ' ', $data['nominee_name']) ?? '');
-
-        // One nomination of a name per category per person (the same name in another category is fine).
+        // The same name in another category is fine.
         if ($samePerson()->where('normalized_name', Nomination::normalize($name))->exists()) {
-            throw ValidationException::withMessages(['nominee_name' => [
-                __('You’ve already nominated :name in “:category”. You can nominate them in another category.', ['name' => $name, 'category' => $category->name]),
-            ]]);
+            return ['status' => 422, 'message' => __('You’ve already nominated :name in “:category”. You can nominate them in another category.', ['name' => $name, 'category' => $category->name])];
         }
         if ($samePerson()->count() >= self::PER_PERSON_PER_CATEGORY) {
-            return response()->json(['message' => __('You’ve already sent the most nominations allowed for this category.')], 429);
+            return ['status' => 429, 'message' => __('You’ve already sent the most nominations allowed for this category.')];
         }
         // Backstop against one network flooding a category (many browsers, one address).
         if (Nomination::where('category_id', $category->id)->where('ip_hash', $ipHash)->count() >= self::PER_NETWORK_PER_CATEGORY) {
-            return response()->json(['message' => __('Too many nominations from this network for this category. Please try again later.')], 429);
+            return ['status' => 429, 'message' => __('Too many nominations from this network for this category. Please try again later.')];
         }
+
         Nomination::create([
             'event_id' => $event->id,
             'category_id' => $category->id,
             'nominee_name' => $name,
             'normalized_name' => Nomination::normalize($name),
-            'reason' => isset($data['reason']) ? trim($data['reason']) ?: null : null,
-            'nominator_email' => isset($data['email']) ? strtolower($data['email']) : null,
+            'reason' => $reason !== null ? (trim($reason) ?: null) : null,
+            'nominator_email' => $email ? strtolower($email) : null,
             'ip_hash' => $ipHash,
             'device_hash' => $deviceHash,
         ]);
-
-        return response()->json(['message' => __('Thank you! Your nomination of :name for “:category” was received.', ['name' => $name, 'category' => $category->name])], 201);
+        return null;
     }
 
     /** Organiser: nominations grouped by category and name, most nominated first. */

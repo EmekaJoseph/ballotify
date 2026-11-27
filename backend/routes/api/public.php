@@ -36,6 +36,8 @@ Route::post('events/{token}/request-code', [SelfRegistrationController::class, '
 // Nominations
 Route::get('events/{token}/nominations', [NominationController::class, 'form'])->middleware('throttle:public');
 Route::post('events/{token}/nominations', [NominationController::class, 'store'])->middleware('throttle:20,1');
+// The whole form at once (every category, several names each).
+Route::post('events/{token}/nominations/batch', [NominationController::class, 'storeMany'])->middleware('throttle:20,1');
 
 // Candidate self-service (private link)
 Route::get('candidate-profile/{token}', [CandidateProfileController::class, 'publicShow'])->middleware('throttle:public');

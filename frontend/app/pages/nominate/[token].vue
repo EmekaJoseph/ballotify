@@ -30,35 +30,70 @@
                 <NuxtLink :to="`/vote/${token}`" class="btn btn-primary">{{ t('nom.goVote') }}</NuxtLink>
             </div>
 
-            <div v-else-if="done" class="card-b text-center px-4 py-5 fade-up">
-                <div class="icon-tile lg mx-auto mb-3" style="background: var(--success-50); color: var(--success)"><i class="bi bi-check2-circle"></i></div>
-                <h2 class="h5 fw-800 mb-2">{{ t('nom.received') }}</h2>
-                <p class="text-muted mb-4">{{ done }}</p>
-                <button class="btn btn-primary" @click="again"><i class="bi bi-plus-lg"></i> {{ t('nom.another') }}</button>
+            <!-- Sent: what went through, what didn't (and why) -->
+            <div v-else-if="result" class="card-b pad fade-up">
+                <div class="text-center">
+                    <div class="icon-tile lg mx-auto mb-3" :style="result.accepted.length ? 'background: var(--success-50); color: var(--success)' : ''">
+                        <i class="bi" :class="result.accepted.length ? 'bi-check2-circle' : 'bi-exclamation-circle'"></i>
+                    </div>
+                    <h2 class="h5 fw-800 mb-2">{{ result.accepted.length ? t('nom.received') : t('nom.notSent') }}</h2>
+                    <p class="text-muted mb-4">{{ result.message }}</p>
+                </div>
+
+                <div v-if="result.accepted.length" class="sent mb-3">
+                    <div class="small fw-bold text-muted mb-2">{{ t('nom.yours') }}</div>
+                    <ul class="list-unstyled mb-0">
+                        <li v-for="g in grouped(result.accepted)" :key="g.category" class="sent-row">
+                            <i class="bi bi-check-circle-fill"></i>
+                            <span class="min-w-0"><b class="text-ink">{{ g.category }}:</b> {{ g.names.join(', ') }}</span>
+                        </li>
+                    </ul>
+                </div>
+                <div v-if="result.refused.length" class="sent refused mb-3">
+                    <div class="small fw-bold mb-2">{{ t('nom.notSentList') }}</div>
+                    <ul class="list-unstyled mb-0">
+                        <li v-for="(r, i) in result.refused" :key="i" class="sent-row">
+                            <i class="bi bi-x-circle-fill"></i>
+                            <span class="min-w-0"><b class="text-ink">{{ r.name }}</b><template v-if="r.category"> ({{ r.category }})</template>: {{ r.reason }}</span>
+                        </li>
+                    </ul>
+                </div>
+                <button type="button" class="btn btn-primary w-100" @click="startOver"><i class="bi bi-plus-lg"></i> {{ t('nom.nominateMore') }}</button>
             </div>
 
-            <form v-else class="card-b pad" novalidate @submit.prevent="submit">
-                <label for="nom-cat" class="form-label">{{ t('nom.category') }}</label>
-                <AppSelect id="nom-cat" v-model="categoryId" :options="form.categories.map(c => ({ value: c.id, label: c.name }))" size="lg" class="mb-3"
-                    :placeholder="t('nom.chooseCategory')" :search-placeholder="t('nom.chooseCategory')" :empty-text="'—'" />
+            <!-- One form: every category, one or more names each, sent together -->
+            <form v-else novalidate @submit.prevent="submit">
+                <p class="small text-muted mb-3">{{ t('nom.introAll') }}</p>
 
-                <label for="nom-name" class="form-label">{{ t('nom.who') }}</label>
-                <AppCombobox id="nom-name" v-model="nominee" :options="suggestions" size="lg" :maxlength="120"
-                    :placeholder="t('nom.fullName')" :toggle-label="t('nom.showSuggestions')" :class="suggestions.length ? 'mb-1' : 'mb-3'" />
-                <div v-if="suggestions.length" class="form-text mb-3">{{ t('nom.pickOrType') }}</div>
+                <section v-for="cat in form.categories" :key="cat.id" class="card-b pad mb-3 cat">
+                    <h2 class="h6 fw-800 mb-3 text-break">{{ cat.name }}</h2>
+                    <div v-for="(row, i) in entries[cat.id]" :key="row.key" class="name-row" :class="{ 'mt-3': i > 0 }">
+                        <div class="name-fields">
+                            <AppCombobox :id="`nom-${cat.id}-${row.key}`" v-model="row.name" :options="cat.suggestions" :maxlength="120"
+                                :placeholder="t('nom.fullName')" :toggle-label="t('nom.showSuggestions')" :aria-label="`${cat.name}: ${t('nom.fullName')}`" />
+                            <input v-model="row.reason" class="form-control reason" maxlength="280" :placeholder="`${t('nom.why')} ${t('common.optional')}`"
+                                :aria-label="`${t('nom.why')} ${t('common.optional')}`" />
+                        </div>
+                        <button v-if="entries[cat.id]!.length > 1" type="button" class="btn btn-ghost btn-icon btn-sm flex-shrink-0" :title="t('nom.removeName')"
+                            :aria-label="t('nom.removeName')" @click="removeRow(cat.id, i)">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                        <div v-if="isRepeat(cat.id, i)" class="field-error w-100 mt-1">{{ t('nom.repeatName') }}</div>
+                    </div>
+                    <div v-if="cat.suggestions.length" class="form-text mt-2">{{ t('nom.pickOrType') }}</div>
+                    <button v-if="entries[cat.id]!.length < perCategory" type="button" class="btn btn-link btn-sm px-0 mt-2" @click="addRow(cat.id)">
+                        <i class="bi bi-plus-lg"></i> {{ t('nom.addName') }}
+                    </button>
+                </section>
 
-                <label for="nom-reason" class="form-label">{{ t('nom.why') }} <span class="text-muted fw-normal">{{ t('common.optional') }}</span></label>
-                <textarea id="nom-reason" v-model="reason" class="form-control mb-1" rows="2" maxlength="280" :placeholder="t('nom.whyPh')"></textarea>
-                <div class="form-text text-end mb-3">{{ reason.length }}/280</div>
-
-                <label for="nom-email" class="form-label">{{ t('nom.email') }} <span class="text-muted fw-normal">{{ t('nom.emailHint') }}</span></label>
-                <input id="nom-email" v-model.trim="email" type="email" class="form-control mb-3" autocomplete="email" maxlength="255" />
-
-                <HumanCheck ref="human" v-model="captcha" class="mb-3" />
-                <button class="btn btn-primary btn-lg w-100" :disabled="busy || !categoryId || nominee.trim().length < 2">
-                    <span v-if="busy" class="spinner-border spinner-border-sm"></span> {{ t('nom.send') }}
-                </button>
-                <p class="small text-muted text-center mt-3 mb-0">{{ t('nom.organiserDecides') }}</p>
+                <div class="card-b pad send-bar">
+                    <HumanCheck ref="human" v-model="captcha" class="mb-3" />
+                    <button class="btn btn-primary btn-lg w-100" :disabled="busy || !toSend.length">
+                        <span v-if="busy" class="spinner-border spinner-border-sm"></span>
+                        {{ toSend.length ? tn('nom.sendN', toSend.length) : t('nom.fillOne') }}
+                    </button>
+                    <p class="small text-muted text-center mt-3 mb-0">{{ t('nom.organiserDecides') }}</p>
+                </div>
             </form>
         </template>
     </div>
@@ -66,7 +101,7 @@
 
 <script setup lang="ts">
 import { publicApi } from '~/api/endpoints/public';
-import type { NominationForm } from '~/types';
+import type { NominationForm, NominationResult } from '~/types';
 
 definePageMeta({ layout: 'ballot' });
 useBallotModeFor('nominate');
@@ -77,16 +112,36 @@ const { alert } = useAlert();
 const form = ref<NominationForm | null>(null);
 const loading = ref(true);
 const notFound = ref(false);
-const categoryId = ref(0);
-const nominee = ref('');
-const reason = ref('');
-const email = ref('');
 const captcha = ref('');
 const human = ref<{ reset: () => void } | null>(null);
 const busy = ref(false);
-const done = ref('');
-/** The organiser's suggested names for the chosen category. */
-const suggestions = computed(() => form.value?.categories.find(c => c.id === categoryId.value)?.suggestions ?? []);
+const result = ref<NominationResult | null>(null);
+
+// ----- The names typed, per category (one row to start; up to the limit)
+interface Row { key: number; name: string; reason: string }
+const entries = ref<Record<number, Row[]>>({});
+let nextKey = 1;
+const blankRow = (): Row => ({ key: nextKey++, name: '', reason: '' });
+const perCategory = computed(() => form.value?.per_category ?? 3);
+function resetEntries() {
+    entries.value = Object.fromEntries((form.value?.categories ?? []).map(c => [c.id, [blankRow()]]));
+}
+function addRow(catId: number) { entries.value[catId]?.push(blankRow()); }
+function removeRow(catId: number, i: number) { entries.value[catId]?.splice(i, 1); }
+
+/** "Ada  OBI" and "ada obi" are the same name. */
+const key = (s: string) => s.replace(/\s+/g, ' ').trim().toLowerCase();
+/** The same name typed twice in one category: only the first counts. */
+function isRepeat(catId: number, i: number): boolean {
+    const rows = entries.value[catId] ?? [];
+    const k = key(rows[i]?.name ?? '');
+    return k.length >= 2 && rows.slice(0, i).some(r => key(r.name) === k);
+}
+/** Every filled-in name, once per category. */
+const toSend = computed(() => (form.value?.categories ?? []).flatMap(c =>
+    (entries.value[c.id] ?? [])
+        .filter((r, i) => key(r.name).length >= 2 && !isRepeat(c.id, i))
+        .map(r => ({ category_id: c.id, nominee_name: r.name.replace(/\s+/g, ' ').trim(), reason: r.reason.trim() || undefined }))));
 
 useHead({ title: computed(() => `${t('nom.title')} · ${form.value?.name ?? 'Ballotify'}`) });
 useBrandTheme(() => form.value?.brand);
@@ -95,7 +150,7 @@ onMounted(async () => {
     try {
         form.value = (await publicApi.nominationForm(token)).data;
         setEventLanguage(form.value.language);
-        if (form.value.categories.length === 1) categoryId.value = form.value.categories[0]!.id;
+        resetEntries();
     } catch (e) {
         notFound.value = apiStatus(e) === 404;
         if (!notFound.value) await alert({ title: t('nom.cantLoad'), message: apiErrorMessage(e) });
@@ -105,15 +160,18 @@ onMounted(async () => {
 });
 
 async function submit() {
+    if (!toSend.value.length) return;
     busy.value = true;
     try {
-        const { data } = await publicApi.nominate(token, {
-            category_id: categoryId.value, nominee_name: nominee.value.trim(), reason: reason.value.trim() || undefined,
-            email: email.value || undefined, captcha_token: captcha.value || undefined, device_id: deviceId(),
+        const { data } = await publicApi.nominateMany(token, {
+            nominations: toSend.value, captcha_token: captcha.value || undefined, device_id: deviceId(),
         });
-        done.value = data.message;
+        showResult(data);
     } catch (e) {
         human.value?.reset();
+        // Every name refused: the server still says which and why.
+        const body = (e as { response?: { data?: Partial<NominationResult> } }).response?.data;
+        if (body?.refused?.length) { showResult({ message: body.message ?? '', accepted: body.accepted ?? [], refused: body.refused }); return; }
         const fields = apiFieldErrors(e);
         await alert({ title: t('nom.notSent'), message: Object.values(fields)[0] ?? apiErrorMessage(e) });
     } finally {
@@ -121,14 +179,35 @@ async function submit() {
     }
 }
 
-function again() {
-    done.value = '';
-    nominee.value = '';
-    reason.value = '';
+function showResult(r: NominationResult) {
+    result.value = r;
+    captcha.value = ''; // a check token works once: the next form gets a fresh one
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function startOver() {
+    result.value = null;
+    resetEntries();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+/** Accepted names grouped by category, in the form's order. */
+function grouped(list: NominationResult['accepted']) {
+    const by = new Map<string, string[]>();
+    for (const a of list) by.set(a.category, [...(by.get(a.category) ?? []), a.name]);
+    return [...by].map(([category, names]) => ({ category, names }));
 }
 </script>
 
 <style scoped>
+.name-row { display: flex; flex-wrap: wrap; align-items: flex-start; gap: .5rem; }
+.name-fields { flex: 1 1 0; min-width: 0; display: grid; grid-template-columns: 1.2fr 1fr; gap: .5rem; }
+@media (max-width: 575.98px) { .name-fields { grid-template-columns: 1fr; } }
+.reason { font-size: .92rem; }
+.send-bar { position: sticky; bottom: .75rem; z-index: 5; box-shadow: 0 12px 32px -16px rgba(15, 23, 42, .35); }
+.sent { padding: .8rem 1rem; border-radius: 12px; background: var(--surface-2); }
+.sent.refused { background: var(--danger-50, var(--surface-2)); }
+.sent-row { display: flex; gap: .5rem; align-items: baseline; font-size: .92rem; padding: .15rem 0; overflow-wrap: anywhere; }
+.sent-row .bi-check-circle-fill { color: var(--success); flex-shrink: 0; }
+.sent-row .bi-x-circle-fill { color: var(--danger); flex-shrink: 0; }
 .intro-band {
     padding: 1.75rem 1.5rem;
     background:
