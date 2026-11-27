@@ -54,7 +54,12 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       apiBase: 'http://localhost:8883/api',
-      // Live results via Laravel Reverb. Leave reverbKey empty to refresh results every 15 s instead.
+      // Live results through Pusher (hosted; nothing to run on the server). Set the key and
+      // cluster from the Pusher dashboard; the backend needs BROADCAST_CONNECTION=pusher.
+      // Takes priority over Reverb. Both empty = results refresh every 15 s instead.
+      pusherKey: '',
+      pusherCluster: '',
+      // Or live results via Laravel Reverb (self-hosted). Leave reverbKey empty to not use it.
       reverbKey: '',
       reverbHost: 'localhost',
       reverbPort: 8080,
