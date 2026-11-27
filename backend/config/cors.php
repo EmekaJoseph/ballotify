@@ -19,8 +19,10 @@ return [
 
     'allowed_methods' => ['*'],
 
-    // Comma-separated list, e.g. "https://app.example.com,https://www.example.com"
-    'allowed_origins' => array_filter(array_map('trim', explode(',', env('CORS_ALLOWED_ORIGINS', env('FRONTEND_URL', 'http://localhost:3000'))))),
+    // Any website may call the API from a browser. Safe here: signing in uses a token the
+    // app adds to each request itself (never a cookie a browser sends on its own), so another
+    // site can only reach what is public anyway.
+    'allowed_origins' => ['*'],
 
     'allowed_origins_patterns' => [],
 
@@ -30,6 +32,7 @@ return [
 
     'max_age' => 0,
 
-    'supports_credentials' => true,
+    // No cookies: the API uses bearer tokens (and "*" can't be combined with credentials).
+    'supports_credentials' => false,
 
 ];

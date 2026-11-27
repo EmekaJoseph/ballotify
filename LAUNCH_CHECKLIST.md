@@ -20,7 +20,7 @@ there is only a note: the command reports what it actually finds.
 
 ## Production setup
 
-- [ ] Frontend domain chosen; API `.env`: `FRONTEND_URL` + `CORS_ALLOWED_ORIGINS` = it (and its `www.` form if used), then `php artisan config:cache`. API runs at `https://ballotify.agudatechy.com`
+- [ ] API `.env`: `FRONTEND_URL=https://ballotifyng.vercel.app` (links in emails), then `php artisan config:cache`. API runs at `https://ballotify.api.agudatechy.com`; CORS already allows any site
 - [ ] Frontend built with `NUXT_PUBLIC_API_BASE=https://ballotify.agudatechy.com/api` (these are baked in at build time: rebuild after changing them), and the host sends every unknown path to `index.html` (single-page app)
 - [ ] Paystack webhook: `https://ballotify.agudatechy.com/api/paystack/webhook`; Turnstile site key allowed on the frontend domain
 - [ ] Live results via Pusher: API `.env` `BROADCAST_CONNECTION=pusher` + `PUSHER_APP_ID/KEY/SECRET/CLUSTER`; Vercel `NUXT_PUBLIC_PUSHER_KEY` + `NUXT_PUBLIC_PUSHER_CLUSTER` (empty `NUXT_PUBLIC_REVERB_KEY`), then redeploy
