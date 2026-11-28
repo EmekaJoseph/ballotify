@@ -113,3 +113,28 @@ it('signals the organisers on every vote, and the public only while results are 
     $live = new \App\Events\VoteCast(7, true);
     expect(collect($live->broadcastOn())->map->name->all())->toBe(['private-evoting.admin.event.7', 'evoting.event.7']);
 });
+
+it('seeds sample events whose totals add up, and only once', function () {
+    $this->seed(\Database\Seeders\UserSeeder::class);
+    $this->seed(\Database\Seeders\EventSeeder::class);
+    $this->seed(\Database\Seeders\EventSeeder::class); // again: nothing doubled
+
+    expect(Event::count())->toBe(3);
+    $open = Event::where('name', 'like', 'Students%')->first();
+    expect($open->status)->toBe('active')
+        ->and($open->voters()->count())->toBe(120)
+        ->and($open->voters()->whereNotNull('used_at')->count())->toBe(71)
+        ->and(\App\Models\BallotReceipt::where('event_id', $open->id)->count())->toBe(71);
+    // A choose-one category: its votes equal the ballots that answered it.
+    $president = Category::where('event_id', $open->id)->where('name', 'President')->first();
+    expect((int) $president->candidates()->sum('votes'))->toBe($president->ballots);
+
+    expect(Event::where('name', 'like', 'Grace Chapel%')->first()->status)->toBe('completed');
+    $agm = Event::where('name', 'like', 'Lagos Traders%')->first();
+    expect($agm->nominationsOpen())->toBeTrue()->and($agm->nominations()->count())->toBe(24);
+
+    // The dashboard and results load for the owner.
+    $admin = User::where('email', 'admin@agudatechy.com')->first();
+    $this->actingAs($admin)->getJson('/api/events')->assertOk()->assertJsonCount(3);
+    $this->actingAs($admin)->getJson("/api/events/{$open->id}/results")->assertOk()->assertJsonPath('stats.voted', 71);
+});
