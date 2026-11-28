@@ -10,13 +10,13 @@ class Candidate extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['event_id', 'category_id', 'name', 'description', 'image_path', 'motion_choice'];
+    protected $fillable = ['event_id', 'category_id', 'name', 'description', 'image_path'];
 
     /**
      * The running vote total is never serialised by default: ballots and admin
      * lists must not leak results. Results endpoints read it explicitly.
      */
-    protected $hidden = ['votes', 'profile_token'];
+    protected $hidden = ['votes'];
 
     protected $casts = ['votes' => 'integer'];
 

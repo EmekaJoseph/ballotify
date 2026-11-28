@@ -65,7 +65,6 @@ class Templates
             'name' => $t['name'],
             'summary' => $t['summary'],
             'icon' => $t['icon'],
-            'voting_mode' => Event::MODE_CODES,
             'results_visibility' => $t['results_visibility'],
             'categories' => array_column($t['categories'], 'name'),
         ])->values()->all();
@@ -83,7 +82,6 @@ class Templates
                 'name' => $c['name'],
                 'max_choices' => $c['max_choices'] ?? 1,
                 'shuffle_candidates' => $c['shuffle_candidates'] ?? false,
-                'method' => Category::PLURALITY,
             ]);
             foreach ($c['candidates'] ?? [] as $name) {
                 Candidate::create(['event_id' => $event->id, 'category_id' => $category->id, 'name' => $name]);

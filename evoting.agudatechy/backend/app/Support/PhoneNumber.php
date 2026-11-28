@@ -33,7 +33,7 @@ class PhoneNumber
             return '+' . substr($digits, 2);
         }
 
-        $country = preg_replace('/\D+/', '', (string) config('services.sms.default_country_code'));
+        $country = preg_replace('/\D+/', '', (string) config('ballotify.default_country_code'));
         if (str_starts_with($digits, '0') && $country !== '') {
             return '+' . $country . substr($digits, 1);
         }

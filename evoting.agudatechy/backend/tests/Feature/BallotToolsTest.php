@@ -82,7 +82,6 @@ it('duplicates an event ballot without voters, votes or dates', function () {
         ->assertCreated()
         ->assertJsonPath('name', 'Board (copy)')
         ->assertJsonPath('starts_at', null)
-        ->assertJsonPath('voting_mode', 'codes')
         ->assertJsonPath('categories_count', 2)
         ->assertJsonPath('candidates_count', 3)
         ->assertJsonPath('voters_count', 0);

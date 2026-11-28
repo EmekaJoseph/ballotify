@@ -1,7 +1,7 @@
 <?php
 
 /*
-| The ballot: categories (and motions) and candidates.
+| The ballot: categories and candidates.
 | Loaded by routes/api.php inside the signed-in group.
 */
 

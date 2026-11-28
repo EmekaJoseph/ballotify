@@ -200,8 +200,6 @@ it('locks the ballot structure once voting has started, but allows typo fixes', 
     $as->deleteJson("/api/events/{$id}/categories/{$e['category']->id}")->assertStatus(409);
     $as->postJson("/api/events/{$id}/candidates", ['category_id' => $e['category']->id, 'name' => 'Chidi'])->assertStatus(409);
     $as->deleteJson("/api/events/{$id}/candidates/{$e['a']->id}")->assertStatus(409);
-    // There is no other voting mode here: asking for one changes nothing.
-    $as->patchJson("/api/events/{$id}", ['voting_mode' => 'paid'])->assertOk()->assertJsonPath('voting_mode', 'codes');
 
     // Cosmetic fixes are allowed, and recorded.
     $as->patchJson("/api/events/{$id}/candidates/{$e['a']->id}", ['name' => 'Ada Obi'])->assertOk();

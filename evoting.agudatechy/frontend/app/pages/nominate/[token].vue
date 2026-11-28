@@ -144,7 +144,6 @@ const toSend = computed(() => (form.value?.categories ?? []).flatMap(c =>
         .map(r => ({ category_id: c.id, nominee_name: r.name.replace(/\s+/g, ' ').trim(), reason: r.reason.trim() || undefined }))));
 
 useHead({ title: computed(() => `${t('nom.title')} · ${form.value?.name ?? 'E-voting'}`) });
-useBrandTheme(() => form.value?.brand);
 
 onMounted(async () => {
     try {

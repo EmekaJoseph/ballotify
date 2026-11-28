@@ -13,7 +13,7 @@ use Illuminate\Auth\Access\Response;
  *   ability   owner  editor  voters  viewer
  *   view        ✓      ✓       ✓       ✓     overview, results, activity
  *   voters      ✓      ✓       ✓             voter list, codes, invitations
- *   manage      ✓      ✓                     ballot, settings, branding, upgrade
+ *   manage      ✓      ✓                     ballot, settings, logo
  *   own         ✓                            delete the event, manage the team
  *
  * People with no role get a 404 (not 403) so event ids cannot be probed.

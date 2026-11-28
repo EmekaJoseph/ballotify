@@ -1,13 +1,8 @@
-/** Whether the ballot layout shows "Powered by Agudatechy". Pages set it once loaded. */
-export function useBallotBranding() {
-    return useState<boolean>('ballot-branding', () => true);
-}
-
 /**
- * The ballot layout's header note: secret ballot (codes), secure payments
- * (paid voting), nominations, or a neutral note on other public pages.
+ * The ballot layout's header note: secret ballot (codes), nominations, or a
+ * neutral note on other public pages.
  */
-export type BallotMode = 'codes' | 'paid' | 'nominate' | 'other';
+export type BallotMode = 'codes' | 'nominate' | 'other';
 export function useBallotMode() {
     return useState<BallotMode>('ballot-mode', () => 'codes');
 }

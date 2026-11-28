@@ -82,8 +82,7 @@ const busy = ref(false);
 const nameInput = ref<HTMLInputElement | null>(null);
 let nextKey = 1;
 
-/** Candidates can't go into motions (they have fixed Yes / No / Abstain). */
-const categoryOptions = computed(() => props.categories.filter(c => c.method !== 'motion').map(c => ({ value: c.id, label: c.name })));
+const categoryOptions = computed(() => props.categories.map(c => ({ value: c.id, label: c.name })));
 const categoryName = (id: number) => props.categories.find(c => c.id === id)?.name ?? '';
 /** "Ada  OBI" and "ada obi" are the same name. */
 const key = (name: string) => name.replace(/\s+/g, ' ').trim().toLowerCase();

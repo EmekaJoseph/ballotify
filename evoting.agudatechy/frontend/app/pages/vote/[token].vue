@@ -28,20 +28,10 @@
             </div>
         </div>
 
-        <!-- Paid voting: confirming a payment after Paystack sent the voter back -->
-        <div v-else-if="stage === 'confirming'" class="card-b text-center px-4 py-5">
-            <span class="spinner-border text-brand mb-3"></span>
-            <h1 class="h5 fw-800 mb-1">{{ t('vote.confirming') }}</h1>
-            <p class="text-muted small mb-0">{{ t('vote.confirmingHint') }}</p>
-        </div>
-
-        <!-- Enter code (or, for paid voting, the nominee list) -->
-        <div v-else-if="(stage === 'code' || stage === 'paid') && event" class="fade-up">
+        <!-- Enter code -->
+        <div v-else-if="stage === 'code' && event" class="fade-up">
             <div v-if="idleClosed" class="alert alert-info border-0 rounded-4 small d-flex gap-2 mb-3" role="status">
                 <i class="bi bi-shield-lock"></i> <span>{{ t('idle.closed') }}</span>
-            </div>
-            <div v-if="paidNotice" class="alert border-0 rounded-4 small d-flex gap-2 mb-3" :class="paidNotice.ok ? 'alert-success' : 'alert-warning'">
-                <i class="bi" :class="paidNotice.ok ? 'bi-check-circle-fill' : 'bi-info-circle'"></i> {{ paidNotice.text }}
             </div>
             <div class="intro card-b overflow-hidden mb-3">
                 <div class="intro-band">
@@ -90,16 +80,7 @@
                 <span class="code-chip d-none d-sm-inline">{{ maskedCode }}</span>
                 <button class="btn btn-link btn-sm text-muted p-0 flex-shrink-0" @click="changeCode">{{ t('vote.notYou') }}</button>
             </div>
-            <!-- Weighted votes / proxies: what this ballot carries -->
-            <div v-if="proxyFor.length || ballotWeight > 1" class="carry-note mb-3">
-                <i class="bi bi-people-fill"></i>
-                <div class="min-w-0">
-                    <div v-if="proxyFor.length">{{ t('vote.proxyNote', { names: listNames(proxyFor) }) }}</div>
-                    <div v-if="ballotWeight > 1" class="fw-bold">{{ t('vote.weightNote', { n: formatNumber(ballotWeight) }) }}</div>
-                </div>
-            </div>
-            <div v-if="!myCategories.length" class="card-b pad text-center text-muted">{{ t('vote.nothingForYou') }}</div>
-            <BallotForm v-else ref="ballot" :categories="myCategories" :candidates="myCandidates"
+            <BallotForm ref="ballot" :categories="event.categories" :candidates="event.candidates"
                 :submitting="submitting" :error="submitError" @submit="castVote" />
         </div>
 
@@ -116,11 +97,9 @@ import { publicApi } from '~/api/endpoints/public';
 import type { Choice, EventStatus, PublicEvent } from '~/types';
 
 definePageMeta({ layout: 'ballot' });
-const branding = useBallotBranding();
-const ballotMode = useBallotMode();
-onBeforeUnmount(() => { branding.value = true; ballotMode.value = 'codes'; }); // other pages use the defaults
+useBallotModeFor('codes');
 
-type Stage = 'loading' | 'unavailable' | 'code' | 'paid' | 'confirming' | 'ballot' | 'done';
+type Stage = 'loading' | 'unavailable' | 'code' | 'ballot' | 'done';
 
 const route = useRoute();
 const router = useRouter();
@@ -143,22 +122,8 @@ const submitError = ref('');
 useErrorAlert(submitError, () => t('vote.notSubmitted'));
 const codeInput = ref<HTMLInputElement | null>(null);
 const ballot = ref<{ closeReview: () => void } | null>(null);
-/** Receipt for a counted ballot (code voting). */
+/** Receipt for a counted ballot. */
 const receipt = ref<string | null>(null);
-/** Paid voting: outcome of the payment the voter just made. */
-const paidResult = ref<{ message: string; reference: string } | null>(null);
-const paidNotice = ref<{ ok: boolean; text: string } | null>(null);
-
-const isPaid = computed(() => event.value?.voting_mode === 'paid');
-const allowedCategories = ref<number[] | null>(null);
-/** Weighted votes / proxies: votes this ballot counts as, and whose votes it also carries. */
-const ballotWeight = ref(1);
-const proxyFor = ref<string[]>([]);
-function listNames(names: string[]): string {
-    return names.length < 2 ? (names[0] ?? '') : `${names.slice(0, -1).join(', ')} ${t('common.and')} ${names[names.length - 1]}`;
-}
-const myCategories = computed(() => (event.value?.categories ?? []).filter(c => !allowedCategories.value || allowedCategories.value.includes(c.id)));
-const myCandidates = computed(() => (event.value?.candidates ?? []).filter(c => myCategories.value.some(cat => cat.id === c.category_id)));
 
 // ----- Idle timeout: a ballot left open (shared phone, polling-booth tablet) closes by itself.
 // Nothing is submitted, so the code still works; the voter just enters it again.
@@ -169,7 +134,7 @@ const idleClosed = ref(false);
 const idle = useIdleTimeout({
     idleMs: IDLE_MS,
     warnMs: IDLE_WARN_MS,
-    active: () => stage.value === 'ballot' || (stage.value === 'done' && !isPaid.value)
+    active: () => stage.value === 'ballot' || stage.value === 'done'
         || (stage.value === 'code' && code.value.trim() !== ''),
     onTimeout: closeIdleSession,
 });
@@ -184,8 +149,7 @@ function closeIdleSession() {
     window.scrollTo({ top: 0 });
 }
 watch(code, (v) => { if (v) idleClosed.value = false; });
-const allSingle = computed(() => (event.value?.categories ?? []).every(c => c.max_choices === 1 && c.method !== 'ranked'));
-useBrandTheme(() => event.value?.brand);
+const allSingle = computed(() => (event.value?.categories ?? []).every(c => c.max_choices === 1));
 
 const unavailable = reactive({
     status: '' as '' | EventStatus,
@@ -214,16 +178,12 @@ async function load() {
     stage.value = 'loading';
     try {
         event.value = (await publicApi.getEvent(token)).data;
-        branding.value = event.value.branding !== false;
-        ballotMode.value = event.value.voting_mode;
-        stage.value = isPaid.value ? 'paid' : 'code';
-        if (!isPaid.value) {
-            await nextTick();
-            codeInput.value?.focus();
-        }
+        stage.value = 'code';
+        await nextTick();
+        codeInput.value?.focus();
     } catch (e) {
         const status = apiStatus(e);
-        const body = (e as { response?: { data?: { status?: EventStatus; starts_at?: string | null; results_public?: boolean; nominations_open?: boolean; language?: string } } }).response?.data;
+        const body = (e as { response?: { data?: { status?: EventStatus; starts_at?: string | null; results_public?: boolean; nominations_open?: boolean } } }).response?.data;
         nominationsOpen.value = !!body?.nominations_open;
         if (status === 403 && body?.status === 'upcoming') {
             showUnavailable({ status: 'upcoming', title: t('vote.notStarted'), text: t('vote.opensAt', { date: formatDate(body.starts_at ?? null, true) }), icon: 'bi-clock', tone: 'amber', startsAt: body.starts_at ?? null });
@@ -249,17 +209,11 @@ async function checkCode() {
         const { data } = await retryWhenBusy(() => publicApi.validateCode(token, normalized.value), () => { codeError.value = t('vote.busyRetrying'); });
         codeError.value = '';
         voterName.value = data.name?.trim() || null;
-        // Voter groups: the categories this code may vote in (all when the API doesn't say).
-        allowedCategories.value = data.categories ?? null;
-        ballotWeight.value = data.weight ?? 1;
-        proxyFor.value = data.proxy_for ?? [];
         stage.value = 'ballot';
         window.scrollTo({ top: 0 });
     } catch (e) {
         const status = apiStatus(e);
-        // Someone holds this member's proxy: the server explains (in the voter's language).
-        if (status === 422 && (e as { response?: { data?: { proxy?: boolean } } }).response?.data?.proxy) codeError.value = apiErrorMessage(e);
-        else if (status === 422) codeError.value = t('vote.badCode');
+        if (status === 422) codeError.value = t('vote.badCode');
         else if (status === 403) await load();
         else if (status === 429 && !(e as { response?: { data?: { retry_after?: number } } }).response?.data?.retry_after) codeError.value = t('vote.busy');
         else codeError.value = apiErrorMessage(e);
@@ -306,8 +260,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.carry-note { display: flex; gap: .7rem; align-items: flex-start; padding: .8rem 1rem; border-radius: var(--radius); background: var(--brand-50); color: var(--ink); font-size: .92rem; overflow-wrap: anywhere; }
-.carry-note > .bi { color: var(--brand-600); font-size: 1.15rem; line-height: 1.3; }
 .voter-bar { display: flex; align-items: center; gap: .75rem; padding: .7rem 1rem; }
 .brand-logo { display: block; max-height: 48px; max-width: 180px; object-fit: contain; border-radius: 8px; background: rgba(255, 255, 255, .92); padding: 4px 8px; }
 .intro-band {

@@ -48,8 +48,6 @@
             </button>
         </div>
 
-        <!-- Weighted votes / proxies / quorum (live quorum progress) -->
-
         <div v-if="loading && !results" class="d-grid gap-3">
             <div class="row g-3"><div v-for="i in 4" :key="i" class="col-6 col-lg-3"><div class="skeleton" style="height: 92px"></div></div></div>
             <div class="skeleton" style="height: 240px"></div>
@@ -125,7 +123,7 @@ const note = computed(() => {
 function downloadCsv() {
     if (!results.value) return;
     const stamp = new Date().toISOString().slice(0, 10);
-    downloadFile(`${slugify(props.event.name)}-results-${stamp}.csv`, resultsCsv(results.value, props.event));
+    downloadFile(`${slugify(props.event.name)}-results-${stamp}.csv`, resultsCsv(results.value));
 }
 
 const updatedAt = ref<Date | null>(null);

@@ -30,7 +30,7 @@ const emit = defineEmits<{ done: [] }>();
 
 const ALL = [
     { target: '[data-tour="tab-ballot"]', title: '1. Build the ballot', text: 'Add categories (like “President”) and the candidates in each, with photos and short descriptions.' },
-    { target: '[data-tour="tab-voters"]', title: '2. Add voters', text: 'Import your voter list or generate codes. Send them by email, SMS or WhatsApp, or print slips.' },
+    { target: '[data-tour="tab-voters"]', title: '2. Add voters', text: 'Import your voter list or generate codes. Send them by email or WhatsApp, or print slips.' },
     { target: '[data-tour="tab-share"]', title: '3. Share and watch', text: 'Share the voting link, then follow turnout live. Present the results on a projector when it’s time.' },
     { target: '[data-tour="checklist"]', title: 'Your checklist', text: 'It ticks itself off as you go. Click any step to jump straight to it.' },
 ];
@@ -71,7 +71,7 @@ const tipStyle = computed(() => {
 
 function onKey(e: KeyboardEvent) { if (e.key === 'Escape') finish(); }
 onMounted(() => {
-    // Only steps that exist on this page (e.g. no Voters tab for paid voting).
+    // Only steps that exist on this page.
     steps.value = ALL.filter(s => document.querySelector(s.target));
     if (!steps.value.length) return finish();
     go(0);

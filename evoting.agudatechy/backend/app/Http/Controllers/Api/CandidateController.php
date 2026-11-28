@@ -39,7 +39,6 @@ class CandidateController extends Controller
         ]);
 
         $category = $this->categoryOf($event, (int) $data['category_id']);
-        self::ensureNotMotion($category);
         $this->ensureUniqueName($category->id, $data['name']);
 
         $candidate = Candidate::create([
@@ -96,10 +95,6 @@ class CandidateController extends Controller
                     $newCategories++;
                 }
                 $category = $byName[$key];
-                if ($category->isMotion()) {
-                    $skipped[] = ['row' => $i + 1, 'reason' => "“{$category->name}” is a motion (Yes / No / Abstain)"];
-                    continue;
-                }
                 $dupeKey = $category->id . '|' . mb_strtolower($name);
                 if (isset($taken[$dupeKey])) {
                     $skipped[] = ['row' => $i + 1, 'reason' => "“{$name}” is already in “{$category->name}”"];
@@ -135,9 +130,6 @@ class CandidateController extends Controller
     public function update(Request $request, Event $event, Candidate $candidate)
     {
         Gate::authorize('manage', $event);
-        if ($candidate->motion_choice) {
-            throw ValidationException::withMessages(['name' => ['A motion’s Yes / No / Abstain options can’t be changed.']]);
-        }
         $data = $request->validate([
             'category_id' => ['sometimes', 'integer'],
             'name' => ['sometimes', 'string', 'max:255'],
@@ -151,7 +143,6 @@ class CandidateController extends Controller
             // Moving a candidate changes the ballot's structure.
             $this->ensureBallotEditable($event);
             $target = $this->categoryOf($event, (int) $data['category_id']);
-            self::ensureNotMotion($target);
             $candidate->category_id = $target->id;
         }
         if (isset($data['name'])) {
@@ -193,9 +184,6 @@ class CandidateController extends Controller
     {
         Gate::authorize('manage', $event);
         $this->ensureBallotEditable($event);
-        if ($candidate->motion_choice) {
-            throw ValidationException::withMessages(['candidate' => ['A motion’s options can’t be removed. Delete the motion instead.']]);
-        }
         self::deleteImage($candidate->image_path);
         $candidate->delete();
         Audit::log($event, 'candidate.deleted', "Candidate “{$candidate->name}” removed");
@@ -208,13 +196,6 @@ class CandidateController extends Controller
     {
         $text = trim(preg_replace('/\s+/u', ' ', (string) $text) ?? '');
         return $text === '' ? null : $text;
-    }
-
-    private static function ensureNotMotion(Category $category): void
-    {
-        if ($category->isMotion()) {
-            throw ValidationException::withMessages(['category_id' => ['Motions have fixed Yes / No / Abstain options.']]);
-        }
     }
 
     private function categoryOf(Event $event, int $categoryId): Category

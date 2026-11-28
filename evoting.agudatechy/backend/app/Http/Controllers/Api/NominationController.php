@@ -34,48 +34,12 @@ class NominationController extends Controller
             'open' => $event->nominationsOpen(),
             'ends_at' => $event->nominations_ends_at,
             'voting_starts_at' => $event->starts_at,
-            'language' => $event->language,
-            'brand' => ($event->brand_color || $event->brand_logo_path) && \App\Support\Plans::isPro($event)
-                ? ['color' => $event->brand_color, 'logo_url' => $event->brand_logo_url] : null,
-            'categories' => $event->categories->reject(fn ($c) => $c->isMotion())->values()
+            'brand' => $event->brand_logo_path ? ['logo_url' => $event->brand_logo_url] : null,
+            'categories' => $event->categories
                 ->map(fn ($c) => ['id' => $c->id, 'name' => $c->name, 'suggestions' => $c->nominee_suggestions ?? []]),
             // Names one person may put forward per category.
             'per_category' => self::PER_PERSON_PER_CATEGORY,
         ]);
-    }
-
-    /** Public: submit one nomination. */
-    public function store(Request $request, string $token)
-    {
-        $data = $request->validate([
-            'category_id' => ['required', 'integer'],
-            'nominee_name' => ['required', 'string', 'min:2', 'max:120'],
-            'reason' => ['nullable', 'string', 'max:280'],
-            'email' => ['nullable', 'email:rfc', 'max:255'],
-            // Anonymous ID the browser keeps (see sameNominator): random, never personal.
-            'device_id' => ['nullable', 'string', 'max:100'],
-        ]);
-        Turnstile::verify($request);
-
-        $event = Event::publicToken($token)->firstOrFail();
-        if (! $event->nominationsOpen()) {
-            return response()->json(['message' => __('Nominations are closed for this event.')], 403);
-        }
-        $category = $this->nominatable($event)->firstWhere('id', $data['category_id']);
-        if (! $category) {
-            throw ValidationException::withMessages(['category_id' => [__('Choose a category from this event.')]]);
-        }
-
-        [$ipHash, $deviceHash] = $this->sameNominator($request, $data['device_id'] ?? null);
-        $refused = $this->accept($event, $category, $data['nominee_name'], $data['reason'] ?? null, $data['email'] ?? null, $ipHash, $deviceHash);
-        if ($refused) {
-            return $refused['status'] === 422
-                ? throw ValidationException::withMessages(['nominee_name' => [$refused['message']]])
-                : response()->json(['message' => $refused['message']], $refused['status']);
-        }
-        $name = self::squish($data['nominee_name']);
-
-        return response()->json(['message' => __('Thank you! Your nomination of :name for “:category” was received.', ['name' => $name, 'category' => $category->name])], 201);
     }
 
     /**
@@ -90,7 +54,6 @@ class NominationController extends Controller
             'nominations.*.category_id' => ['required', 'integer'],
             'nominations.*.nominee_name' => ['required', 'string', 'min:2', 'max:120'],
             'nominations.*.reason' => ['nullable', 'string', 'max:280'],
-            'email' => ['nullable', 'email:rfc', 'max:255'],
             'device_id' => ['nullable', 'string', 'max:100'],
         ], [
             'nominations.required' => __('Enter at least one name.'),
@@ -114,7 +77,7 @@ class NominationController extends Controller
                 $refused[] = ['category_id' => $row['category_id'], 'category' => null, 'name' => $name, 'reason' => __('Choose a category from this event.')];
                 continue;
             }
-            $no = $this->accept($event, $category, $name, $row['reason'] ?? null, $data['email'] ?? null, $ipHash, $deviceHash);
+            $no = $this->accept($event, $category, $name, $row['reason'] ?? null, $ipHash, $deviceHash);
             if ($no) {
                 $refused[] = ['category_id' => $category->id, 'category' => $category->name, 'name' => $name, 'reason' => $no['message']];
             } else {
@@ -132,10 +95,10 @@ class NominationController extends Controller
         ], $n ? 201 : 422);
     }
 
-    /** Categories people can nominate in (motions have fixed Yes / No / Abstain). */
+    /** Categories people can nominate in. */
     private function nominatable(Event $event)
     {
-        return $event->categories()->get()->reject(fn ($c) => $c->isMotion())->values();
+        return $event->categories()->get();
     }
 
     /**
@@ -166,7 +129,7 @@ class NominationController extends Controller
      *
      * @return array{status: int, message: string}|null
      */
-    private function accept(Event $event, Category $category, string $rawName, ?string $reason, ?string $email, string $ipHash, ?string $deviceHash): ?array
+    private function accept(Event $event, Category $category, string $rawName, ?string $reason, string $ipHash, ?string $deviceHash): ?array
     {
         $name = self::squish($rawName);
         $samePerson = fn () => Nomination::where('category_id', $category->id)->where('ip_hash', $ipHash)
@@ -190,7 +153,6 @@ class NominationController extends Controller
             'nominee_name' => $name,
             'normalized_name' => Nomination::normalize($name),
             'reason' => $reason !== null ? (trim($reason) ?: null) : null,
-            'nominator_email' => $email ? strtolower($email) : null,
             'ip_hash' => $ipHash,
             'device_hash' => $deviceHash,
         ]);

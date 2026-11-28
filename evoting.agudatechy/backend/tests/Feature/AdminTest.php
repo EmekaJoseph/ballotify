@@ -45,7 +45,6 @@ it('creates an event with status, mode and counts', function () {
     ])->assertCreated()
         ->assertJsonPath('name', 'Awards Night')
         ->assertJsonPath('status', 'active')
-        ->assertJsonPath('voting_mode', 'codes') // secret ballot with codes: the only kind here
         ->assertJsonPath('my_role', 'owner')
         ->assertJsonPath('voters_count', 0);
 });

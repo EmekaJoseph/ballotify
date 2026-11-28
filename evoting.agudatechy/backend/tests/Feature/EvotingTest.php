@@ -23,7 +23,7 @@ it('lets new accounts in, but creating events waits for the admin', function () 
 
     $this->actingAs($ada->fresh())->getJson('/api/me')->assertJsonPath('awaiting_approval', false);
     $id = $this->actingAs($ada->fresh())->postJson('/api/events', ['name' => 'Union election'])
-        ->assertCreated()->assertJsonPath('voting_mode', 'codes')->assertJsonPath('limits.max_voters', null)->json('id');
+        ->assertCreated()->json('id');
 
     // More voters than any old plan allowed.
     $this->actingAs($ada->fresh())->postJson("/api/events/{$id}/voters/generate", ['count' => 6000])->assertCreated();
@@ -43,13 +43,12 @@ it('keeps to secret ballots: no ranked choice or motions, email only, no payment
     $id = $this->actingAs($owner)->postJson('/api/events', ['name' => 'Club'])->assertCreated()->json('id');
 
     $this->actingAs($owner)->postJson("/api/events/{$id}/categories", ['name' => 'President'])->assertCreated();
-    $this->actingAs($owner)->postJson("/api/events/{$id}/categories", ['name' => 'Rank them', 'method' => 'ranked'])->assertStatus(422);
-    $this->actingAs($owner)->postJson("/api/events/{$id}/categories", ['name' => 'Approve dues', 'method' => 'motion'])->assertStatus(422);
-    expect(Category::where('event_id', $id)->count())->toBe(1);
+    // No other voting method exists: a ranked or motion request is just a normal "choose one" category.
+    $this->actingAs($owner)->postJson("/api/events/{$id}/categories", ['name' => 'Rank them', 'method' => 'ranked'])->assertCreated()->assertJsonMissingPath('method');
+    expect(Category::where('event_id', $id)->count())->toBe(2);
 
     $owner->markEmailAsVerified();
     $this->actingAs($owner)->postJson("/api/events/{$id}/voters/invite", ['channel' => 'sms', 'audience' => 'pending'])->assertStatus(422);
-    $this->actingAs($owner)->patchJson("/api/events/{$id}", ['reminder_channel' => 'sms'])->assertStatus(422);
 
     // The payment, USSD and plan endpoints don't exist.
     $this->actingAs($owner)->postJson("/api/events/{$id}/upgrade", ['tier' => 'large'])->assertNotFound();

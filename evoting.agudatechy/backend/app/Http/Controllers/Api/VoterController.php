@@ -7,8 +7,6 @@ use App\Jobs\SendVoterInvitation;
 use App\Models\Event;
 use App\Models\Voter;
 use App\Support\Audit;
-use App\Support\MeetingRules;
-use App\Support\Plans;
 use App\Support\PhoneNumber;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -23,8 +21,6 @@ class VoterController extends Controller
     private const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
     private const CODE_LENGTH = 8;
     private const MAX_BATCH = 10000;
-    /** Largest weight one voter can have (shares, units...). */
-    public const MAX_WEIGHT = 10000000;
 
     /** Member IDs (membership numbers...) match case-insensitively, ignoring spaces. */
     public static function normalizeMemberId(?string $id): ?string
@@ -39,11 +35,6 @@ class VoterController extends Controller
         return strtoupper(trim($code));
     }
 
-    /** Every event here votes with codes (kept as the one place to add a check later). */
-    private function ensureCodeVoting(Event $event): void
-    {
-    }
-
     public function index(Event $event)
     {
         Gate::authorize('voters', $event);
@@ -54,18 +45,14 @@ class VoterController extends Controller
     public function store(Request $request, Event $event)
     {
         Gate::authorize('voters', $event);
-        $this->ensureCodeVoting($event);
         $this->normalizeInput($request);
         $data = $request->validate([
             'name' => ['nullable', 'string', 'max:255'],
             'email' => ['nullable', 'string', 'email:rfc', 'max:255'],
             'phone' => ['nullable', 'string', 'max:32', $this->phoneRule()],
             'member_id' => ['nullable', 'string', 'max:64', Rule::unique('voters', 'member_id')->where('event_id', $event->id)],
-            'groups' => ['nullable', 'array', 'max:10'],
-            'weight' => ['nullable', 'integer', 'min:1', 'max:' . self::MAX_WEIGHT],
-            'code' => ['nullable', 'string', 'min:4', 'max:64', Rule::unique('voters', 'code')->where('event_id', $event->id), ...($event->ussd_enabled ? ['regex:/^\d+$/'] : [])],
-        ], ['member_id.unique' => 'Another voter already has this ID.', 'code.regex' => 'This event uses USSD voting, so codes must be numbers only.']);
-        Plans::ensureVoterCapacity($event, 1);
+            'code' => ['nullable', 'string', 'min:4', 'max:64', Rule::unique('voters', 'code')->where('event_id', $event->id)],
+        ], ['member_id.unique' => 'Another voter already has this ID.']);
 
         $voter = Voter::create([
             'event_id' => $event->id,
@@ -73,12 +60,9 @@ class VoterController extends Controller
             'email' => $data['email'] ?? null,
             'phone' => $data['phone'] ?? null,
             'member_id' => $data['member_id'] ?? null,
-            'groups' => $data['groups'] ?? null,
-            'weight' => $data['weight'] ?? 1,
             'code' => $data['code'] ?? $this->uniqueCodes($event, 1)[0],
         ]);
-        Audit::log($event, 'voters.added', 'Voter added: ' . ($voter->name ?: 'anonymous code')
-            . ($event->weighted_votes && $voter->weight > 1 ? " (weight {$voter->weight})" : ''));
+        Audit::log($event, 'voters.added', 'Voter added: ' . ($voter->name ?: 'anonymous code'));
 
         return response()->json($voter, 201);
     }
@@ -98,37 +82,18 @@ class VoterController extends Controller
             'email' => ['sometimes', 'nullable', 'string', 'email:rfc', 'max:255'],
             'phone' => ['sometimes', 'nullable', 'string', 'max:32', $this->phoneRule()],
             'member_id' => ['sometimes', 'nullable', 'string', 'max:64', Rule::unique('voters', 'member_id')->where('event_id', $event->id)->ignore($voter->id)],
-            'groups' => ['sometimes', 'nullable', 'array', 'max:10'],
-            'weight' => ['sometimes', 'integer', 'min:1', 'max:' . self::MAX_WEIGHT],
-            'proxy_voter_id' => ['sometimes', 'nullable', 'integer'],
-            'code' => ['sometimes', 'string', 'min:4', 'max:64', Rule::unique('voters', 'code')->where('event_id', $event->id)->ignore($voter->id), ...($event->ussd_enabled ? ['regex:/^\d+$/'] : [])],
-        ], ['member_id.unique' => 'Another voter already has this ID.', 'code.regex' => 'This event uses USSD voting, so codes must be numbers only.']);
+            'code' => ['sometimes', 'string', 'min:4', 'max:64', Rule::unique('voters', 'code')->where('event_id', $event->id)->ignore($voter->id)],
+        ], ['member_id.unique' => 'Another voter already has this ID.']);
 
-        foreach (['name', 'email', 'phone', 'member_id', 'groups', 'code'] as $field) {
+        foreach (['name', 'email', 'phone', 'member_id', 'code'] as $field) {
             if (array_key_exists($field, $data)) {
                 $voter->{$field} = $data[$field];
             }
         }
-        // Weights decide how much each ballot counts: fixed once voting starts.
-        $oldWeight = (int) $voter->getOriginal('weight');
-        if (array_key_exists('weight', $data) && (int) $data['weight'] !== $oldWeight) {
-            if ($event->ballot_locked) {
-                throw ValidationException::withMessages(['weight' => ['Weights can’t be changed after voting has started.']]);
-            }
-            $voter->weight = (int) $data['weight'];
-        }
         $codeChanged = $voter->isDirty('code');
-        $weightChanged = $voter->isDirty('weight');
         $voter->save();
         if ($codeChanged) {
             Audit::log($event, 'voters.code_changed', 'Voting code replaced for ' . ($voter->name ?: 'an anonymous voter'));
-        }
-        if ($weightChanged) {
-            Audit::log($event, 'voters.weight', 'Weight for ' . ($voter->name ?: 'an anonymous voter') . ": {$oldWeight} → {$voter->weight}");
-        }
-        $newProxy = array_key_exists('proxy_voter_id', $data) && $data['proxy_voter_id'] !== null ? (int) $data['proxy_voter_id'] : null;
-        if (array_key_exists('proxy_voter_id', $data) && $newProxy !== $voter->proxy_voter_id) {
-            $voter = $this->setProxy($event, $voter, $newProxy);
         }
 
         return response()->json($voter);
@@ -138,12 +103,7 @@ class VoterController extends Controller
     public function destroy(Event $event, Voter $voter)
     {
         Gate::authorize('voters', $event);
-        // A proxy holder removed: the members they held for can vote for themselves again.
-        $freed = Voter::where('proxy_voter_id', $voter->id)->whereNull('used_at')->update(['proxy_voter_id' => null]);
         $voter->delete();
-        if ($freed) {
-            Audit::log($event, 'voters.proxy', "{$freed} prox" . ($freed === 1 ? 'y' : 'ies') . ' held by ' . ($voter->name ?: 'an anonymous voter') . ' cancelled (voter removed)');
-        }
         Audit::log($event, 'voters.deleted', 'Voter removed: ' . ($voter->name ?: 'anonymous code') . ($voter->used_at ? ' (had already voted; vote stays counted)' : ''));
 
         return response()->json([], 204);
@@ -155,20 +115,15 @@ class VoterController extends Controller
         Gate::authorize('voters', $event);
         $data = $request->validate(['ids' => ['required', 'array', 'min:1', 'max:' . self::MAX_BATCH], 'ids.*' => ['integer']]);
 
-        [$deleted, $voted, $freed] = DB::transaction(function () use ($event, $data) {
+        [$deleted, $voted] = DB::transaction(function () use ($event, $data) {
             $voters = Voter::where('event_id', $event->id)->whereIn('id', $data['ids'])->lockForUpdate()->get(['id', 'used_at']);
-            $ids = $voters->pluck('id');
-            // Proxy holders removed: the members they held for vote for themselves again
-            // (unless those members are being removed too).
-            $freed = Voter::whereIn('proxy_voter_id', $ids)->whereNotIn('id', $ids)->whereNull('used_at')->update(['proxy_voter_id' => null]);
-            Voter::whereIn('id', $ids)->delete();
-            return [$ids->count(), $voters->whereNotNull('used_at')->count(), $freed];
+            Voter::whereIn('id', $voters->pluck('id'))->delete();
+            return [$voters->count(), $voters->whereNotNull('used_at')->count()];
         });
 
         if ($deleted) {
             Audit::log($event, 'voters.deleted', "{$deleted} voter" . ($deleted === 1 ? '' : 's') . ' removed'
-                . ($voted ? " ({$voted} had already voted; their votes stay counted)" : '')
-                . ($freed ? "; {$freed} prox" . ($freed === 1 ? 'y' : 'ies') . ' they held cancelled' : ''));
+                . ($voted ? " ({$voted} had already voted; their votes stay counted)" : ''));
         }
 
         return response()->json(['deleted' => $deleted, 'voted' => $voted]);
@@ -190,11 +145,9 @@ class VoterController extends Controller
     public function generate(Request $request, Event $event)
     {
         Gate::authorize('voters', $event);
-        $this->ensureCodeVoting($event);
         $data = $request->validate([
             'count' => ['required', 'integer', 'min:1', 'max:' . self::MAX_BATCH],
         ]);
-        Plans::ensureVoterCapacity($event, (int) $data['count']);
 
         $created = $this->createMany($event, array_fill(0, $data['count'], []));
         Audit::log($event, 'voters.generated', "{$data['count']} anonymous code" . ($data['count'] === 1 ? '' : 's') . ' generated');
@@ -210,7 +163,6 @@ class VoterController extends Controller
     public function import(Request $request, Event $event)
     {
         Gate::authorize('voters', $event);
-        $this->ensureCodeVoting($event);
 
         if (! $request->has('voters') && $request->has('names')) {
             $request->merge(['voters' => array_map(fn ($n) => ['name' => $n], (array) $request->input('names'))]);
@@ -223,8 +175,6 @@ class VoterController extends Controller
             'voters.*.email' => ['nullable', 'string', 'max:255'],
             'voters.*.phone' => ['nullable', 'string', 'max:32'],
             'voters.*.member_id' => ['nullable', 'string', 'max:64'],
-            'voters.*.groups' => ['nullable'],
-            'voters.*.weight' => ['nullable'],
         ]);
 
         // Validate contacts row by row so the organiser gets the exact line to fix.
@@ -249,22 +199,11 @@ class VoterController extends Controller
             if ($rawPhone !== '' && ! PhoneNumber::isValid($phone)) {
                 $errors["voters.{$i}.phone"] = ['Row ' . ($i + 1) . ': "' . $row['phone'] . '" ' . PhoneNumber::problem($phone)];
             }
-            // Weighted votes: a whole number of 1 or more ("1,000" is fine); empty = 1.
-            $rawWeight = str_replace([',', ' '], '', trim((string) ($row['weight'] ?? '')));
-            $weight = 1;
-            if ($rawWeight !== '') {
-                if (! ctype_digit($rawWeight) || (int) $rawWeight < 1 || (int) $rawWeight > self::MAX_WEIGHT) {
-                    $errors["voters.{$i}.weight"] = ['Row ' . ($i + 1) . ': weight "' . $row['weight'] . '" must be a whole number from 1 to ' . number_format(self::MAX_WEIGHT) . '.'];
-                } else {
-                    $weight = (int) $rawWeight;
-                }
-            }
-            $rows[] = ['name' => $row['name'] ?? null, 'email' => $email ?: null, 'phone' => $phone, 'member_id' => $memberId, 'groups' => Voter::normalizeGroups($row['groups'] ?? null), 'weight' => $weight];
+            $rows[] = ['name' => $row['name'] ?? null, 'email' => $email ?: null, 'phone' => $phone, 'member_id' => $memberId];
         }
         if ($errors) {
             throw ValidationException::withMessages(array_slice($errors, 0, 20, true));
         }
-        Plans::ensureVoterCapacity($event, count($rows));
 
         $created = $this->createMany($event, $rows);
         $n = count($created);
@@ -274,7 +213,7 @@ class VoterController extends Controller
     }
 
     /**
-     * Send voting codes by email and/or SMS (queued; delivered by the queue worker).
+     * Send voting codes by email (queued, or sent right after the response without a worker).
      * Voters who have already voted are never messaged.
      */
     public function invite(Request $request, Event $event)
@@ -287,33 +226,30 @@ class VoterController extends Controller
             'voter_ids.*' => ['integer'],
         ]);
 
-        Plans::ensureCanMessage($event);
         if ($event->status === Event::STATUS_COMPLETED) {
             throw ValidationException::withMessages(['channel' => ['Voting has closed for this event, so invitations can no longer be sent.']]);
         }
 
-        // Members whose proxy is held can't vote with their own code: never sent it.
-        $query = Voter::where('event_id', $event->id)->whereNull('used_at')->whereNull('proxy_voter_id');
+        $query = Voter::where('event_id', $event->id)->whereNull('used_at');
         if ($data['audience'] === 'not_invited') {
             $query->whereNull('invited_at');
         } elseif ($data['audience'] === 'selected') {
             $query->whereIn('id', $data['voter_ids'] ?? []);
         }
 
-        return response()->json(self::sendMessages($event, $query, $data['channel'], 'invite'));
+        return response()->json(self::sendMessages($event, $query, 'invite'));
     }
 
-    /** Remind everyone who hasn't voted yet (Pro). */
+    /** Remind everyone who hasn't voted yet. */
     public function remind(Request $request, Event $event)
     {
         Gate::authorize('voters', $event);
         $data = $request->validate(['channel' => ['required', Rule::in(['email'])]]);
-        Plans::ensureCanMessage($event);
         if (! $event->isOpen()) {
             throw ValidationException::withMessages(['channel' => ['Reminders can only be sent while voting is open.']]);
         }
 
-        return response()->json(self::sendMessages($event, Voter::where('event_id', $event->id)->whereNull('used_at')->whereNull('proxy_voter_id'), $data['channel'], 'reminder'));
+        return response()->json(self::sendMessages($event, Voter::where('event_id', $event->id)->whereNull('used_at'), 'reminder'));
     }
 
     /**
@@ -330,22 +266,14 @@ class VoterController extends Controller
     }
 
     /**
-     * Queue one message per reachable voter in $query. Shared by invitations,
+     * Email every voter in $query who has an address. Shared by invitations,
      * reminders and the scheduled reminder command.
      *
-     * @return array{queued: int, email: int, sms: int, failed: int, queue: string}
+     * @return array{queued: int, email: int, failed: int, queue: string}
      */
-    public static function sendMessages(Event $event, $query, string $channel, string $kind, bool $strict = true): array
+    public static function sendMessages(Event $event, $query, string $kind): array
     {
-        // Email only here (no SMS): WhatsApp sharing happens in the browser.
-        $channels = ['email'];
-        $smsCharged = false;
-
-        // Only voters reachable on at least one requested channel.
-        $query->where(function ($q) use ($channels) {
-            if (in_array('email', $channels, true)) $q->orWhereNotNull('email');
-            if (in_array('sms', $channels, true)) $q->orWhereNotNull('phone');
-        });
+        $query->whereNotNull('email');
 
         // Without a queue worker (QUEUE_CONNECTION=sync) messages are sent right
         // after the HTTP response, so the organiser never waits on the mail server.
@@ -355,36 +283,30 @@ class VoterController extends Controller
             ignore_user_abort(true);  // …even if the browser tab is closed
         }
 
-        $counts = ['queued' => 0, 'email' => 0, 'sms' => 0, 'failed' => 0];
-        $query->select(['id', 'email', 'phone'])->chunkById(500, function ($voters) use ($channels, $kind, &$counts, $noWorker, $smsCharged, $event) {
+        $counts = ['queued' => 0, 'email' => 0, 'failed' => 0];
+        $query->select(['id'])->chunkById(500, function ($voters) use ($kind, &$counts, $noWorker) {
             foreach ($voters as $voter) {
                 try {
                     // Delivery errors are handled inside the job; this only guards
                     // against the queue itself being unavailable.
-                    $charged = $smsCharged && $voter->phone;
                     $noWorker
-                        ? SendVoterInvitation::dispatchAfterResponse($voter->id, $channels, $kind, $charged)
-                        : SendVoterInvitation::dispatch($voter->id, $channels, $kind, $charged);
+                        ? SendVoterInvitation::dispatchAfterResponse($voter->id, $kind)
+                        : SendVoterInvitation::dispatch($voter->id, $kind);
                 } catch (\Throwable $e) {
                     report($e);
-                    if ($smsCharged && $voter->phone) {
-                        Plans::refundSms($event->id);
-                    }
                     $counts['failed']++;
                     Voter::whereKey($voter->id)->update(['invite_error' => 'Could not be queued: ' . Str::limit($e->getMessage(), 200)]);
                     continue;
                 }
                 $counts['queued']++;
-                if (in_array('email', $channels, true) && $voter->email) $counts['email']++;
-                if (in_array('sms', $channels, true) && $voter->phone) $counts['sms']++;
+                $counts['email']++;
             }
         });
 
         if ($counts['queued'] > 0) {
-            $via = implode(' and ', array_map(fn ($c) => $c === 'sms' ? 'SMS' : 'email', $channels));
             $n = $counts['queued'] . ' voter' . ($counts['queued'] === 1 ? '' : 's');
             Audit::log($event, $kind === 'reminder' ? 'voters.reminded' : 'voters.invited',
-                $kind === 'reminder' ? "Reminder sent to {$n} who hadn’t voted, by {$via}" : "Voting codes sent to {$n} by {$via}");
+                $kind === 'reminder' ? "Reminder emailed to {$n} who hadn’t voted" : "Voting codes emailed to {$n}");
         }
 
         return $counts + ['queue' => config('queue.default')];
@@ -405,98 +327,24 @@ class VoterController extends Controller
         $voter = Voter::where('event_id', $event->id)
             ->whereNull('used_at')
             ->where('code', self::normalizeCode($data['code']))
-            ->first(['id', 'name', 'groups', 'weight', 'proxy_voter_id']);
+            ->first(['id', 'name']);
         if (! $voter) {
             \App\Support\CodeGuard::miss($request, $event);
             return response()->json(['valid' => false, 'message' => 'Invalid or used voting code.'], 422);
         }
-        // Someone else holds this member's proxy: they can't vote as well.
-        if ($voter->proxy_voter_id !== null) {
-            $holder = Voter::where('id', $voter->proxy_voter_id)->value('name');
-            return response()->json(['valid' => false, 'proxy' => true, 'message' => $holder
-                ? __('Your vote is being cast by your proxy, :name. Ask the organiser if this is wrong.', ['name' => $holder])
-                : __('Your vote is being cast by your proxy. Ask the organiser if this is wrong.')], 422);
-        }
-
         // The voter's own name (from the organiser's import) lets them confirm the
         // code is theirs. Only returned for a valid, unused code (rate-limited).
-        // `categories`: the ones this voter (or a member they hold a proxy for) may vote in.
-        // `weight`: how many votes this ballot counts as; `proxy_for`: whose votes it also carries.
         \App\Support\CodeGuard::ok($request, $event);
-        $members = MeetingRules::members($event, $voter);
-        return response()->json([
-            'valid' => true,
-            'name' => $voter->name,
-            'categories' => MeetingRules::allowedCategoryIds($event, $members),
-            'weight' => (int) $members->sum(fn ($m) => MeetingRules::weightOf($event, $m)),
-            'own_weight' => MeetingRules::weightOf($event, $voter),
-            'proxy_for' => $members->slice(1)->map(fn ($m) => $m->name ?: __('a member'))->values(),
-        ]);
+        return response()->json(['valid' => true, 'name' => $voter->name]);
     }
 
     // ------------------------------------------------------------------ helpers
-
-    /**
-     * Give (or take back) a member's proxy. The rules keep it simple and checkable:
-     * proxies must be switched on; neither member has voted; nobody holds their own
-     * proxy; no chains (a holder can't give theirs away, and someone who gave theirs
-     * can't hold others'); and nobody holds more than the event's limit.
-     */
-    private function setProxy(Event $event, Voter $voter, ?int $holderId): Voter
-    {
-        return DB::transaction(function () use ($event, $voter, $holderId) {
-            $principal = Voter::where('event_id', $event->id)->lockForUpdate()->findOrFail($voter->id);
-            $fail = fn (string $msg) => throw ValidationException::withMessages(['proxy_voter_id' => [$msg]]);
-            if ($principal->used_at) {
-                $fail('This member has already voted, so their proxy can’t change.');
-            }
-            $old = $principal->proxy_voter_id ? Voter::where('id', $principal->proxy_voter_id)->value('name') : null;
-            $who = $principal->name ?: 'an anonymous voter';
-
-            if ($holderId === null) {
-                $principal->proxy_voter_id = null;
-                $principal->save();
-                Audit::log($event, 'voters.proxy', "Proxy cancelled: {$who} votes for themselves" . ($old ? " (was {$old})" : ''));
-                return $principal;
-            }
-
-            if (! $event->proxies_enabled) {
-                $fail('Switch on proxy voting in Settings first.');
-            }
-            if ($holderId === $principal->id) {
-                $fail('A member can’t hold their own proxy.');
-            }
-            $holder = Voter::where('event_id', $event->id)->lockForUpdate()->find($holderId);
-            if (! $holder) {
-                $fail('Choose a member from this voter list to hold the proxy.');
-            }
-            if ($holder->used_at) {
-                $fail(($holder->name ?: 'That member') . ' has already voted, so they can’t hold a proxy now.');
-            }
-            if ($holder->proxy_voter_id) {
-                $fail(($holder->name ?: 'That member') . ' has given their own vote to a proxy, so they can’t hold others’.');
-            }
-            if (Voter::where('proxy_voter_id', $principal->id)->exists()) {
-                $fail($who . ' holds proxies for other members, so they must vote themselves.');
-            }
-            $held = Voter::where('proxy_voter_id', $holder->id)->where('id', '!=', $principal->id)->count();
-            if ($held >= $event->max_proxies) {
-                $fail(($holder->name ?: 'That member') . ' already holds ' . $held . ' prox' . ($held === 1 ? 'y' : 'ies') . ', the most allowed.');
-            }
-
-            $principal->proxy_voter_id = $holder->id;
-            $principal->save();
-            Audit::log($event, 'voters.proxy', ($holder->name ?: 'An anonymous voter') . " will vote for {$who} (proxy)" . ($old ? ", replacing {$old}" : ''));
-            return $principal;
-        });
-    }
 
     /** Trim/normalise code, email and phone before validation. */
     private function normalizeInput(Request $request): void
     {
         $merge = [];
         if ($request->has('member_id')) $merge['member_id'] = self::normalizeMemberId($request->input('member_id'));
-        if ($request->has('groups')) $merge['groups'] = Voter::normalizeGroups($request->input('groups'));
         if ($request->filled('code')) $merge['code'] = self::normalizeCode((string) $request->input('code'));
         elseif ($request->has('code')) $merge['code'] = null;
         if ($request->has('email')) $merge['email'] = $request->filled('email') ? strtolower(trim((string) $request->input('email'))) : null;
@@ -530,10 +378,9 @@ class VoterController extends Controller
             $insert = [];
             foreach (array_values($rows) as $i => $row) {
                 $name = isset($row['name']) && trim((string) $row['name']) !== '' ? trim((string) $row['name']) : null;
-                $groups = $row['groups'] ?? null;
-                $voter = ['name' => $name, 'email' => $row['email'] ?? null, 'phone' => $row['phone'] ?? null, 'member_id' => $row['member_id'] ?? null, 'weight' => max(1, (int) ($row['weight'] ?? 1)), 'code' => $codes[$i]];
-                $out[] = $voter + ['groups' => $groups];
-                $insert[] = $voter + ['groups' => $groups ? json_encode($groups) : null, 'event_id' => $event->id, 'created_at' => $now, 'updated_at' => $now];
+                $voter = ['name' => $name, 'email' => $row['email'] ?? null, 'phone' => $row['phone'] ?? null, 'member_id' => $row['member_id'] ?? null, 'code' => $codes[$i]];
+                $out[] = $voter;
+                $insert[] = $voter + ['event_id' => $event->id, 'created_at' => $now, 'updated_at' => $now];
             }
             foreach (array_chunk($insert, 500) as $chunk) {
                 Voter::insert($chunk);
@@ -543,20 +390,15 @@ class VoterController extends Controller
     }
 
     /** @return string[] codes not yet used in this event */
-    /**
-     * Codes not yet used in this event. Events with USSD voting get numbers
-     * only (10 digits), because phone keypads can't type letters in USSD.
-     */
     private function uniqueCodes(Event $event, int $count): array
     {
         $taken = array_flip(Voter::where('event_id', $event->id)->pluck('code')->all());
         $codes = [];
-        [$alphabet, $length] = $event->ussd_enabled ? ['0123456789', 10] : [self::CODE_ALPHABET, self::CODE_LENGTH];
-        $max = strlen($alphabet) - 1;
+        $max = strlen(self::CODE_ALPHABET) - 1;
         while (count($codes) < $count) {
             $code = '';
-            for ($i = 0; $i < $length; $i++) {
-                $code .= $alphabet[random_int(0, $max)];
+            for ($i = 0; $i < self::CODE_LENGTH; $i++) {
+                $code .= self::CODE_ALPHABET[random_int(0, $max)];
             }
             if (! isset($taken[$code])) {
                 $taken[$code] = true;

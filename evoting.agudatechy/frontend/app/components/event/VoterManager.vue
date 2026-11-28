@@ -15,8 +15,6 @@
                         <input v-model="query" type="search" class="form-control form-control-sm py-2" placeholder="Search name, email, phone or code" aria-label="Search voters" />
                     </div>
                     <AppSelect v-model="statusFilter" :options="STATUS_FILTERS" size="sm" :block="false" icon="bi-funnel" class="status-filter" aria-label="Filter by status" />
-                    <AppSelect v-if="groupNames.length" v-model="groupFilter" :options="groupFilterOptions" size="sm" :block="false" icon="bi-people"
-                        class="status-filter" aria-label="Filter by group" :menu-min-width="200" />
                 </div>
                 <div class="d-flex flex-wrap gap-2">
                     <button class="btn btn-primary btn-sm" @click="onSendCodes">
@@ -40,21 +38,6 @@
                 <i class="bi bi-alarm"></i>
                 <span>Reminder scheduled for <b>{{ formatDate(event.reminder_at, true) }}</b> to everyone who hasn’t voted by then.</span>
                 <button class="btn btn-soft btn-sm flex-shrink-0" @click="dialog = 'remind'">Change</button>
-            </div>
-
-            <div v-if="event.weighted_votes || event.proxies_enabled" class="hint">
-                <i class="bi bi-bank"></i>
-                <span class="flex-grow-1">
-                    <template v-if="event.weighted_votes">
-                        <b>Weighted votes are on:</b> {{ formatNumber(totalWeight) }} votes in total across {{ formatNumber(voters.length) }} members.
-                        Set weights with <i class="bi bi-pencil"></i> or a <b>Weight</b> column when you import.
-                    </template>
-                    <template v-if="event.proxies_enabled">
-                        <b>Proxy voting is on:</b> click <i class="bi bi-pencil"></i> on a member to choose who votes for them
-                        (up to {{ event.max_proxies ?? 2 }} per holder).
-                        <template v-if="proxyCount"> {{ formatNumber(proxyCount) }} prox{{ proxyCount === 1 ? 'y' : 'ies' }} assigned.</template>
-                    </template>
-                </span>
             </div>
 
             <div v-if="strongDuplicates && statusFilter !== 'duplicates'" class="hint dup-hint">
@@ -134,22 +117,10 @@
                                             <i class="bi bi-files"></i> {{ dupLabel(duplicates.get(v.id)!) }}
                                         </span>
                                     </div>
-                                    <div v-if="v.groups?.length || (event.weighted_votes && (v.weight ?? 1) !== 1) || proxyLabel(v) || heldBy.get(v.id)" class="d-flex flex-wrap gap-1 my-1">
-                                        <span v-for="g in v.groups" :key="g" class="group-chip">{{ g }}</span>
-                                        <span v-if="event.weighted_votes && (v.weight ?? 1) !== 1" class="rule-chip" title="Weight: this ballot counts as this many votes">
-                                            <i class="bi bi-bar-chart-steps"></i> {{ formatNumber(v.weight ?? 1) }} votes
-                                        </span>
-                                        <span v-if="proxyLabel(v)" class="rule-chip proxy text-truncate" :title="proxyLabel(v)">
-                                            <i class="bi bi-arrow-right-circle"></i> {{ proxyLabel(v) }}
-                                        </span>
-                                        <span v-if="heldBy.get(v.id)" class="rule-chip proxy" :title="`Votes for: ${heldBy.get(v.id)!.join(', ')}`">
-                                            <i class="bi bi-person-check"></i> Holds {{ heldBy.get(v.id)!.length }} prox{{ heldBy.get(v.id)!.length === 1 ? 'y' : 'ies' }}
-                                        </span>
-                                    </div>
                                     <div v-if="v.email || v.phone || v.member_id" class="small text-muted d-flex flex-wrap column-gap-3">
                                         <span v-if="v.email" class="text-break"><i class="bi bi-envelope me-1"></i>{{ v.email }}</span>
                                         <span v-if="v.phone" class="text-nowrap"><i class="bi bi-phone me-1"></i>{{ v.phone }}</span>
-                                        <span v-if="v.member_id" class="text-nowrap mono" :title="event.member_id_label || 'Member ID'"><i class="bi bi-person-vcard me-1"></i>{{ v.member_id }}</span>
+                                        <span v-if="v.member_id" class="text-nowrap mono" title="Member ID"><i class="bi bi-person-vcard me-1"></i>{{ v.member_id }}</span>
                                     </div>
                                 </td>
                                 <td class="text-nowrap">
@@ -161,9 +132,7 @@
                                     <button class="btn btn-link btn-sm text-muted p-1" title="Copy code" aria-label="Copy code" @click="copyText(v.code, 'Code copied')"><i class="bi bi-copy"></i></button>
                                 </td>
                                 <td class="text-nowrap">
-                                    <span v-if="v.used_at && v.proxy_voter_id" class="pill pill-active" :title="'Voted by proxy ' + formatDate(v.used_at, true)"><i class="bi bi-check2"></i> Voted by proxy</span>
-                                    <span v-else-if="v.used_at" class="pill pill-active" :title="'Voted ' + formatDate(v.used_at, true)"><i class="bi bi-check2"></i> Voted</span>
-                                    <span v-else-if="v.proxy_voter_id" class="pill pill-violet" title="Their proxy votes for them; their own code doesn’t work"><i class="bi bi-arrow-right-circle"></i> Proxy given</span>
+                                    <span v-if="v.used_at" class="pill pill-active" :title="'Voted ' + formatDate(v.used_at, true)"><i class="bi bi-check2"></i> Voted</span>
                                     <span v-else-if="v.invite_error" class="pill pill-failed" :title="v.invite_error"><i class="bi bi-exclamation-triangle"></i> Not delivered</span>
                                     <span v-else-if="v.invited_at && v.invited_via === 'whatsapp'" class="pill pill-wa" :title="'Shared on WhatsApp ' + formatDate(v.invited_at, true)"><i class="bi bi-whatsapp"></i> Shared</span>
                                     <span v-else-if="v.invited_at" class="pill pill-violet" :title="'Sent ' + formatDate(v.invited_at, true)"><i class="bi bi-send-check"></i> Invited</span>
@@ -195,10 +164,9 @@
         </div>
 
         <!-- Dialogs -->
-        <EventVoterBatchModal :open="dialog === 'batch'" :event-id="event.id" :existing="voters" :member-label="event.member_id_label || 'Member ID'"
-            :weighted="!!event.weighted_votes" :group-options="groupNames" @close="dialog = null" @created="afterCreate" @limit="onLimit" />
-        <EventVoterFormModal :open="dialog === 'form'" :event-id="event.id" :voter="editing" :existing="voters" :member-label="event.member_id_label || 'Member ID'" :group-options="groupNames" :rules="formRules" @close="dialog = null" @saved="onSaved" @limit="onLimit" />
-        <EventVoterImportModal :open="dialog === 'import'" :event-id="event.id" :existing="voters" :member-label="event.member_id_label || 'Member ID'" :weighted="!!event.weighted_votes" @close="dialog = null" @created="afterCreate" @limit="onLimit" />
+        <EventVoterBatchModal :open="dialog === 'batch'" :event-id="event.id" :existing="voters" @close="dialog = null" @created="afterCreate" />
+        <EventVoterFormModal :open="dialog === 'form'" :event-id="event.id" :voter="editing" :existing="voters" @close="dialog = null" @saved="onSaved" />
+        <EventVoterImportModal :open="dialog === 'import'" :event-id="event.id" :existing="voters" @close="dialog = null" @created="afterCreate" />
         <EventWhatsAppModal :open="dialog === 'whatsapp'" :event="event" :voters="voters" :vote-url="voteUrl" @close="dialog = null" @shared="onShared" />
         <EventRemindModal :open="dialog === 'remind'" :event="event" :pending="pendingVoters.length" :reachable="reachableCount" :phone-pending="pendingVoters.filter(v => v.phone).length"
             @close="dialog = null" @done="afterRemind" />
@@ -259,14 +227,6 @@ const busy = ref(false);
 const voters = ref<Voter[]>([]);
 const query = ref('');
 const statusFilter = ref<'all' | 'voted' | 'pending' | 'not_invited' | 'failed' | 'duplicates'>('all');
-/** Voter groups in use (for the filter and the voter form's suggestions). */
-const groupNames = computed(() => {
-    const seen = new Map<string, string>();
-    for (const v of voters.value) for (const g of v.groups ?? []) if (!seen.has(g.toLowerCase())) seen.set(g.toLowerCase(), g);
-    return [...seen.values()].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
-});
-const groupFilter = ref('');
-const groupFilterOptions = computed(() => [{ value: '', label: 'All groups' }, ...groupNames.value.map(g => ({ value: g, label: g }))]);
 const STATUS_FILTERS: { value: typeof statusFilter.value; label: string }[] = [
     { value: 'all', label: 'All voters' },
     { value: 'pending', label: 'Not voted' },
@@ -342,14 +302,13 @@ const filtered = computed(() => {
         if (s === 'not_invited' && (v.invited_at || v.used_at)) return false;
         if (s === 'failed' && !v.invite_error) return false;
         if (s === 'duplicates' && !duplicates.value.has(v.id)) return false;
-        if (groupFilter.value && !(v.groups ?? []).some(g => g.toLowerCase() === groupFilter.value.toLowerCase())) return false;
         if (!q) return true;
         return [v.code, v.name, v.email, v.phone, v.member_id].some(f => (f ?? '').toLowerCase().includes(q));
     });
 });
 const pages = computed(() => Math.max(1, Math.ceil(filtered.value.length / PER_PAGE)));
 const paged = computed(() => filtered.value.slice((page.value - 1) * PER_PAGE, page.value * PER_PAGE));
-watch([query, statusFilter, groupFilter], () => { page.value = 1; });
+watch([query, statusFilter], () => { page.value = 1; });
 watch(pages, (p) => { if (page.value > p) page.value = p; });
 
 // --- Data --------------------------------------------------------------------
@@ -416,27 +375,6 @@ function onSendCodes() {
     }
 }
 
-// ------------------------------------------------------------------ meeting rules
-const totalWeight = computed(() => voters.value.reduce((n, v) => n + (v.weight ?? 1), 0));
-const proxyCount = computed(() => voters.value.filter(v => v.proxy_voter_id).length);
-/** Holder id => names of the members they vote for. */
-const heldBy = computed(() => {
-    const map = new Map<number, string[]>();
-    if (!props.event.proxies_enabled) return map;
-    for (const v of voters.value) {
-        if (v.proxy_voter_id) map.set(v.proxy_voter_id, [...(map.get(v.proxy_voter_id) ?? []), v.name || 'a member']);
-    }
-    return map;
-});
-function proxyLabel(v: Voter): string {
-    if (!v.proxy_voter_id) return '';
-    const holder = voters.value.find(x => x.id === v.proxy_voter_id);
-    return `Proxy: ${holder?.name || 'a member'}`;
-}
-const formRules = computed(() => (props.event.weighted_votes || props.event.proxies_enabled
-    ? { weighted: !!props.event.weighted_votes, proxies: !!props.event.proxies_enabled, maxProxies: props.event.max_proxies ?? 2, locked: props.event.ballot_locked, voters: voters.value }
-    : null));
-
 async function onSaved(_v: Voter, isNew: boolean) {
     dialog.value = null;
     toast.success(isNew ? 'Voter added' : 'Voter updated');
@@ -464,15 +402,12 @@ async function generate() {
         const { data } = await adminApi.generateVoters(props.event.id, { count: genCount.value });
         await afterCreate(data.voters);
     } catch (e) {
-        if (planLimitReason(e) === 'events') return onLimit();
         toast.error(apiErrorMessage(e));
     } finally {
         busy.value = false;
     }
 }
 
-
-/** Removed straight away, with a few seconds to undo (no confirm dialog). */
 /** Short chip text for the strongest match. */
 function dupLabel(m: DuplicateMatch[]): string {
     const k = m[0]!.kind;
@@ -487,14 +422,11 @@ async function deleteSelected() {
     if (!list.length) return;
     const n = list.length;
     const voted = list.filter(v => v.used_at).length;
-    // Members (not being deleted, not yet voted) whose proxy is held by someone being deleted.
-    const proxies = voters.value.filter(m => m.proxy_voter_id && selected.value.has(m.proxy_voter_id) && !selected.value.has(m.id) && !m.used_at).length;
     const ok = await confirm({
         title: `Delete ${n} voter${n === 1 ? '' : 's'}?`,
         message: [
             n - voted ? `${n - voted === n ? 'Their' : `${n - voted} of them haven’t voted: their`} codes stop working at once, even if already sent.` : '',
             voted ? `${voted} already voted: ${voted === 1 ? 'that vote stays' : 'those votes stay'} counted (secret, so ${voted === 1 ? 'it' : 'they'} can’t be removed).` : '',
-            proxies ? `${proxies} member${proxies === 1 ? '' : 's'} whose proxy they hold will vote for themselves again.` : '',
             'This can’t be undone, and is recorded in the Activity log.',
         ].filter(Boolean).join(' '),
         confirmText: `Delete ${n} voter${n === 1 ? '' : 's'}`,
@@ -518,14 +450,12 @@ async function deleteSelected() {
 
 async function removeVoter(v: Voter) {
     const who = v.name ? `“${v.name}”` : 'voter';
-    const held = heldBy.value.get(v.id)?.length ?? 0;
     const ok = await confirm({
         title: `Delete ${v.name ? v.name : 'this voter'}?`,
         message: [
             v.used_at
                 ? 'They have already voted. Their vote stays counted (it’s secret, so it can’t be removed), but they leave the voter list.'
                 : 'Their voting code stops working at once, even if you already sent it.',
-            held ? `They hold ${held} prox${held === 1 ? 'y' : 'ies'}; ${held === 1 ? 'that member' : 'those members'} will vote for themselves again.` : '',
             'This is recorded in the Activity log.',
         ].filter(Boolean).join(' '),
         confirmText: 'Delete voter',
@@ -574,24 +504,14 @@ async function afterRemind() {
     pollStatuses();
 }
 
-/** A dialog reported a limit: there are none here, so just close it. */
-function onLimit() {
-    dialog.value = null;
-}
-
 function exportCsv(list: (Voter | GeneratedCode)[]) {
-    const weighted = !!props.event.weighted_votes;
-    const proxies = !!props.event.proxies_enabled;
-    const rows: (string | null | undefined)[][] = [['Name', 'Email', 'Phone', 'Code', 'Voting link', 'Status', 'Invited',
-        ...(weighted ? ['Weight'] : []), ...(proxies ? ['Proxy (votes for them)'] : [])]];
+    const rows: (string | null | undefined)[][] = [['Name', 'Email', 'Phone', 'Code', 'Voting link', 'Status', 'Invited']];
     for (const v of list) {
         const voter = 'id' in v ? v : null;
         rows.push([
             v.name ?? '', v.email ?? '', v.phone ?? '', v.code, voteUrl.value,
-            voter?.used_at ? (voter.proxy_voter_id ? 'Voted by proxy' : 'Voted') : 'Not voted',
+            voter?.used_at ? 'Voted' : 'Not voted',
             voter?.invited_at ? formatDate(voter.invited_at, true) : '',
-            ...(weighted ? [String(voter?.weight ?? 1)] : []),
-            ...(proxies ? [voter ? proxyLabel(voter).replace(/^Proxy: /, '') : ''] : []),
         ]);
     }
     downloadFile(`${slugify(props.event.name)}-voters.csv`, toCsv(rows));
@@ -605,11 +525,6 @@ function printSlips(list: (Voter | GeneratedCode)[]) {
 <style scoped>
 .dup-chip { display: inline-flex; align-items: center; gap: .25rem; margin-left: .35rem; vertical-align: middle; font-size: .68rem; font-weight: 700; padding: .05rem .45rem; border-radius: 6px; background: var(--surface-2); color: var(--ink-2); box-shadow: inset 0 0 0 1px var(--line); cursor: help; white-space: nowrap; }
 .dup-chip.same, .dup-chip.email { background: var(--warning-50); color: var(--warning-text); box-shadow: none; }
-.rule-chip { display: inline-flex; align-items: center; gap: .25rem; max-width: 220px; font-size: .7rem; font-weight: 700; padding: .05rem .45rem; border-radius: 6px; background: var(--pro-bg); color: var(--ink); box-shadow: inset 0 0 0 1px var(--pro-ring); }
-.rule-chip .bi { color: var(--pro-icon); }
-.rule-chip.proxy { background: var(--brand-50); box-shadow: none; }
-.rule-chip.proxy .bi { color: var(--brand-600); }
-.group-chip { font-size: .7rem; font-weight: 700; padding: .05rem .45rem; border-radius: 6px; background: var(--violet-50, rgba(124, 92, 255, .1)); color: var(--violet-600, #6d4ce8); }
 .status-filter { flex-shrink: 0; min-width: 160px; }
 .status-filter :deep(.as-trigger) { padding-top: .5rem; padding-bottom: .5rem; }
 .codes-grid { display: grid; gap: .5rem; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }

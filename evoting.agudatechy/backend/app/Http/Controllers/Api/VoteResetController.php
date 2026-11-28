@@ -7,7 +7,6 @@ use App\Models\BallotReceipt;
 use App\Models\Candidate;
 use App\Models\Category;
 use App\Models\Event;
-use App\Models\RankedBallot;
 use App\Models\ResultCertificate;
 use App\Models\Voter;
 use App\Support\Audit;
@@ -18,8 +17,7 @@ use Illuminate\Validation\ValidationException;
 
 /**
  * Reset votes and results: for test runs ("we tried the ballot, now start clean").
- * Owner only, never on paid voting (people paid), never once voting has closed or
- * results were certified. Voters, codes and the ballot stay. Every reset is recorded
+ * Owner only, never once voting has closed or results were certified. Voters, codes and the ballot stay. Every reset is recorded
  * for good and shown on the results, report and any later certificate.
  */
 class VoteResetController extends Controller
@@ -47,7 +45,6 @@ class VoteResetController extends Controller
 
             Candidate::where('event_id', $event->id)->update(['votes' => 0]);
             Category::where('event_id', $event->id)->update(['ballots' => 0]);
-            RankedBallot::whereIn('category_id', $categoryIds)->delete();
             BallotReceipt::where('event_id', $event->id)->delete();
             Voter::where('event_id', $event->id)->whereNotNull('used_at')->update(['used_at' => null]);
 

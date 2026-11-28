@@ -18,32 +18,9 @@ return [
         'key' => env('POSTMARK_API_KEY'),
     ],
 
-    // Payments. Get keys at https://dashboard.paystack.com/#/settings/developers
-    // (use the test secret key while trying it out).
-    'paystack' => [
-        'secret_key' => env('PAYSTACK_SECRET_KEY'),
-        'base_url' => env('PAYSTACK_BASE_URL', 'https://api.paystack.co'),
-    ],
-
-    // Backup payment provider: used when Paystack can't start a checkout.
-    // Keys at https://app.flutterwave.com -> Settings -> API keys. The webhook
-    // "secret hash" is any long random string, set both there and here.
-    'flutterwave' => [
-        'secret_key' => env('FLUTTERWAVE_SECRET_KEY'),
-        'webhook_hash' => env('FLUTTERWAVE_WEBHOOK_HASH'),
-        'base_url' => env('FLUTTERWAVE_BASE_URL', 'https://api.flutterwave.com/v3'),
-    ],
-
-    // Cloudflare Turnstile (bot / card-testing protection). Empty = off.
+    // Cloudflare Turnstile (bot protection). Empty = off.
     'turnstile' => [
         'secret_key' => env('TURNSTILE_SECRET_KEY'),
-    ],
-
-    // USSD voting through Africa's Talking. The callback URL contains this
-    // secret (Africa's Talking doesn't sign USSD requests).
-    'ussd' => [
-        'service_code' => env('USSD_SERVICE_CODE'), // e.g. *384*1234#  (shown to organisers)
-        'webhook_secret' => env('USSD_WEBHOOK_SECRET'),
     ],
 
     'resend' => [
@@ -54,35 +31,6 @@ return [
         'key' => env('AWS_ACCESS_KEY_ID'),
         'secret' => env('AWS_SECRET_ACCESS_KEY'),
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
-    ],
-
-    /*
-    | Voter SMS invitations. SMS_DRIVER: log (test mode) | twilio | termii | africastalking.
-    | A driver without credentials falls back to test mode (messages are logged).
-    */
-    'sms' => [
-        'driver' => env('SMS_DRIVER', 'log'),
-        // Used to convert local numbers ("0801…") to international format, e.g. 234 for Nigeria.
-        'default_country_code' => env('SMS_DEFAULT_COUNTRY_CODE'),
-    ],
-
-    'twilio' => [
-        'sid' => env('TWILIO_SID'),
-        'token' => env('TWILIO_AUTH_TOKEN'),
-        'from' => env('TWILIO_FROM'),
-    ],
-
-    'termii' => [
-        'api_key' => env('TERMII_API_KEY'),
-        'sender_id' => env('TERMII_SENDER_ID'),
-        'base_url' => env('TERMII_BASE_URL', 'https://api.ng.termii.com'),
-        'channel' => env('TERMII_CHANNEL', 'generic'),
-    ],
-
-    'africastalking' => [
-        'username' => env('AFRICASTALKING_USERNAME'),
-        'api_key' => env('AFRICASTALKING_API_KEY'),
-        'from' => env('AFRICASTALKING_FROM'),
     ],
 
     'slack' => [

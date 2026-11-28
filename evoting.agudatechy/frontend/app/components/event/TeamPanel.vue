@@ -45,29 +45,22 @@
             <div v-if="isOwner" class="card-b pad">
                 <h3 class="h6 fw-800 mb-1">Invite someone</h3>
                 <p class="small text-muted mb-3">They get an email. If they don’t have an account yet, they create one with that address.</p>
-                <template v-if="event.limits?.team">
-                    <form novalidate @submit.prevent="invite">
-                        <label for="tm-email" class="form-label">Email</label>
-                        <input id="tm-email" v-model.trim="email" type="email" class="form-control mb-3" placeholder="name@example.com" :disabled="busy" />
-                        <label class="form-label">Role</label>
-                        <div class="d-grid gap-2 mb-3">
-                            <label v-for="r in roles" :key="r" class="choice" :class="{ selected: role === r }">
-                                <input v-model="role" type="radio" class="visually-hidden" :value="r" />
-                                <span class="icon-tile sm"><i class="bi" :class="ROLE_INFO[r].icon"></i></span>
-                                <span><span class="d-block fw-bold text-ink">{{ ROLE_INFO[r].label }}</span><span class="d-block small text-muted">{{ ROLE_INFO[r].text }}</span></span>
-                            </label>
-                        </div>
-                        <div v-if="error" class="field-error mb-2">{{ error }}</div>
-                        <button class="btn btn-primary w-100" :disabled="busy || !/^\S+@\S+\.\S+$/.test(email)">
-                            <span v-if="busy" class="spinner-border spinner-border-sm"></span><i v-else class="bi bi-person-plus"></i> Add to team
-                        </button>
-                    </form>
-                </template>
-                <div v-else class="pro-lock">
-                    <span class="pill pill-pro"><i class="bi bi-lightning-charge-fill"></i> Pro</span>
-                    <span class="small">Co-organisers are a <b>Pro</b> feature. Upgrade this event to invite up to {{ maxMembers }} people.</span>
-                    <button class="btn btn-soft btn-sm" @click="emit('upgrade')">Upgrade</button>
-                </div>
+                <form novalidate @submit.prevent="invite">
+                    <label for="tm-email" class="form-label">Email</label>
+                    <input id="tm-email" v-model.trim="email" type="email" class="form-control mb-3" placeholder="name@example.com" :disabled="busy" />
+                    <label class="form-label">Role</label>
+                    <div class="d-grid gap-2 mb-3">
+                        <label v-for="r in roles" :key="r" class="choice" :class="{ selected: role === r }">
+                            <input v-model="role" type="radio" class="visually-hidden" :value="r" />
+                            <span class="icon-tile sm"><i class="bi" :class="ROLE_INFO[r].icon"></i></span>
+                            <span><span class="d-block fw-bold text-ink">{{ ROLE_INFO[r].label }}</span><span class="d-block small text-muted">{{ ROLE_INFO[r].text }}</span></span>
+                        </label>
+                    </div>
+                    <div v-if="error" class="field-error mb-2">{{ error }}</div>
+                    <button class="btn btn-primary w-100" :disabled="busy || !/^\S+@\S+\.\S+$/.test(email)">
+                        <span v-if="busy" class="spinner-border spinner-border-sm"></span><i v-else class="bi bi-person-plus"></i> Add to team
+                    </button>
+                </form>
             </div>
             <div class="card-b pad small text-muted">
                 <h3 class="h6 fw-800 text-ink mb-2">Who can do what</h3>
@@ -85,7 +78,7 @@ import { useAuthStore } from '~/stores/auth';
 import type { BallotEvent, MemberRole, TeamInfo, TeamMember } from '~/types';
 
 const props = defineProps<{ event: BallotEvent }>();
-const emit = defineEmits<{ upgrade: []; left: [] }>();
+const emit = defineEmits<{ left: [] }>();
 const toast = useToast();
 const { confirm } = useConfirm();
 const auth = useAuthStore();
@@ -101,7 +94,6 @@ const error = ref('');
 
 const isOwner = computed(() => props.event.my_role === 'owner');
 const myEmail = computed(() => auth.user?.email?.toLowerCase());
-const maxMembers = 10;
 
 async function load() {
     try { team.value = (await adminApi.getTeam(props.event.id)).data; }
@@ -159,7 +151,5 @@ async function remove(m: TeamMember) {
 .member { display: flex; align-items: center; gap: .8rem; padding: .8rem 1.25rem; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
 .member:last-child { border-bottom: 0; }
 .role-select { flex-shrink: 0; }
-.pro-lock { display: flex; gap: .6rem; align-items: center; flex-wrap: wrap; padding: .8rem; border-radius: 12px; background: var(--brand-50); }
-.pro-lock > span { flex: 1 1 180px; }
 .icon-tile.sm { width: 34px; height: 34px; font-size: 1rem; flex-shrink: 0; }
 </style>

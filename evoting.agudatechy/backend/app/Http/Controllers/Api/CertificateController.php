@@ -29,38 +29,23 @@ class CertificateController extends Controller
                 'id' => $event->id,
                 'name' => $event->name,
                 'organiser' => $event->user?->name,
-                'voting_mode' => $event->voting_mode,
                 'starts_at' => $event->starts_at?->toIso8601String(),
                 'ends_at' => $event->ends_at?->toIso8601String(),
             ],
             'stats' => ['voters' => $event->voters()->count(),
                 'ballots' => $event->voters()->whereNotNull('used_at')->count(),
                 'receipts' => BallotReceipt::where('event_id', $event->id)->count()],
-            // Weighted votes / proxies / quorum, when used.
-            'rules' => \App\Support\MeetingRules::summary($event),
             // Votes reset during a test run, before these results (when, by whom).
             ...(($resets = VoteResetController::history($event)) ? ['votes_reset' => $resets] : []),
             'categories' => $categories->map(function ($cat) {
                 $tally = \App\Support\Tally::category($cat, $cat->candidates);
                 $byId = $cat->candidates->keyBy('id');
                 $cands = collect($tally['order'])->map(fn ($id) => $byId[$id] ?? null)->filter()->values();
-                $row = [
+                return [
                     'name' => $cat->name,
                     'candidates' => $cands->map(fn ($c) => ['name' => $c->name, 'votes' => (int) $c->votes])->all(),
                     'winners' => collect($tally['winners'])->map(fn ($id) => $byId[$id]->name ?? null)->filter()->values()->all(),
                 ];
-                if (! empty($tally['motion'])) {
-                    $row['method'] = 'motion';
-                    $row['motion'] = $tally['motion'];
-                }
-                if ($tally['rounds']) {
-                    // Ranked choice: the votes shown are first choices; the final round decided it.
-                    $last = end($tally['rounds']);
-                    $row['method'] = 'ranked';
-                    $row['final_round'] = collect($last['counts'])->map(fn ($r) => ['name' => $byId[$r['id']]->name ?? '', 'votes' => $r['votes']])->all();
-                    $row['rounds'] = count($tally['rounds']);
-                }
-                return $row;
             })->all(),
         ];
     }

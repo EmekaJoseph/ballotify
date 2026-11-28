@@ -5,6 +5,5 @@
 </template>
 
 <script setup lang="ts">
-// Drafts are always allowed; the free plan limits live events (see useNewEvent).
 withDefaults(defineProps<{ label?: string }>(), { label: 'New event' });
 </script>

@@ -22,11 +22,6 @@ class Event extends Model
     public const RESULTS_PRIVATE = 'private';
     public const RESULTS_OPTIONS = [self::RESULTS_LIVE, self::RESULTS_AFTER_CLOSE, self::RESULTS_PRIVATE];
 
-    /** Secret ballot with one-time voter codes. */
-    public const MODE_CODES = 'codes';
-    /** Public paid voting: anyone pays per vote (award nights, pageants). */
-    public const MODES = [self::MODE_CODES];
-
     protected $fillable = [
         'user_id',
         'name',
@@ -35,46 +30,22 @@ class Event extends Model
         'starts_at',
         'ends_at',
         'results_visibility',
-        'voting_mode',
-        'vote_price_naira',
-        'brand_color',
         'reminder_at',
-        'reminder_channel',
-        'self_registration',
-        'member_id_label',
-        'language',
         'nominations_enabled',
         'nominations_ends_at',
-        'weighted_votes',
-        'proxies_enabled',
-        'max_proxies',
-        'quorum_type',
-        'quorum_value',
     ];
 
     protected $casts = [
         'starts_at' => 'datetime',
         'ends_at' => 'datetime',
-        'upgraded_at' => 'datetime',
         'reminder_at' => 'datetime',
         'reminder_sent_at' => 'datetime',
-        'vote_price_naira' => 'integer',
-        'self_registration' => 'boolean',
-        'ussd_enabled' => 'boolean',
         'nominations_enabled' => 'boolean',
         'nominations_ends_at' => 'datetime',
-        'weighted_votes' => 'boolean',
-        'proxies_enabled' => 'boolean',
-        'max_proxies' => 'integer',
-        'quorum_value' => 'integer',
     ];
-
-    public const QUORUM_TYPES = ['percent', 'count'];
 
     protected $attributes = [
         'results_visibility' => self::RESULTS_AFTER_CLOSE,
-        'voting_mode' => self::MODE_CODES,
-        'language' => 'en',
     ];
 
     protected $appends = ['status', 'ballot_locked', 'brand_logo_url'];
@@ -154,7 +125,7 @@ class Event extends Model
     /**
      * Once the first vote is in (or voting has closed) the ballot structure is
      * frozen: no adding/removing/moving categories or candidates, no change of
-     * pick limits or voting mode. Cosmetic fixes (names, photos) stay possible
+     * pick limits. Cosmetic fixes (names, photos) stay possible
      * and are audited.
      */
     protected function ballotLocked(): Attribute

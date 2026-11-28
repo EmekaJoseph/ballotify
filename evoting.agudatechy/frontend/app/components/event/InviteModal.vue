@@ -67,7 +67,7 @@
 
 <script setup lang="ts">
 import { adminApi } from '~/api/endpoints/admin';
-import type { InviteChannel, MessagingStatus, Voter } from '~/types';
+import type { MessagingStatus, Voter } from '~/types';
 
 /**
  * targets = null  → whole list, organiser picks an audience
@@ -78,7 +78,7 @@ const emit = defineEmits<{ close: []; sent: [] }>();
 
 const toast = useToast();
 const status = ref<MessagingStatus | null>(null);
-const channel = ref<InviteChannel>('email');
+const channel = ref<'email'>('email');
 const audience = ref<'not_invited' | 'pending'>('not_invited');
 const busy = ref(false);
 
@@ -90,7 +90,7 @@ const title = computed(() => {
 });
 
 /** Email is the only channel here. */
-const reach = (v: Voter, _ch: InviteChannel) => !!v.email;
+const reach = (v: Voter, _ch: 'email') => !!v.email;
 /** Voters this send could reach, before the channel filter. */
 const pool = computed(() => (props.targets ?? props.voters).filter(v => !v.used_at));
 

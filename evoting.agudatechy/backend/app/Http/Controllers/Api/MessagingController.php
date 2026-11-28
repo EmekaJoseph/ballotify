@@ -3,12 +3,11 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Services\Sms\SmsSender;
 
-/** Tells the dashboard whether email/SMS will really be delivered or only logged. */
+/** Tells the dashboard whether email will really be delivered or only logged. */
 class MessagingController extends Controller
 {
-    public function status(SmsSender $sms)
+    public function status()
     {
         $mailer = (string) config('mail.default');
 
@@ -16,10 +15,6 @@ class MessagingController extends Controller
             'email' => [
                 'live' => ! in_array($mailer, ['log', 'array'], true),
                 'provider' => $mailer,
-            ],
-            'sms' => [
-                'live' => $sms->isLive(),
-                'provider' => $sms->name(),
             ],
             // 'sync' sends immediately; anything else needs `php artisan queue:work` running.
             'queue' => config('queue.default'),

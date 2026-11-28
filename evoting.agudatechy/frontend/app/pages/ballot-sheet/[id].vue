@@ -39,17 +39,15 @@
                         <h2><span class="cat-no">{{ ci + 1 }}.</span> {{ cat.name }}</h2>
                         <span class="how">{{ instruction(cat) }}</span>
                     </div>
-                    <p v-if="cat.method === 'motion' && cat.description" class="motion-text">{{ cat.description }}</p>
-                    <p v-if="cat.groups?.length" class="note">For: {{ cat.groups.join(', ') }}</p>
 
                     <p v-if="!(byCategory.get(cat.id) ?? []).length" class="muted small">No candidates yet.</p>
-                    <ol v-else class="cands" :class="{ ranked: cat.method === 'ranked' }">
+                    <ol v-else class="cands">
                         <li v-for="c in byCategory.get(cat.id)" :key="c.id" class="cand">
-                            <span v-if="opts.boxes" class="box" :class="{ rank: cat.method === 'ranked' }" aria-hidden="true"></span>
+                            <span v-if="opts.boxes" class="box" aria-hidden="true"></span>
                             <img v-if="opts.photos && c.image_url" :src="c.image_url" alt="" class="photo" />
                             <div class="cand-text">
                                 <div class="cname">{{ c.name }}</div>
-                                <div v-if="opts.descriptions && c.description && cat.method !== 'motion'" class="cdesc">{{ c.description }}</div>
+                                <div v-if="opts.descriptions && c.description" class="cdesc">{{ c.description }}</div>
                             </div>
                         </li>
                     </ol>
@@ -85,21 +83,14 @@ const byCategory = computed(() => {
     for (const c of candidates.value) m.set(c.category_id, [...(m.get(c.category_id) ?? []), c]);
     return m;
 });
-const candidateCount = computed(() => candidates.value.filter(c => !c.motion_choice).length);
+const candidateCount = computed(() => candidates.value.length);
 const hasPhotos = computed(() => candidates.value.some(c => c.image_url));
-const hasDescriptions = computed(() => candidates.value.some(c => c.description && !c.motion_choice));
+const hasDescriptions = computed(() => candidates.value.some(c => c.description));
 const anyShuffled = computed(() => categories.value.some(c => c.shuffle_candidates));
 
 /** How to fill in this category, in words. */
 function instruction(cat: Category): string {
-    if (cat.method === 'motion') {
-        const rule = cat.pass_rule === 'two_thirds' ? 'two-thirds majority' : cat.pass_rule === 'three_quarters' ? 'three-quarters majority' : 'simple majority';
-        return `Choose one: Yes, No or Abstain (passes by ${rule})`;
-    }
-    if (cat.method === 'ranked') {
-        return cat.max_choices ? `Rank up to ${cat.max_choices} in order of preference (1 = first choice)` : 'Rank the candidates in order of preference (1 = first choice)';
-    }
-    if (cat.max_choices === null) return 'Choose as many as you approve of';
+    if (cat.max_choices === null) return 'Choose as many as you support';
     if (!cat.max_choices || cat.max_choices === 1) return 'Choose one';
     return `Choose up to ${cat.max_choices}`;
 }
@@ -133,7 +124,7 @@ function print() {
 </script>
 
 <style scoped>
-h1, h2, .cname, .cdesc, .motion-text, .desc { overflow-wrap: anywhere; }
+h1, h2, .cname, .cdesc, .desc { overflow-wrap: anywhere; }
 /* A printed document: always light, whatever the app theme. */
 .sheet-shell {
     min-height: 100vh; background: #eef2f6; color: #0f172a; padding: 1.5rem 1rem 3rem;
@@ -175,14 +166,12 @@ h1 { font-size: 2rem; font-weight: 800; margin: 0 0 .3rem; letter-spacing: -.02e
 h2 { font-size: 1.15rem; font-weight: 800; margin: 0; }
 .cat-no { color: #058580; }
 .how { display: block; font-size: .82rem; color: #475569; font-weight: 600; margin-top: .15rem; }
-.motion-text { margin: .4rem 0 .6rem; padding: .7rem .9rem; background: #f8fafc; border-left: 3px solid #058580; border-radius: 6px; white-space: pre-line; font-size: .92rem; }
 .note { font-size: .78rem; color: #64748b; margin: 0 0 .4rem; }
 
 .cands { list-style: none; margin: 0; padding: 0; }
 .cand { display: flex; align-items: center; gap: .85rem; padding: .6rem .25rem; border-bottom: 1px solid #eef2f6; break-inside: avoid; }
 .cand:last-child { border-bottom: 0; }
 .box { width: 22px; height: 22px; border: 2px solid #0f172a; border-radius: 4px; flex-shrink: 0; }
-.box.rank { width: 30px; height: 26px; border-radius: 6px; }
 .photo { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; flex-shrink: 0; background: #eef2f6; }
 .cand-text { min-width: 0; }
 .cname { font-weight: 700; }

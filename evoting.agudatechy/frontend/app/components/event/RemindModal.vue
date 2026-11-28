@@ -11,7 +11,7 @@
 
         <div v-if="scheduled" class="scheduled mb-3">
             <i class="bi bi-alarm"></i>
-            <span class="flex-grow-1">Reminder scheduled for <b>{{ formatDate(event.reminder_at!, true) }}</b> by {{ channelLabel(event.reminder_channel) }}.</span>
+            <span class="flex-grow-1">Reminder scheduled for <b>{{ formatDate(event.reminder_at!, true) }}</b> by email.</span>
             <button class="btn btn-ghost btn-sm" :disabled="busy" @click="cancelSchedule">Cancel it</button>
         </div>
 
@@ -39,20 +39,18 @@
 
 <script setup lang="ts">
 import { adminApi } from '~/api/endpoints/admin';
-import type { BallotEvent, InviteChannel } from '~/types';
+import type { BallotEvent } from '~/types';
 
 const props = defineProps<{ open: boolean; event: BallotEvent; pending: number; reachable: number; phonePending?: number }>();
 const emit = defineEmits<{ close: []; done: [] }>();
 const toast = useToast();
 
 const when = ref<'now' | 'later'>('now');
-const channel = ref<InviteChannel>('email');
 const at = ref('');
 const busy = ref(false);
 const error = ref('');
 
 // Reminders go by email here.
-const channelLabel = (_c?: string | null) => 'email';
 const scheduled = computed(() => !!props.event.reminder_at && !props.event.reminder_sent_at);
 
 const pad = (n: number) => String(n).padStart(2, '0');
@@ -72,7 +70,6 @@ watch(() => props.open, (o) => {
     if (!o) return;
     error.value = '';
     when.value = scheduled.value ? 'later' : 'now';
-    channel.value = 'email';
     at.value = props.event.reminder_at && !props.event.reminder_sent_at ? toLocalInput(props.event.reminder_at) : '';
 });
 
@@ -81,10 +78,10 @@ async function submit() {
     error.value = '';
     try {
         if (when.value === 'now') {
-            const { data } = await adminApi.remindVoters(props.event.id, channel.value);
+            const { data } = await adminApi.remindVoters(props.event.id);
             toast.success(`Reminder on its way to ${formatNumber(data.queued)} voter${data.queued === 1 ? '' : 's'}`);
         } else {
-            await adminApi.updateEvent(props.event.id, { reminder_at: fromLocalInput(at.value), reminder_channel: channel.value });
+            await adminApi.updateEvent(props.event.id, { reminder_at: fromLocalInput(at.value) });
             toast.success(`Reminder scheduled for ${formatDate(fromLocalInput(at.value), true)}`);
         }
         emit('done');

@@ -5,28 +5,12 @@ use App\Mail\VoterInvitation;
 use App\Models\Event;
 use App\Models\User;
 use App\Models\Voter;
-use App\Services\Sms\SmsSender;
 use App\Support\PhoneNumber;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
 
 uses(RefreshDatabase::class);
-
-/** Records SMS instead of sending them. */
-class FakeSms implements SmsSender
-{
-    public array $sent = [];
-    public bool $fail = false;
-    public function send(string $to, string $message): void
-    {
-        if ($this->fail) throw new RuntimeException('provider down');
-        $this->sent[] = compact('to', 'message');
-    }
-    public function isLive(): bool { return true; }
-    public function name(): string { return 'Fake'; }
-}
 
 function openEvent(): array
 {
@@ -39,7 +23,7 @@ function openEvent(): array
 }
 
 it('normalises phone numbers to international format', function () {
-    config(['services.sms.default_country_code' => '234']);
+    config(['ballotify.default_country_code' => '234']);
     expect(PhoneNumber::normalize('0801 234 5678'))->toBe('+2348012345678')
         ->and(PhoneNumber::normalize('+44 (20) 7946-0958'))->toBe('+442079460958')
         ->and(PhoneNumber::normalize('2348012345678'))->toBe('+2348012345678')
@@ -50,7 +34,7 @@ it('normalises phone numbers to international format', function () {
 });
 
 it('adds a voter with email and phone and generates the code', function () {
-    config(['services.sms.default_country_code' => '234']);
+    config(['ballotify.default_country_code' => '234']);
     [$user, $event] = openEvent();
 
     $this->actingAs($user)->postJson("/api/events/{$event->id}/voters", [
@@ -91,9 +75,9 @@ it('queues invitations only for reachable voters who have not voted', function (
     Voter::create(['event_id' => $event->id, 'code' => 'DDDD2222', 'email' => 'd@x.com', 'used_at' => now()]); // voted
 
     $this->actingAs($user)->postJson("/api/events/{$event->id}/voters/invite", ['channel' => 'email', 'audience' => 'pending'])
-        ->assertOk()->assertJson(['queued' => 1, 'email' => 1, 'sms' => 0]);
+        ->assertOk()->assertJson(['queued' => 1, 'email' => 1]);
 
-    // No SMS here: asking for it is refused.
+    // Email only: anything else is refused.
     $this->actingAs($user)->postJson("/api/events/{$event->id}/voters/invite", ['channel' => 'both', 'audience' => 'pending'])
         ->assertStatus(422)->assertJsonValidationErrors('channel');
 
@@ -111,35 +95,18 @@ it('refuses to send invitations after voting has closed', function () {
         ->assertStatus(422);
 });
 
-it('delivers the email and SMS with the code and voting link, and records the result', function () {
+it('emails the code and voting link, and records the result', function () {
     Mail::fake();
-    $sms = new FakeSms();
-    app()->instance(SmsSender::class, $sms);
     config(['app.frontend_url' => 'https://vote.example.com']);
     [, $event] = openEvent();
-    $voter = Voter::create(['event_id' => $event->id, 'name' => 'Ada', 'code' => 'K7M2QX9P', 'email' => 'ada@example.com', 'phone' => '+2348012345678']);
+    $voter = Voter::create(['event_id' => $event->id, 'name' => 'Ada', 'code' => 'K7M2QX9P', 'email' => 'ada@example.com']);
 
-    (new SendVoterInvitation($voter->id, ['email', 'sms']))->handle($sms);
+    (new SendVoterInvitation($voter->id))->handle();
 
     Mail::assertSent(VoterInvitation::class, fn ($m) => $m->hasTo('ada@example.com') && $m->voteUrl === 'https://vote.example.com/vote/tok-inv');
-    expect($sms->sent)->toHaveCount(1)
-        ->and($sms->sent[0]['to'])->toBe('+2348012345678')
-        ->and($sms->sent[0]['message'])->toContain('K7M2QX9P')->toContain('https://vote.example.com/vote/tok-inv')
-        ->and($voter->fresh()->invited_at)->not->toBeNull()
+    expect($voter->fresh()->invited_at)->not->toBeNull()
+        ->and($voter->fresh()->invited_via)->toBe('email')
         ->and($voter->fresh()->invite_error)->toBeNull();
-});
-
-it('records a delivery failure instead of crashing', function () {
-    Mail::fake();
-    $sms = new FakeSms();
-    $sms->fail = true;
-    [, $event] = openEvent();
-    $voter = Voter::create(['event_id' => $event->id, 'code' => 'K7M2QX9P', 'phone' => '+2348012345678']);
-
-    (new SendVoterInvitation($voter->id, ['sms']))->handle($sms);
-
-    expect($voter->fresh()->invited_at)->toBeNull()
-        ->and($voter->fresh()->invite_error)->toContain('provider down');
 });
 
 it('renders the invitation email', function () {
@@ -151,29 +118,12 @@ it('renders the invitation email', function () {
     expect($html)->toContain('K7M2QX9P')->toContain('Hello Ada')->toContain('https://vote.example.com/vote/tok-inv');
 });
 
-it('calls the Termii API with the right payload', function () {
-    Http::fake(['api.ng.termii.com/*' => Http::response(['code' => 'ok', 'message_id' => '1'])]);
-    config(['services.sms.driver' => 'termii', 'services.termii.api_key' => 'k', 'services.termii.sender_id' => 'Ballotify']);
-
-    $sender = app(SmsSender::class);
-    expect($sender->name())->toBe('Termii');
-    $sender->send('+2348012345678', 'hello');
-
-    Http::assertSent(fn ($r) => $r->url() === 'https://api.ng.termii.com/api/sms/send'
-        && $r['to'] === '2348012345678' && $r['from'] === 'Ballotify' && $r['api_key'] === 'k');
-});
-
-it('stays in test mode when an SMS provider has no credentials', function () {
-    config(['services.sms.driver' => 'twilio', 'services.twilio.sid' => null]);
-    expect(app(SmsSender::class)->isLive())->toBeFalse();
-});
-
 it('reports messaging status to the dashboard', function () {
     $user = User::factory()->create();
-    config(['mail.default' => 'log', 'services.sms.driver' => 'log']);
+    config(['mail.default' => 'log']);
 
     $this->actingAs($user)->getJson('/api/messaging/status')
-        ->assertOk()->assertJsonPath('email.live', false)->assertJsonPath('sms.live', false);
+        ->assertOk()->assertJsonPath('email.live', false)->assertJsonMissingPath('sms');
 });
 
 it('keeps working when the mailer fails (sync queue)', function () {
@@ -198,7 +148,7 @@ it('records a job that dies in the worker', function () {
     [, $event] = openEvent();
     $voter = Voter::create(['event_id' => $event->id, 'code' => 'K7M2QX9P', 'email' => 'a@example.com']);
 
-    (new SendVoterInvitation($voter->id, ['email']))->failed(new RuntimeException('timed out'));
+    (new SendVoterInvitation($voter->id))->failed(new RuntimeException('timed out'));
 
     expect($voter->fresh()->invite_error)->toContain('timed out');
 });

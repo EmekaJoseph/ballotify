@@ -9,14 +9,13 @@ use App\Models\EventMember;
 use App\Models\User;
 use App\Policies\EventPolicy;
 use App\Support\Audit;
-use App\Support\Plans;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
-/** Co-organisers (the election committee). Pro events only; managed by the owner. */
+/** Co-organisers (the election committee), managed by the owner. */
 class TeamController extends Controller
 {
     private const ROLE_LABELS = [
@@ -51,7 +50,6 @@ class TeamController extends Controller
             'email' => ['required', 'email:rfc', 'max:255'],
             'role' => ['required', Rule::in(EventMember::ROLES)],
         ]);
-        Plans::ensureTeam($event, $event->members()->count());
 
         $email = strtolower(trim($data['email']));
         if ($email === strtolower($event->user->email)) {

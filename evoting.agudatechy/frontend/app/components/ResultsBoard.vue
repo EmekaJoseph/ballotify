@@ -24,36 +24,15 @@
                 <div class="min-w-0">
                     <h2 class="h5 fw-800 mb-0 text-break">{{ cat.name }}</h2>
                     <div class="small text-muted">
-                        {{ tn('res.votes', catTotal(cat)) }}<template v-if="isRanked(cat)"> ({{ t('res.firstChoices') }})</template>
-                        <template v-if="cat.eligible != null"> · <i class="bi bi-people"></i> {{ t('res.eligibleLine', { voted: formatNumber(cat.ballots ?? 0), eligible: formatNumber(cat.eligible) }) }}</template>
+                        {{ tn('res.votes', catTotal(cat)) }}
                     </div>
                 </div>
-                <div v-if="isMotion(cat) && cat.motion" class="pill" :class="!cat.motion.decided ? '' : cat.motion.passed ? 'pill-active' : 'pill-danger'">
-                    <i class="bi" :class="!cat.motion.decided ? 'bi-hourglass-split' : cat.motion.passed ? 'bi-check-circle-fill' : 'bi-x-circle-fill'"></i>
-                    {{ !cat.motion.decided ? t('res.undecided') : cat.motion.passed ? t('res.passed') : t('res.failed') }}
-                </div>
-                <div v-else-if="winners(cat).length" class="pill pill-brand pill-wrap">
+                <div v-if="winners(cat).length" class="pill pill-brand pill-wrap">
                     <i class="bi bi-trophy-fill"></i>
                     {{ winners(cat).length > 1 ? t('res.tied') : (closed ? t('res.winner') : t('res.leading')) }}: {{ winners(cat).map(c => c.name).join(' & ') }}
                 </div>
             </header>
-            <div v-if="isMotion(cat) && cat.motion" class="p-3 p-md-4">
-                <p v-if="cat.description" class="motion-text mb-3">{{ cat.description }}</p>
-                <div class="d-grid gap-3">
-                    <div v-for="c in cat.candidates" :key="c.id" class="motion-row">
-                        <div class="d-flex justify-content-between gap-2 mb-1">
-                            <span class="fw-semibold text-ink"><i class="bi me-1" :class="MOTION_ICON[c.motion_choice ?? 'abstain']"></i>{{ t(`motion.${c.motion_choice ?? 'abstain'}`) }}</span>
-                            <span class="small text-nowrap"><b class="text-ink">{{ formatNumber(c.votes) }}</b>
-                                <span v-if="c.motion_choice !== 'abstain'" class="text-muted"> · {{ percent(c.votes, cat.motion.yes + cat.motion.no) }}%</span></span>
-                        </div>
-                        <div class="bar slim"><span :class="c.motion_choice" :style="{ width: (c.motion_choice === 'abstain' ? percent(c.votes, catTotal(cat)) : percent(c.votes, cat.motion.yes + cat.motion.no)) + '%' }"></span></div>
-                    </div>
-                </div>
-                <p class="small text-muted mt-3 mb-0">
-                    {{ t(`res.rule.${cat.motion.rule}`) }} <template v-if="cat.motion.abstain">{{ t('res.abstainNote', { n: formatNumber(cat.motion.abstain) }) }}</template>
-                </p>
-            </div>
-            <div v-else class="p-3 p-md-4">
+            <div class="p-3 p-md-4">
                 <div class="row g-4 align-items-center">
                     <div class="col-md-auto d-flex justify-content-center">
                         <DonutChart :values="cat.candidates.map(c => c.votes)" :colors="palette" :size="170" :label="t('res.votesWord')" />
@@ -81,10 +60,9 @@
                                 </div>
                             </li>
                         </ol>
-                        <p v-if="isApproval(cat) && !paid && catTotal(cat)" class="small text-muted mt-3 mb-0"><i class="bi bi-ui-checks"></i> {{ t('res.approvalNote') }}</p>
+                        <p v-if="isApproval(cat) && catTotal(cat)" class="small text-muted mt-3 mb-0"><i class="bi bi-ui-checks"></i> {{ t('res.approvalNote') }}</p>
                     </div>
                 </div>
-                <RoundsTable v-if="isRanked(cat)" :category="cat" />
             </div>
         </section>
     </div>
@@ -103,18 +81,11 @@ const turnout = computed(() => {
     return total_voters ? `${percent(voted, total_voters)}%` : '—';
 });
 
-const paid = computed(() => props.results.event.voting_mode === 'paid');
 const catTotal = (cat: ResultCategory) => cat.candidates.reduce((s, c) => s + c.votes, 0);
 const winners = (cat: ResultCategory) => categoryWinners(cat);
-const MOTION_ICON = { yes: 'bi-check-lg text-success', no: 'bi-x-lg text-danger', abstain: 'bi-dash-lg text-muted' } as const;
 </script>
 
 <style scoped>
-.motion-text { white-space: pre-line; color: var(--ink); max-width: 760px; }
-.motion-row .bar span.yes { background: #16a34a; }
-.motion-row .bar span.no { background: #dc2626; }
-.motion-row .bar span.abstain { background: var(--line-strong); }
-.pill-danger { background: #fef3f2; color: #b42318; }
 .rank {
     width: 28px; height: 28px; border-radius: 8px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center;
     font-weight: 800; font-size: .8rem; background: var(--surface-2); color: var(--muted); border: 1px solid var(--line);

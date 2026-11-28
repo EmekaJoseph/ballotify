@@ -2,7 +2,7 @@
     <BaseModal :open="open" title="Add voters" subtitle="Fill in one line and press Enter. Add as many as you like, then create all their codes at once."
         size="lg" @close="close">
         <!-- One-line entry. Enter adds it to the list below. -->
-        <form class="entry" :class="{ weighted }" novalidate @submit.prevent="addRow">
+        <form class="entry" novalidate @submit.prevent="addRow">
             <div>
                 <label class="form-label small mb-1" for="vb-name">Name</label>
                 <input id="vb-name" ref="nameInput" v-model="draft.name" class="form-control" maxlength="255" placeholder="e.g. Ada Obi" autocomplete="off" />
@@ -16,24 +16,14 @@
                 <input id="vb-phone" v-model="draft.phone" type="tel" class="form-control" maxlength="32" placeholder="optional" autocomplete="off" />
             </div>
             <div>
-                <label class="form-label small mb-1 text-truncate d-block" for="vb-id">{{ memberLabel }}</label>
+                <label class="form-label small mb-1 text-truncate d-block" for="vb-id">Member ID</label>
                 <input id="vb-id" v-model="draft.memberId" class="form-control" maxlength="64" placeholder="optional" autocomplete="off" />
-            </div>
-            <div>
-                <label class="form-label small mb-1" for="vb-group">Group</label>
-                <input id="vb-group" v-model="draft.groups" class="form-control" maxlength="255" placeholder="optional" autocomplete="off" :list="groupOptions.length ? 'vb-groups' : undefined" />
-                <datalist v-if="groupOptions.length" id="vb-groups"><option v-for="g in groupOptions" :key="g" :value="g" /></datalist>
-            </div>
-            <div v-if="weighted">
-                <label class="form-label small mb-1" for="vb-weight">Weight</label>
-                <input id="vb-weight" v-model.number="draft.weight" type="number" min="1" max="10000000" class="form-control" placeholder="1" />
             </div>
             <button type="submit" class="btn btn-soft f-add" :disabled="!canAdd"><i class="bi bi-plus-lg"></i> Add</button>
         </form>
         <div v-if="entryError" class="field-error mt-2" role="alert">{{ entryError }}</div>
         <div class="form-text">
             Press <kbd>Enter</kbd> to add. A name, email or phone is enough; give an email or phone to send codes by message.
-            Several groups: separate them with “;”.
         </div>
 
         <!-- The list waiting to be saved -->
@@ -43,8 +33,7 @@
                 <table class="table-b small mb-0">
                     <thead>
                         <tr>
-                            <th style="width: 40px">#</th><th>Name</th><th>Email</th><th>Phone</th><th>{{ memberLabel }}</th><th>Group</th>
-                            <th v-if="weighted" class="text-end">Weight</th><th></th>
+                            <th style="width: 40px">#</th><th>Name</th><th>Email</th><th>Phone</th><th>Member ID</th><th></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -57,8 +46,6 @@
                             <td class="text-break">{{ r.email || '—' }}</td>
                             <td class="text-nowrap">{{ r.phone || '—' }}</td>
                             <td class="text-break">{{ r.memberId || '—' }}</td>
-                            <td class="text-break">{{ r.groups || '—' }}</td>
-                            <td v-if="weighted" class="text-end">{{ r.weight ?? 1 }}</td>
                             <td class="text-end">
                                 <button type="button" class="btn btn-ghost btn-icon btn-sm" :aria-label="`Remove ${r.name || 'row ' + (i + 1)}`" title="Remove" @click="rows.splice(i, 1)">
                                     <i class="bi bi-x-lg"></i>
@@ -91,17 +78,13 @@ const props = withDefaults(defineProps<{
     eventId: number;
     /** Voters already on the list (to refuse duplicates). */
     existing?: Voter[];
-    memberLabel?: string;
-    weighted?: boolean;
-    /** Groups already used on this event (suggested in the Group field). */
-    groupOptions?: string[];
-}>(), { existing: () => [], memberLabel: 'Member ID', weighted: false, groupOptions: () => [] });
-const emit = defineEmits<{ close: []; created: [codes: GeneratedCode[]]; limit: [] }>();
+}>(), { existing: () => [] });
+const emit = defineEmits<{ close: []; created: [codes: GeneratedCode[]] }>();
 const { confirm } = useConfirm();
 
-interface Row { key: number; name: string; email: string; phone: string; memberId: string; groups: string; weight: number | null; note: string }
+interface Row { key: number; name: string; email: string; phone: string; memberId: string; note: string }
 const rows = ref<Row[]>([]);
-const blank = () => ({ name: '', email: '', phone: '', memberId: '', groups: '', weight: null as number | null });
+const blank = () => ({ name: '', email: '', phone: '', memberId: '' });
 const draft = reactive(blank());
 const entryError = ref('');
 const error = ref('');
@@ -130,8 +113,6 @@ function addRow() {
         email: draft.email.trim(),
         phone: draft.phone.trim(),
         memberId: draft.memberId.trim(),
-        groups: draft.groups.trim(),
-        weight: props.weighted && draft.weight && draft.weight > 1 ? Math.floor(draft.weight) : null,
         note: '',
     };
     if (row.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(row.email)) {
@@ -141,8 +122,8 @@ function addRow() {
     // Same ID: refused (the server would refuse it too).
     if (row.memberId) {
         const id = idKey(row.memberId);
-        if (rows.value.some(r => r.memberId && idKey(r.memberId) === id)) { entryError.value = `${props.memberLabel} ${row.memberId} is already in your list.`; return; }
-        if (props.existing.some(v => v.member_id && idKey(v.member_id) === id)) { entryError.value = `${props.memberLabel} ${row.memberId} is already on the voter list.`; return; }
+        if (rows.value.some(r => r.memberId && idKey(r.memberId) === id)) { entryError.value = `Member ID ${row.memberId} is already in your list.`; return; }
+        if (props.existing.some(v => v.member_id && idKey(v.member_id) === id)) { entryError.value = `Member ID ${row.memberId} is already on the voter list.`; return; }
     }
     // Same person (same name and contact) or same email: refused, they'd get two codes.
     // Same name only, or a shared phone: allowed (often two people, or a family phone), but marked.
@@ -161,7 +142,7 @@ function addRow() {
     if (soft) row.note = describeMatch(soft);
 
     rows.value.push(row);
-    Object.assign(draft, { ...blank(), groups: draft.groups, weight: draft.weight }); // keep group and weight for the next person
+    Object.assign(draft, blank());
     nextTick(() => nameInput.value?.focus());
 }
 
@@ -175,13 +156,12 @@ async function save() {
         const { data } = await adminApi.importVoters(props.eventId, {
             voters: rows.value.map(r => ({
                 name: r.name || undefined, email: r.email || undefined, phone: r.phone || undefined,
-                member_id: r.memberId || undefined, groups: r.groups || undefined, ...(r.weight ? { weight: r.weight } : {}),
+                member_id: r.memberId || undefined,
             })),
         });
         rows.value = [];
         emit('created', data.voters);
     } catch (e) {
-        if (planLimitReason(e) === 'events') { emit('limit'); return; }
         error.value = Object.values(apiFieldErrors(e))[0] ?? apiErrorMessage(e);
     } finally {
         busy.value = false;
@@ -203,13 +183,12 @@ async function close() {
 
 <style scoped>
 .entry { display: grid; grid-template-columns: 1.3fr 1.3fr 1fr 1fr 1fr auto; gap: .6rem; align-items: end; }
-.entry.weighted { grid-template-columns: 1.3fr 1.3fr 1fr 1fr 1fr .6fr auto; }
 .entry .form-control { min-width: 0; }
 .f-add { height: 46px; white-space: nowrap; }
 @media (max-width: 991.98px) {
-    .entry, .entry.weighted { grid-template-columns: 1fr 1fr; }
+    .entry { grid-template-columns: 1fr 1fr; }
     .f-add { grid-column: 1 / -1; width: 100%; }
 }
-@media (max-width: 575.98px) { .entry, .entry.weighted { grid-template-columns: 1fr; } }
+@media (max-width: 575.98px) { .entry { grid-template-columns: 1fr; } }
 kbd { font-size: .72rem; padding: .05rem .35rem; border-radius: 4px; background: var(--surface-2); color: var(--ink); border: 1px solid var(--line); }
 </style>

@@ -3,7 +3,7 @@
         <div class="toolbar no-print">
             <NuxtLink :to="`/dashboard/events/${id}?tab=results`" class="tb-btn"><i class="bi bi-arrow-left"></i> Back to event</NuxtLink>
             <div class="tb-options">
-                <label v-if="canSeeRegister"><input v-model="opts.register" type="checkbox" /> {{ paid ? 'Payments summary' : 'Voter register' }}</label>
+                <label v-if="canSeeRegister"><input v-model="opts.register" type="checkbox" /> Voter register</label>
                 <label><input v-model="opts.signatures" type="checkbox" /> Signature lines</label>
             </div>
             <button class="tb-btn primary" :disabled="!results" @click="print"><i class="bi bi-file-earmark-pdf"></i> Save as PDF / Print</button>
@@ -28,31 +28,18 @@
                 <h1>{{ results.event.name }}</h1>
                 <p class="sub">
                     {{ formatWindow(results.event.starts_at, results.event.ends_at) }} ·
-                    {{ paid ? `Paid public voting (₦${formatNumber(event.vote_price_naira ?? 0)} per vote)` : 'Secret ballot with one-time codes' }}
+                    Secret ballot with one-time codes
                 </p>
             </div>
 
             <div class="stats">
-                <template v-if="paid">
-                    <div><span>Votes</span><b>{{ formatNumber(totalVotes) }}</b></div>
-                    <div><span>Payments</span><b>{{ formatNumber(results.stats.voted) }}</b></div>
-                </template>
-                <template v-else>
-                    <div><span>Ballots cast</span><b>{{ formatNumber(results.stats.voted) }}</b></div>
-                    <div><span>Registered voters</span><b>{{ formatNumber(results.stats.total_voters) }}</b></div>
-                    <div class="accent"><span>Turnout</span><b>{{ turnout }}</b></div>
-                </template>
+                <div><span>Ballots cast</span><b>{{ formatNumber(results.stats.voted) }}</b></div>
+                <div><span>Registered voters</span><b>{{ formatNumber(results.stats.total_voters) }}</b></div>
+                <div class="accent"><span>Turnout</span><b>{{ turnout }}</b></div>
                 <div><span>Categories</span><b>{{ formatNumber(results.categories.length) }}</b></div>
                 <div><span>Candidates</span><b>{{ formatNumber(results.stats.total_candidates) }}</b></div>
-                <div v-if="!paid"><span>Votes counted</span><b>{{ formatNumber(totalVotes) }}</b></div>
+                <div><span>Votes counted</span><b>{{ formatNumber(totalVotes) }}</b></div>
             </div>
-
-            <!-- Meeting rules: weighted votes, proxies, quorum (and whether the quorum was reached) -->
-            <section v-if="ruleLines.length" class="rules-box" :class="{ failed: verdict && !verdict.ok && final }">
-                <h2>Meeting rules</h2>
-                <ul><li v-for="l in ruleLines" :key="l">{{ l }}</li></ul>
-                <p v-if="verdict" class="verdict" :class="verdict.ok ? 'ok' : 'bad'">{{ verdict.text }}</p>
-            </section>
 
             <!-- Winners at a glance -->
             <section class="block">
@@ -62,33 +49,24 @@
                     <tbody>
                         <tr v-for="cat in results.categories" :key="cat.id">
                             <td class="cat-name">{{ cat.name }}</td>
-                            <td v-if="isMotion(cat)"><b :class="cat.motion?.passed ? 'pass' : 'fail'">{{ cat.motion?.decided ? (cat.motion.passed ? '✓ Passed' : '✗ Not passed') : 'No votes' }}</b>
-                                <span class="muted small"> · {{ passRuleLabel(cat.pass_rule) }}</span></td>
-                            <td v-else>
+                            <td>
                                 <template v-if="!winnersOf(cat).length"><span class="muted">No votes</span></template>
                                 <template v-else>
                                     <span class="trophy">★</span> <b>{{ winnersOf(cat).map(c => c.name).join(' & ') }}</b>
                                     <span v-if="winnersOf(cat).length > 1" class="tie">tie</span>
                                 </template>
                             </td>
-                            <template v-if="isMotion(cat) && cat.motion">
-                                <td class="num">Yes {{ formatNumber(cat.motion.yes) }}</td>
-                                <td class="num">{{ percent(cat.motion.yes, cat.motion.yes + cat.motion.no) }}%</td>
-                                <td class="num">{{ cat.motion.yes - cat.motion.no >= 0 ? '+' : '' }}{{ formatNumber(cat.motion.yes - cat.motion.no) }}</td>
-                            </template>
-                            <template v-else>
-                                <td class="num">{{ winnersOf(cat).length ? formatNumber(decidingVotes(cat, winnersOf(cat)[0]!)) : '–' }}</td>
-                                <td class="num">{{ winnersOf(cat).length ? decidingShare(cat, winnersOf(cat)[0]!) + '%' : '–' }}</td>
-                                <td class="num">{{ margin(cat) }}</td>
-                            </template>
+                            <td class="num">{{ winnersOf(cat).length ? formatNumber(winnersOf(cat)[0]!.votes) : '–' }}</td>
+                            <td class="num">{{ winnersOf(cat).length ? share(winnersOf(cat)[0]!.votes, cat) + '%' : '–' }}</td>
+                            <td class="num">{{ margin(cat) }}</td>
                         </tr>
                     </tbody>
                 </table>
             </section>
 
             <section v-if="hasTimeline" class="block chart-block">
-                <h2>{{ paid ? 'Votes over time' : 'Turnout over time' }}</h2>
-                <TurnoutChart :timeline="results.timeline" :unit="paid ? 'votes' : 'ballots'" :height="170" />
+                <h2>Turnout over time</h2>
+                <TurnoutChart :timeline="results.timeline" unit="ballots" :height="170" />
             </section>
 
             <section class="meta-grid">
@@ -118,7 +96,7 @@
             <section v-for="cat in results.categories" :key="cat.id" class="cat">
                 <div class="cat-head">
                     <h3>{{ cat.name }}</h3>
-                    <span class="cat-total">{{ methodName(cat) }} · {{ formatNumber(categoryTotal(cat)) }} {{ isRanked(cat) ? 'first choices' : `vote${categoryTotal(cat) === 1 ? '' : 's'}` }} · {{ cat.candidates.length }} candidate{{ cat.candidates.length === 1 ? '' : 's' }}</span>
+                    <span class="cat-total">{{ methodName(cat) }} · {{ formatNumber(categoryTotal(cat)) }} vote{{ categoryTotal(cat) === 1 ? '' : 's' }} · {{ cat.candidates.length }} candidate{{ cat.candidates.length === 1 ? '' : 's' }}</span>
                 </div>
                 <table class="tally">
                     <thead><tr><th class="rank">#</th><th>Candidate</th><th class="bar-col">Share</th><th class="num">Votes</th><th class="num">%</th></tr></thead>
@@ -136,22 +114,12 @@
                         <tr v-if="!cat.candidates.length"><td colspan="5" class="muted">No candidates</td></tr>
                     </tbody>
                 </table>
-                <RoundsTable v-if="isRanked(cat)" :category="cat" class="report-rounds" />
-                <div v-else-if="isMotion(cat) && cat.motion" class="small mt-2">
-                    <p v-if="cat.description" class="muted mb-1" style="white-space: pre-line">{{ cat.description }}</p>
-                    <b :class="cat.motion.passed ? 'pass' : 'fail'">{{ motionSummary(cat) }}</b>
-                    <span class="muted"> · {{ passRuleLabel(cat.pass_rule) }} of Yes + No; abstentions ({{ formatNumber(cat.motion.abstain) }}) don’t count.</span>
-                </div>
-                <p v-else-if="isApproval(cat) && !paid && categoryTotal(cat)" class="muted small mt-1 mb-0">Approval vote: each voter could pick several, so shares are of voters and can add up to more than 100%.</p>
+                <p v-if="isApproval(cat) && categoryTotal(cat)" class="muted small mt-1 mb-0">Each voter could pick several, so shares are of voters and can add up to more than 100%.</p>
             </section>
 
             <section class="statement">
                 <h2>Integrity statement</h2>
-                <p v-if="paid">
-                    This was public paid voting: each vote was a payment confirmed by Paystack before it was counted, and payments
-                    received after voting closed were not counted. Anyone who paid can check their payment reference on the results page.
-                </p>
-                <p v-else>
+                <p>
                     This vote used one-time voter codes: each code could be used once, and only inside the voting window.
                     It was a secret ballot. Only a running total per candidate was stored, so no individual’s choices can be identified;
                     voters received a receipt to check that their ballot was counted.
@@ -176,25 +144,23 @@
             <!-- ===================== Appendix ===================== -->
             <template v-if="opts.register && canSeeRegister">
                 <div class="page-break"></div>
-                <template v-if="!paid">
-                    <h2 class="section-title">Appendix: voter register</h2>
-                    <p class="muted small mb">
-                        Who voted, and when. It never shows how anyone voted: this system doesn’t record that.
-                        {{ formatNumber(votedCount) }} of {{ formatNumber(voters.length) }} voters voted.
-                    </p>
-                    <div class="table-wrap"><table class="register">
-                        <thead><tr><th>#</th><th>Voter</th><th v-if="hasIds">{{ event.member_id_label || 'ID' }}</th><th>Status</th><th>Voted at</th></tr></thead>
-                        <tbody>
-                            <tr v-for="(v, i) in register" :key="v.id">
-                                <td class="muted">{{ i + 1 }}</td>
-                                <td>{{ v.name || 'Anonymous code' }}</td>
-                                <td v-if="hasIds" class="mono">{{ v.member_id || '' }}</td>
-                                <td><span class="status" :class="v.used_at ? 'yes' : 'no'">{{ v.used_at ? 'Voted' : 'Did not vote' }}</span></td>
-                                <td>{{ v.used_at ? formatDate(v.used_at, true) : '' }}</td>
-                            </tr>
-                        </tbody>
-                    </table></div>
-                </template>
+                <h2 class="section-title">Appendix: voter register</h2>
+                <p class="muted small mb">
+                    Who voted, and when. It never shows how anyone voted: this system doesn’t record that.
+                    {{ formatNumber(votedCount) }} of {{ formatNumber(voters.length) }} voters voted.
+                </p>
+                <div class="table-wrap"><table class="register">
+                    <thead><tr><th>#</th><th>Voter</th><th v-if="hasIds">ID</th><th>Status</th><th>Voted at</th></tr></thead>
+                    <tbody>
+                        <tr v-for="(v, i) in register" :key="v.id">
+                            <td class="muted">{{ i + 1 }}</td>
+                            <td>{{ v.name || 'Anonymous code' }}</td>
+                            <td v-if="hasIds" class="mono">{{ v.member_id || '' }}</td>
+                            <td><span class="status" :class="v.used_at ? 'yes' : 'no'">{{ v.used_at ? 'Voted' : 'Did not vote' }}</span></td>
+                            <td>{{ v.used_at ? formatDate(v.used_at, true) : '' }}</td>
+                        </tr>
+                    </tbody>
+                </table></div>
             </template>
 
             <footer class="r-foot">{{ results.event.name }} · Generated by {{ appName }} · {{ generatedAt }}</footer>
@@ -222,12 +188,9 @@ const generatedAt = new Date().toLocaleString(undefined, { dateStyle: 'long', ti
 const appName = String(useRuntimeConfig().public.companyName || 'E-voting by Agudatechy');
 const opts = reactive({ register: true, signatures: true });
 
-const paid = computed(() => event.value?.voting_mode === 'paid');
 const final = computed(() => results.value?.event.status === 'completed');
 const changes = computed(() => results.value?.integrity?.changes_during_voting ?? 0);
 const resetText = computed(() => describeResets(results.value?.integrity?.votes_reset));
-const ruleLines = computed(() => describeRules(results.value?.rules));
-const verdict = computed(() => (results.value?.rules?.quorum ? quorumVerdict(results.value.rules.quorum, final.value) : null));
 const organiser = ref('');
 /** The register needs voter access. */
 const canSeeRegister = computed(() => voters.value.length > 0);
@@ -236,15 +199,11 @@ const categoryTotal = (cat: ResultCategory) => cat.candidates.reduce((s, c) => s
 const totalVotes = computed(() => (results.value?.categories ?? []).reduce((s, c) => s + categoryTotal(c), 0));
 const share = (votes: number, cat: ResultCategory) => categoryShare(votes, cat);
 const winnersOf = (cat: ResultCategory): ResultCandidate[] => categoryWinners(cat);
-/** Ranked choice is decided by the final round; other methods by the votes. */
-const decidingVotes = (cat: ResultCategory, c: ResultCandidate) => (isRanked(cat) ? finalVotes(cat, c.id) : c.votes);
-const decidingShare = (cat: ResultCategory, c: ResultCandidate) =>
-    (isRanked(cat) ? percent(finalVotes(cat, c.id), finalRound(cat)?.continuing ?? 0) : share(c.votes, cat));
 function margin(cat: ResultCategory): string {
     const w = winnersOf(cat);
     if (w.length !== 1) return '–';
-    const runnerUp = cat.candidates.filter(c => c !== w[0]).reduce((m, c) => Math.max(m, decidingVotes(cat, c)), 0);
-    return `+${formatNumber(decidingVotes(cat, w[0]!) - runnerUp)}`;
+    const runnerUp = cat.candidates.filter(c => c !== w[0]).reduce((m, c) => Math.max(m, c.votes), 0);
+    return `+${formatNumber(w[0]!.votes - runnerUp)}`;
 }
 const turnout = computed(() => {
     const s = results.value?.stats;
@@ -305,8 +264,6 @@ function print() {
 h1, h3, .cname, .cat-name, .cdesc, td { overflow-wrap: anywhere; }
 .pass { color: #15803d; }
 .fail { color: #b42318; }
-.report-rounds { margin-top: .5rem; }
-.report-rounds :deep(.table-rounds) { font-size: .8rem; }
 /* A printed document: always light, whatever the app theme. */
 .report-shell {
     min-height: 100vh; background: #eef2f6; color: #0f172a; padding: 1.5rem 1rem 3rem;
@@ -403,13 +360,6 @@ h3 { font-size: 1.05rem; font-weight: 800; margin: 0; }
 .status.no { background: #f1f5f9; color: #64748b; }
 
 .statement { margin: 2rem 0; padding: 1rem 1.2rem; background: #f8fafc; border-left: 4px solid #058580; border-radius: 8px; break-inside: avoid; }
-.rules-box { border: 1px solid var(--line, #e5e7eb); border-radius: 12px; padding: .8rem 1rem; margin-bottom: 1.25rem; break-inside: avoid; }
-.rules-box h2 { font-size: 1rem; margin-bottom: .4rem; }
-.rules-box ul { margin: 0 0 .4rem; padding-left: 1.1rem; font-size: .9rem; }
-.rules-box .verdict { margin: 0; font-weight: 800; font-size: .95rem; }
-.rules-box .verdict.ok { color: #15803d; }
-.rules-box .verdict.bad { color: #b91c1c; }
-.rules-box.failed { border: 2px solid #b91c1c; background: #fef2f2; }
 .statement h2 { margin-bottom: .4rem; font-size: 1rem; }
 .statement p { margin: 0 0 .4rem; font-size: .86rem; line-height: 1.6; color: #334155; }
 

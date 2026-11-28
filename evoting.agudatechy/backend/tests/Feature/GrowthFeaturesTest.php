@@ -41,8 +41,7 @@ function gfEvent(array $attrs = [], ?User $owner = null): Event
 
 function gfPro(Event $event): Event
 {
-    $event->forceFill(['plan' => 'pro'])->save();
-    return $event->fresh();
+    return $event->fresh(); // every event has everything here
 }
 
 function gfBallot(Event $event): array
@@ -106,12 +105,11 @@ it('creates an event from a template', function () {
     $this->actingAs($user)->getJson('/api/event-templates')->assertOk()->assertJsonFragment(['key' => 'association']);
 
     $this->actingAs($user)->postJson('/api/events', ['name' => 'Club elections', 'template' => 'association'])
-        ->assertCreated()->assertJsonPath('categories_count', 4)->assertJsonPath('voting_mode', 'codes');
+        ->assertCreated()->assertJsonPath('categories_count', 4);
 
-    // Church template: council (pick up to 5) and officers; no motions here.
+    // Church template: council (pick up to 5) and officers.
     $church = $this->actingAs($user)->postJson('/api/events', ['name' => 'Parish elections', 'template' => 'church'])->assertCreated()->json('id');
-    expect(Category::where('event_id', $church)->where('name', 'Church Council')->value('max_choices'))->toBe(5)
-        ->and(Category::where('event_id', $church)->where('method', '!=', 'plurality')->count())->toBe(0);
+    expect(Category::where('event_id', $church)->where('name', 'Church Council')->value('max_choices'))->toBe(5);
 
     // Templates that are gone here (paid voting, motions).
     $this->actingAs($user)->postJson('/api/events', ['name' => 'Awards', 'template' => 'award_night'])->assertStatus(422);
@@ -188,7 +186,7 @@ it('sends a scheduled reminder once, when it is due', function () {
     $event = gfPro(gfEvent());
     Voter::create(['event_id' => $event->id, 'code' => 'AAAA1111', 'email' => 'a@example.com']);
 
-    $this->actingAs($event->user)->patchJson("/api/events/{$event->id}", ['reminder_at' => now()->addHour()->toIso8601String(), 'reminder_channel' => 'email'])
+    $this->actingAs($event->user)->patchJson("/api/events/{$event->id}", ['reminder_at' => now()->addHour()->toIso8601String()])
         ->assertOk();
     $this->actingAs($event->user)->patchJson("/api/events/{$event->id}", ['reminder_at' => now()->addDays(3)->toIso8601String()])
         ->assertStatus(422); // after voting closes

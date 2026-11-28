@@ -1,7 +1,7 @@
 <?php
 
 /*
-| The voter list: codes, imports, groups, invitations, and resetting votes.
+| The voter list: codes, imports, invitations, and resetting votes.
 | Loaded by routes/api.php inside the signed-in group.
 */
 

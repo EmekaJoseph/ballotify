@@ -10,9 +10,6 @@ use App\Models\Event;
 use App\Models\User;
 use App\Policies\EventPolicy;
 use App\Support\Audit;
-use App\Support\Plans;
-use App\Models\Voter;
-use App\Support\MeetingRules;
 use App\Support\Templates;
 use App\Support\Timeline;
 use Illuminate\Http\Request;
@@ -36,7 +33,6 @@ class EventController extends Controller
 
     private const BRAND_DIR = 'branding';
 
-    /** Counts shown on the dashboard for each event. */
     /** New accounts create events only once the platform admin has approved them. */
     private function ensureApproved(?User $user): void
     {
@@ -48,6 +44,7 @@ class EventController extends Controller
         }
     }
 
+    /** Counts shown on the dashboard for each event. */
     private function counts(): array
     {
         return [
@@ -59,13 +56,12 @@ class EventController extends Controller
         ];
     }
 
-    /** Event as the dashboard sees it: plan limits plus this user's role and abilities. */
+    /** Event as the dashboard sees it: plus this user's role and abilities. */
     private function present(Event $event, User $user): Event
     {
-        Plans::withLimits($event);
         $event->setAttribute('my_role', EventPolicy::roleOf($user, $event));
         $event->setAttribute('abilities', EventPolicy::abilitiesOf($user, $event));
-        // Name only: never serialise the owner's user record (it holds payout details).
+        // Name only: never serialise the owner's user record.
         $event->setAttribute('owner_name', $event->relationLoaded('user') ? $event->user?->name : $event->user()->value('name'));
         return $event;
     }
@@ -125,8 +121,6 @@ class EventController extends Controller
                 'starts_at' => $data['starts_at'] ?? null,
                 'ends_at' => $data['ends_at'] ?? null,
                 'results_visibility' => $data['results_visibility'] ?? $template['results_visibility'] ?? Event::RESULTS_AFTER_CLOSE,
-                // Secret ballot with voting codes: the only kind of election here.
-                'voting_mode' => Event::MODE_CODES,
             ]);
             if (isset($data['template'])) {
                 Templates::apply($event, $data['template']);
@@ -155,11 +149,8 @@ class EventController extends Controller
             'results_visibility' => ['sometimes', Rule::in(Event::RESULTS_OPTIONS)],
             'starts_at' => ['sometimes', 'nullable', 'date'],
             'ends_at' => ['sometimes', 'nullable', 'date'],
+            // Scheduled email reminder to voters who haven't voted.
             'reminder_at' => ['sometimes', 'nullable', 'date'],
-            // Reminders go by email (no SMS here).
-            'reminder_channel' => ['sometimes', 'nullable', Rule::in(['email'])],
-            'member_id_label' => ['sometimes', 'nullable', 'string', 'max:40'],
-            'language' => ['sometimes', 'string', \Illuminate\Validation\Rule::in(config('ballotify.languages'))],
             'nominations_enabled' => ['sometimes', 'boolean'],
             'nominations_ends_at' => ['sometimes', 'nullable', 'date'],
         ]);
@@ -168,12 +159,10 @@ class EventController extends Controller
         $end = array_key_exists('ends_at', $data) ? $data['ends_at'] : $event->ends_at;
         $this->ensureValidWindow($start, $end);
 
-        $before = $event->only(['name', 'voting_mode', 'vote_price_naira', 'results_visibility', 'starts_at', 'ends_at', 'reminder_at', 'self_registration', 'ussd_enabled', 'nominations_enabled',
-            'weighted_votes', 'proxies_enabled', 'max_proxies', 'quorum_type', 'quorum_value']) + ['status' => $event->status];
+        $before = $event->only(['name', 'results_visibility', 'starts_at', 'ends_at', 'reminder_at', 'nominations_enabled']) + ['status' => $event->status];
 
-        // Scheduled reminder (Pro). Clearing it is always allowed.
+        // Scheduled reminder. Clearing it is always allowed.
         if (! empty($data['reminder_at'])) {
-            Plans::ensureCanMessage($event);
             $at = Carbon::parse($data['reminder_at']);
             if ($at->isPast()) {
                 throw ValidationException::withMessages(['reminder_at' => ['Choose a reminder time in the future.']]);
@@ -181,13 +170,9 @@ class EventController extends Controller
             if ($end && $at->gte(Carbon::parse($end))) {
                 throw ValidationException::withMessages(['reminder_at' => ['The reminder must be sent before voting closes.']]);
             }
-            $data['reminder_channel'] = $data['reminder_channel'] ?? $event->reminder_channel ?? 'email';
         }
         if (array_key_exists('reminder_at', $data)) {
             $event->reminder_sent_at = null;
-            if (! $data['reminder_at']) {
-                $data['reminder_channel'] = null;
-            }
         }
 
         if (! empty($data['nominations_ends_at']) && $start && Carbon::parse($data['nominations_ends_at'])->gt(Carbon::parse($start))) {
@@ -244,14 +229,6 @@ class EventController extends Controller
                 'description' => $event->description,
                 'link_token' => Str::uuid()->toString(),
                 'results_visibility' => $event->results_visibility,
-                'voting_mode' => $event->voting_mode,
-                'vote_price_naira' => $event->vote_price_naira,
-                'brand_color' => $event->brand_color,
-                'weighted_votes' => $event->weighted_votes,
-                'proxies_enabled' => $event->proxies_enabled,
-                'max_proxies' => $event->max_proxies,
-                'quorum_type' => $event->quorum_type,
-                'quorum_value' => $event->quorum_value,
                 'starts_at' => null,
                 'ends_at' => null,
             ]);
@@ -263,10 +240,6 @@ class EventController extends Controller
                     'name' => $category->name,
                     'max_choices' => $category->max_choices,
                     'shuffle_candidates' => $category->shuffle_candidates,
-                    'method' => $category->method,
-                    'description' => $category->description,
-                    'pass_rule' => $category->pass_rule,
-                    'groups' => $category->groups,
                 ])->id;
             }
             foreach ($event->candidates as $candidate) {
@@ -279,7 +252,6 @@ class EventController extends Controller
                     'name' => $candidate->name,
                     'description' => $candidate->description,
                     'image_path' => CandidateController::copyImage($candidate->image_path),
-                    'motion_choice' => $candidate->motion_choice,
                 ]);
             }
 
@@ -328,7 +300,6 @@ class EventController extends Controller
                     ? __('Voting has not started yet.')
                     : __('Voting has ended.'),
                 'name' => $event->name,
-                'language' => $event->language,
                 'status' => $event->status,
                 'starts_at' => $event->starts_at,
                 'ends_at' => $event->ends_at,
@@ -339,8 +310,8 @@ class EventController extends Controller
         }
 
         $event->load([
-            'categories:id,event_id,name,max_choices,shuffle_candidates,method,description,pass_rule',
-            'candidates:id,event_id,category_id,name,description,image_path,motion_choice',
+            'categories:id,event_id,name,max_choices,shuffle_candidates',
+            'candidates:id,event_id,category_id,name,description,image_path',
         ]);
 
         // Shuffled categories: a fresh random order for every ballot that is opened.
@@ -356,13 +327,9 @@ class EventController extends Controller
             'starts_at' => $event->starts_at,
             'ends_at' => $event->ends_at,
             'status' => $event->status,
-            'voting_mode' => $event->voting_mode,
             'results_visibility' => $event->results_visibility,
-            'branding' => Plans::limits($event)['branding'],
             'brand' => $this->publicBrand($event),
-            'member_id_label' => $event->member_id_label ?: 'ID',
-            'language' => $event->language,
-            'categories' => $event->categories->map->only(['id', 'event_id', 'name', 'max_choices', 'method', 'description', 'pass_rule']),
+            'categories' => $event->categories->map->only(['id', 'event_id', 'name', 'max_choices']),
             'candidates' => $candidates,
         ]);
     }
@@ -380,7 +347,6 @@ class EventController extends Controller
                 'visibility' => $event->results_visibility,
                 'event' => [
                     'name' => $event->name,
-                    'language' => $event->language,
                     'status' => $event->status,
                     'starts_at' => $event->starts_at,
                     'ends_at' => $event->ends_at,
@@ -428,26 +394,21 @@ class EventController extends Controller
 
     // ------------------------------------------------------------------ helpers
 
+    /** The event's logo for the public pages, or null. */
     private function publicBrand(Event $event): ?array
     {
-        if (! Plans::isPro($event) || (! $event->brand_color && ! $event->brand_logo_path)) {
-            return null;
-        }
-        return ['color' => $event->brand_color, 'logo_url' => $event->brand_logo_url];
+        return $event->brand_logo_path ? ['logo_url' => $event->brand_logo_url] : null;
     }
 
     private function buildResults(Event $event): array
     {
         $categories = $event->categories()
-            ->with(['candidates' => fn ($q) => $q->select(['id', 'category_id', 'name', 'description', 'image_path', 'votes', 'motion_choice'])])
+            ->with(['candidates' => fn ($q) => $q->select(['id', 'category_id', 'name', 'description', 'image_path', 'votes'])])
             ->orderBy('id')
             ->get();
 
-        // Voter groups: how many voters may vote in each category (for "x of y eligible").
-        $voterGroups = $event->voters()->pluck('groups')
-            ->map(fn ($g) => is_string($g) ? json_decode($g, true) : $g);
         $totalVotes = 0;
-        $results = $categories->map(function ($category) use (&$totalVotes, $voterGroups) {
+        $results = $categories->map(function ($category) use (&$totalVotes) {
             $tally = \App\Support\Tally::category($category, $category->candidates);
             $position = array_flip($tally['order']);
             $candidates = $category->candidates
@@ -456,9 +417,7 @@ class EventController extends Controller
                     'name' => $c->name,
                     'description' => $c->description,
                     'image_url' => $c->image_url,
-                    // Ranked categories: first-choice votes (the rounds show the rest).
                     'votes' => (int) $c->votes,
-                    'motion_choice' => $c->motion_choice,
                 ])
                 ->sortBy(fn ($c) => $position[$c['id']] ?? PHP_INT_MAX)
                 ->values();
@@ -469,17 +428,9 @@ class EventController extends Controller
                 'id' => $category->id,
                 'name' => $category->name,
                 'max_choices' => $category->max_choices,
-                'method' => $category->method,
-                'description' => $category->description,
-                'pass_rule' => $category->pass_rule,
-                'motion' => $tally['motion'] ?? null,
                 // Ballots that answered this category: the base for "% of voters".
                 'ballots' => (int) $category->ballots,
-                // Limited to some voter groups: how many voters may vote in it.
-                'groups' => $category->groups,
-                'eligible' => $category->groups ? $voterGroups->filter(fn ($g) => $category->allows($g))->count() : null,
                 'winners' => $tally['winners'],
-                'rounds' => $tally['rounds'],
                 'candidates' => $candidates,
                 'leader' => $leaderId ? $candidates->firstWhere('id', $leaderId) : $candidates->first(),
             ];
@@ -489,13 +440,10 @@ class EventController extends Controller
             'event' => [
                 'id' => $event->id,
                 'name' => $event->name,
-                'language' => $event->language,
                 'status' => $event->status,
                 'starts_at' => $event->starts_at,
                 'ends_at' => $event->ends_at,
                 'results_visibility' => $event->results_visibility,
-                'voting_mode' => $event->voting_mode,
-                'branding' => Plans::limits($event)['branding'],
                 'brand' => $this->publicBrand($event),
             ],
             'stats' => [
@@ -514,8 +462,6 @@ class EventController extends Controller
                 'votes_reset' => VoteResetController::history($event),
             ],
             'timeline' => Timeline::for($event),
-            // Weighted votes / proxies / quorum (null when none are on).
-            'rules' => MeetingRules::summary($event),
             'categories' => $results,
         ];
     }
@@ -541,21 +487,8 @@ class EventController extends Controller
             Audit::log($event, 'event.visibility', 'Results visibility changed: '
                 . self::VISIBILITY_LABELS[$before['results_visibility']] . ' → ' . self::VISIBILITY_LABELS[$event->results_visibility]);
         }
-        foreach (['self_registration' => 'Voter self-registration', 'ussd_enabled' => 'USSD voting', 'nominations_enabled' => 'Nominations'] as $field => $label) {
-            if ((bool) ($before[$field] ?? false) !== (bool) $event->{$field}) {
-                Audit::log($event, 'event.feature', $label . ($event->{$field} ? ' switched on' : ' switched off'));
-            }
-        }
-        foreach (['weighted_votes' => 'Weighted votes', 'proxies_enabled' => 'Proxy voting'] as $field => $label) {
-            if ((bool) $before[$field] !== (bool) $event->{$field}) {
-                Audit::log($event, 'event.rules', $label . ($event->{$field} ? ' switched on' : ' switched off'));
-            }
-        }
-        if ($event->proxies_enabled && (int) $before['max_proxies'] !== (int) $event->max_proxies) {
-            Audit::log($event, 'event.rules', "Proxies one member may hold: {$event->max_proxies}");
-        }
-        if ($before['quorum_type'] !== $event->quorum_type || (int) $before['quorum_value'] !== (int) $event->quorum_value) {
-            Audit::log($event, 'event.rules', $event->quorum_type ? 'Quorum set: ' . MeetingRules::describeQuorum($event) : 'Quorum removed');
+        if ((bool) $before['nominations_enabled'] !== (bool) $event->nominations_enabled) {
+            Audit::log($event, 'event.feature', 'Nominations' . ($event->nominations_enabled ? ' switched on' : ' switched off'));
         }
         if ((string) $before['reminder_at'] !== (string) $event->reminder_at) {
             Audit::log($event, 'event.reminder', $event->reminder_at

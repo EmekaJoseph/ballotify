@@ -2,7 +2,7 @@
 
 /*
 | Events and everything about them that isn't the ballot or the voter list:
-| results, activity, branding, nominations, certificates, co-organisers, messaging.
+| results, activity, logo, nominations, certificates, co-organisers, messaging.
 | Loaded by routes/api.php inside the signed-in group.
 */
 

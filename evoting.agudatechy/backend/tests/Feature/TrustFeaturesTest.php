@@ -36,10 +36,15 @@ function tfEvent(array $attrs = [], bool $pro = true): Event
         'ends_at' => now()->addDay(),
         'results_visibility' => 'live',
     ], $attrs));
-    if ($pro) {
-        $event->forceFill(['plan' => 'pro'])->save();
-    }
     return $event->fresh();
+}
+
+/** One nomination, sent through the public form (one category, one name). */
+function nominateOne($test, string $url, array $d)
+{
+    return $test->postJson("{$url}/batch", array_filter(['device_id' => $d['device_id'] ?? null]) + ['nominations' => [
+        ['category_id' => $d['category_id'], 'nominee_name' => $d['nominee_name'], 'reason' => $d['reason'] ?? null],
+    ]]);
 }
 
 function tfBallot(Event $event): array
@@ -57,7 +62,7 @@ function tfBallot(Event $event): array
 // ------------------------------------------------------------------ nominations
 
 it('collects public nominations and lets the organiser add nominees to the ballot', function () {
-    $event = tfEvent(['voting_mode' => 'paid', 'vote_price_naira' => 50, 'starts_at' => now()->addDays(3), 'ends_at' => now()->addDays(5)], pro: false);
+    $event = tfEvent(['starts_at' => now()->addDays(3), 'ends_at' => now()->addDays(5)], pro: false);
     $cat = Category::create(['event_id' => $event->id, 'name' => 'Most Popular']);
     $this->actingAs($event->user)->patchJson("/api/events/{$event->id}", ['nominations_enabled' => true, 'nominations_ends_at' => now()->addDays(4)->toIso8601String()])
         ->assertStatus(422); // must close before voting opens
@@ -66,21 +71,21 @@ it('collects public nominations and lets the organiser add nominees to the ballo
     $url = "/api/public/events/{$event->link_token}/nominations";
     $this->getJson($url)->assertOk()->assertJsonPath('open', true)->assertJsonPath('categories.0.name', 'Most Popular');
     $a = ['category_id' => $cat->id, 'device_id' => 'phone-a'];
-    $this->postJson($url, $a + ['nominee_name' => 'Amaka  Obi', 'reason' => 'Kind'])->assertCreated();
+    nominateOne($this, $url, $a + ['nominee_name' => 'Amaka  Obi', 'reason' => 'Kind'])->assertCreated();
     // Same person (same IP and browser), same name in the same category: refused, any spelling.
-    $this->postJson($url, $a + ['nominee_name' => 'amaka obi'])->assertStatus(422)->assertJsonValidationErrors('nominee_name');
+    nominateOne($this, $url, $a + ['nominee_name' => 'amaka obi'])->assertStatus(422);
     // Someone else on the same network (shared mobile IP, other browser): counts.
-    $this->postJson($url, ['category_id' => $cat->id, 'device_id' => 'phone-b', 'nominee_name' => 'amaka obi'])->assertCreated();
-    $this->postJson($url, $a + ['nominee_name' => 'Tunde'])->assertCreated();
-    $this->postJson($url, $a + ['nominee_name' => 'Zainab'])->assertCreated();
-    $this->postJson($url, $a + ['nominee_name' => 'Kemi'])->assertStatus(429); // 3 per person per category
+    nominateOne($this, $url, ['category_id' => $cat->id, 'device_id' => 'phone-b', 'nominee_name' => 'amaka obi'])->assertCreated();
+    nominateOne($this, $url, $a + ['nominee_name' => 'Tunde'])->assertCreated();
+    nominateOne($this, $url, $a + ['nominee_name' => 'Zainab'])->assertCreated();
+    nominateOne($this, $url, $a + ['nominee_name' => 'Kemi'])->assertStatus(422); // 3 per person per category
 
     // The same name in another category is fine.
     $cat2 = Category::create(['event_id' => $event->id, 'name' => 'Best Dressed']);
-    $this->postJson($url, ['category_id' => $cat2->id, 'device_id' => 'phone-a', 'nominee_name' => 'Amaka Obi'])->assertCreated();
+    nominateOne($this, $url, ['category_id' => $cat2->id, 'device_id' => 'phone-a', 'nominee_name' => 'Amaka Obi'])->assertCreated();
     // No browser ID (storage blocked): the IP alone decides.
-    $this->postJson($url, ['category_id' => $cat2->id, 'nominee_name' => 'Ngozi'])->assertCreated();
-    $this->postJson($url, ['category_id' => $cat2->id, 'nominee_name' => 'NGOZI'])->assertStatus(422);
+    nominateOne($this, $url, ['category_id' => $cat2->id, 'nominee_name' => 'Ngozi'])->assertCreated();
+    nominateOne($this, $url, ['category_id' => $cat2->id, 'nominee_name' => 'NGOZI'])->assertStatus(422);
 
     $this->actingAs($event->user)->getJson("/api/events/{$event->id}/nominations")->assertOk()
         ->assertJsonPath('total', 6)
@@ -91,25 +96,24 @@ it('collects public nominations and lets the organiser add nominees to the ballo
     $this->actingAs($event->user)->getJson("/api/events/{$event->id}/nominations")->assertJsonPath('categories.0.nominees.0.on_ballot', true);
 
     $event->update(['nominations_ends_at' => now()->subMinute()]);
-    $this->postJson($url, ['category_id' => $cat->id, 'nominee_name' => 'Late'])->assertForbidden();
+    nominateOne($this, $url, ['category_id' => $cat->id, 'nominee_name' => 'Late'])->assertForbidden();
 });
 
 it('takes the whole nomination form at once: every category, several names each', function () {
-    $event = tfEvent(['voting_mode' => 'paid', 'vote_price_naira' => 50, 'starts_at' => now()->addDays(3), 'ends_at' => now()->addDays(5),
+    $event = tfEvent(['starts_at' => now()->addDays(3), 'ends_at' => now()->addDays(5),
         'nominations_enabled' => true, 'nominations_ends_at' => now()->addDays(2)], pro: false);
     $artist = Category::create(['event_id' => $event->id, 'name' => 'Best Artist']);
     $dressed = Category::create(['event_id' => $event->id, 'name' => 'Best Dressed']);
-    $motion = Category::create(['event_id' => $event->id, 'name' => 'Approve budget', 'method' => 'motion']);
     $url = "/api/public/events/{$event->link_token}/nominations";
 
-    // The form lists only categories people can nominate in, and the per-category limit.
+    // The form lists the categories and the per-category limit.
     $this->getJson($url)->assertJsonCount(2, 'categories')->assertJsonPath('per_category', 3);
 
     $row = fn ($cat, $name) => ['category_id' => $cat->id, 'nominee_name' => $name];
-    $this->postJson("{$url}/batch", ['device_id' => 'phone-a', 'email' => 'fan@example.com', 'nominations' => [
+    $this->postJson("{$url}/batch", ['device_id' => 'phone-a', 'nominations' => [
         $row($artist, 'Burna Boy'), $row($artist, 'Tems'), $row($artist, 'TEMS'),   // a repeat inside the form
         $row($dressed, 'Burna Boy'),                                                 // same name, other category: fine
-        $row($motion, 'Someone'),                                                    // motions take no nominations
+        ['category_id' => 999999, 'nominee_name' => 'Someone'],                      // not a category of this event
     ]])->assertCreated()
         ->assertJsonCount(3, 'accepted')
         ->assertJsonCount(2, 'refused')
@@ -125,12 +129,11 @@ it('takes the whole nomination form at once: every category, several names each'
         ->assertStatus(422)->assertJsonCount(1, 'refused');
     $this->postJson("{$url}/batch", ['nominations' => []])->assertStatus(422);
 
-    expect(\App\Models\Nomination::where('event_id', $event->id)->count())->toBe(4)
-        ->and(\App\Models\Nomination::where('event_id', $event->id)->where('nominee_name', 'Tems')->value('nominator_email'))->toBe('fan@example.com');
+    expect(\App\Models\Nomination::where('event_id', $event->id)->count())->toBe(4);
 });
 
 it('lets the organiser suggest nominee names that the public can pick or ignore', function () {
-    $event = tfEvent(['voting_mode' => 'paid', 'vote_price_naira' => 50, 'starts_at' => now()->addDays(3), 'ends_at' => now()->addDays(5),
+    $event = tfEvent(['starts_at' => now()->addDays(3), 'ends_at' => now()->addDays(5),
         'nominations_enabled' => true, 'nominations_ends_at' => now()->addDays(2)], pro: false);
     $cat = Category::create(['event_id' => $event->id, 'name' => 'Best Artist']);
     $api = "/api/events/{$event->id}/nominations/suggestions";
@@ -144,9 +147,9 @@ it('lets the organiser suggest nominee names that the public can pick or ignore'
     $this->getJson($url)->assertJsonPath('categories.0.suggestions', ['Burna Boy', 'Tems']);
 
     // Picking a suggestion and typing your own both work, and count together with other spellings.
-    $this->postJson($url, ['category_id' => $cat->id, 'device_id' => 'p1', 'nominee_name' => 'Burna Boy'])->assertCreated();
-    $this->postJson($url, ['category_id' => $cat->id, 'device_id' => 'p2', 'nominee_name' => 'BURNA BOY'])->assertCreated();
-    $this->postJson($url, ['category_id' => $cat->id, 'nominee_name' => 'Asake'])->assertCreated();
+    nominateOne($this, $url, ['category_id' => $cat->id, 'device_id' => 'p1', 'nominee_name' => 'Burna Boy'])->assertCreated();
+    nominateOne($this, $url, ['category_id' => $cat->id, 'device_id' => 'p2', 'nominee_name' => 'BURNA BOY'])->assertCreated();
+    nominateOne($this, $url, ['category_id' => $cat->id, 'nominee_name' => 'Asake'])->assertCreated();
     $this->actingAs($event->user)->getJson("/api/events/{$event->id}/nominations")
         ->assertJsonPath('categories.0.suggestions', ['Burna Boy', 'Tems'])
         ->assertJsonPath('categories.0.nominees.0.name', 'Burna Boy')

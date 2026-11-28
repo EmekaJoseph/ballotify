@@ -13,7 +13,6 @@ export interface CampaignCardInput {
     /** Photo as a same-origin blob (null = initials). */
     photo: Blob | null;
     voteUrl: string;
-    brandColor?: string | null;
     labels: { vote: string; forCategory: string; scan: string };
     format: 'square' | 'story';
 }
@@ -26,7 +25,7 @@ export async function drawCampaignCard(canvas: HTMLCanvasElement, o: CampaignCar
     canvas.width = W;
     canvas.height = H;
     const ctx = canvas.getContext('2d')!;
-    const brand = /^#[0-9a-f]{6}$/i.test(o.brandColor ?? '') ? o.brandColor! : '#058580';
+    const brand = '#058580';
     try {
         await Promise.all([document.fonts.load(`800 80px ${FONT}`), document.fonts.load(`600 36px ${FONT}`)]);
     } catch { /* the fallback font is fine */ }

@@ -27,7 +27,6 @@ const props = defineProps<{
     eventName: string;
     /** The event's public link token (voting page + photo). */
     token: string;
-    brandColor?: string | null;
 }>();
 const emit = defineEmits<{ close: [] }>();
 
@@ -61,7 +60,6 @@ async function render() {
         eventName: props.eventName,
         photo: photo.value,
         voteUrl: voteUrl.value,
-        brandColor: props.brandColor,
         format: format.value,
         labels: { vote: t('card.vote'), forCategory: t('card.for', { category: props.categoryName }), scan: t('card.scan') },
     });

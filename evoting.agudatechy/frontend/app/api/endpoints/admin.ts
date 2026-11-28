@@ -1,20 +1,17 @@
 import api from '../index';
-import type { AuditEntry, BallotEvent, Candidate, CandidateImportResult, CandidateImportRow, Category, EventResults, EventTemplate, GeneratedCode, InviteChannel, MemberRole, MessagingStatus, Paginated, PlatformEvent, PlatformOverview, PlatformUser, ResultsVisibility, SystemHealth, TeamInfo, TeamMember, User, Voter, VoterContact, NominationSummary, ResultCertificateInfo, VotingMethod } from '~/types';
+import type { AuditEntry, BallotEvent, Candidate, CandidateImportResult, CandidateImportRow, Category, EventResults, EventTemplate, GeneratedCode, MemberRole, MessagingStatus, Paginated, PlatformEvent, PlatformOverview, PlatformUser, ResultsVisibility, SystemHealth, TeamInfo, TeamMember, User, Voter, VoterContact, NominationSummary, ResultCertificateInfo } from '~/types';
 
 type Id = number | string;
 
 export interface EventPayload {
-    language?: string;
     name?: string;
     description?: string | null;
     results_visibility?: ResultsVisibility;
     starts_at?: string | null;
     ends_at?: string | null;
     reminder_at?: string | null;
-    reminder_channel?: InviteChannel | null;
     /** Create only: start from a template. */
     template?: string | null;
-    member_id_label?: string | null;
     nominations_enabled?: boolean;
     nominations_ends_at?: string | null;
 }
@@ -83,9 +80,9 @@ export const adminApi = {
 
     // Categories
     getCategories: (eventId: Id) => api.get<Category[]>(`/events/${eventId}/categories`),
-    createCategory: (eventId: Id, data: { name: string; max_choices?: number | null; shuffle_candidates?: boolean; method?: VotingMethod }) =>
+    createCategory: (eventId: Id, data: { name: string; max_choices?: number | null; shuffle_candidates?: boolean }) =>
         api.post<Category>(`/events/${eventId}/categories`, data),
-    updateCategory: (eventId: Id, categoryId: Id, data: { name?: string; max_choices?: number | null; shuffle_candidates?: boolean; method?: VotingMethod }) =>
+    updateCategory: (eventId: Id, categoryId: Id, data: { name?: string; max_choices?: number | null; shuffle_candidates?: boolean }) =>
         api.patch<Category>(`/events/${eventId}/categories/${categoryId}`, data),
     deleteCategory: (eventId: Id, categoryId: Id) => api.delete(`/events/${eventId}/categories/${categoryId}`),
 
@@ -105,12 +102,12 @@ export const adminApi = {
     createVoter: (eventId: Id, data: VoterContact & { code?: string | null }) =>
         api.post<Voter>(`/events/${eventId}/voters`, data),
     eraseVoterContacts: (eventId: Id) => api.post<{ erased: number }>(`/events/${eventId}/voters/erase-contacts`),
-    updateVoter: (eventId: Id, voterId: Id, data: VoterContact & { code?: string; proxy_voter_id?: number | null }) =>
+    updateVoter: (eventId: Id, voterId: Id, data: VoterContact & { code?: string }) =>
         api.patch<Voter>(`/events/${eventId}/voters/${voterId}`, data),
     deleteVoter: (eventId: Id, voterId: Id) => api.delete(`/events/${eventId}/voters/${voterId}`),
     /** Delete several voters at once (votes already cast stay counted). */
     deleteVoters: (eventId: Id, ids: Id[]) => api.post<{ deleted: number; voted: number }>(`/events/${eventId}/voters/bulk-delete`, { ids }),
-    /** Test runs: erase every vote and result; voters and codes stay (owner only, never paid/closed/certified). */
+    /** Test runs: erase every vote and result; voters and codes stay (owner only, never once closed or certified). */
     resetVotes: (eventId: Id, confirmName: string) => api.post<{ erased: number; message: string }>(`/events/${eventId}/reset-votes`, { confirm_name: confirmName }),
     generateVoters: (eventId: Id, data: { count: number }) =>
         api.post<{ voters: GeneratedCode[] }>(`/events/${eventId}/voters/generate`, data),
@@ -118,11 +115,11 @@ export const adminApi = {
         api.post<{ voters: GeneratedCode[] }>(`/events/${eventId}/voters/import`, data),
 
     // Invitations (email; WhatsApp is shared from the browser)
-    inviteVoters: (eventId: Id, data: { channel: InviteChannel; audience: 'not_invited' | 'pending' | 'selected'; voter_ids?: number[] }) =>
-        api.post<{ queued: number; email: number; sms: number; queue: string }>(`/events/${eventId}/voters/invite`, data),
+    inviteVoters: (eventId: Id, data: { channel: 'email'; audience: 'not_invited' | 'pending' | 'selected'; voter_ids?: number[] }) =>
+        api.post<{ queued: number; email: number; queue: string }>(`/events/${eventId}/voters/invite`, data),
     /** Remind everyone who hasn't voted. */
-    remindVoters: (eventId: Id, channel: InviteChannel) =>
-        api.post<{ queued: number; email: number; sms: number; queue: string }>(`/events/${eventId}/voters/remind`, { channel }),
+    remindVoters: (eventId: Id) =>
+        api.post<{ queued: number; email: number; queue: string }>(`/events/${eventId}/voters/remind`, { channel: 'email' }),
     /** The organiser shared this code themselves (WhatsApp). */
     markShared: (eventId: Id, voterId: Id) => api.post<Voter>(`/events/${eventId}/voters/${voterId}/shared`, { channel: 'whatsapp' }),
     messagingStatus: () => api.get<MessagingStatus>('/messaging/status'),

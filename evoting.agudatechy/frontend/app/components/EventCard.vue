@@ -3,8 +3,7 @@
         <div class="d-flex justify-content-between align-items-start gap-2 mb-3">
             <StatusBadge :status="event.status" :draft="isDraft(event)" />
             <span class="d-flex flex-wrap gap-1 justify-content-end">
-            <span v-if="event.voting_mode === 'paid'" class="pill pill-amber"><i class="bi bi-cash-coin"></i> Paid voting</span>
-            <span v-else class="pill pill-brand"><i class="bi bi-shield-lock"></i> Secret ballot</span>
+            <span class="pill pill-brand"><i class="bi bi-shield-lock"></i> Secret ballot</span>
             <span v-if="event.my_role && event.my_role !== 'owner'" class="pill pill-completed" :title="`Shared with you as ${roleLabel(event.my_role).toLowerCase()}`"><i class="bi bi-people"></i> Shared</span>
             </span>
         </div>

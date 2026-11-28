@@ -24,15 +24,9 @@
             </p>
 
             <div class="stats mb-4">
-                <template v-if="p.event.voting_mode === 'paid'">
-                    <div><b>{{ formatNumber(p.stats.votes ?? 0) }}</b><span>votes</span></div>
-                    <div><b>{{ formatNumber(p.stats.payments ?? 0) }}</b><span>payments</span></div>
-                </template>
-                <template v-else>
-                    <div><b>{{ formatNumber(p.stats.ballots ?? 0) }}</b><span>ballots cast</span></div>
-                    <div><b>{{ formatNumber(p.stats.voters ?? 0) }}</b><span>eligible voters</span></div>
-                    <div><b>{{ p.stats.voters ? Math.round(((p.stats.ballots ?? 0) / p.stats.voters) * 1000) / 10 : 0 }}%</b><span>turnout</span></div>
-                </template>
+                <div><b>{{ formatNumber(p.stats.ballots ?? 0) }}</b><span>ballots cast</span></div>
+                <div><b>{{ formatNumber(p.stats.voters ?? 0) }}</b><span>eligible voters</span></div>
+                <div><b>{{ p.stats.voters ? Math.round(((p.stats.ballots ?? 0) / p.stats.voters) * 1000) / 10 : 0 }}%</b><span>turnout</span></div>
             </div>
 
             <div v-if="p.votes_reset?.length" class="cert-rules mb-4">
@@ -40,36 +34,19 @@
                 <div>{{ describeResets(p.votes_reset) }}</div>
             </div>
 
-            <div v-if="certRules.length" class="cert-rules mb-4" :class="{ bad: certVerdict && !certVerdict.ok }">
-                <div class="small-caps mb-1">Meeting rules</div>
-                <ul class="mb-1"><li v-for="l in certRules" :key="l">{{ l }}</li></ul>
-                <div v-if="certVerdict" class="fw-800" :class="certVerdict.ok ? 'text-success' : 'text-danger'">
-                    <i class="bi" :class="certVerdict.ok ? 'bi-check-circle-fill' : 'bi-x-octagon-fill'"></i> {{ certVerdict.text }}
-                </div>
-            </div>
-
             <section v-for="c in p.categories" :key="c.name" class="cat">
                 <div class="d-flex flex-wrap justify-content-between align-items-baseline column-gap-3">
                     <h2 class="h6 fw-800 mb-2 text-break">{{ c.name }}</h2>
-                    <span v-if="c.method === 'motion' && c.motion" class="small fw-bold" :class="c.motion.passed ? 'winner' : 'text-danger'">
-                        <i class="bi" :class="c.motion.passed ? 'bi-check-circle-fill' : 'bi-x-circle-fill'"></i>
-                        {{ !c.motion.decided ? 'No Yes or No votes' : c.motion.passed ? 'Passed' : 'Not passed' }}
-                    </span>
-                    <span v-else-if="c.winners.length" class="small fw-bold winner text-break mb-2"><i class="bi bi-trophy-fill"></i> {{ c.winners.join(' & ') }}{{ c.winners.length > 1 ? ' (tie)' : '' }}</span>
+                    <span v-if="c.winners.length" class="small fw-bold winner text-break mb-2"><i class="bi bi-trophy-fill"></i> {{ c.winners.join(' & ') }}{{ c.winners.length > 1 ? ' (tie)' : '' }}</span>
                 </div>
                 <table class="w-100 lines">
                     <tbody>
-                        <tr v-if="c.method === 'ranked'" class="ranked-head"><td></td><td class="text-end">First choices</td><td class="text-end">Final round</td></tr>
                         <tr v-for="cand in c.candidates" :key="cand.name" :class="{ won: c.winners.includes(cand.name) }">
                             <td>{{ cand.name }}</td>
                             <td class="text-end mono">{{ formatNumber(cand.votes) }}</td>
-                            <td v-if="c.method === 'ranked'" class="text-end mono">{{ finalOf(c, cand.name) }}</td>
                         </tr>
                     </tbody>
                 </table>
-                <p v-if="c.method === 'ranked'" class="small text-muted mt-1 mb-0">
-                    Ranked choice, decided in {{ c.rounds }} round{{ c.rounds === 1 ? '' : 's' }}: the last-placed candidate was eliminated each round and their ballots moved to the next choice.
-                </p>
             </section>
 
             <footer class="verify-box mt-4">
@@ -87,7 +64,7 @@
 <script setup lang="ts">
 import QRCode from 'qrcode';
 import { publicApi } from '~/api/endpoints/public';
-import type { CertificatePayload, ResultCertificateInfo } from '~/types';
+import type { ResultCertificateInfo } from '~/types';
 
 const route = useRoute();
 const serial = String(route.params.serial ?? '');
@@ -96,9 +73,6 @@ const loading = ref(true);
 const qr = ref('');
 const p = computed(() => cert.value!.payload);
 
-const certRules = computed(() => describeRules(cert.value?.payload.rules));
-// Certificates are issued after voting closed: the quorum result is final.
-const certVerdict = computed(() => (cert.value?.payload.rules?.quorum ? quorumVerdict(cert.value.payload.rules.quorum, true) : null));
 useHead({ title: computed(() => (cert.value ? `Certificate · ${cert.value.payload.event.name}` : 'Certificate · E-voting')) });
 
 onMounted(async () => {
@@ -109,19 +83,11 @@ onMounted(async () => {
 });
 
 function print() { window.print(); }
-
-/** Ranked choice: a candidate's votes in the deciding round ('–' if eliminated earlier). */
-function finalOf(c: CertificatePayload['categories'][number], name: string): string {
-    const row = c.final_round?.find(r => r.name === name);
-    return row ? formatNumber(row.votes) : '–';
-}
 </script>
 
 <style scoped>
 .cert-rules { padding: .9rem 1.1rem; border-radius: 14px; background: var(--surface-2); font-size: .9rem; color: var(--ink-2); overflow-wrap: anywhere; }
 .cert-rules ul { padding-left: 1.1rem; }
-.cert-rules.bad { background: var(--danger-50); box-shadow: inset 0 0 0 1px var(--danger); }
-.ranked-head td { font-size: .68rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); font-weight: 700; padding-bottom: .2rem; }
 .cert-page { min-height: 100vh; background: var(--bg); padding: 1.5rem 1rem 3rem; }
 .toolbar { max-width: 780px; margin: 0 auto 1rem; display: flex; justify-content: space-between; gap: .5rem; }
 .sheet { max-width: 780px; margin: 0 auto; background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 2.5rem; }

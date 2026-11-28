@@ -24,17 +24,14 @@
             </span>
         </div>
         <div class="form-text">
-            Columns named <b>Name</b>, <b>Email</b>, <b>Phone</b>, an <b>ID</b> column (e.g. Membership number, Staff ID)
-            and a <b>Group</b> column (e.g. branch or unit; several separated by “;”) are matched in any order.
-            <template v-if="weighted"> A <b>Weight</b> (or Shares) column sets how many votes each ballot counts as; blank means 1.</template>
-            The ID lets voters request their own code if you switch on self-registration.
-            Local numbers like 0801… are converted using your country code.
+            Columns named <b>Name</b>, <b>Email</b>, <b>Phone</b> and an <b>ID</b> column (e.g. Membership number, Staff ID)
+            are matched in any order. Local numbers like 0801… are converted using your country code.
         </div>
 
         <div v-if="rows.length || removed.size" class="mt-3 border rounded-3 overflow-hidden">
           <div class="preview">
             <table class="table-b small mb-0">
-                <thead><tr><th>#</th><th>Name</th><th>Email</th><th>Phone</th><th v-if="withId">ID</th><th v-if="withGroups">Groups</th><th v-if="withWeight">Weight</th><th></th></tr></thead>
+                <thead><tr><th>#</th><th>Name</th><th>Email</th><th>Phone</th><th v-if="withId">ID</th><th></th></tr></thead>
                 <tbody>
                     <tr v-for="(r, i) in rows.slice(0, PREVIEW_MAX)" :key="origin[i]">
                         <td class="text-muted">{{ i + 1 }}</td>
@@ -45,8 +42,6 @@
                         <td :class="{ 'text-danger': r.email && !emailOk(r.email) }">{{ r.email || '—' }}</td>
                         <td>{{ r.phone || '—' }}</td>
                         <td v-if="withId" class="mono">{{ r.member_id || '—' }}</td>
-                        <td v-if="withGroups">{{ r.groups || '—' }}</td>
-                        <td v-if="withWeight" class="mono">{{ r.weight || '1' }}</td>
                         <td class="text-end">
                             <button type="button" class="btn btn-ghost btn-icon btn-sm" title="Leave this row out" :aria-label="`Leave out row ${i + 1}`" @click="removeRow(i)">
                                 <i class="bi bi-x-lg"></i>
@@ -97,23 +92,18 @@ import { adminApi } from '~/api/endpoints/admin';
 import type { GeneratedCode, Voter, VoterContact } from '~/types';
 import type { DuplicateMatch } from '~/utils/duplicates';
 
-const props = withDefaults(defineProps<{ open: boolean; eventId: number; memberLabel?: string; weighted?: boolean; existing?: Voter[] }>(),
-    { memberLabel: 'Member ID', weighted: false, existing: () => [] });
+const props = withDefaults(defineProps<{ open: boolean; eventId: number; existing?: Voter[] }>(), { existing: () => [] });
 
 /** A ready-to-fill spreadsheet: the columns this import recognises, with example rows. */
 function downloadTemplate() {
-    // The ID column keeps the event's own label when the import will recognise it.
-    const idHeader = /matric|member|staff|student|reg(istration)?\.? ?(no|num)|id|identification/i.test(props.memberLabel) ? props.memberLabel : 'Member ID';
-    // Weighted votes: a Weight column (shares, units...).
-    const w = (n: string) => (props.weighted ? [n] : []);
     downloadFile('voters-template.csv', toCsv([
-        ['Name', 'Email', 'Phone', idHeader, 'Group', ...w('Weight')],
-        ['Ada Obi', 'ada@example.com', '0801 234 5678', 'MEM-0001', 'Lagos; Youth', ...w('40')],
-        ['Bola Ade', 'bola@example.com', '', 'MEM-0002', 'Abuja', ...w('25')],
-        ['Chidi Eze', '', '0809 876 5432', 'MEM-0003', '', ...w('1')],
+        ['Name', 'Email', 'Phone', 'Member ID'],
+        ['Ada Obi', 'ada@example.com', '0801 234 5678', 'MEM-0001'],
+        ['Bola Ade', 'bola@example.com', '', 'MEM-0002'],
+        ['Chidi Eze', '', '0809 876 5432', 'MEM-0003'],
     ]));
 }
-const emit = defineEmits<{ close: []; created: [codes: GeneratedCode[]]; limit: [] }>();
+const emit = defineEmits<{ close: []; created: [codes: GeneratedCode[]] }>();
 
 const text = ref('');
 const busy = ref(false);
@@ -137,15 +127,10 @@ const parsed = computed<VoterContact[]>(() => {
         email: header.findIndex(h => /e-?mail/.test(h)),
         member_id: header.findIndex(h => /matric|member|staff|student|reg(istration)?\.? ?(no|num)|\bid\b|identification/.test(h)),
         phone: -1,
-        // "Group", "Branch", "Unit", "Department", "Zone", "Level"…: all go into groups.
-        groups: [] as number[],
-        // Weighted votes: "Weight", "Shares", "Votes", "Holding".
-        weight: header.findIndex(h => /weight|shares?|^votes?$|holding/.test(h)),
     };
-    header.forEach((h, i) => { if (i !== idx.weight && /^groups?$|branch|chapter|unit|department|dept|zone|district|region|parish|assembly|fellowship|ministry|cell|ward|faculty|level|class\b|house/.test(h)) idx.groups.push(i); });
     // Phone: a phone-like column that isn't the ID column ("Member number" is an ID, not a phone).
     idx.phone = header.findIndex((h, i) => i !== idx.member_id && /phone|mobile|tel|whatsapp|^number/.test(h));
-    const hasHeader = idx.name >= 0 || idx.email >= 0 || idx.phone >= 0 || idx.member_id >= 0 || idx.groups.length > 0 || idx.weight >= 0;
+    const hasHeader = idx.name >= 0 || idx.email >= 0 || idx.phone >= 0 || idx.member_id >= 0;
 
     return (hasHeader ? table.slice(1) : table).map((cells) => {
         if (hasHeader) {
@@ -154,8 +139,6 @@ const parsed = computed<VoterContact[]>(() => {
                 email: idx.email >= 0 ? cells[idx.email] || null : null,
                 phone: idx.phone >= 0 ? cells[idx.phone] || null : null,
                 member_id: idx.member_id >= 0 ? cells[idx.member_id] || null : null,
-                groups: idx.groups.map(i => (cells[i] ?? '').trim()).filter(Boolean).join('; ') || null,
-                ...(idx.weight >= 0 ? { weight: (cells[idx.weight] ?? '').trim() || null } : {}),
             };
         }
         const row: VoterContact = { name: null, email: null, phone: null };
@@ -186,8 +169,6 @@ watch(text, () => { removed.value = new Set(); });
 const withEmail = computed(() => rows.value.filter(r => r.email).length);
 const withPhone = computed(() => rows.value.filter(r => r.phone).length);
 const withId = computed(() => rows.value.some(r => r.member_id));
-const withGroups = computed(() => rows.value.some(r => r.groups));
-const withWeight = computed(() => rows.value.some(r => r.weight));
 
 // ----- Possible duplicates
 const skipListed = ref(true);
@@ -235,8 +216,6 @@ async function submit() {
         const { data } = await adminApi.importVoters(props.eventId, { voters: toCreate.value });
         emit('created', data.voters);
     } catch (e) {
-        // Free plan: a second live event. The parent explains the options in a modal.
-        if (planLimitReason(e) === 'events') { emit('limit'); return; }
         error.value = apiErrorMessage(e);
     } finally {
         busy.value = false;

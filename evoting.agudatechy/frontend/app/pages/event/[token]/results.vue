@@ -46,7 +46,7 @@
             </div>
             <div v-if="results.integrity" class="integrity mb-4" :class="{ warn: results.integrity.changes_during_voting > 0 }">
                 <i class="bi" :class="results.integrity.changes_during_voting ? 'bi-info-circle' : 'bi-shield-check'"></i>
-                <span><template v-if="!isPaid">{{ t('layout.secretBallot') }} · </template>{{ results.integrity.changes_during_voting
+                <span>{{ t('layout.secretBallot') }} · {{ results.integrity.changes_during_voting
                     ? tn('res.integrityChanges', results.integrity.changes_during_voting)
                     : t('res.integrityOk') }}</span>
             </div>
@@ -58,16 +58,16 @@
             <div v-if="!presenting" class="row g-4 mt-1 no-print">
                 <div class="col-lg-7">
                     <div class="card-b pad h-100">
-                        <h3 class="h6 fw-800 mb-3">{{ isPaid ? t('res.votesOverTime') : t('res.ballotsOverTime') }}</h3>
-                        <TurnoutChart :timeline="results.timeline" :unit="isPaid ? 'votes' : 'ballots'" />
+                        <h3 class="h6 fw-800 mb-3">{{ t('res.ballotsOverTime') }}</h3>
+                        <TurnoutChart :timeline="results.timeline" unit="ballots" />
                     </div>
                 </div>
                 <div class="col-lg-5">
                     <form class="card-b pad h-100" novalidate @submit.prevent="checkReceipt">
-                        <h3 class="h6 fw-800 mb-1"><i class="bi bi-patch-check text-brand"></i> {{ isPaid ? t('res.checkVotes') : t('res.checkBallot') }}</h3>
-                        <p class="small text-muted mb-3">{{ isPaid ? t('res.checkVotesHint') : t('res.checkBallotHint') }}</p>
+                        <h3 class="h6 fw-800 mb-1"><i class="bi bi-patch-check text-brand"></i> {{ t('res.checkBallot') }}</h3>
+                        <p class="small text-muted mb-3">{{ t('res.checkBallotHint') }}</p>
                         <div class="d-flex gap-2">
-                            <input v-model.trim="receiptCode" class="form-control mono text-uppercase" :placeholder="isPaid ? 'PV-…' : 'XXXX-XXXX-XX'" maxlength="40" :aria-label="t('res.receipt')" />
+                            <input v-model.trim="receiptCode" class="form-control mono text-uppercase" placeholder="XXXX-XXXX-XX" maxlength="40" :aria-label="t('res.receipt')" />
                             <button class="btn btn-primary" :disabled="checkingReceipt || receiptCode.length < 6">
                                 <span v-if="checkingReceipt" class="spinner-border spinner-border-sm"></span><span v-else>{{ t('res.check') }}</span>
                             </button>
@@ -81,8 +81,7 @@
             </div>
 
             <p class="text-center small text-muted mt-2 no-print">
-                <template v-if="isPaid"><i class="bi bi-cash-coin"></i> {{ t('res.paidNote') }}</template>
-                <template v-else><i class="bi bi-incognito"></i> {{ t('res.secretNote') }}</template>
+                <i class="bi bi-incognito"></i> {{ t('res.secretNote') }}
                 <template v-if="results.event.status === 'active'">
                     · {{ live ? t('res.liveNote') : t('res.pollNote') }}
                 </template>
@@ -96,9 +95,7 @@ import { publicApi } from '~/api/endpoints/public';
 import type { Brand, EventResults, EventStatus, ReceiptCheck } from '~/types';
 
 definePageMeta({ layout: 'ballot', wide: true });
-const branding = useBallotBranding();
-const ballotMode = useBallotMode();
-onBeforeUnmount(() => { branding.value = true; ballotMode.value = 'codes'; }); // other pages use the defaults
+useBallotModeFor('codes');
 
 const POLL_MS = 15000;
 const route = useRoute();
@@ -121,12 +118,10 @@ const tick = ref(Date.now());
 interface HiddenResults {
     message: string;
     visibility: 'after_close' | 'private';
-    event: { name: string; status: EventStatus; starts_at: string | null; ends_at: string | null; brand?: Brand | null; language?: string };
+    event: { name: string; status: EventStatus; starts_at: string | null; ends_at: string | null; brand?: Brand | null };
 }
 const hidden = ref<HiddenResults | null>(null);
 const closesIn = useCountdown(() => hidden.value?.event.ends_at);
-useBrandTheme(() => results.value?.event.brand ?? hidden.value?.event.brand);
-const isPaid = computed(() => results.value?.event.voting_mode === 'paid');
 
 // ----- Receipt check
 const receiptCode = ref('');
@@ -159,8 +154,6 @@ async function fetchResults(manual = false) {
     refreshing.value = true;
     try {
         results.value = (await publicApi.getResults(token)).data;
-        branding.value = results.value.event.branding !== false;
-        ballotMode.value = results.value.event.voting_mode ?? 'codes';
         hidden.value = null;
         updatedAt.value = new Date();
         error.value = '';

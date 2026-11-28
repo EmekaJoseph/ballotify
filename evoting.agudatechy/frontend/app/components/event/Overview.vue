@@ -88,7 +88,7 @@ async function loadTimeline() {
     finally { timelineLoading.value = false; }
 }
 onMounted(loadTimeline);
-watch(() => [props.event.voted_count, props.event.votes_sold], loadTimeline);
+watch(() => props.event.voted_count, loadTimeline);
 
 const checklist = computed(() => {
     const cats = props.event.categories ?? [];
