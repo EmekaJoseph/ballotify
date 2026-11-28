@@ -11,7 +11,7 @@
             <ol v-if="article.steps?.length" class="mb-0">
                 <li v-for="(s, i) in article.steps" :key="i">{{ s }}</li>
             </ol>
-            <div v-for="(tip, i) in article.tips ?? []" :key="i" class="tip"><i class="bi bi-lightbulb"></i> {{ tip }}</div>
+            <div v-for="(tip, i) in article.tips ?? []" :key="i" class="tip">{{ tip }}</div>
         </div>
     </article>
 </template>

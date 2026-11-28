@@ -111,6 +111,7 @@
 
         <AdminPayouts v-else-if="tab === 'payouts'" />
         <AdminHealth v-else-if="tab === 'health'" />
+        <AdminAccountLog v-else-if="tab === 'log'" />
 
         <template v-else>
             <div class="d-flex flex-column flex-md-row gap-2 mb-3">
@@ -278,13 +279,14 @@ const providerPills = computed(() => {
     ];
 });
 
-type TabKey = 'users' | 'events' | 'payments' | 'payouts' | 'pricing' | 'health';
+type TabKey = 'users' | 'events' | 'payments' | 'payouts' | 'pricing' | 'log' | 'health';
 const tabs: { key: TabKey; label: string; icon: string }[] = [
     { key: 'users', label: 'Organisers', icon: 'bi-people' },
     { key: 'events', label: 'Events', icon: 'bi-calendar2-week' },
     { key: 'payments', label: 'Payments', icon: 'bi-receipt' },
     { key: 'payouts', label: 'Payouts', icon: 'bi-bank' },
     { key: 'pricing', label: 'Pricing', icon: 'bi-tags' },
+    { key: 'log', label: 'Log', icon: 'bi-journal-text' },
     { key: 'health', label: 'Health', icon: 'bi-heart-pulse' },
 ];
 const paymentLabel = { success: 'Paid', pending: 'Pending', failed: 'Failed' } as const;
@@ -300,7 +302,7 @@ const loadError = ref('');
 const acting = ref<number | null>(null);
 
 const searchPlaceholder = computed(() => ({
-    users: 'Search name or email', events: 'Search event or organiser', payments: 'Search reference, event or organiser', pricing: '', payouts: '', health: '',
+    users: 'Search name or email', events: 'Search event or organiser', payments: 'Search reference, event or organiser', pricing: '', payouts: '', log: '', health: '',
 })[tab.value]);
 
 const filters = computed(() => {
@@ -313,7 +315,7 @@ const filters = computed(() => {
 
 let requestId = 0;
 async function load(pageNo = 1) {
-    if (tab.value === 'pricing' || tab.value === 'payouts' || tab.value === 'health') return;
+    if (tab.value === 'pricing' || tab.value === 'payouts' || tab.value === 'health' || tab.value === 'log') return;
     const mine = ++requestId;
     loading.value = true;
     loadError.value = '';

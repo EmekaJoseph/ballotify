@@ -3,7 +3,7 @@
         <Transition name="alert-dlg">
             <div v-if="open" class="alert-backdrop" @mousedown.self="emit('close')">
                 <div ref="panel" class="alert-panel" role="alertdialog" aria-modal="true" :aria-labelledby="titleId" :aria-describedby="textId" tabindex="-1">
-                    <div class="alert-icon" :class="tone"><i class="bi" :class="icon"></i></div>
+                    <div v-if="adminIcons" class="alert-icon" :class="tone"><i class="bi" :class="icon"></i></div>
                     <h2 :id="titleId" class="h5 fw-800 mb-2 text-break">{{ title }}</h2>
                     <p :id="textId" class="text-muted mb-4 alert-text">{{ message }}</p>
                     <div class="d-grid gap-2">
@@ -17,6 +17,8 @@
 </template>
 
 <script setup lang="ts">
+
+const adminIcons = useAdminIcons();
 /**
  * A small alert that pops up on top of everything, including other dialogs
  * (e.g. "Payment didn't start" over the vote dialog). Esc closes only this one.

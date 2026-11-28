@@ -2,7 +2,7 @@
     <div class="toast-stack" aria-live="polite" aria-atomic="false">
         <TransitionGroup name="toast">
             <div v-for="t in toasts" :key="t.id" class="toast-b" :class="t.kind" role="status">
-                <i class="bi" :class="icon[t.kind]"></i>
+                <i v-if="adminIcons" class="bi" :class="icon[t.kind]"></i>
                 <span class="flex-grow-1 toast-msg">{{ t.message }}</span>
                 <button v-if="t.action" type="button" class="toast-action" @click="t.action.run()">{{ t.action.label }}</button>
                 <button type="button" class="toast-close" aria-label="Dismiss" @click="dismiss(t.id)">
@@ -16,6 +16,8 @@
 </template>
 
 <script setup lang="ts">
+
+const adminIcons = useAdminIcons();
 const { toasts, dismiss } = useToast();
 const icon = { success: 'bi-check-circle-fill', error: 'bi-exclamation-octagon-fill', info: 'bi-info-circle-fill' } as const;
 </script>

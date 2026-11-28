@@ -232,6 +232,19 @@ export interface PlatformEvent {
     user: { id: number; name: string; email: string; suspended_at: string | null; approved_at: string | null; is_admin: boolean } | null;
 }
 
+/** One line of the platform account log (admin page). */
+export interface AccountLogEntry {
+    id: number;
+    action: string;
+    description: string;
+    ip: string | null;
+    created_at: string;
+    /** Email kept after the account itself was deleted. */
+    user_email: string | null;
+    user: { id: number; name: string; email: string } | null;
+    actor: { id: number; name: string; email: string } | null;
+}
+
 export interface SystemHealth {
     queue: { driver: string; pending: number | null; failed: number; needs_worker: boolean };
     scheduler: { last_run: string | null; running: boolean };

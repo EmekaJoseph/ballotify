@@ -22,7 +22,7 @@
         </div>
 
         <div class="d-flex flex-column flex-sm-row gap-2 justify-content-center">
-            <NuxtLink v-if="resultsTo" :to="resultsTo" class="btn btn-primary"><i class="bi bi-bar-chart-line"></i> {{ resultsLabel || t('vote.viewLive') }}</NuxtLink>
+            <NuxtLink v-if="resultsTo" :to="resultsTo" class="btn btn-primary">{{ resultsLabel || t('vote.viewLive') }}</NuxtLink>
             <slot name="actions" />
             <NuxtLink v-if="!hideDone" to="/" class="btn btn-ghost">{{ t('done.done') }}</NuxtLink>
         </div>

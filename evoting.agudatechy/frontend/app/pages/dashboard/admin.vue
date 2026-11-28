@@ -29,6 +29,7 @@
         </div>
 
         <AdminHealth v-if="tab === 'health'" />
+        <AdminAccountLog v-else-if="tab === 'log'" />
 
         <div v-else class="card-b overflow-hidden">
             <div class="list-tools">
@@ -127,10 +128,11 @@ useHead({ title: `Admin · ${String(useRuntimeConfig().public.companyName || 'E-
 const toast = useToast();
 const { confirm } = useConfirm();
 
-type Tab = 'users' | 'events' | 'health';
+type Tab = 'users' | 'events' | 'log' | 'health';
 const tabs: { key: Tab; label: string; icon: string }[] = [
     { key: 'users', label: 'Accounts', icon: 'bi-people' },
     { key: 'events', label: 'Events', icon: 'bi-calendar2-week' },
+    { key: 'log', label: 'Log', icon: 'bi-journal-text' },
     { key: 'health', label: 'Health', icon: 'bi-heart-pulse' },
 ];
 const USER_FILTERS = [
@@ -162,7 +164,7 @@ async function loadOverview() {
 }
 
 async function load(p = 1) {
-    if (tab.value === 'health') return;
+    if (tab.value === 'health' || tab.value === 'log') return;
     loading.value = true;
     try {
         page.value = tab.value === 'users'

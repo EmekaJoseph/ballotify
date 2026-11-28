@@ -7,7 +7,7 @@
             <p class="text-muted mb-4">
                 {{ is404 ? 'The page you\'re looking for doesn\'t exist or has moved.' : 'An unexpected error occurred. Please try again.' }}
             </p>
-            <button class="btn btn-primary" @click="clearError({ redirect: '/' })"><i class="bi bi-house"></i> Back to home</button>
+            <button class="btn btn-primary" @click="clearError({ redirect: '/' })">Back to home</button>
         </div>
     </div>
 </template>

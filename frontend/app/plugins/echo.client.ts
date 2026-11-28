@@ -1,5 +1,6 @@
 import Echo from 'laravel-echo';
 import Pusher from 'pusher-js';
+import api from '~/api';
 
 /**
  * Live results over websockets: Pusher (hosted, nothing to run on the server) when
@@ -12,9 +13,13 @@ import Pusher from 'pusher-js';
  * connection. Off, or unreachable: the results page refreshes every 15 seconds.
  */
 
-/** What the results page uses: the same for Pusher and Reverb. */
+type Listenable = { listen(event: string, callback: (...args: unknown[]) => void): unknown };
+
+/** What the results pages use: the same for Pusher and Reverb. */
 export interface LiveClient {
-    channel(name: string): { listen(event: string, callback: (...args: unknown[]) => void): unknown };
+    channel(name: string): Listenable;
+    /** Organiser-only channels: the API checks the signed-in user (POST /broadcasting/auth). */
+    private(name: string): Listenable;
     leave(name: string): void;
     disconnect(): void;
 }
@@ -34,6 +39,18 @@ export default defineNuxtPlugin(() => {
     let echo: LiveClient | null = null;
     let users = 0;
 
+    /**
+     * Private channels: ask our API, through the shared axios instance so the
+     * current Bearer token (and the API base URL) are always the right ones.
+     */
+    const authorizer = (channel: { name: string }) => ({
+        authorize: (socketId: string, callback: (error: Error | null, data: { auth: string } | null) => void) => {
+            api.post('/broadcasting/auth', { socket_id: socketId, channel_name: channel.name })
+                .then(res => callback(null, res.data as { auth: string }))
+                .catch(err => callback(err instanceof Error ? err : new Error('Live updates not allowed'), null));
+        },
+    });
+
     /** A new client for whichever service is configured (Pusher first). */
     function connect(): LiveClient {
         // Both speak the Pusher protocol; pusher-js is the client transport.
@@ -44,6 +61,7 @@ export default defineNuxtPlugin(() => {
                 key: pusherKey,
                 cluster: String(config.public.pusherCluster || 'mt1'),
                 forceTLS: true,
+                authorizer,
             }) as unknown as LiveClient;
         }
         const scheme = String(config.public.reverbScheme || 'http');
@@ -56,6 +74,7 @@ export default defineNuxtPlugin(() => {
             wssPort: port,
             forceTLS: scheme === 'https',
             enabledTransports: ['ws', 'wss'],
+            authorizer,
         }) as unknown as LiveClient;
     }
 

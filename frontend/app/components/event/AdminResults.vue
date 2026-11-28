@@ -4,6 +4,9 @@
             <i class="bi" :class="note.icon"></i>
             <span class="note-text">{{ note.text }}</span>
             <div class="actions">
+                <span v-if="live && event.status === 'active'" class="pill pill-active" title="New votes appear here by themselves">
+                    <span class="dot"></span>Live
+                </span>
                 <a v-if="publicNow" :href="resultsUrl" target="_blank" rel="noopener" class="btn btn-ghost btn-icon btn-sm"
                     title="Open public results page" aria-label="Open public results page">
                     <i class="bi bi-box-arrow-up-right"></i>
@@ -18,10 +21,11 @@
                     title="Printable report / PDF" aria-label="Printable report / PDF">
                     <i class="bi bi-file-earmark-pdf"></i>
                 </NuxtLink>
-                <button class="btn btn-soft btn-sm" :disabled="!results || !results.categories.length" title="Award-night reveal: one category at a time, winner revealed on a click" @click="startPresent('reveal')">
-                    <i class="bi bi-stars"></i> Reveal
+                <button class="btn btn-soft btn-sm d-none d-md-inline-block" :disabled="!results || !results.categories.length" title="Award-night reveal: one category at a time, winner revealed on a click" @click="startPresent('reveal')">
+                    <i class="bi bi-easel"></i> Reveal
                 </button>
-                <button class="btn btn-primary btn-sm" :disabled="!results" title="Show full screen, e.g. on a projector" @click="startPresent('board')">
+                <!-- Projector board: desktop and tablets only (a phone screen can't show it) -->
+                <button class="btn btn-primary btn-sm d-none d-md-inline-block" :disabled="!results" title="Show full screen, e.g. on a projector" @click="startPresent('board')">
                     <i class="bi bi-fullscreen"></i> Present
                 </button>
             </div>
@@ -54,7 +58,7 @@
         </div>
 
         <!-- Presentation: this element goes full screen. Works for private results too (it's your dashboard data). -->
-        <div ref="stage" class="stage" :class="{ presenting, reveal: presenting && presentMode === 'reveal' }">
+        <div ref="stage" class="stage" :class="{ presenting, reveal: presenting && presentMode === 'reveal', board: presenting && presentMode === 'board' }">
             <template v-if="results && presenting && presentMode === 'reveal'">
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <span class="text-white fw-800">{{ results.event.name }}</span>
@@ -62,18 +66,13 @@
                 </div>
                 <RevealStage :categories="results.categories" @finish="togglePresent" />
             </template>
-            <template v-else-if="results">
-                <ResultsHeader v-if="presenting" :name="results.event.name" :status="results.event.status"
-                    :ends-at="results.event.ends_at" :updated-at="updatedLabel">
-                    <button class="btn btn-light-on-dark btn-sm" @click="togglePresent">
-                        <i class="bi bi-fullscreen-exit"></i> Exit
-                    </button>
-                </ResultsHeader>
-                <ResultsBoard :results="results" />
-                <p v-if="presenting && event.status === 'active'" class="text-center small text-muted mt-2 mb-0">
-                    <i class="bi bi-arrow-repeat"></i> Updates automatically while voting is open.
-                </p>
-            </template>
+            <!-- Projector board: everything on one screen, refreshing while voting is open -->
+            <PresentBoard v-else-if="results && presenting" :results="results" :live="live" :updated-at="updatedLabel">
+                <button class="btn btn-outline-light-on-dark btn-sm" title="Exit (Esc)" @click="togglePresent">
+                    <i class="bi bi-fullscreen-exit"></i> Exit
+                </button>
+            </PresentBoard>
+            <ResultsBoard v-else-if="results" :results="results" />
         </div>
     </div>
 </template>
@@ -180,16 +179,50 @@ watch(presenting, (on) => {
     if (!on) return;
     load(true);
     tickTimer = setInterval(() => { tick.value = Date.now(); }, 5000);
-    if (props.event.status === 'active') pollTimer = setInterval(() => load(true), 10000);
+    // With live updates connected the totals arrive by themselves; polling is the fallback.
+    if (props.event.status === 'active') pollTimer = setInterval(() => load(true), live.value ? 60000 : 10000);
 });
+
+// --- Live tally over Pusher / Reverb (private channel: this event's team only) --------
+const { $live } = useNuxtApp();
+let echo: ReturnType<typeof $live.acquire> = null;
+const channelName = `ballotify.admin.event.${props.event.id}`;
+const live = ref(false);
+let refreshTimer: ReturnType<typeof setTimeout> | undefined;
+/** Many votes can land together: refetch at most about once a second. */
+function scheduleRefresh() {
+    if (refreshTimer) return;
+    refreshTimer = setTimeout(() => { refreshTimer = undefined; load(true); }, 1000);
+}
+function startLive() {
+    if (props.event.status === 'completed') return; // nothing more can change
+    echo = $live.acquire();
+    if (!echo) return;
+    try {
+        echo.private(channelName).listen('.vote.cast', scheduleRefresh);
+        live.value = true;
+    } catch (e) {
+        console.warn('Live results unavailable:', e);
+    }
+}
+function stopLive() {
+    clearTimeout(refreshTimer);
+    if (!echo) return;
+    try { echo.leave(channelName); } catch { /* already gone */ }
+    $live.release();
+    echo = null;
+    live.value = false;
+}
 
 onMounted(() => {
     load();
     loadCertificate();
+    startLive();
     document.addEventListener('fullscreenchange', onFullscreen);
     document.addEventListener('keydown', onKey);
 });
 onBeforeUnmount(() => {
+    stopLive();
     clearInterval(pollTimer);
     clearInterval(tickTimer);
     document.removeEventListener('fullscreenchange', onFullscreen);
@@ -214,8 +247,11 @@ onBeforeUnmount(() => {
     background: var(--bg); padding: 2rem; overflow-y: auto;
 }
 .stage.presenting > * { max-width: 1280px; margin-left: auto; margin-right: auto; }
+/* The projector board sizes itself to the screen: no padding, no scrolling (phones may scroll). */
+.stage.presenting.board { padding: 0; overflow: hidden; background: #07111e; }
+.stage.presenting.board > * { max-width: none; }
+@media (max-width: 767.98px) { .stage.presenting.board { overflow-y: auto; } }
 .stage.presenting.reveal {
-    background: radial-gradient(900px 500px at 85% 0%, rgba(124, 92, 255, .35), transparent 60%),
-        radial-gradient(900px 500px at 0% 100%, rgba(20, 145, 138, .45), transparent 60%), var(--night);
+    background: var(--night);
 }
 </style>

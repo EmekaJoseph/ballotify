@@ -7,8 +7,7 @@
         <form novalidate @submit.prevent="submit">
             <div class="mb-3">
                 <label for="name" class="form-label">Full name</label>
-                <div class="input-icon">
-                    <i class="bi bi-person"></i>
+                <div>
                     <input id="name" v-model.trim="form.name" type="text" class="form-control form-control-lg"
                         :class="{ 'is-invalid': fieldErrors.name }" autocomplete="name" placeholder="Firstname Lastname"
                         required :disabled="loading" />
@@ -17,8 +16,7 @@
             </div>
             <div class="mb-3">
                 <label for="email" class="form-label">Work email</label>
-                <div class="input-icon">
-                    <i class="bi bi-envelope"></i>
+                <div>
                     <input id="email" v-model.trim="form.email" type="email" class="form-control form-control-lg"
                         :class="{ 'is-invalid': fieldErrors.email }" autocomplete="email"
                         placeholder="you@organisation.com" required :disabled="loading" />

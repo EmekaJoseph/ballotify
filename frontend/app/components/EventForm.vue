@@ -118,7 +118,7 @@ const modeLocked = computed(() => !!props.event?.ballot_locked);
 
 const modes = [
     { value: 'codes' as const, title: 'Secret ballot', text: 'One-time codes. One person, one vote. For elections.', icon: 'bi-shield-lock', tone: '' },
-    { value: 'paid' as const, title: 'Paid public voting', text: 'Fans pay per vote. For award nights and pageants.', icon: 'bi-trophy', tone: 'violet' },
+    { value: 'paid' as const, title: 'Paid public voting', text: 'Fans pay per vote. For award nights and pageants.', icon: 'bi-cash-coin', tone: 'violet' },
 ];
 
 const visibilityOptions: { value: ResultsVisibility; title: string; text: string; icon: string; tone: string }[] = [

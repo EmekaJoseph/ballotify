@@ -18,7 +18,7 @@
                     </svg>
                     <div class="flex-grow-1 min-w-0">
                         <div class="hm-caps">President</div>
-                        <div class="hm-leader text-truncate"><i class="bi bi-trophy-fill"></i> {{ leader.name }}</div>
+                        <div class="hm-leader text-truncate">{{ leader.name }}</div>
                         <div class="hm-muted">Turnout {{ turnout }}%</div>
                     </div>
                 </div>
@@ -40,14 +40,14 @@
                         <div class="hm-title">Annual Elections 2026</div>
                         <div class="hm-open"><span class="hm-dot sm"></span> Open · closes in 3h 12m</div>
                     </div>
-                    <div class="hm-voter"><i class="bi bi-person-check"></i> Voting as <b>Tolu A.</b></div>
+                    <div class="hm-voter">Voting as <b>Tolu A.</b></div>
                     <div class="hm-caps px-1 mb-2">President <span class="hm-muted fw-normal">· pick one</span></div>
                     <div v-for="(c, i) in candidates" :key="c.name" class="hm-cand" :class="{ on: selected === i }">
                         <span class="hm-av" :style="{ background: c.color }">{{ initials(c.name) }}</span>
                         <span class="hm-cname">{{ c.name }}</span>
                         <span class="hm-radio"><i class="bi bi-check-lg"></i></span>
                     </div>
-                    <div class="hm-btn" :class="{ ready: selected !== null }">Review my vote <i class="bi bi-arrow-right"></i></div>
+                    <div class="hm-btn" :class="{ ready: selected !== null }">Review my vote</div>
                 </div>
             </div>
 
@@ -181,7 +181,7 @@ onBeforeUnmount(() => {
 }
 .hm-notch { position: absolute; top: .55em; left: 50%; transform: translateX(-50%); width: 4.2em; height: 1em; border-radius: 999px; background: #070d19; }
 .hm-head {
-    background: linear-gradient(135deg, var(--brand-600), var(--accent)); color: #fff;
+    background: var(--brand-600); color: #fff;
     border-radius: 1em; padding: .8em .9em; margin-bottom: .7em;
 }
 .hm-brand { display: flex; align-items: center; gap: .35em; font-size: .68em; font-weight: 700; opacity: .9; }

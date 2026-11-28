@@ -2,7 +2,6 @@
     <div>
         <div v-if="loading" class="card-b pad"><div class="skeleton mb-3" style="height: 30px; width: 50%"></div><div class="skeleton" style="height: 180px"></div></div>
         <div v-else-if="!profile" class="card-b text-center px-4 py-5">
-            <div class="icon-tile lg mx-auto mb-3"><i class="bi bi-link-45deg"></i></div>
             <h1 class="h4 fw-800 mb-2">This link doesn’t work</h1>
             <p class="text-muted mb-0">It may have been switched off. Ask the organiser for a new one.</p>
         </div>
@@ -21,7 +20,7 @@
                         <div class="h5 fw-800 mb-1 text-break">{{ profile.name }}</div>
                         <div v-if="profile.editable" class="d-flex flex-wrap gap-2">
                             <label class="btn btn-soft btn-sm mb-0">
-                                <i class="bi bi-image"></i> {{ preview ? 'Change photo' : 'Add a photo' }}
+                                {{ preview ? 'Change photo' : 'Add a photo' }}
                                 <input type="file" accept="image/png,image/jpeg,image/webp" class="visually-hidden" @change="onFile" />
                             </label>
                             <button v-if="preview" type="button" class="btn btn-ghost btn-sm" @click="clearPhoto">Remove</button>
@@ -40,20 +39,19 @@
                         <span v-if="saving" class="spinner-border spinner-border-sm"></span> Save my profile
                     </button>
                 </div>
-                <div v-else class="alert alert-secondary border-0 rounded-4 small mt-3 mb-0"><i class="bi bi-lock"></i> Voting has closed, so the profile can’t change any more.</div>
+                <div v-else class="alert alert-secondary border-0 rounded-4 small mt-3 mb-0">Voting has closed, so the profile can’t change any more.</div>
             </div>
             <div class="card-b pad mt-3 d-flex align-items-center gap-3 flex-wrap">
-                <span class="icon-tile violet flex-shrink-0"><i class="bi bi-image"></i></span>
                 <div class="flex-grow-1 min-w-0">
                     <div class="fw-bold text-ink">Your campaign card</div>
                     <div class="small text-muted">An image with your photo and a QR code to the voting page, ready for WhatsApp, Instagram and X.</div>
                 </div>
-                <button class="btn btn-primary" @click="cardOpen = true"><i class="bi bi-magic"></i> Make my card</button>
+                <button class="btn btn-primary" @click="cardOpen = true">Make my card</button>
             </div>
             <CampaignCardModal :open="cardOpen" :candidate="{ id: profile.id, name: profile.name, image_url: profile.image_url }"
                 :category-name="profile.category ?? ''" :event-name="profile.event.name" :token="profile.event.link_token" :brand-color="profile.event.brand_color"
                 @close="cardOpen = false" />
-            <p class="small text-muted text-center mt-3"><i class="bi bi-shield-check"></i> Your name and category are set by the organiser. Changes you make are recorded in the event’s activity log.</p>
+            <p class="small text-muted text-center mt-3">Your name and category are set by the organiser. Changes you make are recorded in the event’s activity log.</p>
         </template>
     </div>
 </template>

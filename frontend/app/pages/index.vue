@@ -2,11 +2,10 @@
     <div>
         <!-- Hero -->
         <section class="hero">
-            <div class="hero-glow"></div>
             <div class="container position-relative">
                 <div class="row align-items-center g-4 g-lg-5">
                     <div class="col-lg-6 text-center text-lg-start fade-up">
-                        <span class="eyebrow dark mb-4"><i class="bi bi-stars"></i> Elections · Awards · Polls</span>
+                        <span class="eyebrow dark mb-4">Elections · Awards · Polls</span>
                         <h1 class="display-title text-white mb-4">
                             Run a fair vote<br />
                             <span class="text-gradient-light">in minutes.</span>
@@ -18,16 +17,16 @@
                         <div class="d-flex flex-column flex-sm-row gap-3 justify-content-center justify-content-lg-start">
                             <NuxtLink :to="ctaLink" class="btn btn-light-on-dark btn-lg">
                                 {{ auth.isAuthenticated ? 'Go to dashboard' : 'Create your first event' }}
-                                <i class="bi bi-arrow-right"></i>
+                               
                             </NuxtLink>
                             <NuxtLink to="/demo/vote" class="btn btn-outline-light-on-dark btn-lg">
-                                <i class="bi bi-play-circle"></i> Try the demo ballot
+                                Try the demo ballot
                             </NuxtLink>
                         </div>
                         <div class="d-flex flex-wrap gap-4 justify-content-center justify-content-lg-start mt-5 hero-points">
-                            <span><i class="bi bi-shield-check"></i> One vote per code</span>
-                            <span><i class="bi bi-phone"></i> Mobile-first ballot</span>
-                            <span><i class="bi bi-lightning-charge"></i> Live results</span>
+                            <span>One vote per code</span>
+                            <span>Mobile-first ballot</span>
+                            <span>Live results</span>
                         </div>
                     </div>
                     <div class="col-lg-6 fade-up" style="animation-delay: .12s">
@@ -41,11 +40,11 @@
         <section class="border-bottom bg-surface">
             <div class="container py-4">
                 <div class="d-flex flex-wrap justify-content-center gap-3 gap-md-5 use-cases">
-                    <span><i class="bi bi-people"></i> Associations &amp; cooperatives</span>
-                    <span><i class="bi bi-house-heart"></i> Churches &amp; ministries</span>
-                    <span><i class="bi bi-building"></i> Staff &amp; board votes</span>
-                    <span><i class="bi bi-trophy"></i> Award nights</span>
-                    <span><i class="bi bi-mortarboard"></i> Schools &amp; unions</span>
+                    <span>Associations &amp; cooperatives</span>
+                    <span>Churches &amp; ministries</span>
+                    <span>Staff &amp; board votes</span>
+                    <span>Award nights</span>
+                    <span>Schools &amp; unions</span>
                 </div>
             </div>
         </section>
@@ -61,7 +60,6 @@
                 <div class="row g-4">
                     <div v-for="f in features" :key="f.title" class="col-md-6 col-lg-4">
                         <div class="card-b pad hoverable h-100">
-                            <div class="icon-tile mb-3" :class="f.tone"><i class="bi" :class="f.icon"></i></div>
                             <h3 class="h5 fw-800 mb-2">{{ f.title }}</h3>
                             <p class="text-muted mb-0">{{ f.text }}</p>
                         </div>
@@ -100,7 +98,7 @@
                             The server checks every ballot, not the browser. Voting windows, one-vote-per-code and
                             category rules can't be bypassed, and code guessing is rate-limited.
                         </p>
-                        <NuxtLink to="/demo/results" class="btn btn-soft">See demo results <i class="bi bi-arrow-right"></i></NuxtLink>
+                        <NuxtLink to="/demo/results" class="btn btn-soft">See demo results</NuxtLink>
                     </div>
                     <div class="col-lg-7">
                         <div class="row g-3">
@@ -124,17 +122,17 @@
             <div class="container">
                 <div class="row g-4 g-lg-5 align-items-center">
                     <div class="col-lg-6 order-lg-2">
-                        <span class="eyebrow mb-3"><i class="bi bi-trophy"></i> Award nights & pageants</span>
+                        <span class="eyebrow mb-3">Award nights & pageants</span>
                         <h2 class="section-title mb-3">Let fans vote, and raise money while they do</h2>
                         <p class="lead-muted mb-4">
                             Switch an event to <b>paid public voting</b>: anyone with the link picks a nominee and pays per vote with
                             card, transfer or USSD. Votes count the moment Paystack confirms, and you watch a live leaderboard.
                         </p>
                         <ul class="list-unstyled d-grid gap-2 mb-4">
-                            <li v-for="p in awardPoints" :key="p" class="d-flex gap-2"><i class="bi bi-check2-circle text-brand"></i><span>{{ p }}</span></li>
+                            <li v-for="p in awardPoints" :key="p" class="d-flex gap-2"><span>{{ p }}</span></li>
                         </ul>
                         <NuxtLink :to="auth.isAuthenticated ? '/dashboard/events/create?template=award_night' : '/signup'" class="btn btn-primary">
-                            Start an award night <i class="bi bi-arrow-right"></i>
+                            Start an award night
                         </NuxtLink>
                     </div>
                     <div class="col-lg-6 order-lg-1">
@@ -169,7 +167,7 @@
                 </div>
                 <div class="d-grid gap-2">
                     <details v-for="(f, i) in faqs" :key="f.q" class="faq card-b" :open="i === 0">
-                        <summary>{{ f.q }}<i class="bi bi-chevron-down"></i></summary>
+                        <summary>{{ f.q }}</summary>
                         <p class="text-muted mb-0">{{ f.a }}</p>
                     </details>
                 </div>
@@ -180,12 +178,11 @@
         <section class="pb-6">
             <div class="container">
                 <div class="cta text-center">
-                    <div class="hero-glow"></div>
                     <div class="position-relative">
                         <h2 class="section-title text-white mb-3">Ready to run your next vote?</h2>
                         <p class="hero-lead mx-auto mb-4">Set up your first event and share the voting link today.</p>
                         <div class="d-flex flex-column flex-sm-row gap-3 justify-content-center">
-                            <NuxtLink :to="ctaLink" class="btn btn-light-on-dark btn-lg">Get started free <i class="bi bi-arrow-right"></i></NuxtLink>
+                            <NuxtLink :to="ctaLink" class="btn btn-light-on-dark btn-lg">Get started free</NuxtLink>
                             <NuxtLink to="/demo/vote" class="btn btn-outline-light-on-dark btn-lg">Try the demo</NuxtLink>
                         </div>
                     </div>
@@ -260,14 +257,8 @@ const faqs = computed(() => [
 .pb-6 { padding-bottom: 5rem; }
 .hero { position: relative; overflow: hidden; background: var(--night); padding: 4.5rem 0 5rem; }
 @media (min-width: 992px) { .hero { padding: 6rem 0 7rem; } }
-.hero-glow {
-    position: absolute; inset: 0; pointer-events: none;
-    background:
-        radial-gradient(600px 400px at 85% 20%, rgba(124, 92, 255, .35), transparent 60%),
-        radial-gradient(500px 380px at 10% 90%, rgba(20, 145, 138, .35), transparent 60%);
-}
 .hero-lead { color: rgba(255, 255, 255, .72); font-size: 1.125rem; line-height: 1.7; max-width: 540px; }
-.text-gradient-light { background: linear-gradient(100deg, #5eead4, #a78bfa); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.text-gradient-light { color: #5eead4; }
 .eyebrow.dark { background: rgba(255, 255, 255, .08); color: #99f6e4; border-color: rgba(255, 255, 255, .12); }
 .award-mock { padding: 1.5rem; box-shadow: var(--shadow-lg); }
 .mock-row { display: flex; align-items: center; gap: .75rem; padding: .55rem 0; }
@@ -286,7 +277,7 @@ const faqs = computed(() => [
 .step { padding: 1.75rem; border-radius: var(--radius-lg); background: var(--surface-2); border: 1px solid var(--line); }
 .step-num {
     width: 44px; height: 44px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center;
-    background: linear-gradient(135deg, var(--brand-500), var(--accent)); color: #fff; font-weight: 800; font-size: 1.1rem;
+    background: var(--brand-500); color: #fff; font-weight: 800; font-size: 1.1rem;
 }
 .cta { position: relative; overflow: hidden; background: var(--night); border-radius: var(--radius-xl); padding: 4rem 1.5rem; }
 </style>

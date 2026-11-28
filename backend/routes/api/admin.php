@@ -20,6 +20,7 @@ Route::put('plans', [PlatformAdminController::class, 'updatePlans']);
 Route::get('payments', [PlatformAdminController::class, 'payments']);
 Route::get('payouts', [PlatformAdminController::class, 'payouts']);
 Route::post('events/{event}/payouts', [PlatformAdminController::class, 'recordPayout']);
+Route::get('logs', [PlatformAdminController::class, 'logs']);
 Route::get('health', [PlatformAdminController::class, 'health']);
 Route::post('health/failed-jobs/{uuid}/retry', [PlatformAdminController::class, 'retryFailedJob']);
 Route::delete('health/failed-jobs/{uuid}', [PlatformAdminController::class, 'forgetFailedJob']);

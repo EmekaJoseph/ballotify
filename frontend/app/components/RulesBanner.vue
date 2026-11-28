@@ -10,7 +10,7 @@
             </div>
         </div>
         <ul v-if="notes.length" class="notes" :class="{ 'mt-2': q }">
-            <li v-for="n in notes" :key="n"><i class="bi bi-dot"></i>{{ n }}</li>
+            <li v-for="n in notes" :key="n">{{ n }}</li>
         </ul>
     </div>
 </template>

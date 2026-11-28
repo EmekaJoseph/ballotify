@@ -1,7 +1,7 @@
 <template>
     <!-- Ranked choice: how the count went, round by round. -->
     <div v-if="rounds.length" class="rounds">
-        <div v-if="winnerLine" class="won small mb-2"><i class="bi bi-trophy-fill"></i> {{ winnerLine }}</div>
+        <div v-if="winnerLine" class="won small mb-2">{{ winnerLine }}</div>
         <template v-if="rounds.length > 1">
             <div class="small fw-bold text-ink mb-1">{{ t('res.rounds') }}</div>
             <div class="table-responsive">

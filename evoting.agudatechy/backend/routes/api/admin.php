@@ -15,6 +15,7 @@ Route::post('users/{user}/unsuspend', [PlatformAdminController::class, 'unsuspen
 // New accounts can create events once approved.
 Route::post('users/{user}/approval', [PlatformAdminController::class, 'setApproval']);
 Route::get('events', [PlatformAdminController::class, 'events']);
+Route::get('logs', [PlatformAdminController::class, 'logs']);
 Route::get('health', [PlatformAdminController::class, 'health']);
 Route::post('health/failed-jobs/{uuid}/retry', [PlatformAdminController::class, 'retryFailedJob']);
 Route::delete('health/failed-jobs/{uuid}', [PlatformAdminController::class, 'forgetFailedJob']);

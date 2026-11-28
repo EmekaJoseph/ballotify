@@ -1,5 +1,5 @@
 import api from '../index';
-import type { AuditEntry, BallotEvent, Candidate, CandidateImportResult, CandidateImportRow, Category, EventResults, EventTemplate, GeneratedCode, MemberRole, MessagingStatus, Paginated, PlatformEvent, PlatformOverview, PlatformUser, ResultsVisibility, SystemHealth, TeamInfo, TeamMember, User, Voter, VoterContact, NominationSummary, ResultCertificateInfo } from '~/types';
+import type { AccountLogEntry, AuditEntry, BallotEvent, Candidate, CandidateImportResult, CandidateImportRow, Category, EventResults, EventTemplate, GeneratedCode, MemberRole, MessagingStatus, Paginated, PlatformEvent, PlatformOverview, PlatformUser, ResultsVisibility, SystemHealth, TeamInfo, TeamMember, User, Voter, VoterContact, NominationSummary, ResultCertificateInfo } from '~/types';
 
 type Id = number | string;
 
@@ -137,6 +137,9 @@ export const platformApi = {
     unsuspend: (userId: Id) => api.post<PlatformUser>(`/admin/users/${userId}/unsuspend`),
     events: (params: { search?: string; status?: string; page?: number }) =>
         api.get<Paginated<PlatformEvent>>('/admin/events', { params }),
+    /** Account log: group admin | signin | security; failed = failed sign-ins only. */
+    logs: (params: { search?: string; group?: string; failed?: boolean; page?: number }) =>
+        api.get<Paginated<AccountLogEntry>>('/admin/logs', { params: { ...params, failed: params.failed ? 1 : undefined } }),
     health: () => api.get<SystemHealth>('/admin/health'),
     /** uuid 'all' = every failed job. */
     retryFailedJob: (uuid: string) => api.post(`/admin/health/failed-jobs/${uuid}/retry`),

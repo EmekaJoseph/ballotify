@@ -17,7 +17,7 @@
                         <div class="flex-grow-1 min-w-0">
                             <div class="d-flex justify-content-between align-items-baseline gap-2">
                                 <span class="name text-truncate">
-                                    <i v-if="revealed && isWinner(c)" class="bi bi-trophy-fill trophy"></i>{{ c.name }}
+                                    {{ c.name }}
                                 </span>
                                 <span class="votes" :class="{ show: revealed }">{{ formatNumber(c.votes) }} · {{ pct(c.votes) }}%</span>
                             </div>
@@ -31,7 +31,7 @@
         <div class="d-flex justify-content-center gap-2 mt-4">
             <button class="btn btn-outline-light-on-dark" :disabled="index === 0 && !revealed" @click="back"><i class="bi bi-arrow-left"></i> Back</button>
             <button class="btn btn-light-on-dark btn-lg px-4" @click="forward">
-                <template v-if="!revealed"><i class="bi bi-stars"></i> Reveal</template>
+                <template v-if="!revealed"><i class="bi bi-easel"></i> Reveal</template>
                 <template v-else-if="index < categories.length - 1">Next category <i class="bi bi-arrow-right"></i></template>
                 <template v-else><i class="bi bi-flag"></i> Finish</template>
             </button>
@@ -92,13 +92,11 @@ kbd { background: rgba(255, 255, 255, .12); border-radius: 6px; padding: .05rem 
 .nominee.dim { opacity: .55; }
 .nominee.winner { background: rgba(94, 234, 212, .14); border-color: #5eead4; transform: scale(1.02); }
 .name { font-size: clamp(1.1rem, 2.4vw, 1.5rem); font-weight: 800; }
-.trophy { color: #fbbf24; margin-right: .5rem; animation: pop .6s var(--ease); display: inline-block; }
-@keyframes pop { 0% { transform: scale(0) rotate(-20deg); } 70% { transform: scale(1.3); } 100% { transform: scale(1); } }
 .votes { font-weight: 700; color: rgba(255, 255, 255, .8); opacity: 0; transition: opacity .4s .8s; white-space: nowrap; }
 .votes.show { opacity: 1; }
 .track { height: 10px; border-radius: 6px; background: rgba(255, 255, 255, .08); margin-top: .5rem; overflow: hidden; }
-.track span { display: block; height: 100%; border-radius: 6px; background: linear-gradient(90deg, #069a94, #5eead4); transition: width 1.2s cubic-bezier(.2, .8, .2, 1); }
-.winner .track span { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+.track span { display: block; height: 100%; border-radius: 6px; background: #069a94; transition: width 1.2s cubic-bezier(.2, .8, .2, 1); }
+.winner .track span { background: #f59e0b; }
 .cat-enter-active, .cat-leave-active { transition: opacity .35s, transform .35s; }
 .cat-enter-from { opacity: 0; transform: translateY(16px); }
 .cat-leave-to { opacity: 0; transform: translateY(-16px); }

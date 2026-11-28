@@ -5,7 +5,6 @@
             <h1 class="h4 fw-800">Confirming your email…</h1>
         </template>
         <template v-else-if="state === 'done'">
-            <div class="icon-tile lg green mx-auto mb-3"><i class="bi bi-patch-check-fill"></i></div>
             <h1 class="h2 fw-800 mb-2">Email confirmed</h1>
             <p class="text-muted mb-4">Thanks! You can now send voting codes to your voters.</p>
             <NuxtLink :to="auth.isAuthenticated ? '/dashboard' : '/login'" class="btn btn-primary btn-lg w-100">
@@ -13,7 +12,6 @@
             </NuxtLink>
         </template>
         <template v-else>
-            <div class="icon-tile lg mx-auto mb-3 danger"><i class="bi bi-x-octagon"></i></div>
             <h1 class="h2 fw-800 mb-2">Link not valid</h1>
             <p class="text-muted mb-4">This confirmation link is invalid or has expired (links last 24 hours). Sign in and request a new one from the dashboard.</p>
             <NuxtLink :to="auth.isAuthenticated ? '/dashboard' : '/login'" class="btn btn-primary btn-lg w-100">

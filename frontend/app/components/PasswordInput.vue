@@ -1,8 +1,7 @@
 <template>
     <div class="input-icon pw-field">
-        <i v-if="icon" class="bi" :class="icon"></i>
         <input :id="id" v-model="model" :type="visible ? 'text' : 'password'" v-bind="$attrs"
-            class="form-control form-control-lg pw-input" :class="[{ 'is-invalid': invalid }, { 'no-icon': !icon }]" />
+            class="form-control form-control-lg pw-input" :class="[{ 'is-invalid': invalid }, 'no-icon']" />
         <button type="button" class="pw-reveal" :aria-label="visible ? 'Hide password' : 'Show password'"
             :aria-pressed="visible" :aria-controls="id" :title="visible ? 'Hide password' : 'Show password'"
             @click="visible = !visible">

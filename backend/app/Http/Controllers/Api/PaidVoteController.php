@@ -202,12 +202,10 @@ class PaidVoteController extends Controller
                     report($e);
                 }
             })->afterResponse();
-            if ($counted->resultsArePublic()) {
-                try {
-                    event(new VoteCast($counted->id));
-                } catch (\Throwable $e) {
-                    report($e);
-                }
+            try {
+                event(new VoteCast($counted->id, $counted->resultsArePublic()));
+            } catch (\Throwable $e) {
+                report($e);
             }
         }
     }

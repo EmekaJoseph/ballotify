@@ -11,7 +11,7 @@
                 <div class="d-none d-xl-flex align-items-center gap-2">
                     <ThemeToggle class="me-1" />
                     <template v-if="auth.isAuthenticated">
-                        <NuxtLink to="/dashboard" class="btn btn-primary">Dashboard <i class="bi bi-arrow-right"></i></NuxtLink>
+                        <NuxtLink to="/dashboard" class="btn btn-primary">Dashboard</NuxtLink>
                     </template>
                     <template v-else>
                         <NuxtLink to="/login" class="btn btn-ghost">Sign in</NuxtLink>

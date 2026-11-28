@@ -1,7 +1,7 @@
 <template>
     <div ref="wrap" class="turnout" :style="{ height: height + 'px' }">
         <div v-if="loading" class="skeleton h-100"></div>
-        <div v-else-if="!points.length" class="empty small text-muted"><i class="bi bi-graph-up"></i> {{ t('chart.empty') }}</div>
+        <div v-else-if="!points.length" class="empty small text-muted"><i v-if="adminIcons" class="bi bi-graph-up"></i> {{ t('chart.empty') }}</div>
         <template v-else>
             <svg :width="w" :height="height" role="img" :aria-label="summary" @pointermove="onMove" @pointerleave="hover = null">
                 <!-- recessive grid + y labels -->
@@ -35,6 +35,8 @@
 </template>
 
 <script setup lang="ts">
+
+const adminIcons = useAdminIcons();
 /** Cumulative votes (or ballots) over time: one series, so no legend; the card title names it. */
 const props = withDefaults(defineProps<{
     timeline?: { bucket_minutes: number; points: { t: string; votes: number }[] } | null;

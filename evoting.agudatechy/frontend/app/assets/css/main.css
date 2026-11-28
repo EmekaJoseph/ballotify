@@ -101,10 +101,7 @@ h1, h2, h3, h4, h5, h6 { color: var(--ink); font-weight: 700; letter-spacing: -.
 .text-brand { color: var(--brand-600) !important; }
 .fw-800 { font-weight: 800; }
 .small-caps { font-size: .72rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
-.text-gradient {
-    background: linear-gradient(100deg, var(--brand-500) 0%, var(--accent) 100%);
-    -webkit-background-clip: text; background-clip: text; color: transparent;
-}
+.text-gradient { color: var(--brand-600); }
 .mono { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .04em; }
 a { text-decoration: none; }
 ::selection { background: var(--brand-100); }
@@ -285,7 +282,7 @@ a { text-decoration: none; }
 .bar { height: 10px; border-radius: 999px; background: var(--track); overflow: hidden; }
 .bar > span {
     display: block; height: 100%; border-radius: inherit;
-    background: linear-gradient(90deg, var(--brand-500), var(--accent));
+    background: var(--brand-500);
     transition: width .8s var(--ease);
 }
 .bar.slim { height: 6px; }

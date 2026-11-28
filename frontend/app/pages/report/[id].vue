@@ -409,9 +409,9 @@ h3 { font-size: 1.05rem; font-weight: 800; margin: 0; }
 .tally .rank { width: 32px; color: #64748b; }
 .tally .bar-col { width: 32%; }
 .bar { height: 9px; border-radius: 5px; background: #eef2f6; overflow: hidden; }
-.bar span { display: block; height: 100%; border-radius: 5px; background: linear-gradient(90deg, #0e7c77, #14b8a6); }
+.bar span { display: block; height: 100%; border-radius: 5px; background: #0e7c77; }
 .tally tr.top td { background: #f0fbf9; }
-.tally tr.top .bar span { background: linear-gradient(90deg, #d97706, #fbbf24); }
+.tally tr.top .bar span { background: #d97706; }
 .tally tr.top .cname { font-weight: 800; }
 .cname { font-weight: 600; }
 .cdesc { color: #64748b; font-size: .78rem; font-weight: 400; }

@@ -4,9 +4,9 @@
             <div class="container d-flex align-items-center justify-content-between" :style="{ maxWidth: wide ? '1140px' : '760px' }">
                 <AppLogo />
                 <div class="d-flex align-items-center gap-2 gap-sm-3">
-                    <span v-if="mode === 'paid'" class="small text-muted d-none d-md-inline-flex align-items-center gap-1"><i class="bi bi-lock"></i> {{ t('layout.securePayments') }}</span>
-                    <span v-else-if="mode === 'nominate'" class="small text-muted d-none d-md-inline-flex align-items-center gap-1"><i class="bi bi-megaphone"></i> {{ t('layout.nominations') }}</span>
-                    <span v-else-if="mode === 'codes'" class="small text-muted d-none d-md-inline-flex align-items-center gap-1"><i class="bi bi-shield-lock"></i> {{ t('layout.secretBallot') }}</span>
+                    <span v-if="mode === 'paid'" class="small text-muted d-none d-md-inline-flex align-items-center gap-1">{{ t('layout.securePayments') }}</span>
+                    <span v-else-if="mode === 'nominate'" class="small text-muted d-none d-md-inline-flex align-items-center gap-1">{{ t('layout.nominations') }}</span>
+                    <span v-else-if="mode === 'codes'" class="small text-muted d-none d-md-inline-flex align-items-center gap-1">{{ t('layout.secretBallot') }}</span>
                     <LangSwitcher />
                     <ThemeToggle />
                 </div>

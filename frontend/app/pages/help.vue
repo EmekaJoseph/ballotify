@@ -11,8 +11,8 @@
                     <input v-model.trim="query" type="search" class="form-control form-control-lg" placeholder="Search, e.g. “send codes”, “motion”, “USSD”" aria-label="Search the help centre" />
                 </div>
                 <div v-if="support.whatsapp || support.email" class="d-flex flex-wrap justify-content-center gap-2 mt-3">
-                    <a v-if="support.whatsapp" :href="support.whatsappHref('Help centre')" target="_blank" rel="noopener" class="btn btn-wa btn-sm"><i class="bi bi-whatsapp"></i> Chat with us on WhatsApp</a>
-                    <a v-if="support.email" :href="`mailto:${support.email}`" class="btn btn-ghost btn-sm"><i class="bi bi-envelope"></i> {{ support.email }}</a>
+                    <a v-if="support.whatsapp" :href="support.whatsappHref('Help centre')" target="_blank" rel="noopener" class="btn btn-wa btn-sm">Chat with us on WhatsApp</a>
+                    <a v-if="support.email" :href="`mailto:${support.email}`" class="btn btn-ghost btn-sm">{{ support.email }}</a>
                 </div>
             </div>
         </section>
@@ -31,7 +31,7 @@
             <template v-else>
                 <!-- Video -->
                 <section v-if="support.videoEmbed" class="mb-5">
-                    <h2 class="h5 fw-800 mb-3"><i class="bi bi-play-circle text-brand"></i> Watch the 3-minute tour</h2>
+                    <h2 class="h5 fw-800 mb-3">Watch the 3-minute tour</h2>
                     <div class="video card-b">
                         <iframe :src="support.videoEmbed" title="Ballotify tour" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen"
                             allowfullscreen loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe>
@@ -56,7 +56,7 @@
 
                 <!-- Guides by topic -->
                 <section v-for="sec in HELP_SECTIONS" :id="`s-${sec.key}`" :key="sec.key" class="mb-5">
-                    <h2 class="h5 fw-800 mb-3"><i class="bi text-brand me-1" :class="sec.icon"></i> {{ sec.label }}</h2>
+                    <h2 class="h5 fw-800 mb-3">{{ sec.label }}</h2>
                     <div class="d-grid gap-2">
                         <HelpArticleCard v-for="a in bySection(sec.key)" :id="`a-${a.id}`" :key="a.id" :article="a" :open="opened === a.id"
                             @toggle="opened = opened === a.id ? '' : a.id" />
@@ -66,13 +66,12 @@
 
             <!-- Still stuck -->
             <section class="card-b pad still text-center mt-4">
-                <div class="icon-tile lg mx-auto mb-3"><i class="bi bi-chat-heart"></i></div>
                 <h2 class="h5 fw-800 mb-1">Still stuck?</h2>
                 <p class="text-muted mb-3">We’re happy to help you set up your event, or to look at a problem with you.</p>
                 <div class="d-flex flex-wrap justify-content-center gap-2">
-                    <a v-if="support.whatsapp" :href="support.whatsappHref('Help centre')" target="_blank" rel="noopener" class="btn btn-wa"><i class="bi bi-whatsapp"></i> WhatsApp us</a>
-                    <a v-if="support.email" :href="`mailto:${support.email}`" class="btn btn-ghost"><i class="bi bi-envelope"></i> Email us</a>
-                    <NuxtLink to="/demo/vote" class="btn btn-ghost"><i class="bi bi-ui-checks"></i> Try the demo ballot</NuxtLink>
+                    <a v-if="support.whatsapp" :href="support.whatsappHref('Help centre')" target="_blank" rel="noopener" class="btn btn-wa">WhatsApp us</a>
+                    <a v-if="support.email" :href="`mailto:${support.email}`" class="btn btn-ghost">Email us</a>
+                    <NuxtLink to="/demo/vote" class="btn btn-ghost">Try the demo ballot</NuxtLink>
                 </div>
             </section>
         </div>
@@ -108,7 +107,7 @@ onMounted(() => { if (opened.value) openArticle(opened.value); });
 </script>
 
 <style scoped>
-.help-hero { background: radial-gradient(600px 260px at 50% 0%, var(--brand-50), transparent 70%); border-bottom: 1px solid var(--line); }
+.help-hero { background: none; border-bottom: 1px solid var(--line); }
 .search { position: relative; max-width: 560px; }
 .search > i { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--muted); }
 .search .form-control { padding-left: 2.7rem; border-radius: 16px; }

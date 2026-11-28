@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Support\AccountLogger;
 use App\Models\Event;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -43,6 +44,7 @@ class AccountController extends Controller
         }
 
         $user->tokens()->delete();
+        AccountLogger::record('account.deleted', "Account deleted by its owner ({$user->name})", $user, $user);
         $user->delete(); // events, voters, ballot totals and team links go with it (cascade)
 
         return response()->json(['message' => 'Your account has been deleted.']);

@@ -10,7 +10,6 @@
 
         <!-- Unavailable -->
         <div v-else-if="stage === 'unavailable'" class="card-b text-center px-4 py-5 fade-up">
-            <div class="icon-tile lg mx-auto mb-3" :class="unavailable.tone"><i class="bi" :class="unavailable.icon"></i></div>
             <h1 class="h4 fw-800 mb-2">{{ unavailable.title }}</h1>
             <p class="text-muted mx-auto mb-3" style="max-width: 420px">{{ unavailable.text }}</p>
             <div v-if="unavailable.status === 'upcoming' && opensIn.label" class="countdown mx-auto mb-4">
@@ -19,19 +18,19 @@
             </div>
             <div class="d-flex flex-column flex-sm-row gap-2 justify-content-center">
                 <NuxtLink v-if="unavailable.status === 'upcoming' && nominationsOpen" :to="`/nominate/${token}`" class="btn btn-primary">
-                    <i class="bi bi-megaphone"></i> {{ t('vote.nominate') }}
+                    {{ t('vote.nominate') }}
                 </NuxtLink>
                 <NuxtLink v-if="unavailable.status === 'completed' && resultsPublic" :to="`/event/${token}/results`" class="btn btn-primary">
-                    <i class="bi bi-bar-chart-line"></i> {{ t('vote.seeResults') }}
+                    {{ t('vote.seeResults') }}
                 </NuxtLink>
-                <button v-if="unavailable.retry" class="btn btn-ghost" @click="load"><i class="bi bi-arrow-clockwise"></i> {{ t('common.tryAgain') }}</button>
+                <button v-if="unavailable.retry" class="btn btn-ghost" @click="load">{{ t('common.tryAgain') }}</button>
             </div>
         </div>
 
         <!-- Enter code -->
         <div v-else-if="stage === 'code' && event" class="fade-up">
             <div v-if="idleClosed" class="alert alert-info border-0 rounded-4 small d-flex gap-2 mb-3" role="status">
-                <i class="bi bi-shield-lock"></i> <span>{{ t('idle.closed') }}</span>
+                <span>{{ t('idle.closed') }}</span>
             </div>
             <div class="intro card-b overflow-hidden mb-3">
                 <div class="intro-band">
@@ -41,8 +40,8 @@
                     <p v-if="event.description" class="intro-text mb-0" style="white-space: pre-line">{{ event.description }}</p>
                 </div>
                 <div class="d-flex flex-wrap gap-3 gap-sm-4 px-4 py-3 small">
-                    <span class="text-muted"><i class="bi bi-grid me-1"></i>{{ tn('vote.categories', event.categories.length) }}</span>
-                    <span class="text-muted"><i class="bi me-1" :class="allSingle ? 'bi-record-circle' : 'bi-ui-checks'"></i>{{ allSingle ? t('vote.oneChoice') : t('vote.severalPicks') }}</span>
+                    <span class="text-muted">{{ tn('vote.categories', event.categories.length) }}</span>
+                    <span class="text-muted">{{ allSingle ? t('vote.oneChoice') : t('vote.severalPicks') }}</span>
                     <span v-if="closesIn.label" class="text-muted"><i class="bi bi-hourglass-split me-1"></i><Tx k="vote.closesIn"><template #time><b class="text-ink">{{ closesIn.label }}</b></template></Tx></span>
                 </div>
             </div>
@@ -53,12 +52,12 @@
                 <input id="code" ref="codeInput" v-model="code" class="form-control code-input mono" :class="{ 'is-invalid': codeError }"
                     placeholder="XXXXXXXX" maxlength="64" autocomplete="one-time-code" autocapitalize="characters" spellcheck="false"
                     inputmode="text" :disabled="checking" @input="codeError = ''" />
-                <div v-if="codeError" class="field-error d-flex gap-1 align-items-start"><i class="bi bi-exclamation-circle"></i>{{ codeError }}</div>
+                <div v-if="codeError" class="field-error d-flex gap-1 align-items-start">{{ codeError }}</div>
                 <button type="submit" class="btn btn-primary btn-lg w-100 mt-3" :disabled="checking || code.trim().length < 4">
                     <span v-if="checking" class="spinner-border spinner-border-sm"></span>
-                    {{ checking ? t('vote.checking') : t('vote.continue') }} <i v-if="!checking" class="bi bi-arrow-right"></i>
+                    {{ checking ? t('vote.checking') : t('vote.continue') }}
                 </button>
-                <p class="small text-muted text-center mt-3 mb-0"><i class="bi bi-incognito"></i> {{ t('vote.privacy') }}</p>
+                <p class="small text-muted text-center mt-3 mb-0">{{ t('vote.privacy') }}</p>
             </form>
 
         </div>
@@ -72,7 +71,6 @@
 
             <div class="voter-bar card-b mb-3">
                 <span v-if="voterName" class="avatar sm" :style="{ background: colorFor(voterName) }" aria-hidden="true">{{ initials(voterName) }}</span>
-                <span v-else class="icon-tile" style="width: 34px; height: 34px; font-size: 1rem"><i class="bi bi-person"></i></span>
                 <div class="min-w-0 flex-grow-1">
                     <div class="small text-muted lh-sm">{{ t('vote.votingAs') }}</div>
                     <div class="fw-bold text-ink truncate">{{ voterName || t('vote.anonymous') }}</div>
@@ -264,10 +262,7 @@ onMounted(() => {
 .brand-logo { display: block; max-height: 48px; max-width: 180px; object-fit: contain; border-radius: 8px; background: rgba(255, 255, 255, .92); padding: 4px 8px; }
 .intro-band {
     padding: 1.75rem 1.5rem; position: relative;
-    background:
-        radial-gradient(420px 220px at 100% 0%, rgba(124, 92, 255, .45), transparent 60%),
-        radial-gradient(420px 220px at 0% 100%, rgba(5, 133, 128, .55), transparent 60%),
-        var(--night);
+    background: var(--night);
 }
 .intro-band .pill-active { background: rgba(74, 222, 128, .15); color: #86efac; }
 .intro-text { color: rgba(255, 255, 255, .75); }

@@ -10,9 +10,6 @@
         <div v-else-if="hidden" class="fade-up">
             <ResultsHeader :name="hidden.event.name" :status="hidden.event.status" :ends-at="hidden.event.ends_at" />
             <div class="card-b text-center px-4 py-5">
-                <div class="icon-tile lg mx-auto mb-3" :class="hidden.visibility === 'private' ? 'violet' : ''">
-                    <i class="bi" :class="hidden.visibility === 'private' ? 'bi-eye-slash' : 'bi-hourglass-split'"></i>
-                </div>
                 <h2 class="h4 fw-800 mb-2">{{ hidden.visibility === 'private' ? t('res.notPublic') : t('res.notYet') }}</h2>
                 <p class="text-muted mx-auto mb-3" style="max-width: 440px">{{ hidden.message }}</p>
                 <div v-if="hidden.visibility === 'after_close' && closesIn.label" class="countdown mx-auto">
@@ -33,15 +30,14 @@
         <template v-else-if="results">
             <ResultsHeader :name="results.event.name" :status="results.event.status" :ends-at="results.event.ends_at" :updated-at="updatedLabel">
                 <button class="btn btn-outline-light-on-dark btn-sm" :disabled="refreshing" @click="fetchResults(true)">
-                    <i class="bi bi-arrow-clockwise" :class="{ spin: refreshing }"></i> {{ t('res.refresh') }}
+                    {{ t('res.refresh') }}
                 </button>
                 <button class="btn btn-light-on-dark btn-sm" @click="togglePresent">
-                    <i class="bi" :class="presenting ? 'bi-fullscreen-exit' : 'bi-fullscreen'"></i> {{ presenting ? t('res.exit') : t('res.present') }}
+                    {{ presenting ? t('res.exit') : t('res.present') }}
                 </button>
             </ResultsHeader>
 
             <div v-if="results.integrity?.votes_reset?.length" class="integrity warn mb-2">
-                <i class="bi bi-arrow-counterclockwise"></i>
                 <span>{{ tn('res.votesReset', results.integrity.votes_reset.length, { date: formatDate(results.integrity.votes_reset.at(-1)?.at ?? null, true) }) }}</span>
             </div>
             <div v-if="results.integrity" class="integrity mb-4" :class="{ warn: results.integrity.changes_during_voting > 0 }">
@@ -65,7 +61,7 @@
                 </div>
                 <div class="col-lg-5">
                     <form class="card-b pad h-100" novalidate @submit.prevent="checkReceipt">
-                        <h3 class="h6 fw-800 mb-1"><i class="bi bi-patch-check text-brand"></i> {{ isPaid ? t('res.checkVotes') : t('res.checkBallot') }}</h3>
+                        <h3 class="h6 fw-800 mb-1">{{ isPaid ? t('res.checkVotes') : t('res.checkBallot') }}</h3>
                         <p class="small text-muted mb-3">{{ isPaid ? t('res.checkVotesHint') : t('res.checkBallotHint') }}</p>
                         <div class="d-flex gap-2">
                             <input v-model.trim="receiptCode" class="form-control mono text-uppercase" :placeholder="isPaid ? 'PV-…' : 'XXXX-XXXX-XX'" maxlength="40" :aria-label="t('res.receipt')" />
@@ -74,7 +70,6 @@
                             </button>
                         </div>
                         <div v-if="receiptResult" class="receipt-result mt-3" :class="receiptResult.valid ? 'ok' : 'bad'">
-                            <i class="bi" :class="receiptResult.valid ? 'bi-check-circle-fill' : 'bi-x-circle-fill'"></i>
                             <span>{{ receiptResult.message }}<template v-if="receiptResult.valid && receiptResult.counted_at"> ({{ formatDate(receiptResult.counted_at, true) }})</template></span>
                         </div>
                     </form>
@@ -82,8 +77,8 @@
             </div>
 
             <p class="text-center small text-muted mt-2 no-print">
-                <template v-if="isPaid"><i class="bi bi-cash-coin"></i> {{ t('res.paidNote') }}</template>
-                <template v-else><i class="bi bi-incognito"></i> {{ t('res.secretNote') }}</template>
+                <template v-if="isPaid">{{ t('res.paidNote') }}</template>
+                <template v-else>{{ t('res.secretNote') }}</template>
                 <template v-if="results.event.status === 'active'">
                     · {{ live ? t('res.liveNote') : t('res.pollNote') }}
                 </template>

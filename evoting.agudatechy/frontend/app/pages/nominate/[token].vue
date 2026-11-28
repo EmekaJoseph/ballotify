@@ -2,7 +2,6 @@
     <div>
         <div v-if="loading" class="card-b pad"><div class="skeleton mb-3" style="height: 30px; width: 60%"></div><div class="skeleton" style="height: 160px"></div></div>
         <div v-else-if="notFound" class="card-b text-center px-4 py-5">
-            <div class="icon-tile lg mx-auto mb-3"><i class="bi bi-search"></i></div>
             <h1 class="h4 fw-800 mb-2">{{ t('nom.notFound') }}</h1>
             <p class="text-muted mb-0">{{ t('nom.checkLink') }}</p>
         </div>
@@ -18,13 +17,12 @@
                     <p class="intro-text mb-0">{{ t('nom.intro') }}</p>
                 </div>
                 <div v-if="form.ends_at || form.voting_starts_at" class="d-flex flex-wrap gap-3 px-4 py-3 small text-muted">
-                    <span v-if="form.ends_at && form.open"><i class="bi bi-hourglass-split me-1"></i>{{ t('nom.closes', { date: formatDate(form.ends_at, true) }) }}</span>
-                    <span v-if="form.voting_starts_at"><i class="bi bi-calendar-event me-1"></i>{{ t('nom.votingOpens', { date: formatDate(form.voting_starts_at, true) }) }}</span>
+                    <span v-if="form.ends_at && form.open">{{ t('nom.closes', { date: formatDate(form.ends_at, true) }) }}</span>
+                    <span v-if="form.voting_starts_at">{{ t('nom.votingOpens', { date: formatDate(form.voting_starts_at, true) }) }}</span>
                 </div>
             </div>
 
             <div v-if="!form.open" class="card-b text-center px-4 py-5">
-                <div class="icon-tile lg mx-auto mb-3"><i class="bi bi-lock"></i></div>
                 <h2 class="h5 fw-800 mb-2">{{ t('nom.closedTitle') }}</h2>
                 <p class="text-muted mb-3">{{ t('nom.closedText') }}</p>
                 <NuxtLink :to="`/vote/${token}`" class="btn btn-primary">{{ t('nom.goVote') }}</NuxtLink>
@@ -33,9 +31,6 @@
             <!-- Sent: what went through, what didn't (and why) -->
             <div v-else-if="result" class="card-b pad fade-up">
                 <div class="text-center">
-                    <div class="icon-tile lg mx-auto mb-3" :style="result.accepted.length ? 'background: var(--success-50); color: var(--success)' : ''">
-                        <i class="bi" :class="result.accepted.length ? 'bi-check2-circle' : 'bi-exclamation-circle'"></i>
-                    </div>
                     <h2 class="h5 fw-800 mb-2">{{ result.accepted.length ? t('nom.received') : t('nom.notSent') }}</h2>
                     <p class="text-muted mb-4">{{ result.message }}</p>
                 </div>
@@ -44,7 +39,6 @@
                     <div class="small fw-bold text-muted mb-2">{{ t('nom.yours') }}</div>
                     <ul class="list-unstyled mb-0">
                         <li v-for="g in grouped(result.accepted)" :key="g.category" class="sent-row">
-                            <i class="bi bi-check-circle-fill"></i>
                             <span class="min-w-0"><b class="text-ink">{{ g.category }}:</b> {{ g.names.join(', ') }}</span>
                         </li>
                     </ul>
@@ -53,12 +47,11 @@
                     <div class="small fw-bold mb-2">{{ t('nom.notSentList') }}</div>
                     <ul class="list-unstyled mb-0">
                         <li v-for="(r, i) in result.refused" :key="i" class="sent-row">
-                            <i class="bi bi-x-circle-fill"></i>
                             <span class="min-w-0"><b class="text-ink">{{ r.name }}</b><template v-if="r.category"> ({{ r.category }})</template>: {{ r.reason }}</span>
                         </li>
                     </ul>
                 </div>
-                <button type="button" class="btn btn-primary w-100" @click="startOver"><i class="bi bi-plus-lg"></i> {{ t('nom.nominateMore') }}</button>
+                <button type="button" class="btn btn-primary w-100" @click="startOver">{{ t('nom.nominateMore') }}</button>
             </div>
 
             <!-- One form: every category, one or more names each, sent together -->
@@ -82,7 +75,7 @@
                     </div>
                     <div v-if="cat.suggestions.length" class="form-text mt-2">{{ t('nom.pickOrType') }}</div>
                     <button v-if="entries[cat.id]!.length < perCategory" type="button" class="btn btn-link btn-sm px-0 mt-2" @click="addRow(cat.id)">
-                        <i class="bi bi-plus-lg"></i> {{ t('nom.addName') }}
+                        {{ t('nom.addName') }}
                     </button>
                 </section>
 
@@ -208,10 +201,7 @@ function grouped(list: NominationResult['accepted']) {
 .sent-row .bi-x-circle-fill { color: var(--danger); flex-shrink: 0; }
 .intro-band {
     padding: 1.75rem 1.5rem;
-    background:
-        radial-gradient(420px 220px at 100% 0%, rgba(124, 92, 255, .45), transparent 60%),
-        radial-gradient(420px 220px at 0% 100%, rgba(5, 133, 128, .55), transparent 60%),
-        var(--night);
+    background: var(--night);
 }
 .intro-band .pill-live { background: rgba(74, 222, 128, .15); color: #86efac; }
 .intro-text { color: rgba(255, 255, 255, .75); }

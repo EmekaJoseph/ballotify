@@ -1,11 +1,10 @@
 <template>
     <!-- The whole home page: one hero, with sign-in and sign-up. -->
     <section class="hero">
-        <div class="hero-glow"></div>
         <div class="container position-relative">
             <div class="row align-items-center g-5">
                 <div class="col-lg-7 text-center text-lg-start fade-up">
-                    <span class="eyebrow dark mb-4"><i class="bi bi-shield-lock"></i> Secret ballot elections</span>
+                    <span class="eyebrow dark mb-4">Secret ballot elections</span>
                     <h1 class="display-title text-white mb-4">
                         Fair, secret elections,<br />
                         <span class="text-gradient-light">run online.</span>
@@ -16,24 +15,24 @@
                     </p>
 
                     <div v-if="auth.isAuthenticated" class="d-flex justify-content-center justify-content-lg-start">
-                        <NuxtLink to="/dashboard" class="btn btn-light-on-dark btn-lg">Go to your dashboard <i class="bi bi-arrow-right"></i></NuxtLink>
+                        <NuxtLink to="/dashboard" class="btn btn-light-on-dark btn-lg">Go to your dashboard</NuxtLink>
                     </div>
                     <div v-else class="d-flex flex-column flex-sm-row gap-3 justify-content-center justify-content-lg-start">
-                        <NuxtLink to="/signup" class="btn btn-light-on-dark btn-lg">Create an account <i class="bi bi-arrow-right"></i></NuxtLink>
-                        <NuxtLink to="/login" class="btn btn-outline-light-on-dark btn-lg"><i class="bi bi-box-arrow-in-right"></i> Sign in</NuxtLink>
+                        <NuxtLink to="/signup" class="btn btn-light-on-dark btn-lg">Create an account</NuxtLink>
+                        <NuxtLink to="/login" class="btn btn-outline-light-on-dark btn-lg">Sign in</NuxtLink>
                     </div>
 
                     <div class="d-flex flex-wrap gap-4 justify-content-center justify-content-lg-start mt-5 hero-points">
-                        <span><i class="bi bi-shield-check"></i> One vote per code</span>
-                        <span><i class="bi bi-incognito"></i> Votes stay secret</span>
-                        <span><i class="bi bi-bar-chart-line"></i> Results when voting closes</span>
+                        <span>One vote per code</span>
+                        <span>Votes stay secret</span>
+                        <span>Results when voting closes</span>
                     </div>
                 </div>
                 <div class="col-lg-5 text-center fade-up" style="animation-delay: .12s">
                     <!-- A small mock ballot: shows what voters see, without being a real form. -->
                     <div class="mock" aria-hidden="true">
                         <div class="mock-top">
-                            <span class="mock-chip"><i class="bi bi-shield-lock"></i> Secret ballot</span>
+                            <span class="mock-chip">Secret ballot</span>
                             <span class="mock-code">Code · K7Q-29X</span>
                         </div>
                         <div class="mock-title">President</div>
@@ -43,7 +42,7 @@
                             <span class="flex-grow-1 text-start">{{ c }}</span>
                             <span class="mock-radio"><i v-if="i === 1" class="bi bi-check-lg"></i></span>
                         </div>
-                        <div class="mock-btn">Review and submit <i class="bi bi-arrow-right"></i></div>
+                        <div class="mock-btn">Review and submit</div>
                         <div class="mock-turnout">
                             <div class="d-flex justify-content-between"><span>Turnout</span><b>68%</b></div>
                             <div class="mock-bar"><span style="width: 68%"></span></div>
@@ -69,22 +68,15 @@ const mockCandidates = ['Ada Okafor', 'Bayo Adeyemi', 'Hauwa Musa'];
 .hero { position: relative; overflow: hidden; background: var(--night); padding: 4.5rem 0 5rem; min-height: calc(100vh - 140px); display: flex; align-items: center; }
 @media (min-width: 992px) { .hero { padding: 6rem 0 7rem; } }
 .hero > .container { width: 100%; }
-.hero-glow {
-    position: absolute; inset: 0; pointer-events: none;
-    background:
-        radial-gradient(600px 400px at 85% 25%, rgba(0, 212, 201, .28), transparent 60%),
-        radial-gradient(500px 380px at 10% 90%, rgba(5, 133, 128, .4), transparent 60%);
-}
 .hero-lead { color: rgba(255, 255, 255, .74); font-size: 1.125rem; line-height: 1.7; max-width: 560px; }
-.text-gradient-light { background: linear-gradient(100deg, #00d4c9, #5eead4); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.text-gradient-light { color: #5eead4; }
 .eyebrow.dark { background: rgba(255, 255, 255, .08); color: #99f6e4; border-color: rgba(255, 255, 255, .12); }
 .hero-points span { color: rgba(255, 255, 255, .72); font-weight: 600; font-size: .92rem; display: inline-flex; gap: .45rem; align-items: center; }
 .hero-points .bi { color: #00d4c9; }
 .mock {
     max-width: 360px; margin: 0 auto; padding: 1.25rem; border-radius: 20px; text-align: left;
     background: rgba(255, 255, 255, .06); border: 1px solid rgba(255, 255, 255, .12);
-    box-shadow: 0 30px 80px rgba(0, 0, 0, .35), 0 0 0 1px rgba(0, 212, 201, .08); backdrop-filter: blur(8px);
-    transform: rotate(-1.5deg); color: #fff;
+    color: #fff;
 }
 .mock-top { display: flex; justify-content: space-between; align-items: center; gap: .5rem; margin-bottom: 1rem; }
 .mock-chip { font-size: .72rem; font-weight: 700; color: #99f6e4; background: rgba(0, 212, 201, .14); padding: .25rem .6rem; border-radius: 999px; display: inline-flex; gap: .3rem; }
@@ -101,6 +93,5 @@ const mockCandidates = ['Ada Okafor', 'Bayo Adeyemi', 'Hauwa Musa'];
 .mock-turnout { margin-top: 1rem; font-size: .78rem; color: rgba(255, 255, 255, .65); }
 .mock-turnout b { color: #fff; }
 .mock-bar { height: 6px; border-radius: 999px; background: rgba(255, 255, 255, .12); margin-top: .35rem; overflow: hidden; }
-.mock-bar span { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, #058580, #00d4c9); }
-@media (max-width: 991.98px) { .mock { transform: none; } }
+.mock-bar span { display: block; height: 100%; border-radius: 999px; background: #058580; }
 </style>

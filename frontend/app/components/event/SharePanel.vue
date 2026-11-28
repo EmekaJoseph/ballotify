@@ -64,7 +64,7 @@ const links = computed(() => [
 
 const paid = computed(() => props.event.voting_mode === 'paid');
 const message = computed(() => paid.value ? [
-    `Vote now in "${props.event.name}"! 🏆`,
+    `Vote now in "${props.event.name}".`,
     `It's ₦${formatNumber(props.event.vote_price_naira ?? 0)} per vote, and you can vote as many times as you like.`,
     props.event.ends_at ? `Voting closes ${formatDate(props.event.ends_at, true)}.` : '',
     '',

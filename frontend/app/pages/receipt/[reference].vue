@@ -1,8 +1,8 @@
 <template>
     <div class="receipt-page">
         <div class="toolbar no-print">
-            <NuxtLink to="/dashboard/profile" class="btn btn-ghost btn-sm"><i class="bi bi-arrow-left"></i> Account</NuxtLink>
-            <button class="btn btn-primary btn-sm" :disabled="!data" @click="print"><i class="bi bi-printer"></i> Print / Save as PDF</button>
+            <NuxtLink to="/dashboard/profile" class="btn btn-ghost btn-sm">Account</NuxtLink>
+            <button class="btn btn-primary btn-sm" :disabled="!data" @click="print">Print / Save as PDF</button>
         </div>
 
         <div v-if="loading" class="sheet"><div class="skeleton mb-3" style="height: 40px; width: 40%"></div><div class="skeleton" style="height: 200px"></div></div>
@@ -43,7 +43,7 @@
                 <tfoot><tr><th>Total paid</th><th class="text-end">{{ money }}</th></tr></tfoot>
             </table>
 
-            <div class="paid-stamp"><i class="bi bi-check-circle-fill"></i> Paid in full</div>
+            <div class="paid-stamp">Paid in full</div>
             <p class="small text-muted mt-4 mb-0">
                 {{ data.seller.name }}<template v-if="data.seller.email"> · {{ data.seller.email }}</template> · Payment processed by Paystack.
             </p>

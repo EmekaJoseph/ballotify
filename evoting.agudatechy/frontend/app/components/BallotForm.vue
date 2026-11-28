@@ -5,9 +5,9 @@
             <div class="small fw-bold text-ink text-nowrap">{{ answered }} / {{ categories.length }}</div>
             <div class="bar slim flex-grow-1"><span :style="{ width: progress + '%' }"></span></div>
             <button v-if="nextUnanswered" type="button" class="btn btn-soft btn-sm text-nowrap" @click="jumpTo(nextUnanswered.id)">
-                {{ t('ballot.next') }} <i class="bi bi-arrow-down"></i>
+                {{ t('ballot.next') }}
             </button>
-            <span v-else class="pill pill-brand"><i class="bi bi-check2"></i> {{ t('ballot.allDone') }}</span>
+            <span v-else class="pill pill-brand">{{ t('ballot.allDone') }}</span>
         </div>
 
         <section v-for="(cat, idx) in categories" :id="`ballot-cat-${cat.id}`" :key="cat.id" class="card-b mb-3 overflow-hidden fade-up ballot-cat"
@@ -55,7 +55,7 @@
         <div class="submit-bar">
             <button type="button" class="btn btn-primary btn-lg w-100" :disabled="disabled || answered === 0"
                 @click="reviewOpen = true">
-                {{ t('ballot.review') }} <i class="bi bi-arrow-right"></i>
+                {{ t('ballot.review') }}
             </button>
             <p v-if="answered < categories.length && answered > 0" class="small text-muted text-center mt-2 mb-0">
                 {{ tn('ballot.blank', categories.length - answered) }}

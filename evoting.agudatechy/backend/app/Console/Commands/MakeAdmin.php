@@ -22,6 +22,8 @@ class MakeAdmin extends Command
 
         $revoke = (bool) $this->option('revoke');
         $user->forceFill(['is_admin' => ! $revoke])->save();
+        \App\Support\AccountLogger::record($revoke ? 'admin.revoked' : 'admin.granted',
+            $revoke ? 'Admin rights removed (server command)' : 'Made a platform admin (server command)', $user, null);
         $this->info($revoke ? "{$user->email} is no longer an admin." : "{$user->email} is now an admin.");
 
         return self::SUCCESS;

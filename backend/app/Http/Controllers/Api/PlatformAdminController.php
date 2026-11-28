@@ -10,6 +10,7 @@ use App\Models\Payout;
 use App\Models\User;
 use App\Models\VotePurchase;
 use App\Models\Voter;
+use App\Support\AccountLogger;
 use App\Support\Audit;
 use App\Support\Paystack;
 use App\Support\Plans;
@@ -105,6 +106,8 @@ class PlatformAdminController extends Controller
             'note' => $data['note'] ?? null,
             'created_by' => $request->user()->id,
         ]);
+        AccountLogger::record('admin.payout', 'Payout of ₦' . number_format((float) $data['amount_naira'], 2) . " recorded for “{$event->name}”"
+            . (! empty($data['note']) ? " ({$data['note']})" : ''), $event->user);
         Audit::log($event, 'event.payout', 'Payout of ₦' . number_format((float) $data['amount_naira'], 2) . ' recorded by the platform admin');
 
         return response()->json(['ok' => true], 201);
@@ -179,6 +182,7 @@ class PlatformAdminController extends Controller
     public function retryFailedJob(string $uuid)
     {
         Artisan::call('queue:retry', ['id' => [$uuid === 'all' ? 'all' : $uuid]]);
+        AccountLogger::record('admin.jobs', $uuid === 'all' ? 'Retried every failed background job' : 'Retried a failed background job');
         return response()->json(['ok' => true]);
     }
 
@@ -186,6 +190,7 @@ class PlatformAdminController extends Controller
     public function forgetFailedJob(string $uuid)
     {
         $uuid === 'all' ? Artisan::call('queue:flush') : Artisan::call('queue:forget', ['id' => $uuid]);
+        AccountLogger::record('admin.jobs', $uuid === 'all' ? 'Cleared every failed background job' : 'Cleared a failed background job');
         return response()->json(['ok' => true]);
     }
 
@@ -210,7 +215,13 @@ class PlatformAdminController extends Controller
             'pro_large_max_voters' => ['sometimes', 'integer', 'min:1', 'max:1000000'],
             'sms_price_naira' => ['sometimes', 'integer', 'min:1', 'max:1000'],
         ]);
+        $before = $this->planSettings();
         Plans::update($data);
+        $changes = collect($data)->filter(fn ($v, $k) => ($before[$k] ?? null) != $v)
+            ->map(fn ($v, $k) => str_replace('_', ' ', $k) . ': ' . ($before[$k] ?? '–') . ' → ' . $v)->values();
+        if ($changes->isNotEmpty()) {
+            AccountLogger::record('admin.prices', 'Prices and limits changed: ' . $changes->implode('; '), null, null, ['changes' => $data]);
+        }
 
         return response()->json($this->planSettings());
     }
@@ -227,6 +238,9 @@ class PlatformAdminController extends Controller
             'pro_account_at' => $data['enabled'] ? ($user->pro_account_at ?? now()) : null,
             'pro_account_tier' => $data['enabled'] ? ($data['tier'] ?? $user->pro_account_tier ?? 'large') : null,
         ])->save();
+        AccountLogger::record('admin.plan', $data['enabled']
+            ? 'Whole account set to ' . Plans::tierInfo($user->pro_account_tier)['name'] . ' (free of charge)'
+            : 'Whole-account plan removed (back to paying per event)', $user);
 
         return response()->json($user->loadCount('events'));
     }
@@ -251,9 +265,12 @@ class PlatformAdminController extends Controller
             ])->save();
             Audit::log($event, 'event.plan', "Set to {$size['name']} by the platform admin"
                 . ($sms !== null ? ' (' . number_format($sms) . ' SMS included)' : ''));
+            AccountLogger::record('admin.plan', "Event “{$event->name}” set to {$size['name']}"
+                . ($sms !== null ? ' (' . number_format($sms) . ' SMS included)' : ''), $event->user);
         } elseif ($data['plan'] === 'free' && $event->plan !== 'free') {
             $event->forceFill(['plan' => 'free', 'pro_tier' => null, 'upgraded_at' => null, 'upgraded_via' => null])->save();
             Audit::log($event, 'event.plan', 'Set back to Free by the platform admin');
+            AccountLogger::record('admin.plan', "Event “{$event->name}” set back to Free", $event->user);
         }
 
         return response()->json(['id' => $event->id, 'plan' => $event->plan, 'pro_tier' => $event->pro_tier, 'upgraded_via' => $event->upgraded_via, 'sms_included' => (int) $event->sms_included]);
@@ -290,6 +307,34 @@ class PlatformAdminController extends Controller
     }
 
     /** LIKE pattern with the user's % and _ treated literally. */
+    /**
+     * The platform account log, newest first. group: admin | signin | security;
+     * search matches the account's email or name, the admin's name, or the text.
+     */
+    public function logs(Request $request)
+    {
+        $data = $request->validate([
+            'search' => ['nullable', 'string', 'max:255'],
+            'group' => ['nullable', Rule::in(array_keys(\App\Models\AccountLog::GROUPS))],
+            'failed' => ['nullable', 'boolean'],
+        ]);
+
+        $logs = \App\Models\AccountLog::query()
+            ->with(['actor:id,name,email', 'user:id,name,email'])
+            ->when($data['group'] ?? null, fn ($q, $g) => $q->where('action', 'like', \App\Models\AccountLog::GROUPS[$g] . '%'))
+            ->when($request->boolean('failed'), fn ($q) => $q->where('action', 'auth.login_failed'))
+            ->when($data['search'] ?? null, function ($q, $term) {
+                $like = $this->like($term);
+                $q->where(fn ($w) => $w->where('user_email', 'like', $like)->orWhere('description', 'like', $like)
+                    ->orWhereHas('user', fn ($u) => $u->where('name', 'like', $like))
+                    ->orWhereHas('actor', fn ($u) => $u->where('name', 'like', $like)->orWhere('email', 'like', $like)));
+            })
+            ->latest('created_at')->latest('id')
+            ->paginate(50);
+
+        return response()->json($logs);
+    }
+
     private function like(string $term): string
     {
         return '%' . addcslashes($term, '%_\\') . '%';
@@ -330,13 +375,16 @@ class PlatformAdminController extends Controller
         $user->forceFill(['suspended_at' => now()])->save();
         // Sign them out everywhere.
         $user->tokens()->delete();
+        AccountLogger::record('admin.suspended', 'Account suspended (signed out everywhere)', $user);
 
         return response()->json($user->loadCount('events'));
     }
 
     public function unsuspend(User $user)
     {
+        $was = $user->suspended_at !== null;
         $user->forceFill(['suspended_at' => null])->save();
+        if ($was) AccountLogger::record('admin.restored', 'Suspension lifted', $user);
 
         return response()->json($user->loadCount('events'));
     }

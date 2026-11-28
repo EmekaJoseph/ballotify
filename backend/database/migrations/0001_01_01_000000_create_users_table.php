@@ -58,6 +58,26 @@ return new class extends Migration
             $table->longText('payload');
             $table->integer('last_activity')->index();
         });
+
+        // Platform account log, shown to the platform admin: sign-ins (and failed ones),
+        // account security changes, and every action an admin takes on an account.
+        // Kept for a year (routes/console.php). Never holds passwords, codes or votes.
+        Schema::create('account_logs', function (Blueprint $table) {
+            $table->id();
+            // Who did it (null = the system, or a server command).
+            $table->foreignId('actor_id')->nullable()->constrained('users')->nullOnDelete();
+            // The account it concerns. The email is kept too, so entries stay readable after an account is deleted.
+            $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->string('user_email')->nullable();
+            $table->string('action', 40);
+            $table->string('description', 500);
+            $table->string('ip', 45)->nullable();
+            $table->json('meta')->nullable();
+            $table->timestamp('created_at')->useCurrent();
+            $table->index('created_at');
+            $table->index(['user_id', 'created_at']);
+            $table->index('action');
+        });
     }
 
     /**
@@ -65,6 +85,7 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::dropIfExists('account_logs');
         Schema::dropIfExists('users');
         Schema::dropIfExists('password_reset_tokens');
         Schema::dropIfExists('sessions');

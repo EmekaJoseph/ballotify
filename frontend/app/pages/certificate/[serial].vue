@@ -1,8 +1,8 @@
 <template>
     <div class="cert-page">
         <div class="toolbar no-print">
-            <NuxtLink :to="`/verify/${serial}`" class="btn btn-ghost btn-sm"><i class="bi bi-patch-check"></i> Verification page</NuxtLink>
-            <button class="btn btn-primary btn-sm" :disabled="!cert" @click="print"><i class="bi bi-printer"></i> Print / Save as PDF</button>
+            <NuxtLink :to="`/verify/${serial}`" class="btn btn-ghost btn-sm">Verification page</NuxtLink>
+            <button class="btn btn-primary btn-sm" :disabled="!cert" @click="print">Print / Save as PDF</button>
         </div>
 
         <div v-if="loading" class="sheet"><div class="skeleton mb-3" style="height: 40px"></div><div class="skeleton" style="height: 300px"></div></div>
@@ -44,7 +44,7 @@
                 <div class="small-caps mb-1">Meeting rules</div>
                 <ul class="mb-1"><li v-for="l in certRules" :key="l">{{ l }}</li></ul>
                 <div v-if="certVerdict" class="fw-800" :class="certVerdict.ok ? 'text-success' : 'text-danger'">
-                    <i class="bi" :class="certVerdict.ok ? 'bi-check-circle-fill' : 'bi-x-octagon-fill'"></i> {{ certVerdict.text }}
+                    {{ certVerdict.text }}
                 </div>
             </div>
 
@@ -52,10 +52,9 @@
                 <div class="d-flex flex-wrap justify-content-between align-items-baseline column-gap-3">
                     <h2 class="h6 fw-800 mb-2 text-break">{{ c.name }}</h2>
                     <span v-if="c.method === 'motion' && c.motion" class="small fw-bold" :class="c.motion.passed ? 'winner' : 'text-danger'">
-                        <i class="bi" :class="c.motion.passed ? 'bi-check-circle-fill' : 'bi-x-circle-fill'"></i>
                         {{ !c.motion.decided ? 'No Yes or No votes' : c.motion.passed ? 'Passed' : 'Not passed' }}
                     </span>
-                    <span v-else-if="c.winners.length" class="small fw-bold winner text-break mb-2"><i class="bi bi-trophy-fill"></i> {{ c.winners.join(' & ') }}{{ c.winners.length > 1 ? ' (tie)' : '' }}</span>
+                    <span v-else-if="c.winners.length" class="small fw-bold winner text-break mb-2">{{ c.winners.join(' & ') }}{{ c.winners.length > 1 ? ' (tie)' : '' }}</span>
                 </div>
                 <table class="w-100 lines">
                     <tbody>

@@ -1,5 +1,5 @@
 import api from '../index';
-import type { AuditEntry, BallotEvent, Candidate, CandidateImportResult, CandidateImportRow, Category, Earnings, EventResults, EventTemplate, GeneratedCode, InviteChannel, MemberRole, MessagingStatus, MyPayment, Paginated, PaymentReceiptInfo, PlanInfo, PlanSettings, PlanSize, PlatformEvent, PlatformOverview, PlatformPayment, PlatformPayout, PlatformUser, ResultsVisibility, SystemHealth, TeamInfo, TeamMember, User, Voter, VoterContact, VotingMode, NominationSummary, ResultCertificateInfo, Bank, VotingMethod, PassRule, VoterGroup } from '~/types';
+import type { AccountLogEntry, AuditEntry, BallotEvent, Candidate, CandidateImportResult, CandidateImportRow, Category, Earnings, EventResults, EventTemplate, GeneratedCode, InviteChannel, MemberRole, MessagingStatus, MyPayment, Paginated, PaymentReceiptInfo, PlanInfo, PlanSettings, PlanSize, PlatformEvent, PlatformOverview, PlatformPayment, PlatformPayout, PlatformUser, ResultsVisibility, SystemHealth, TeamInfo, TeamMember, User, Voter, VoterContact, VotingMode, NominationSummary, ResultCertificateInfo, Bank, VotingMethod, PassRule, VoterGroup } from '~/types';
 
 type Id = number | string;
 
@@ -174,6 +174,9 @@ export const platformApi = {
         api.get<Paginated<PlatformPayment>>('/admin/payments', { params }),
     payouts: () => api.get<PlatformPayout[]>('/admin/payouts'),
     recordPayout: (eventId: Id, data: { amount_naira: number; note?: string }) => api.post(`/admin/events/${eventId}/payouts`, data),
+    /** Account log: group admin | signin | security; failed = failed sign-ins only. */
+    logs: (params: { search?: string; group?: string; failed?: boolean; page?: number }) =>
+        api.get<Paginated<AccountLogEntry>>('/admin/logs', { params: { ...params, failed: params.failed ? 1 : undefined } }),
     health: () => api.get<SystemHealth>('/admin/health'),
     /** uuid 'all' = every failed job. */
     retryFailedJob: (uuid: string) => api.post(`/admin/health/failed-jobs/${uuid}/retry`),

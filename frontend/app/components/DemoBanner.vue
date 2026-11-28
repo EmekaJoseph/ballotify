@@ -1,8 +1,7 @@
 <template>
     <div class="demo-banner mb-4">
-        <i class="bi bi-eye"></i>
         <span class="flex-grow-1">{{ text }}</span>
-        <NuxtLink to="/signup" class="fw-bold text-nowrap">Create yours <i class="bi bi-arrow-right"></i></NuxtLink>
+        <NuxtLink to="/signup" class="fw-bold text-nowrap">Create yours</NuxtLink>
     </div>
 </template>
 

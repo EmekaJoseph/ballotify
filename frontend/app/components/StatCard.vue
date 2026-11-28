@@ -1,7 +1,7 @@
 <template>
     <div class="stat-wrap h-100">
         <div class="card-b stat h-100">
-            <div class="icon-tile" :class="tone"><i class="bi" :class="icon"></i></div>
+            <div v-if="adminIcons" class="icon-tile" :class="tone"><i class="bi" :class="icon"></i></div>
             <div class="stat-body">
                 <div class="small-caps stat-label">{{ label }}</div>
                 <div class="stat-value fw-800 lh-1 text-ink">{{ value }}</div>
@@ -12,6 +12,8 @@
 </template>
 
 <script setup lang="ts">
+
+const adminIcons = useAdminIcons();
 withDefaults(defineProps<{ label: string; value: string | number; icon: string; tone?: '' | 'violet' | 'green' | 'amber'; hint?: string }>(), {
     tone: '',
     hint: '',

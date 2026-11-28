@@ -1,8 +1,8 @@
 <template>
     <div class="cert-page">
         <div class="toolbar no-print">
-            <NuxtLink :to="`/verify/${serial}`" class="btn btn-ghost btn-sm"><i class="bi bi-patch-check"></i> Verification page</NuxtLink>
-            <button class="btn btn-primary btn-sm" :disabled="!cert" @click="print"><i class="bi bi-printer"></i> Print / Save as PDF</button>
+            <NuxtLink :to="`/verify/${serial}`" class="btn btn-ghost btn-sm">Verification page</NuxtLink>
+            <button class="btn btn-primary btn-sm" :disabled="!cert" @click="print">Print / Save as PDF</button>
         </div>
 
         <div v-if="loading" class="sheet"><div class="skeleton mb-3" style="height: 40px"></div><div class="skeleton" style="height: 300px"></div></div>
@@ -37,7 +37,7 @@
             <section v-for="c in p.categories" :key="c.name" class="cat">
                 <div class="d-flex flex-wrap justify-content-between align-items-baseline column-gap-3">
                     <h2 class="h6 fw-800 mb-2 text-break">{{ c.name }}</h2>
-                    <span v-if="c.winners.length" class="small fw-bold winner text-break mb-2"><i class="bi bi-trophy-fill"></i> {{ c.winners.join(' & ') }}{{ c.winners.length > 1 ? ' (tie)' : '' }}</span>
+                    <span v-if="c.winners.length" class="small fw-bold winner text-break mb-2">{{ c.winners.join(' & ') }}{{ c.winners.length > 1 ? ' (tie)' : '' }}</span>
                 </div>
                 <table class="w-100 lines">
                     <tbody>

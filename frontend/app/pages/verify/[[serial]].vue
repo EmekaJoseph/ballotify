@@ -15,7 +15,6 @@
 
         <template v-if="cert">
             <div class="verdict mb-3" :class="verdict">
-                <i class="bi" :class="verdict === 'ok' ? 'bi-patch-check-fill' : verdict === 'warn' ? 'bi-exclamation-triangle-fill' : 'bi-x-octagon-fill'"></i>
                 <div>
                     <div class="fw-800">{{ verdict === 'ok' ? 'Genuine certificate' : verdict === 'warn' ? 'Genuine, but results changed since' : 'Not valid' }}</div>
                     <div class="small">{{ cert.message }}</div>
@@ -27,11 +26,11 @@
                         <h2 class="h5 fw-800 mb-1 text-break">{{ cert.payload.event.name }}</h2>
                         <div class="small text-muted">Certificate <span class="mono">{{ cert.serial }}</span> · issued {{ formatDate(cert.issued_at, true) }}</div>
                     </div>
-                    <NuxtLink :to="`/certificate/${cert.serial}`" class="btn btn-ghost btn-sm"><i class="bi bi-file-earmark-text"></i> View certificate</NuxtLink>
+                    <NuxtLink :to="`/certificate/${cert.serial}`" class="btn btn-ghost btn-sm">View certificate</NuxtLink>
                 </div>
                 <div v-for="c in cert.payload.categories" :key="c.name" class="py-2 border-top d-flex justify-content-between gap-2 flex-wrap">
                     <span class="fw-semibold text-ink">{{ c.name }}</span>
-                    <span class="small"><i v-if="c.winners.length" class="bi bi-trophy-fill" style="color: #d97706"></i> {{ c.winners.join(' & ') || 'No votes' }}</span>
+                    <span class="small">{{ c.winners.join(' & ') || 'No votes' }}</span>
                 </div>
             </div>
         </template>

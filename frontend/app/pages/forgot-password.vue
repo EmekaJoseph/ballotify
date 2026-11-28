@@ -1,7 +1,6 @@
 <template>
     <div class="fade-up">
         <template v-if="sent">
-            <div class="icon-tile lg green mb-3"><i class="bi bi-envelope-check"></i></div>
             <h1 class="h2 fw-800 mb-2">Check your inbox</h1>
             <p class="text-muted mb-4">
                 If an account exists for <b class="text-ink">{{ email }}</b>, we’ve sent a link to choose a new password.
@@ -18,8 +17,7 @@
             <p class="text-muted mb-4">Enter your account email and we’ll send you a link to reset it.</p>
             <form novalidate @submit.prevent="submit">
                 <label for="email" class="form-label">Email</label>
-                <div class="input-icon mb-4">
-                    <i class="bi bi-envelope"></i>
+                <div class="mb-4">
                     <input id="email" v-model.trim="email" type="email" class="form-control form-control-lg" autocomplete="email"
                         placeholder="you@organisation.com" :disabled="loading" />
                 </div>

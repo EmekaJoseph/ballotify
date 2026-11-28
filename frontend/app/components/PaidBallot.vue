@@ -1,7 +1,7 @@
 <template>
     <div>
         <div v-if="!paymentsReady" class="alert alert-warning border-0 rounded-4 small d-flex gap-2 mb-3">
-            <i class="bi bi-exclamation-triangle"></i> {{ t('paid.unavailable') }}
+            {{ t('paid.unavailable') }}
         </div>
 
         <!-- Category tabs (sticky) -->
@@ -26,7 +26,7 @@
                             <div v-if="cand.description" class="small text-muted mt-1 desc" :title="cand.description">{{ cand.description }}</div>
                             <div class="d-flex gap-2 mt-auto" style="margin-top: .75rem !important">
                                 <button type="button" class="btn btn-primary btn-sm flex-grow-1" :disabled="!paymentsReady" @click="openBuy(cand, cat.name)">
-                                    <i class="bi bi-heart-fill"></i> {{ t('paid.vote') }}
+                                    {{ t('paid.vote') }}
                                 </button>
                                 <button type="button" class="btn btn-ghost btn-icon btn-sm" :title="t('card.title')" :aria-label="`${t('card.title')}: ${cand.name}`"
                                     @click="cardFor = { cand, category: cat.name }"><i class="bi bi-share"></i></button>
@@ -77,7 +77,7 @@
                         <span v-if="paying" class="spinner-border spinner-border-sm"></span>
                         {{ paying ? t('paid.wait') : t('paid.pay') }}
                     </button>
-                    <div class="small text-muted text-center mt-2"><i class="bi bi-lock"></i> {{ t('paid.secure') }}</div>
+                    <div class="small text-muted text-center mt-2">{{ t('paid.secure') }}</div>
                 </div>
             </template>
         </BaseModal>

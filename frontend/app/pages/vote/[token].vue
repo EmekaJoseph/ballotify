@@ -10,7 +10,6 @@
 
         <!-- Unavailable -->
         <div v-else-if="stage === 'unavailable'" class="card-b text-center px-4 py-5 fade-up">
-            <div class="icon-tile lg mx-auto mb-3" :class="unavailable.tone"><i class="bi" :class="unavailable.icon"></i></div>
             <h1 class="h4 fw-800 mb-2">{{ unavailable.title }}</h1>
             <p class="text-muted mx-auto mb-3" style="max-width: 420px">{{ unavailable.text }}</p>
             <div v-if="unavailable.status === 'upcoming' && opensIn.label" class="countdown mx-auto mb-4">
@@ -19,12 +18,12 @@
             </div>
             <div class="d-flex flex-column flex-sm-row gap-2 justify-content-center">
                 <NuxtLink v-if="unavailable.status === 'upcoming' && nominationsOpen" :to="`/nominate/${token}`" class="btn btn-primary">
-                    <i class="bi bi-megaphone"></i> {{ t('vote.nominate') }}
+                    {{ t('vote.nominate') }}
                 </NuxtLink>
                 <NuxtLink v-if="unavailable.status === 'completed' && resultsPublic" :to="`/event/${token}/results`" class="btn btn-primary">
-                    <i class="bi bi-bar-chart-line"></i> {{ t('vote.seeResults') }}
+                    {{ t('vote.seeResults') }}
                 </NuxtLink>
-                <button v-if="unavailable.retry" class="btn btn-ghost" @click="load"><i class="bi bi-arrow-clockwise"></i> {{ t('common.tryAgain') }}</button>
+                <button v-if="unavailable.retry" class="btn btn-ghost" @click="load">{{ t('common.tryAgain') }}</button>
             </div>
         </div>
 
@@ -38,10 +37,10 @@
         <!-- Enter code (or, for paid voting, the nominee list) -->
         <div v-else-if="(stage === 'code' || stage === 'paid') && event" class="fade-up">
             <div v-if="idleClosed" class="alert alert-info border-0 rounded-4 small d-flex gap-2 mb-3" role="status">
-                <i class="bi bi-shield-lock"></i> <span>{{ t('idle.closed') }}</span>
+                <span>{{ t('idle.closed') }}</span>
             </div>
             <div v-if="paidNotice" class="alert border-0 rounded-4 small d-flex gap-2 mb-3" :class="paidNotice.ok ? 'alert-success' : 'alert-warning'">
-                <i class="bi" :class="paidNotice.ok ? 'bi-check-circle-fill' : 'bi-info-circle'"></i> {{ paidNotice.text }}
+                {{ paidNotice.text }}
             </div>
             <div class="intro card-b overflow-hidden mb-3">
                 <div class="intro-band">
@@ -51,9 +50,9 @@
                     <p v-if="event.description" class="intro-text mb-0" style="white-space: pre-line">{{ event.description }}</p>
                 </div>
                 <div class="d-flex flex-wrap gap-3 gap-sm-4 px-4 py-3 small">
-                    <span class="text-muted"><i class="bi bi-grid me-1"></i>{{ tn('vote.categories', event.categories.length) }}</span>
-                    <span v-if="isPaid" class="text-muted"><i class="bi bi-cash-coin me-1"></i>{{ t('vote.perVote', { price: (event.vote_price_naira ?? 0).toLocaleString('en-NG') }) }}</span>
-                    <span v-else class="text-muted"><i class="bi me-1" :class="allSingle ? 'bi-record-circle' : 'bi-ui-checks'"></i>{{ allSingle ? t('vote.oneChoice') : t('vote.severalPicks') }}</span>
+                    <span class="text-muted">{{ tn('vote.categories', event.categories.length) }}</span>
+                    <span v-if="isPaid" class="text-muted">{{ t('vote.perVote', { price: (event.vote_price_naira ?? 0).toLocaleString('en-NG') }) }}</span>
+                    <span v-else class="text-muted">{{ allSingle ? t('vote.oneChoice') : t('vote.severalPicks') }}</span>
                     <span v-if="closesIn.label" class="text-muted"><i class="bi bi-hourglass-split me-1"></i><Tx k="vote.closesIn"><template #time><b class="text-ink">{{ closesIn.label }}</b></template></Tx></span>
                 </div>
             </div>
@@ -62,7 +61,7 @@
                 :price="event.vote_price_naira ?? 0" :min-payment="event.min_payment_naira ?? 50" :payments-ready="!!event.payments_enabled"
                 :event-name="event.name" :brand-color="event.brand?.color" />
             <p v-if="isPaid && event.results_visibility === 'live'" class="text-center mt-2">
-                <NuxtLink :to="`/event/${token}/results`" class="btn btn-ghost btn-sm"><i class="bi bi-bar-chart-line"></i> {{ t('vote.leaderboard') }}</NuxtLink>
+                <NuxtLink :to="`/event/${token}/results`" class="btn btn-ghost btn-sm">{{ t('vote.leaderboard') }}</NuxtLink>
             </p>
 
             <form v-if="!isPaid" class="card-b pad" novalidate @submit.prevent="checkCode">
@@ -71,19 +70,18 @@
                 <input id="code" ref="codeInput" v-model="code" class="form-control code-input mono" :class="{ 'is-invalid': codeError }"
                     placeholder="XXXXXXXX" maxlength="64" autocomplete="one-time-code" autocapitalize="characters" spellcheck="false"
                     inputmode="text" :disabled="checking" @input="codeError = ''" />
-                <div v-if="codeError" class="field-error d-flex gap-1 align-items-start"><i class="bi bi-exclamation-circle"></i>{{ codeError }}</div>
+                <div v-if="codeError" class="field-error d-flex gap-1 align-items-start">{{ codeError }}</div>
                 <button type="submit" class="btn btn-primary btn-lg w-100 mt-3" :disabled="checking || code.trim().length < 4">
                     <span v-if="checking" class="spinner-border spinner-border-sm"></span>
-                    {{ checking ? t('vote.checking') : t('vote.continue') }} <i v-if="!checking" class="bi bi-arrow-right"></i>
+                    {{ checking ? t('vote.checking') : t('vote.continue') }}
                 </button>
-                <p class="small text-muted text-center mt-3 mb-0"><i class="bi bi-incognito"></i> {{ t('vote.privacy') }}</p>
+                <p class="small text-muted text-center mt-3 mb-0">{{ t('vote.privacy') }}</p>
             </form>
 
             <!-- Self-registration: the code goes to the contact the organiser has on file -->
             <div v-if="!isPaid && event.self_registration" class="card-b pad mt-3 selfreg">
                 <template v-if="!selfReg.open && !selfReg.sentTo.length">
                     <div class="d-flex align-items-center gap-3 flex-wrap">
-                        <span class="icon-tile flex-shrink-0"><i class="bi bi-person-vcard"></i></span>
                         <span class="flex-grow-1 small text-muted"><Tx k="vote.noCode"><template #label><b class="text-ink">{{ event.member_id_label }}</b></template></Tx></span>
                         <button class="btn btn-soft btn-sm" @click="selfReg.open = true">{{ t('vote.getCode') }}</button>
                     </div>
@@ -101,7 +99,6 @@
                     <p class="small text-muted mt-2 mb-0">{{ t('vote.sendCodeHint') }}</p>
                 </form>
                 <div v-else class="d-flex gap-3 align-items-start">
-                    <span class="icon-tile flex-shrink-0" style="background: var(--success-50); color: var(--success)"><i class="bi bi-send-check"></i></span>
                     <div class="small">
                         <div class="fw-bold text-ink mb-1">{{ t('vote.codeOnWay') }}</div>
                         <div class="text-muted">{{ t('vote.sentTo', { to: selfReg.sentTo.join(` ${t('common.and')} `) }) }}</div>
@@ -119,7 +116,6 @@
 
             <div class="voter-bar card-b mb-3">
                 <span v-if="voterName" class="avatar sm" :style="{ background: colorFor(voterName) }" aria-hidden="true">{{ initials(voterName) }}</span>
-                <span v-else class="icon-tile" style="width: 34px; height: 34px; font-size: 1rem"><i class="bi bi-person"></i></span>
                 <div class="min-w-0 flex-grow-1">
                     <div class="small text-muted lh-sm">{{ t('vote.votingAs') }}</div>
                     <div class="fw-bold text-ink truncate">{{ voterName || t('vote.anonymous') }}</div>
@@ -145,7 +141,7 @@
             :receipt="paidResult.reference" :receipt-label="t('vote.paymentRef')" :receipt-hint="t('vote.paymentRefHint')"
             :results-to="event?.results_visibility === 'private' ? '' : `/event/${token}/results`" :results-label="t('vote.seeLeaderboard')" hide-done>
             <template #actions>
-                <button class="btn btn-ghost" @click="voteAgain"><i class="bi bi-heart"></i> {{ t('vote.voteAgain') }}</button>
+                <button class="btn btn-ghost" @click="voteAgain">{{ t('vote.voteAgain') }}</button>
             </template>
         </VoteSuccess>
         <VoteSuccess v-else-if="stage === 'done'" :event-name="event?.name ?? ''" :voter-name="voterName" :receipt="receipt"
@@ -402,10 +398,7 @@ onMounted(() => {
 .brand-logo { display: block; max-height: 48px; max-width: 180px; object-fit: contain; border-radius: 8px; background: rgba(255, 255, 255, .92); padding: 4px 8px; }
 .intro-band {
     padding: 1.75rem 1.5rem; position: relative;
-    background:
-        radial-gradient(420px 220px at 100% 0%, rgba(124, 92, 255, .45), transparent 60%),
-        radial-gradient(420px 220px at 0% 100%, rgba(20, 145, 138, .55), transparent 60%),
-        var(--night);
+    background: var(--night);
 }
 .intro-band .pill-active { background: rgba(74, 222, 128, .15); color: #86efac; }
 .intro-text { color: rgba(255, 255, 255, .75); }

@@ -2,7 +2,6 @@
     <div class="fade-up">
         <!-- Step 2: authenticator code -->
         <template v-if="challenge">
-            <div class="icon-tile lg mb-3"><i class="bi bi-shield-lock"></i></div>
             <h1 class="h2 fw-800 mb-2">Two-step sign in</h1>
             <p class="text-muted mb-4">
                 {{ useRecovery ? 'Enter one of your recovery codes.' : 'Open Google Authenticator and enter the 6-digit code for E-voting by Agudatechy.' }}
@@ -30,20 +29,19 @@
             <p class="text-muted mb-4">Sign in to manage your events.</p>
 
             <div v-if="route.query.suspended" class="alert alert-danger border-0 rounded-4 small d-flex gap-2">
-                <i class="bi bi-slash-circle"></i> This account has been suspended. Contact support if you think this is a mistake.
+                This account has been suspended. Contact support if you think this is a mistake.
             </div>
             <div v-else-if="route.query.expired" class="alert alert-warning border-0 rounded-4 small d-flex gap-2">
-                <i class="bi bi-clock-history"></i> Your session expired. Please sign in again.
+                Your session expired. Please sign in again.
             </div>
             <div v-if="route.query.reset" class="alert alert-success border-0 rounded-4 small d-flex gap-2">
-                <i class="bi bi-check-circle-fill"></i> Password updated. Sign in with your new password.
+                Password updated. Sign in with your new password.
             </div>
 
             <form novalidate @submit.prevent="submit">
                 <div class="mb-3">
                     <label for="email" class="form-label">Email</label>
-                    <div class="input-icon">
-                        <i class="bi bi-envelope"></i>
+                    <div>
                         <input id="email" v-model.trim="form.email" type="email" class="form-control form-control-lg"
                             autocomplete="email" placeholder="you@organisation.com" required :disabled="loading" />
                     </div>

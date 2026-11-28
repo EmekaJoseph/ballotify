@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\EventMember;
 use App\Models\User;
+use App\Support\AccountLogger;
 use App\Support\Turnstile;
 use App\Support\TwoFactor;
 use Illuminate\Auth\Events\PasswordReset;
@@ -42,6 +43,7 @@ class AuthController extends Controller
         // Sent after the response: a slow or broken mail server must never make a sign-up that
         // succeeded look failed (the person would retry and get "email already taken").
         defer(fn () => $this->safely(fn () => $user->sendEmailVerificationNotification()));
+        AccountLogger::record('account.created', 'Signed up', $user, $user);
 
         return response()->json(['token' => $this->issueToken($user), 'user' => $user], 201);
     }
@@ -59,6 +61,8 @@ class AuthController extends Controller
 
         $user = User::where('email', strtolower($data['email']))->first();
         if (! $user || ! Hash::check($data['password'], $user->password)) {
+            // Only for real accounts: typos of unknown addresses aren't worth keeping.
+            if ($user) AccountLogger::record('auth.login_failed', 'Sign-in failed: wrong password', $user, null);
             throw ValidationException::withMessages(['email' => ['The provided credentials are incorrect.']]);
         }
         $this->ensureNotSuspended($user);
@@ -67,6 +71,7 @@ class AuthController extends Controller
             return response()->json(['two_factor' => true, 'challenge' => TwoFactor::makeChallenge($user)]);
         }
 
+        AccountLogger::record('auth.login', 'Signed in', $user, $user);
         return response()->json(['token' => $this->issueToken($user), 'user' => $user]);
     }
 
@@ -88,12 +93,14 @@ class AuthController extends Controller
         }
         if (! TwoFactor::verify($user, $data['code'])) {
             TwoFactor::recordFailure($user);
+            AccountLogger::record('auth.login_failed', 'Sign-in failed: wrong two-step code', $user, null);
             throw ValidationException::withMessages(['code' => ['That code is not valid. Try the latest code from your app, or a recovery code.']]);
         }
         TwoFactor::clearFailures($user);
 
         $this->ensureNotSuspended($user);
 
+        AccountLogger::record('auth.login', 'Signed in with two-step login', $user, $user);
         return response()->json(['token' => $this->issueToken($user), 'user' => $user]);
     }
 
@@ -144,6 +151,7 @@ class AuthController extends Controller
             $current = $user->currentAccessToken();
             $currentId = $current instanceof PersonalAccessToken ? $current->getKey() : null;
             $user->tokens()->when($currentId, fn ($q) => $q->whereKeyNot($currentId))->delete();
+            AccountLogger::record('account.password', 'Password changed (other devices signed out)', $user);
         }
         if (isset($data['name'])) $user->name = $data['name'];
         foreach (['payout_bank_name', 'payout_account_number', 'payout_account_name'] as $field) {
@@ -182,6 +190,7 @@ class AuthController extends Controller
                 if (! $user->hasVerifiedEmail()) $user->markEmailAsVerified();
                 EventMember::claimFor($user);
                 event(new PasswordReset($user));
+                AccountLogger::record('account.password', 'Password reset with an email link (signed out everywhere)', $user, $user);
             },
         );
 
@@ -245,6 +254,7 @@ class AuthController extends Controller
         }
         $codes = TwoFactor::newRecoveryCodes();
         $user->forceFill(['two_factor_confirmed_at' => now(), 'two_factor_recovery_codes' => $codes])->save();
+        AccountLogger::record('account.2fa', 'Two-step login turned on', $user);
 
         return response()->json(['recovery_codes' => $codes, 'user' => $user->fresh()]);
     }
@@ -267,6 +277,7 @@ class AuthController extends Controller
         abort_unless($user->two_factor_enabled, 422, 'Two-step login is not on.');
         $codes = TwoFactor::newRecoveryCodes();
         $user->forceFill(['two_factor_recovery_codes' => $codes])->save();
+        AccountLogger::record('account.2fa', 'New two-step recovery codes made (the old ones stopped working)', $user);
 
         return response()->json(['recovery_codes' => $codes]);
     }
@@ -277,6 +288,7 @@ class AuthController extends Controller
         $request->user()->forceFill([
             'two_factor_secret' => null, 'two_factor_recovery_codes' => null, 'two_factor_confirmed_at' => null,
         ])->save();
+        AccountLogger::record('account.2fa', 'Two-step login turned off', $request->user());
 
         return response()->json(['user' => $request->user()->fresh()]);
     }
@@ -286,6 +298,7 @@ class AuthController extends Controller
     private function ensureNotSuspended(User $user): void
     {
         if ($user->isSuspended()) {
+            AccountLogger::record('auth.login_failed', 'Sign-in refused: the account is suspended', $user, null);
             throw ValidationException::withMessages(['email' => ['This account has been suspended. Contact support if you think this is a mistake.']]);
         }
     }

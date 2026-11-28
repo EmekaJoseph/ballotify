@@ -33,7 +33,7 @@
                     {{ !cat.motion.decided ? t('res.undecided') : cat.motion.passed ? t('res.passed') : t('res.failed') }}
                 </div>
                 <div v-else-if="winners(cat).length" class="pill pill-brand pill-wrap">
-                    <i class="bi bi-trophy-fill"></i>
+                    
                     {{ winners(cat).length > 1 ? t('res.tied') : (closed ? t('res.winner') : t('res.leading')) }}: {{ winners(cat).map(c => c.name).join(' & ') }}
                 </div>
             </header>
@@ -81,7 +81,7 @@
                                 </div>
                             </li>
                         </ol>
-                        <p v-if="isApproval(cat) && !paid && catTotal(cat)" class="small text-muted mt-3 mb-0"><i class="bi bi-ui-checks"></i> {{ t('res.approvalNote') }}</p>
+                        <p v-if="isApproval(cat) && !paid && catTotal(cat)" class="small text-muted mt-3 mb-0"><i v-if="adminIcons" class="bi bi-ui-checks"></i> {{ t('res.approvalNote') }}</p>
                     </div>
                 </div>
                 <RoundsTable v-if="isRanked(cat)" :category="cat" />
@@ -92,6 +92,8 @@
 
 <script setup lang="ts">
 import type { EventResults, ResultCategory } from '~/types';
+
+const adminIcons = useAdminIcons();
 
 const props = defineProps<{ results: EventResults }>();
 

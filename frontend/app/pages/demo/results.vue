@@ -2,7 +2,7 @@
     <div>
         <DemoBanner text="Demo results with sample data. Votes trickle in to show live updates." />
         <ResultsHeader :name="results.event.name" status="active" :ends-at="results.event.ends_at" updated-at="just now">
-            <NuxtLink to="/demo/vote" class="btn btn-light-on-dark btn-sm"><i class="bi bi-check2-square"></i> Try the ballot</NuxtLink>
+            <NuxtLink to="/demo/vote" class="btn btn-light-on-dark btn-sm">Try the ballot</NuxtLink>
         </ResultsHeader>
         <ResultsBoard :results="results" />
     </div>

@@ -1,7 +1,6 @@
 <template>
     <div class="fade-up">
         <template v-if="!token || !email">
-            <div class="icon-tile lg mb-3"><i class="bi bi-link-45deg"></i></div>
             <h1 class="h2 fw-800 mb-2">Link incomplete</h1>
             <p class="text-muted mb-4">This reset link is missing information. Request a new one and open it from the email.</p>
             <NuxtLink to="/forgot-password" class="btn btn-primary btn-lg w-100">Request a new link</NuxtLink>

@@ -14,11 +14,11 @@
                         <div class="amount">₦0</div>
                         <p class="text-muted small mb-4">Try Ballotify properly on a small vote.</p>
                         <ul class="perks">
-                            <li><i class="bi bi-check2"></i> Up to {{ formatNumber(info.free.max_voters) }} voters per event</li>
-                            <li><i class="bi bi-check2"></i> Unlimited drafts; {{ info.free.max_active_events === 1 ? 'one live event at a time' : `${info.free.max_active_events} live events at a time` }}</li>
-                            <li><i class="bi bi-check2"></i> Live results, secret ballot, receipts</li>
-                            <li><i class="bi bi-check2"></i> Share codes on WhatsApp, CSV or slips</li>
-                            <li class="off"><i class="bi bi-x"></i> Email &amp; SMS invitations</li>
+                            <li>Up to {{ formatNumber(info.free.max_voters) }} voters per event</li>
+                            <li>Unlimited drafts; {{ info.free.max_active_events === 1 ? 'one live event at a time' : `${info.free.max_active_events} live events at a time` }}</li>
+                            <li>Live results, secret ballot, receipts</li>
+                            <li>Share codes on WhatsApp, CSV or slips</li>
+                            <li class="off">Email &amp; SMS invitations</li>
                         </ul>
                         <NuxtLink :to="ctaLink" class="btn btn-ghost w-100 mt-auto">Start free</NuxtLink>
                     </div>
@@ -27,38 +27,38 @@
                     <div class="plan card-b h-100" :class="{ featured: t.key === 'standard' }">
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <span class="small-caps text-brand">{{ t.name }}</span>
-                            <span v-if="t.key === 'standard'" class="pill pill-pro"><i class="bi bi-lightning-charge-fill"></i> Popular</span>
+                            <span v-if="t.key === 'standard'" class="pill pill-pro">Popular</span>
                         </div>
                         <div class="amount">{{ formatNaira(t.price_naira) }}<span>/event</span></div>
                         <p class="text-muted small mb-4">{{ blurb[t.key] }}</p>
                         <ul class="perks">
-                            <li><i class="bi bi-check2"></i> Up to <b>{{ formatNumber(t.max_voters) }}</b> voters</li>
-                            <li><i class="bi bi-check2"></i> <b>{{ formatNumber(t.sms_included) }}</b> SMS included, plus email</li>
-                            <li><i class="bi bi-check2"></i> Your logo, no Ballotify branding</li>
-                            <li><i class="bi bi-check2"></i> Co-organisers, USSD, self-registration</li>
-                            <li><i class="bi bi-check2"></i> Everything in Free</li>
+                            <li>Up to <b>{{ formatNumber(t.max_voters) }}</b> voters</li>
+                            <li><b>{{ formatNumber(t.sms_included) }}</b> SMS included, plus email</li>
+                            <li>Your logo, no Ballotify branding</li>
+                            <li>Co-organisers, USSD, self-registration</li>
+                            <li>Everything in Free</li>
                         </ul>
                         <NuxtLink :to="ctaLink" class="btn w-100 mt-auto" :class="t.key === 'standard' ? 'btn-primary' : 'btn-ghost'">Create an event</NuxtLink>
                     </div>
                 </div>
             </div>
             <p class="text-center small text-muted mt-4 mb-1">
-                <i class="bi bi-chat-dots"></i> One-off payment per event; move up a size any time by paying the difference.
+                One-off payment per event; move up a size any time by paying the difference.
                 Need more SMS? <b class="text-ink">SMS credits</b> are {{ formatNaira(info.sms_price_naira) }} each. Email and WhatsApp are always free.
             </p>
             <p v-if="info.paid_votes" class="text-center small text-muted mt-4 mb-1">
-                <i class="bi bi-trophy"></i> <b class="text-ink">Award nights:</b> paid public voting is free to set up. We keep {{ info.paid_votes.fee_percent }}% of each vote payment; the rest is yours.
+                <b class="text-ink">Award nights:</b> paid public voting is free to set up. We keep {{ info.paid_votes.fee_percent }}% of each vote payment; the rest is yours.
             </p>
             <div class="unlimited-note mt-4">
                 <div>
-                    <div class="fw-800 text-ink"><i class="bi bi-infinity"></i> Pro Unlimited</div>
+                    <div class="fw-800 text-ink">Pro Unlimited</div>
                     <div class="small text-muted">More than {{ formatNumber(largest) }} voters, or many events for a national body? No voter limit and no co-organiser limit. Set up by our team.</div>
                 </div>
                 <a v-if="support.whatsapp" :href="support.whatsappHref('Pricing: Pro Unlimited')" target="_blank" rel="noopener" class="btn btn-ghost btn-sm flex-shrink-0">
-                    <i class="bi bi-whatsapp"></i> Talk to us
+                    Talk to us
                 </a>
                 <a v-else-if="contactEmail" :href="`mailto:${contactEmail}?subject=${encodeURIComponent('Pro Unlimited')}`" class="btn btn-ghost btn-sm flex-shrink-0">
-                    <i class="bi bi-envelope"></i> Talk to us
+                    Talk to us
                 </a>
             </div>
         </div>

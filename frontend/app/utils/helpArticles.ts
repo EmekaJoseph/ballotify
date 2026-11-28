@@ -16,8 +16,8 @@ export const HELP_SECTIONS = [
     { key: 'start', label: 'Getting started', icon: 'bi-rocket-takeoff' },
     { key: 'voters', label: 'Voters and codes', icon: 'bi-people' },
     { key: 'results', label: 'Results and records', icon: 'bi-bar-chart-line' },
-    { key: 'paid', label: 'Award nights and paid voting', icon: 'bi-trophy' },
-    { key: 'more', label: 'More features', icon: 'bi-stars' },
+    { key: 'paid', label: 'Award nights and paid voting', icon: 'bi-cash-coin' },
+    { key: 'more', label: 'More features', icon: 'bi-grid' },
     { key: 'account', label: 'Plans and your account', icon: 'bi-person-gear' },
     { key: 'trouble', label: 'Problems and questions', icon: 'bi-life-preserver' },
 ] as const;

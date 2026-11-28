@@ -7,6 +7,7 @@ use App\Models\Candidate;
 use App\Models\Event;
 use App\Models\User;
 use App\Models\Voter;
+use App\Support\AccountLogger;
 use App\Support\Audit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
@@ -96,6 +97,7 @@ class PlatformAdminController extends Controller
     public function retryFailedJob(string $uuid)
     {
         Artisan::call('queue:retry', ['id' => [$uuid === 'all' ? 'all' : $uuid]]);
+        AccountLogger::record('admin.jobs', $uuid === 'all' ? 'Retried every failed background job' : 'Retried a failed background job');
         return response()->json(['ok' => true]);
     }
 
@@ -103,7 +105,36 @@ class PlatformAdminController extends Controller
     public function forgetFailedJob(string $uuid)
     {
         $uuid === 'all' ? Artisan::call('queue:flush') : Artisan::call('queue:forget', ['id' => $uuid]);
+        AccountLogger::record('admin.jobs', $uuid === 'all' ? 'Cleared every failed background job' : 'Cleared a failed background job');
         return response()->json(['ok' => true]);
+    }
+
+    /**
+     * The platform account log, newest first. group: admin | signin | security;
+     * search matches the account's email or name, the admin's name, or the text.
+     */
+    public function logs(Request $request)
+    {
+        $data = $request->validate([
+            'search' => ['nullable', 'string', 'max:255'],
+            'group' => ['nullable', Rule::in(array_keys(\App\Models\AccountLog::GROUPS))],
+            'failed' => ['nullable', 'boolean'],
+        ]);
+
+        $logs = \App\Models\AccountLog::query()
+            ->with(['actor:id,name,email', 'user:id,name,email'])
+            ->when($data['group'] ?? null, fn ($q, $g) => $q->where('action', 'like', \App\Models\AccountLog::GROUPS[$g] . '%'))
+            ->when($request->boolean('failed'), fn ($q) => $q->where('action', 'auth.login_failed'))
+            ->when($data['search'] ?? null, function ($q, $term) {
+                $like = $this->like($term);
+                $q->where(fn ($w) => $w->where('user_email', 'like', $like)->orWhere('description', 'like', $like)
+                    ->orWhereHas('user', fn ($u) => $u->where('name', 'like', $like))
+                    ->orWhereHas('actor', fn ($u) => $u->where('name', 'like', $like)->orWhere('email', 'like', $like)));
+            })
+            ->latest('created_at')->latest('id')
+            ->paginate(50);
+
+        return response()->json($logs);
     }
 
     private function like(string $term): string
@@ -147,13 +178,16 @@ class PlatformAdminController extends Controller
         $user->forceFill(['suspended_at' => now()])->save();
         // Sign them out everywhere.
         $user->tokens()->delete();
+        AccountLogger::record('admin.suspended', 'Account suspended (signed out everywhere)', $user);
 
         return response()->json($user->loadCount('events'));
     }
 
     public function unsuspend(User $user)
     {
+        $was = $user->suspended_at !== null;
         $user->forceFill(['suspended_at' => null])->save();
+        if ($was) AccountLogger::record('admin.restored', 'Suspension lifted', $user);
 
         return response()->json($user->loadCount('events'));
     }
@@ -162,7 +196,12 @@ class PlatformAdminController extends Controller
     public function setApproval(Request $request, User $user)
     {
         $data = $request->validate(['approved' => ['required', 'boolean']]);
+        $was = $user->approved_at !== null;
         $user->forceFill(['approved_at' => $data['approved'] ? ($user->approved_at ?? now()) : null])->save();
+        if ($was !== (bool) $data['approved']) {
+            AccountLogger::record($data['approved'] ? 'admin.approved' : 'admin.unapproved',
+                $data['approved'] ? 'Account approved: can create events' : 'Approval withdrawn: can’t create new events', $user);
+        }
 
         return response()->json($user->loadCount('events'));
     }
