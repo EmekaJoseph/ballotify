@@ -4,6 +4,9 @@
             <i class="bi" :class="note.icon"></i>
             <span class="note-text">{{ note.text }}</span>
             <div class="actions">
+                <span v-if="live && event.status === 'active'" class="pill pill-active" title="New votes appear here by themselves">
+                    <span class="dot"></span>Live
+                </span>
                 <a v-if="publicNow" :href="resultsUrl" target="_blank" rel="noopener" class="btn btn-ghost btn-icon btn-sm"
                     title="Open public results page" aria-label="Open public results page">
                     <i class="bi bi-box-arrow-up-right"></i>
@@ -179,16 +182,50 @@ watch(presenting, (on) => {
     if (!on) return;
     load(true);
     tickTimer = setInterval(() => { tick.value = Date.now(); }, 5000);
-    if (props.event.status === 'active') pollTimer = setInterval(() => load(true), 10000);
+    // With Pusher connected the totals arrive by themselves; polling is the fallback.
+    if (props.event.status === 'active') pollTimer = setInterval(() => load(true), live.value ? 60000 : 10000);
 });
+
+// --- Live tally over Pusher (private channel: this event's team only) --------
+const { $live } = useNuxtApp();
+let echo: ReturnType<typeof $live.acquire> = null;
+const channelName = `evoting.admin.event.${props.event.id}`;
+const live = ref(false);
+let refreshTimer: ReturnType<typeof setTimeout> | undefined;
+/** Many votes can land together: refetch at most about once a second. */
+function scheduleRefresh() {
+    if (refreshTimer) return;
+    refreshTimer = setTimeout(() => { refreshTimer = undefined; load(true); }, 1000);
+}
+function startLive() {
+    if (props.event.status === 'completed') return; // nothing more can change
+    echo = $live.acquire();
+    if (!echo) return;
+    try {
+        echo.private(channelName).listen('.vote.cast', scheduleRefresh);
+        live.value = true;
+    } catch (e) {
+        console.warn('Live results unavailable:', e);
+    }
+}
+function stopLive() {
+    clearTimeout(refreshTimer);
+    if (!echo) return;
+    try { echo.leave(channelName); } catch { /* already gone */ }
+    $live.release();
+    echo = null;
+    live.value = false;
+}
 
 onMounted(() => {
     load();
     loadCertificate();
+    startLive();
     document.addEventListener('fullscreenchange', onFullscreen);
     document.addEventListener('keydown', onKey);
 });
 onBeforeUnmount(() => {
+    stopLive();
     clearInterval(pollTimer);
     clearInterval(tickTimer);
     document.removeEventListener('fullscreenchange', onFullscreen);

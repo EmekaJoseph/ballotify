@@ -257,11 +257,12 @@ For accounts with `is_admin` (grant it with `php artisan ballotify:make-admin yo
 | DELETE | `/admin/health/failed-jobs/{uuid\|all}` | Remove failed jobs |
 | GET | `/admin/payments?search&status&page` | Paystack payments with organiser and event. `status`: `pending`, `success` or `failed`. |
 
-## Live results (Laravel Reverb)
+## Live results (Pusher)
 
-When `BROADCAST_CONNECTION=reverb` and results are public, each accepted ballot broadcasts:
-- channel: `event.{eventId}` (public)
+When `BROADCAST_CONNECTION=pusher` and results are public, each accepted ballot broadcasts:
+- channel: `evoting.event.{eventId}` (public; only while results are public)
+- channel: `private-evoting.admin.event.{eventId}` (always; the event's owner and co-organisers, authorised by `POST /api/broadcasting/auth` with the Bearer token)
 - event: `vote.cast`
 - payload: `{ event_id }` (no ballot content)
 
-The results page refetches the totals when it receives one. Without Reverb it refreshes every 15 seconds.
+The results page refetches the totals when it receives one. Without Pusher it refreshes every 15 seconds.

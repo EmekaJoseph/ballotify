@@ -43,20 +43,15 @@ export default defineNuxtConfig({
     },
   },
 
-  // Every value can be overridden with NUXT_PUBLIC_<NAME> (e.g. NUXT_PUBLIC_API_BASE, NUXT_PUBLIC_REVERB_KEY).
+  // Every value can be overridden with NUXT_PUBLIC_<NAME> (e.g. NUXT_PUBLIC_API_BASE, NUXT_PUBLIC_PUSHER_KEY).
   runtimeConfig: {
     public: {
       apiBase: 'http://localhost:8883/api',
       // Live results through Pusher (hosted; nothing to run on the server). Set the key and
       // cluster from the Pusher dashboard; the backend needs BROADCAST_CONNECTION=pusher.
-      // Takes priority over Reverb. Both empty = results refresh every 15 s instead.
+      // Empty = results refresh every 15 s instead.
       pusherKey: '',
       pusherCluster: '',
-      // Or live results via Laravel Reverb (self-hosted). Leave reverbKey empty to not use it.
-      reverbKey: '',
-      reverbHost: 'localhost',
-      reverbPort: 8080,
-      reverbScheme: 'http',
       // Shown on the Privacy / Terms pages.
       companyName: 'E-voting by Agudatechy',
       contactEmail: '',

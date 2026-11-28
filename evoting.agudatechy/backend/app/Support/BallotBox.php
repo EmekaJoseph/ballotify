@@ -154,13 +154,12 @@ class BallotBox
             throw new BallotRejected(__('Invalid or used code'), 422, unknownCode: true);
         }
 
-        // Live results ping (carries no ballot content). Skipped when results aren't public.
-        if ($event->resultsArePublic()) {
-            try {
-                event(new VoteCast($event->id));
-            } catch (\Throwable $e) {
-                report($e); // a broadcasting outage must never make a recorded vote look failed
-            }
+        // Live results ping (carries no ballot content): always to the organisers' private
+        // channel, and to the public one only while results are public.
+        try {
+            event(new VoteCast($event->id, $event->resultsArePublic()));
+        } catch (\Throwable $e) {
+            report($e); // a broadcasting outage must never make a recorded vote look failed
         }
 
         return $receipt;

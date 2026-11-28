@@ -89,3 +89,28 @@ it('lets the organiser add and remove an event logo, shown on the public pages',
     ], ['Accept' => 'application/json'])->assertUnprocessable();
     $this->actingAs(User::factory()->create())->postJson("/api/events/{$event->id}/logo", ['remove_logo' => true])->assertNotFound();
 });
+
+it('lets only the event team join its private live-results channel', function () {
+    // Pusher signs channel auth locally; no network call is made.
+    config(['broadcasting.default' => 'pusher', 'broadcasting.connections.pusher.key' => 'test-key',
+        'broadcasting.connections.pusher.secret' => 'test-secret', 'broadcasting.connections.pusher.app_id' => '1',
+        'broadcasting.connections.pusher.options.cluster' => 'mt1']);
+    require base_path('routes/channels.php');
+
+    $owner = User::factory()->create();
+    $event = Event::create(['user_id' => $owner->id, 'name' => 'Union election', 'link_token' => 'tok-live']);
+    $body = ['socket_id' => '1234.5678', 'channel_name' => "private-evoting.admin.event.{$event->id}"];
+
+    $this->actingAs($owner)->postJson('/api/broadcasting/auth', $body)->assertOk()->assertJsonStructure(['auth']);
+    $this->actingAs(User::factory()->create())->postJson('/api/broadcasting/auth', $body)->assertForbidden();
+    auth()->forgetGuards();
+    $this->postJson('/api/broadcasting/auth', $body)->assertUnauthorized();
+});
+
+it('signals the organisers on every vote, and the public only while results are public', function () {
+    $hidden = new \App\Events\VoteCast(7, false);
+    expect(collect($hidden->broadcastOn())->map->name->all())->toBe(['private-evoting.admin.event.7']);
+
+    $live = new \App\Events\VoteCast(7, true);
+    expect(collect($live->broadcastOn())->map->name->all())->toBe(['private-evoting.admin.event.7', 'evoting.event.7']);
+});

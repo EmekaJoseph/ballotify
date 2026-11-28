@@ -180,7 +180,7 @@ async function fetchResults(manual = false) {
     }
 }
 
-// --- Live updates: Reverb when configured, polling otherwise -------------
+// --- Live updates: Pusher when configured, polling otherwise -------------
 let pollTimer: ReturnType<typeof setInterval> | undefined;
 let tickTimer: ReturnType<typeof setInterval> | undefined;
 let debounce: ReturnType<typeof setTimeout> | undefined;
@@ -201,7 +201,7 @@ function startLive() {
     if (!channelName) {
         echo = $live.acquire();
         if (echo) {
-            channelName = `event.${results.value.event.id}`;
+            channelName = `evoting.event.${results.value.event.id}`;
             echo.channel(channelName).listen('.vote.cast', scheduleRefresh);
             live.value = true;
         }
