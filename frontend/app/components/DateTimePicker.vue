@@ -13,11 +13,13 @@
             </button>
         </div>
 
-        <!-- Popover (desktop) / bottom sheet (phone) -->
+        <!-- Popover (desktop) / bottom sheet (phone). Rendered at the page level so a
+             scrolling card or dialog around the field can't clip it. -->
+        <Teleport to="body">
         <Transition name="dtp-pop">
-            <div v-if="open" class="dtp-layer" :class="{ up: openUp }">
+            <div v-if="open" class="dtp-layer">
                 <div class="dtp-scrim" @click="open = false"></div>
-                <div class="dtp-panel" :class="{ right: alignRight }" role="dialog" :aria-label="label || 'Choose date and time'"
+                <div ref="panel" class="dtp-panel" :style="panelStyle" role="dialog" :aria-label="label || 'Choose date and time'"
                     @keydown.esc.stop="open = false">
                     <div class="dtp-sheet-title">{{ label || 'Choose date and time' }}</div>
 
@@ -62,6 +64,7 @@
                 </div>
             </div>
         </Transition>
+        </Teleport>
     </div>
 </template>
 
@@ -85,9 +88,10 @@ const props = withDefaults(defineProps<{
 const model = defineModel<string>({ default: '' });
 
 const root = ref<HTMLElement | null>(null);
+const panel = ref<HTMLElement | null>(null);
 const open = ref(false);
-const alignRight = ref(false);
-const openUp = ref(false);
+/** Desktop: where the panel sits on screen (phones use a bottom sheet instead). */
+const panelStyle = ref<Record<string, string>>({});
 
 const pad = (n: number) => String(n).padStart(2, '0');
 const toStr = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
@@ -213,16 +217,56 @@ const minWarning = computed(() =>
     value.value && minDate.value && value.value <= minDate.value ? 'This is before the opening time.' : '');
 
 // ---- open/close
+const GAP = 6;     // between the field and the panel
+const EDGE = 8;    // kept clear at the window's edges
+const isPhone = () => window.matchMedia('(max-width: 575.98px)').matches;
+
+/**
+ * Place the panel fully inside the window: below the field if it fits, else above,
+ * else wherever it stays fully visible (it may then cover the field).
+ */
+function place() {
+    if (!open.value || !root.value) return;
+    if (isPhone()) { panelStyle.value = {}; return; }
+    const r = root.value.getBoundingClientRect();
+    const w = panel.value?.offsetWidth || 320;
+    const h = panel.value?.offsetHeight || 480;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+
+    let left = r.left;
+    if (left + w > vw - EDGE) left = r.right - w;          // line up with the field's right edge
+    left = Math.max(EDGE, Math.min(left, vw - w - EDGE));
+
+    const below = r.bottom + GAP;
+    const above = r.top - GAP - h;
+    let top: number;
+    if (below + h <= vh - EDGE) top = below;
+    else if (above >= EDGE) top = above;
+    else top = Math.max(EDGE, vh - h - EDGE);
+
+    panelStyle.value = { top: `${Math.round(top)}px`, left: `${Math.round(left)}px` };
+}
+
 function toggle() {
     if (open.value) { open.value = false; return; }
     view.value = startOfMonth(value.value ?? minDate.value ?? new Date());
-    const rect = root.value?.getBoundingClientRect();
-    alignRight.value = !!rect && rect.left + 320 > window.innerWidth - 16;
-    // Not enough room below but enough above: open upwards.
-    const PANEL_H = 480;
-    openUp.value = !!rect && rect.bottom + PANEL_H > window.innerHeight && rect.top > PANEL_H;
+    panelStyle.value = {};
     open.value = true;
+    nextTick(place); // measured once it's on the page
 }
+// Keep it next to the field while the page (or a dialog) scrolls, or the window resizes.
+watch(open, (o) => {
+    if (o) {
+        window.addEventListener('scroll', place, true);
+        window.addEventListener('resize', place);
+    } else {
+        window.removeEventListener('scroll', place, true);
+        window.removeEventListener('resize', place);
+    }
+});
+// Its height changes with the month (5 or 6 rows) and the warning line.
+watch([view, minWarning], () => nextTick(place));
 function clear() {
     model.value = '';
     open.value = false;
@@ -231,7 +275,7 @@ function clear() {
 function onDocDown(e: MouseEvent) {
     const target = e.target as Element;
     // Dropdown menus (hour/minute) are teleported to <body>: clicks in them aren't "outside".
-    if (open.value && root.value && !root.value.contains(target) && !target.closest?.('.as-menu')) open.value = false;
+    if (open.value && root.value && !root.value.contains(target) && !panel.value?.contains(target) && !target.closest?.('.as-menu')) open.value = false;
 }
 function onKey(e: KeyboardEvent) {
     if (e.key === 'Escape' && open.value) open.value = false;
@@ -243,6 +287,8 @@ onMounted(() => {
 onBeforeUnmount(() => {
     document.removeEventListener('mousedown', onDocDown);
     document.removeEventListener('keydown', onKey);
+    window.removeEventListener('scroll', place, true);
+    window.removeEventListener('resize', place);
 });
 </script>
 
@@ -265,16 +311,13 @@ onBeforeUnmount(() => {
 .dtp-clear:hover { background: var(--line); color: var(--ink); }
 .dtp-field.is-invalid { border-color: var(--danger); }
 
-/* Panel */
-.dtp-layer { position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 1200; }
+/* Panel: fixed on screen, placed by place(). Above dialogs (1500), below dropdown menus (1650). */
 .dtp-scrim { display: none; }
 .dtp-panel {
-    position: absolute; top: 0; left: 0; width: 320px; padding: 1rem;
+    position: fixed; top: 0; left: 0; z-index: 1600; width: 320px; max-width: calc(100vw - 16px);
+    max-height: calc(100vh - 16px); overflow-y: auto; padding: 1rem;
     background: var(--surface); border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--shadow-lg);
 }
-.dtp-panel.right { left: auto; right: 0; }
-.dtp-layer.up { top: auto; bottom: calc(100% + 6px); }
-.dtp-layer.up .dtp-panel { top: auto; bottom: 0; }
 .dtp-sheet-title { display: none; }
 
 .dtp-presets { display: flex; flex-wrap: wrap; gap: .35rem; margin-bottom: .85rem; }
@@ -316,10 +359,11 @@ onBeforeUnmount(() => {
 
 /* Phone: bottom sheet */
 @media (max-width: 575.98px) {
-    .dtp-layer, .dtp-layer.up { position: fixed; inset: 0; z-index: 1600; }
+    .dtp-layer { position: fixed; inset: 0; z-index: 1600; }
     .dtp-scrim { display: block; position: absolute; inset: 0; background: rgba(10, 18, 34, .45); backdrop-filter: blur(3px); }
-    .dtp-panel, .dtp-panel.right {
-        top: auto; bottom: 0; left: 0; right: 0; width: 100%; border-radius: 22px 22px 0 0; border: 0;
+    .dtp-panel {
+        position: absolute; top: auto; bottom: 0; left: 0; right: 0; width: 100%; max-width: none; max-height: 92vh;
+        border-radius: 22px 22px 0 0; border: 0;
         padding: 1.1rem 1rem calc(1rem + env(safe-area-inset-bottom));
     }
     .dtp-sheet-title { display: block; font-weight: 800; color: var(--ink); margin-bottom: .75rem; }
